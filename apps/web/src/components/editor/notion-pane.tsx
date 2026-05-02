@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +11,7 @@ import {
   CheckCircle2,
   Database,
   Loader2,
+  Play,
   Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -200,28 +200,118 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
           </div>
 
           {/* Data sources */}
-          {pack.dataSources.length > 0 && (
+          {pack.dataSources.length > 0 && lastDeploy !== null && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Data sources
               </p>
               <div className="space-y-1.5">
                 {pack.dataSources.map((src) => (
-                  <div
+                  <SyncRow
                     key={src.id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2"
-                  >
-                    <p className="text-xs font-medium truncate">{src.label}</p>
-                    <Badge variant="outline" className="text-xs ml-2 shrink-0">
-                      {src.schedule ?? "daily"}
-                    </Badge>
-                  </div>
+                    nicheId={pack.id}
+                    adapterId={src.id}
+                    label={src.label}
+                    schedule={src.schedule ?? "daily"}
+                    databaseIds={lastDeploy!.databaseIds}
+                    targetDatabaseId={src.targetDatabaseId}
+                  />
                 ))}
               </div>
             </div>
           )}
         </div>
       </ScrollArea>
+    </div>
+  );
+}
+
+interface SyncRowProps {
+  nicheId: string;
+  adapterId: string;
+  label: string;
+  schedule: string;
+  databaseIds: Record<string, string>;
+  targetDatabaseId: string;
+}
+
+function SyncRow({
+  nicheId,
+  adapterId,
+  label,
+  schedule,
+  databaseIds,
+  targetDatabaseId,
+}: SyncRowProps) {
+  const [running, setRunning] = useState(false);
+  const [lastResult, setLastResult] = useState<{
+    rowsProcessed: number;
+    rowsSkipped: number;
+    error?: string;
+  } | null>(null);
+
+  async function handleRun() {
+    setRunning(true);
+    try {
+      const res = await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nicheId,
+          adapterId,
+          databaseIds,
+          targetDatabaseId,
+          criteria: {},
+          credentials: {},
+        }),
+      });
+      const body = await res.json() as { result?: typeof lastResult; error?: string };
+      setLastResult(body.result ?? { rowsProcessed: 0, rowsSkipped: 0, error: body.error });
+    } catch (err) {
+      setLastResult({
+        rowsProcessed: 0,
+        rowsSkipped: 0,
+        error: err instanceof Error ? err.message : "Sync failed",
+      });
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <div className="rounded-md border px-3 py-2 space-y-1.5">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium truncate">{label}</p>
+        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+          <Badge variant="outline" className="text-xs">
+            {schedule}
+          </Badge>
+          <button
+            onClick={handleRun}
+            disabled={running}
+            className="inline-flex items-center justify-center h-5 w-5 rounded hover:bg-accent transition-colors disabled:opacity-50"
+            title="Run now"
+          >
+            {running ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Play className="h-3 w-3" />
+            )}
+          </button>
+        </div>
+      </div>
+      {lastResult !== null && (
+        <p
+          className={cn(
+            "text-xs",
+            lastResult.error !== undefined ? "text-destructive" : "text-green-600",
+          )}
+        >
+          {lastResult.error !== undefined
+            ? lastResult.error
+            : `+${lastResult.rowsProcessed} rows, ${lastResult.rowsSkipped} skipped`}
+        </p>
+      )}
     </div>
   );
 }

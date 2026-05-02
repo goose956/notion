@@ -1,0 +1,20 @@
+{
+  "name": "@niche-factory/sync-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@niche-factory/adapter-runtime": "workspace:*",
+    "@niche-factory/notion-client": "workspace:*",
+    "@niche-factory/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
