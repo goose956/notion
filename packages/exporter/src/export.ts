@@ -37,20 +37,21 @@ export async function exportPack(
   const databases: Database[] = [];
 
   for (const [packDbId, notionDbId] of Object.entries(databaseIds)) {
+    // We always get a full DatabaseObjectResponse from databases.retrieve
     const notionDb = await client.call((c) =>
       c.databases.retrieve({ database_id: notionDbId }),
-    );
+    ) as unknown as {
+      title: Array<{ plain_text?: string }>;
+      icon: { type?: string; emoji?: string } | null;
+      properties: Record<string, Record<string, unknown> & { type: string; id: string }>;
+    };
 
     // Extract the database title
-    const titleBlocks = notionDb.title as Array<{ plain_text?: string }>;
     const dbName =
-      titleBlocks.map((b) => b.plain_text ?? "").join("") || packDbId;
+      notionDb.title.map((b) => b.plain_text ?? "").join("") || packDbId;
 
     // Map properties back to PropertySchema shapes
-    const rawProps = notionDb.properties as Record<
-      string,
-      Record<string, unknown> & { type: string; id: string }
-    >;
+    const rawProps = notionDb.properties;
 
     const properties: Property[] = [];
     for (const [propName, rawProp] of Object.entries(rawProps)) {
@@ -79,9 +80,8 @@ export async function exportPack(
       : properties;
 
     // Try to recover the icon from the Notion database
-    const iconRaw = notionDb.icon as { type?: string; emoji?: string } | null;
     const icon =
-      iconRaw?.type === "emoji" ? iconRaw.emoji : undefined;
+      notionDb.icon?.type === "emoji" ? notionDb.icon.emoji : undefined;
 
     // Preserve views from the existing pack (Notion API doesn't expose view config)
     const existingDb = existingPack?.databases.find((d) => d.id === packDbId);

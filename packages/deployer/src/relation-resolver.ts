@@ -62,10 +62,8 @@ export async function resolveRelations(
       await client.call((c) =>
         c.databases.update({
           database_id: db.notionDbId,
-          properties: patchProperties as Parameters<
-            typeof c.databases.update
-          >[0]["properties"],
-        }),
+          properties: patchProperties,
+        } as unknown as Parameters<typeof c.databases.update>[0]),
       );
     }
   }

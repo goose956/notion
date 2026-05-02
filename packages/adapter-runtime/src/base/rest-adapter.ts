@@ -24,10 +24,9 @@ export abstract class RestAdapter<RawType = unknown, Row = unknown>
     credentials: Readonly<Record<string, string>>,
   ): AsyncIterable<RawType> {
     const request = this.buildRequest(criteria, credentials);
-    const response = await fetch(request.url, {
-      method: request.method ?? "GET",
-      headers: request.headers,
-    });
+    const init: RequestInit = { method: request.method ?? "GET" };
+    if (request.headers !== undefined) init.headers = request.headers;
+    const response = await fetch(request.url, init);
     if (!response.ok) {
       throw new Error(
         `REST fetch failed: ${request.url} → HTTP ${response.status}`,

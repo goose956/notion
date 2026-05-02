@@ -13,6 +13,7 @@
     "studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@niche-factory/schema": "workspace:*",
     "drizzle-orm": "^0.31.2",
     "postgres": "^3.4.4"
   },

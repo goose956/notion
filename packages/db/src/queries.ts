@@ -101,8 +101,8 @@ export async function updateDeployStatus(
     .update(deploys)
     .set({
       status: update.status,
-      durationMs: update.durationMs,
-      errorMessage: update.errorMessage,
+      durationMs: update.durationMs ?? null,
+      errorMessage: update.errorMessage ?? null,
       completedAt: new Date(),
     })
     .where(eq(deploys.id, id));

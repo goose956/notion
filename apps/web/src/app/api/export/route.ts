@@ -39,11 +39,14 @@ export async function POST(request: NextRequest) {
 
   let pack;
   try {
-    pack = await exportPack(client, {
+    const exportOpts = {
       parentPageId: input.data.parentPageId,
       databaseIds: input.data.databaseIds,
-      existingPack: input.data.existingPack,
-    });
+      ...(input.data.existingPack !== undefined
+        ? { existingPack: input.data.existingPack }
+        : {}),
+    };
+    pack = await exportPack(client, exportOpts);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Export failed";
     return NextResponse.json({ error: message }, { status: 502 });

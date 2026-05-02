@@ -42,17 +42,18 @@ export async function deploy(
   for (const db of pack.databases) {
     const { notionProperties } = buildPropertiesForCreate(db.properties);
 
+    // Build the create body — use unknown cast to avoid fighting the Notion SDK
+    // icon and properties types which are overly complex with exactOptionalPropertyTypes
+    const createBody = {
+      parent: { type: "page_id" as const, page_id: parentPageId },
+      title: [{ type: "text" as const, text: { content: db.name } }],
+      properties: notionProperties,
+    } as Record<string, unknown>;
+    if (db.icon !== undefined) {
+      createBody["icon"] = { type: "emoji", emoji: db.icon };
+    }
     const created = await client.call((c) =>
-      c.databases.create({
-        parent: { type: "page_id", page_id: parentPageId },
-        title: [{ type: "text", text: { content: db.name } }],
-        ...(db.icon !== undefined
-          ? { icon: { type: "emoji", emoji: db.icon as Parameters<typeof c.databases.create>[0]["icon"] extends { emoji: infer E } ? E : string } }
-          : {}),
-        properties: notionProperties as Parameters<
-          typeof c.databases.create
-        >[0]["properties"],
-      }),
+      c.databases.create(createBody as Parameters<typeof c.databases.create>[0]),
     );
 
     databaseIds[db.id] = created.id;
