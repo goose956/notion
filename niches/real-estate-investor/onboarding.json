@@ -1,0 +1,51 @@
+[
+  {
+    "id": "target-markets",
+    "question": "Which markets (cities or zip codes) are you investing in?",
+    "type": "text",
+    "required": true,
+    "hint": "e.g. 'Kansas City MO, 64101, 64108'"
+  },
+  {
+    "id": "investment-strategy",
+    "question": "What is your primary investment strategy?",
+    "type": "multi_select",
+    "options": ["BRRRR", "Fix & Flip", "Wholesale", "Buy & Hold"],
+    "required": true
+  },
+  {
+    "id": "max-purchase-price",
+    "question": "What is your maximum purchase price per deal?",
+    "type": "number",
+    "required": true,
+    "hint": "Enter in USD, e.g. 150000"
+  },
+  {
+    "id": "min-deal-score",
+    "question": "What minimum Deal Score (0–100) should qualify a lead for further analysis?",
+    "type": "number",
+    "required": false,
+    "hint": "Deals scoring above this threshold appear in the Hot Leads view. Default: 10"
+  },
+  {
+    "id": "arv-method",
+    "question": "How do you typically estimate ARV?",
+    "type": "select",
+    "options": ["Zillow Zestimate", "Redfin Estimate", "Manual comps", "PropStream AVM"],
+    "required": true
+  },
+  {
+    "id": "rehab-budget",
+    "question": "What is your typical rehab budget range?",
+    "type": "select",
+    "options": ["Under $15k", "$15k–$30k", "$30k–$60k", "$60k–$100k", "Over $100k"],
+    "required": false
+  },
+  {
+    "id": "propstream-key",
+    "question": "Do you have a PropStream API key?",
+    "type": "boolean",
+    "required": false,
+    "hint": "Required to enable the PropStream distressed-leads adapter"
+  }
+]

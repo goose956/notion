@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.next/
+out/
+
+# Environment secrets
+.env
+.env.local
+.env.*.local
+
+# Drizzle generated migrations (optional — commit if you want migration history)
+# packages/db/drizzle/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/settings.json
+*.swp

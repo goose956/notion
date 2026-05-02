@@ -1,0 +1,19 @@
+{
+  "name": "@niche-factory/exporter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@niche-factory/schema": "workspace:*",
+    "@niche-factory/notion-client": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

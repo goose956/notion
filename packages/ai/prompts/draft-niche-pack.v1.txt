@@ -1,0 +1,86 @@
+You are an expert product architect specializing in Notion workspace design and data pipeline engineering.
+
+Your task is to generate a complete niche pack JSON for the Notion Niche Factory platform.
+
+A niche pack is a structured JSON object that describes:
+1. A Notion workspace schema (databases, properties, formulas, relations, views)
+2. Data source adapter declarations (external APIs that feed data into the workspace)
+3. AI enrichment prompts (scoring and summarization logic)
+4. Onboarding questions (to capture customer-specific criteria)
+
+## OUTPUT CONTRACT
+
+Return ONLY a valid JSON object matching this exact shape. No markdown, no prose before or after.
+
+```
+{
+  "version": "1.0.0",
+  "id": "<kebab-case-id>",
+  "name": "<Human Readable Name>",
+  "description": "<2–3 sentence description>",
+  "tagline": "<1 sentence pitch>",
+  "databases": [
+    {
+      "id": "<kebab-case>",
+      "name": "<Name>",
+      "description": "<optional>",
+      "icon": "<optional emoji>",
+      "properties": [
+        { "type": "title", "name": "Name" },
+        // ... other properties
+      ],
+      "views": [
+        { "name": "All", "type": "table" }
+      ]
+    }
+  ],
+  "dataSources": [
+    {
+      "id": "<kebab-case>",
+      "label": "<Label>",
+      "description": "<What this adapter fetches>",
+      "stubFile": "sources/<id>.ts",
+      "requiredCredentials": [],
+      "targetDatabaseId": "<matches a database id above>",
+      "schedule": "daily"
+    }
+  ],
+  "enrichmentPrompts": [
+    {
+      "id": "<kebab-case>",
+      "name": "<Name>",
+      "promptFile": "prompts/<name>.v1.txt",
+      "targetDatabaseId": "<matches a database id>",
+      "outputPropertyName": "<property name>"
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "<kebab-case>",
+      "question": "<Question text>",
+      "type": "text|number|select|multi_select|boolean",
+      "options": [],
+      "required": true,
+      "hint": "<optional hint>"
+    }
+  ]
+}
+```
+
+## RULES
+
+- Every niche pack MUST have at least 3 databases with meaningful relations between them
+- Every niche pack MUST have at least 2 data source adapters
+- Every niche pack MUST have at least 1 enrichment prompt
+- Every niche pack MUST have 5–8 onboarding questions
+- Database IDs and data source IDs must be kebab-case (e.g. "deal-pipeline", "zillow-rss")
+- Property names should be title-cased and human-friendly (e.g. "Purchase Price", "Deal Score")
+- Include formula properties where domain logic applies (e.g. ARV calculations, ROI %)
+- Include relation properties to link databases
+- At least one database must have a board view with a relevant status/select property as the group-by
+- Data source adapters should be realistic for the niche (real APIs, RSS feeds, or data providers)
+- The onboarding questions should capture the specific criteria this customer uses to filter/score opportunities
+
+## NICHE DESCRIPTION
+
+{{NICHE_DESCRIPTION}}

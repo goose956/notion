@@ -1,0 +1,261 @@
+{
+  "version": "1.0.0",
+  "id": "real-estate-investor",
+  "name": "Real Estate Investor",
+  "description": "A Notion workspace for real estate investors hunting BRRRR and fix-and-flip deals. Tracks the full deal pipeline from lead to disposition with automated scoring via the 70% rule.",
+  "tagline": "Never miss a deal — every lead scored, tracked, and actioned in one workspace.",
+  "databases": [
+    {
+      "id": "deal-pipeline",
+      "name": "Deal Pipeline",
+      "description": "The master list of every deal lead, from first contact to closed.",
+      "icon": "🏠",
+      "properties": [
+        { "type": "title", "name": "Address" },
+        { "type": "url", "name": "Listing URL" },
+        {
+          "type": "select",
+          "name": "Stage",
+          "options": [
+            { "name": "Lead", "color": "gray" },
+            { "name": "Analyzing", "color": "yellow" },
+            { "name": "Offer Sent", "color": "orange" },
+            { "name": "Under Contract", "color": "blue" },
+            { "name": "Closed", "color": "green" },
+            { "name": "Dead", "color": "red" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "Strategy",
+          "options": [
+            { "name": "BRRRR", "color": "purple" },
+            { "name": "Fix & Flip", "color": "orange" },
+            { "name": "Wholesale", "color": "blue" },
+            { "name": "Buy & Hold", "color": "green" }
+          ]
+        },
+        { "type": "number", "name": "Asking Price", "format": "dollar" },
+        { "type": "number", "name": "ARV (After Repair Value)", "format": "dollar" },
+        { "type": "number", "name": "Estimated Rehab Cost", "format": "dollar" },
+        {
+          "type": "formula",
+          "name": "Max Offer (70% Rule)",
+          "expression": "prop(\"ARV (After Repair Value)\") * 0.7 - prop(\"Estimated Rehab Cost\")"
+        },
+        {
+          "type": "formula",
+          "name": "Deal Score",
+          "expression": "if(prop(\"Asking Price\") <= prop(\"Max Offer (70% Rule)\"), round((prop(\"Max Offer (70% Rule)\") - prop(\"Asking Price\")) / prop(\"Max Offer (70% Rule)\") * 100), 0)"
+        },
+        {
+          "type": "formula",
+          "name": "Under 70% Rule?",
+          "expression": "prop(\"Asking Price\") <= prop(\"Max Offer (70% Rule)\")"
+        },
+        { "type": "number", "name": "Beds", "format": "number" },
+        { "type": "number", "name": "Baths", "format": "number" },
+        { "type": "number", "name": "Sqft", "format": "number" },
+        { "type": "number", "name": "Year Built", "format": "number" },
+        { "type": "select", "name": "Market", "options": [] },
+        { "type": "rich_text", "name": "AI Summary" },
+        { "type": "rich_text", "name": "Notes" },
+        { "type": "date", "name": "Lead Date" },
+        { "type": "date", "name": "Offer Date" },
+        { "type": "date", "name": "Close Date" },
+        {
+          "type": "relation",
+          "name": "Comps",
+          "targetDatabaseId": "comps",
+          "dualProperty": true,
+          "syncedPropertyName": "Deal"
+        },
+        {
+          "type": "relation",
+          "name": "Tasks",
+          "targetDatabaseId": "tasks",
+          "dualProperty": true,
+          "syncedPropertyName": "Deal"
+        }
+      ],
+      "views": [
+        { "name": "All Deals", "type": "table" },
+        {
+          "name": "Pipeline Board",
+          "type": "board",
+          "groupByProperty": "Stage"
+        },
+        {
+          "name": "Hot Leads",
+          "type": "table",
+          "filters": [{ "propertyName": "Under 70% Rule?", "condition": "equals", "value": true }],
+          "sorts": [{ "propertyName": "Deal Score", "direction": "descending" }]
+        }
+      ]
+    },
+    {
+      "id": "comps",
+      "name": "Comps",
+      "description": "Comparable sales used to validate ARV estimates.",
+      "icon": "📊",
+      "properties": [
+        { "type": "title", "name": "Address" },
+        { "type": "number", "name": "Sale Price", "format": "dollar" },
+        { "type": "date", "name": "Sale Date" },
+        { "type": "number", "name": "Sqft", "format": "number" },
+        { "type": "formula", "name": "Price / Sqft", "expression": "prop(\"Sale Price\") / prop(\"Sqft\")" },
+        { "type": "number", "name": "Beds", "format": "number" },
+        { "type": "number", "name": "Baths", "format": "number" },
+        { "type": "number", "name": "Distance (miles)", "format": "number" },
+        { "type": "url", "name": "Source URL" },
+        { "type": "select", "name": "Market", "options": [] },
+        {
+          "type": "relation",
+          "name": "Deal",
+          "targetDatabaseId": "deal-pipeline",
+          "dualProperty": true,
+          "syncedPropertyName": "Comps"
+        }
+      ],
+      "views": [
+        { "name": "All Comps", "type": "table" },
+        { "name": "By Sale Date", "type": "table", "sorts": [{ "propertyName": "Sale Date", "direction": "descending" }] }
+      ]
+    },
+    {
+      "id": "tasks",
+      "name": "Tasks",
+      "description": "Due diligence, contractor bids, and action items per deal.",
+      "icon": "✅",
+      "properties": [
+        { "type": "title", "name": "Task" },
+        {
+          "type": "status",
+          "name": "Status"
+        },
+        {
+          "type": "select",
+          "name": "Category",
+          "options": [
+            { "name": "Due Diligence", "color": "blue" },
+            { "name": "Financing", "color": "green" },
+            { "name": "Legal", "color": "purple" },
+            { "name": "Contractor", "color": "orange" },
+            { "name": "Admin", "color": "gray" }
+          ]
+        },
+        { "type": "date", "name": "Due Date" },
+        { "type": "people", "name": "Assignee" },
+        { "type": "rich_text", "name": "Notes" },
+        {
+          "type": "relation",
+          "name": "Deal",
+          "targetDatabaseId": "deal-pipeline",
+          "dualProperty": true,
+          "syncedPropertyName": "Tasks"
+        }
+      ],
+      "views": [
+        { "name": "All Tasks", "type": "table" },
+        { "name": "My Tasks", "type": "table", "filters": [{ "propertyName": "Status", "condition": "does_not_equal", "value": "Done" }] },
+        { "name": "By Deal", "type": "board", "groupByProperty": "Category" }
+      ]
+    }
+  ],
+  "dataSources": [
+    {
+      "id": "zillow-rss",
+      "label": "Zillow RSS Feed",
+      "description": "Fetches new property listings from Zillow's market-specific RSS feeds. Free, no API key required.",
+      "stubFile": "sources/zillow-rss.ts",
+      "requiredCredentials": [],
+      "targetDatabaseId": "deal-pipeline",
+      "schedule": "daily"
+    },
+    {
+      "id": "redfin-rss",
+      "label": "Redfin RSS Feed",
+      "description": "Fetches new and price-reduced listings from Redfin's search RSS endpoint for target markets.",
+      "stubFile": "sources/redfin-rss.ts",
+      "requiredCredentials": [],
+      "targetDatabaseId": "deal-pipeline",
+      "schedule": "daily"
+    },
+    {
+      "id": "propstream",
+      "label": "PropStream API",
+      "description": "Pulls distressed property leads (pre-foreclosure, tax delinquent, absentee owners) from the PropStream API using the customer's subscription key.",
+      "stubFile": "sources/propstream.ts",
+      "requiredCredentials": ["PROPSTREAM_API_KEY"],
+      "targetDatabaseId": "deal-pipeline",
+      "schedule": "daily"
+    }
+  ],
+  "enrichmentPrompts": [
+    {
+      "id": "deal-scoring",
+      "name": "Deal Scoring",
+      "promptFile": "prompts/deal-scoring.v1.txt",
+      "targetDatabaseId": "deal-pipeline",
+      "outputPropertyName": "AI Summary"
+    },
+    {
+      "id": "deal-summary",
+      "name": "Deal Summary",
+      "promptFile": "prompts/deal-summary.v1.txt",
+      "targetDatabaseId": "deal-pipeline",
+      "outputPropertyName": "AI Summary"
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "target-markets",
+      "question": "Which markets (cities or zip codes) are you investing in?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. 'Kansas City MO, 64101, 64108'"
+    },
+    {
+      "id": "investment-strategy",
+      "question": "What is your primary investment strategy?",
+      "type": "multi_select",
+      "options": ["BRRRR", "Fix & Flip", "Wholesale", "Buy & Hold"],
+      "required": true
+    },
+    {
+      "id": "max-purchase-price",
+      "question": "What is your maximum purchase price per deal?",
+      "type": "number",
+      "required": true,
+      "hint": "Enter in USD, e.g. 150000"
+    },
+    {
+      "id": "min-deal-score",
+      "question": "What minimum Deal Score (0–100) qualifies a lead for further analysis?",
+      "type": "number",
+      "required": false,
+      "hint": "Deals scoring above this appear in the Hot Leads view. Default: 10"
+    },
+    {
+      "id": "arv-method",
+      "question": "How do you typically estimate ARV?",
+      "type": "select",
+      "options": ["Zillow Zestimate", "Redfin Estimate", "Manual comps", "PropStream AVM"],
+      "required": true
+    },
+    {
+      "id": "rehab-budget",
+      "question": "What is your typical rehab budget range?",
+      "type": "select",
+      "options": ["Under $15k", "$15k–$30k", "$30k–$60k", "$60k–$100k", "Over $100k"],
+      "required": false
+    },
+    {
+      "id": "propstream-key",
+      "question": "Do you have a PropStream API key?",
+      "type": "boolean",
+      "required": false,
+      "hint": "Required to enable the PropStream distressed-leads adapter"
+    }
+  ]
+}

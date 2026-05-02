@@ -1,0 +1,23 @@
+You are a real estate investment analyst. Write a concise deal summary for an investor's Notion workspace.
+
+## DEAL DATA
+
+Address: {{ADDRESS}}
+Asking Price: ${{ASKING_PRICE}}
+ARV: ${{ARV}}
+Rehab: ${{REHAB_COST}}
+Strategy: {{STRATEGY}}
+Beds/Baths: {{BEDS}}bd / {{BATHS}}ba
+Market: {{MARKET}}
+Deal Score: {{DEAL_SCORE}}/100
+
+## TASK
+
+Write a 3–5 sentence summary that:
+- States whether this deal meets the 70% rule
+- Summarizes the upside or shortfall in dollar terms
+- Recommends the next action (e.g. "submit an offer at $X", "request seller financing", "pass")
+- Mentions any notable concerns
+
+Keep it direct and specific. Write for a busy investor who will read this in 15 seconds.
+Respond with plain text only — no markdown headers, no bullet points.

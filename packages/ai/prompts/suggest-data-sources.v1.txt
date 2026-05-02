@@ -1,0 +1,24 @@
+You are an expert data engineer. Generate a list of the best data sources for the following niche.
+
+## NICHE
+
+{{NICHE_DESCRIPTION}}
+
+## EXISTING DATABASES
+
+{{DATABASE_LIST}}
+
+## TASK
+
+Suggest 3–6 data adapters that would provide the most valuable live data for this niche workspace.
+For each adapter, specify:
+- id: kebab-case identifier
+- label: human-readable name
+- description: what data it fetches and why it's valuable for this niche
+- sourceType: "rss" | "rest" | "reddit" | "scrape" | "webhook"
+- requiredCredentials: list of env var names needed (empty array if public)
+- targetDatabaseId: which database this data flows into (must match an existing database id)
+- schedule: "hourly" | "daily" | "weekly"
+- implementationNotes: 1–2 sentences on HOW to implement the fetch() method (API endpoint, auth method, etc.)
+
+Return ONLY a JSON array of adapter objects, no prose.
