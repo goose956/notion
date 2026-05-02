@@ -38,7 +38,7 @@ export interface ZillowAdapterCriteria extends RssAdapterCriteria {
 
 // ─── Adapter ───────────────────────────────────────────────────────────────
 
-export class ZillowRssAdapter extends RssAdapter<Listing> {
+export class ZillowRssAdapter extends RssAdapter<Listing, ZillowAdapterCriteria> {
   readonly id = "zillow-rss" as const;
   readonly niche = "real-estate-investor" as const;
   readonly description =
@@ -46,8 +46,6 @@ export class ZillowRssAdapter extends RssAdapter<Listing> {
   readonly requiredCredentials: readonly string[] = [];
 
   normalize(raw: RssItem): Listing {
-    // TODO: Parse price, beds, baths, sqft from raw.title and raw.description
-    // Zillow RSS format: "3bd/2ba house for $185,000 - 123 Main St"
     return {
       address: raw.title,
       listingUrl: raw.link,
@@ -55,7 +53,7 @@ export class ZillowRssAdapter extends RssAdapter<Listing> {
       beds: parseNumber(raw.title, /(\d+)\s*bd/),
       baths: parseNumber(raw.title, /(\d+)\s*ba/),
       sqft: parseNumber(raw.description ?? "", /(\d[\d,]+)\s*sq\s*ft/i),
-      market: "TODO: pass market from criteria",
+      market: this.currentCriteria.market,
       leadDate: raw.pubDate ?? new Date().toISOString(),
     };
   }

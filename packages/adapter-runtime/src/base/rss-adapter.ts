@@ -1,4 +1,5 @@
 import type { DataAdapter, CustomerCriteria } from "../interface.js";
+import { XMLParser } from "fast-xml-parser";
 
 export interface RssItem {
   title: string;
@@ -28,18 +29,22 @@ export interface RssAdapterCriteria extends CustomerCriteria {
  *     ...
  *   }
  */
-export abstract class RssAdapter<Row = unknown>
-  implements DataAdapter<RssItem, Row, RssAdapterCriteria>
+export abstract class RssAdapter<Row = unknown, Criteria extends RssAdapterCriteria = RssAdapterCriteria>
+  implements DataAdapter<RssItem, Row, Criteria>
 {
   abstract readonly id: string;
   abstract readonly niche: string;
   abstract readonly description: string;
   abstract readonly requiredCredentials: readonly string[];
 
+  /** Stored during fetch() so normalize() can access criteria. */
+  protected currentCriteria: Criteria = { feedUrls: [] } as unknown as Criteria;
+
   async *fetch(
-    criteria: RssAdapterCriteria,
+    criteria: Criteria,
     _credentials: Readonly<Record<string, string>>,
   ): AsyncIterable<RssItem> {
+    this.currentCriteria = criteria;
     for (const url of criteria.feedUrls) {
       const response = await fetch(url);
       if (!response.ok) {
@@ -54,33 +59,54 @@ export abstract class RssAdapter<Row = unknown>
   abstract cacheKey(row: Row): string;
 
   /**
-   * Minimal RSS 2.0 / Atom parser.
-   * For production, replace with a proper XML parser package.
+   * RSS 2.0 / Atom parser using fast-xml-parser.
+   * Handles CDATA, namespaced elements, and both RSS 2.0 and Atom formats.
    */
   private *parseRss(xml: string): Iterable<RssItem> {
-    // Minimal regex-based extraction for stub purposes.
-    // TODO(v0.2): Replace with fast-xml-parser or similar.
-    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-    let match: RegExpExecArray | null;
-    while ((match = itemRegex.exec(xml)) !== null) {
-      const block = match[1] ?? "";
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      cdataPropName: "__cdata",
+      isArray: (name) => name === "item" || name === "entry",
+    });
+    const doc = parser.parse(xml) as Record<string, unknown>;
+
+    // Support RSS 2.0 (rss.channel.item) and Atom (feed.entry)
+    const channel = (doc["rss"] as Record<string, unknown> | undefined)?.["channel"] as Record<string, unknown> | undefined;
+    const items: unknown[] = (channel?.["item"] as unknown[] | undefined)
+      ?? (doc["feed"] as Record<string, unknown> | undefined)?.["entry"] as unknown[]
+      ?? [];
+
+    for (const item of items) {
+      const i = item as Record<string, unknown>;
+      const title = extractField(i, "title");
+      const link = extractField(i, "link") || extractAtomLink(i);
+      if (!title && !link) continue;
       yield {
-        title: extractTag(block, "title"),
-        link: extractTag(block, "link"),
-        pubDate: extractTagOptional(block, "pubDate"),
-        description: extractTagOptional(block, "description"),
-        raw: {},
+        title,
+        link,
+        pubDate: extractField(i, "pubDate") || extractField(i, "updated") || undefined,
+        description: extractField(i, "description") || extractField(i, "summary") || undefined,
+        raw: Object.fromEntries(
+          Object.entries(i).map(([k, v]) => [k, String(v ?? "")]),
+        ),
       };
     }
   }
 }
 
-function extractTag(xml: string, tag: string): string {
-  const m = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>|<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`).exec(xml);
-  return m?.[1] ?? m?.[2] ?? "";
+function extractField(item: Record<string, unknown>, key: string): string {
+  const val = item[key];
+  if (val === undefined || val === null) return "";
+  if (typeof val === "string") return val.trim();
+  // fast-xml-parser CDATA wrapper
+  const cdata = (val as Record<string, unknown>)["__cdata"];
+  if (typeof cdata === "string") return cdata.trim();
+  return String(val).trim();
 }
 
-function extractTagOptional(xml: string, tag: string): string | undefined {
-  const val = extractTag(xml, tag);
-  return val.length > 0 ? val : undefined;
+function extractAtomLink(item: Record<string, unknown>): string {
+  // Atom <link href="..."/> is parsed as { "@_href": "...", "@_rel": "alternate" }
+  const link = item["link"];
+  if (!link || typeof link !== "object") return "";
+  return (link as Record<string, string>)["@_href"] ?? "";
 }

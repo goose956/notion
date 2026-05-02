@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NichePack } from "@niche-factory/schema";
+import { OnboardingModal, type OnboardingQuestion } from "./onboarding-modal";
 
 interface NotionPaneProps {
   pack: NichePack;
@@ -35,8 +36,27 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
   const [panelState, setPanelState] = useState<PanelState>("idle");
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
   const [lastDeploy, setLastDeploy] = useState<DeployResult | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, unknown>>({});
 
-  async function handleDeploy() {
+  const onboardingQuestions = (pack.onboardingQuestions ?? []) as OnboardingQuestion[];
+
+  function handleDeployClick() {
+    if (!parentPageId.trim()) return;
+    if (onboardingQuestions.length > 0 && lastDeploy === null) {
+      setShowOnboarding(true);
+    } else {
+      void handleDeploy(onboardingAnswers);
+    }
+  }
+
+  function handleOnboardingComplete(answers: Record<string, unknown>) {
+    setOnboardingAnswers(answers);
+    setShowOnboarding(false);
+    void handleDeploy(answers);
+  }
+
+  async function handleDeploy(answers: Record<string, unknown> = {}) {
     if (!parentPageId.trim()) return;
     setPanelState("deploying");
     setStatusMsg(null);
@@ -45,7 +65,7 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
       const res = await fetch("/api/deploy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pack, parentPageId: parentPageId.trim() }),
+        body: JSON.stringify({ pack, parentPageId: parentPageId.trim(), onboardingAnswers: answers }),
       });
 
       const body = await res.json() as { result?: DeployResult; error?: string };
@@ -145,7 +165,7 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
           <div className="space-y-2">
             <Button
               className="w-full gap-2 text-sm"
-              onClick={handleDeploy}
+              onClick={handleDeployClick}
               disabled={panelState === "deploying" || !parentPageId.trim()}
             >
               {panelState === "deploying" && statusMsg === null ? (
@@ -223,6 +243,14 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
           )}
         </div>
       </ScrollArea>
+
+      {showOnboarding && (
+        <OnboardingModal
+          questions={onboardingQuestions}
+          onComplete={handleOnboardingComplete}
+          onCancel={() => setShowOnboarding(false)}
+        />
+      )}
     </div>
   );
 }

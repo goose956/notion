@@ -10,10 +10,16 @@ import {
   RssAdapter,
   registerAdapter,
   type RssItem,
+  type RssAdapterCriteria,
 } from "@niche-factory/adapter-runtime";
 import type { Listing } from "./zillow-rss.js";
 
-export class RedfinRssAdapter extends RssAdapter<Listing> {
+export interface RedfinAdapterCriteria extends RssAdapterCriteria {
+  feedUrls: string[];
+  market: string;
+}
+
+export class RedfinRssAdapter extends RssAdapter<Listing, RedfinAdapterCriteria> {
   readonly id = "redfin-rss" as const;
   readonly niche = "real-estate-investor" as const;
   readonly description =
@@ -21,16 +27,15 @@ export class RedfinRssAdapter extends RssAdapter<Listing> {
   readonly requiredCredentials: readonly string[] = [];
 
   normalize(raw: RssItem): Listing {
-    // TODO: Redfin RSS format differs from Zillow — parse accordingly
-    // Example URL: https://www.redfin.com/stingray/api/gis-csv?...&market=kansas-city
+    // Redfin RSS titles: "3 bed, 2 bath, 1,200 sqft — $185,000 — 123 Main St, Kansas City, MO"
     return {
       address: raw.title,
       listingUrl: raw.link,
       askingPrice: parseDollar(raw.title),
-      beds: undefined,
-      baths: undefined,
-      sqft: undefined,
-      market: "TODO: pass market from criteria",
+      beds: parseNumber(raw.title, /(\d+)\s*bed/i),
+      baths: parseNumber(raw.title, /(\d+)\s*bath/i),
+      sqft: parseNumber(raw.title, /(\d[\d,]+)\s*sqft/i),
+      market: this.currentCriteria.market,
       leadDate: raw.pubDate ?? new Date().toISOString(),
     };
   }
@@ -42,6 +47,12 @@ export class RedfinRssAdapter extends RssAdapter<Listing> {
 
 function parseDollar(text: string): number | undefined {
   const m = /\$(\d[\d,]+)/.exec(text);
+  if (!m?.[1]) return undefined;
+  return parseInt(m[1].replace(/,/g, ""), 10);
+}
+
+function parseNumber(text: string, pattern: RegExp): number | undefined {
+  const m = pattern.exec(text);
   if (!m?.[1]) return undefined;
   return parseInt(m[1].replace(/,/g, ""), 10);
 }
