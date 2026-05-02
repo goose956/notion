@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -266,7 +267,11 @@ function SyncRow({
         }),
       });
       const body = await res.json() as { result?: typeof lastResult; error?: string };
-      setLastResult(body.result ?? { rowsProcessed: 0, rowsSkipped: 0, error: body.error });
+      setLastResult(body.result ?? {
+        rowsProcessed: 0,
+        rowsSkipped: 0,
+        ...(body.error !== undefined ? { error: body.error } : {}),
+      });
     } catch (err) {
       setLastResult({
         rowsProcessed: 0,

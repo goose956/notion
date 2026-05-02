@@ -4,6 +4,7 @@ import { getAdapter } from "@niche-factory/adapter-runtime";
 import { runAdapter } from "@niche-factory/sync-engine";
 import { NotionApiClient } from "@niche-factory/notion-client";
 import { auth } from "@/auth";
+import "@/lib/load-adapters";
 
 const SyncRequestSchema = z.object({
   /** The niche pack id (e.g. 'real-estate-investor') */

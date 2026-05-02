@@ -93,7 +93,7 @@ export async function runAdapter<RawType, Row>(
     rowsProcessed,
     rowsSkipped,
     durationMs: Date.now() - start,
-    error,
+    ...(error !== undefined ? { error } : {}),
   };
 }
 

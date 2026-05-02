@@ -9,8 +9,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
-    "studio": "drizzle-kit studio"
+    "migrate": "tsx src/migrate.ts",
+    "migrate:kit": "drizzle-kit migrate",
+    "studio": "drizzle-kit studio",
+    "seed": "tsx src/seed.ts"
   },
   "dependencies": {
     "@niche-factory/schema": "workspace:*",
@@ -19,6 +21,7 @@
   },
   "devDependencies": {
     "drizzle-kit": "^0.22.7",
+    "tsx": "^4.7.0",
     "typescript": "^5.4.5"
   }
 }

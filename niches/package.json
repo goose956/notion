@@ -1,0 +1,12 @@
+{
+  "name": "@niche-factory/niches",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./real-estate-investor": "./real-estate-investor/index.ts"
+  },
+  "dependencies": {
+    "@niche-factory/adapter-runtime": "workspace:*"
+  }
+}

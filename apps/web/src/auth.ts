@@ -18,20 +18,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     NotionProvider({
       clientId: process.env["NOTION_CLIENT_ID"] ?? "",
       clientSecret: process.env["NOTION_CLIENT_SECRET"] ?? "",
+      redirectUri: process.env["NEXTAUTH_URL"]
+        ? `${process.env["NEXTAUTH_URL"]}/api/auth/callback/notion`
+        : "http://localhost:3000/api/auth/callback/notion",
     }),
   ],
   callbacks: {
     async jwt({ token, account }) {
       // Persist Notion access token into the JWT on first sign-in
       if (account?.access_token !== undefined) {
-        token["notionToken"] = account.access_token;
+        (token as Record<string, unknown>)["notionToken"] = account.access_token;
       }
       return token;
     },
     async session({ session, token }) {
       // Expose the Notion token to server components via session
-      (session as typeof session & { notionToken?: string }).notionToken =
-        token["notionToken"] as string | undefined;
+      const notionToken = (token as Record<string, unknown>)["notionToken"];
+      if (typeof notionToken === "string") {
+        (session as typeof session & { notionToken: string }).notionToken = notionToken;
+      }
       return session;
     },
   },
