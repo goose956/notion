@@ -15,11 +15,15 @@ const DeployRequestSchema = z.object({
 
 // POST /api/deploy — push a niche pack to a Notion workspace
 export async function POST(request: NextRequest) {
-  const notionToken = process.env["NOTION_TOKEN"];
+  const session = await auth();
+  const notionToken =
+    (session as Record<string, unknown> | null)?.["notionToken"] as string | undefined ??
+    process.env["NOTION_TOKEN"];
+
   if (!notionToken) {
     return NextResponse.json(
-      { error: "NOTION_TOKEN is not configured on the server" },
-      { status: 503 },
+      { error: "Not authenticated — sign in with Notion first" },
+      { status: 401 },
     );
   }
 
@@ -64,7 +68,6 @@ export async function POST(request: NextRequest) {
   });
 
   // Persist user criteria so sync runs can reload them without re-asking
-  const session = await auth();
   const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
   const answers = input.data.onboardingAnswers;
   if (typeof notionUserId === "string" && answers !== undefined && Object.keys(answers).length > 0) {
