@@ -5,15 +5,17 @@
  * Import { db } is the lazy singleton from client.ts.
  */
 
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { db } from "./client.js";
 import {
   nichePacks,
   deploys,
+  userCriteria,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
   type NewDeployRow,
+  type UserCriteriaRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -114,4 +116,50 @@ export async function listDeploysByNiche(nichePackId: string): Promise<DeployRow
     .from(deploys)
     .where(eq(deploys.nichePackId, nichePackId))
     .orderBy(desc(deploys.createdAt));
+}
+
+// ─── UserCriteria queries ───────────────────────────────────────────────────
+
+export async function getUserCriteria(
+  notionUserId: string,
+  nichePackId: string,
+): Promise<UserCriteriaRow | undefined> {
+  const rows = await db
+    .select()
+    .from(userCriteria)
+    .where(
+      and(
+        eq(userCriteria.notionUserId, notionUserId),
+        eq(userCriteria.nichePackId, nichePackId),
+      ),
+    )
+    .limit(1);
+  return rows[0];
+}
+
+export async function upsertUserCriteria(
+  notionUserId: string,
+  nichePackId: string,
+  criteria: Record<string, unknown>,
+): Promise<UserCriteriaRow> {
+  const { randomUUID } = await import("node:crypto");
+  const now = new Date();
+  const result = await db
+    .insert(userCriteria)
+    .values({
+      id: randomUUID(),
+      notionUserId,
+      nichePackId,
+      criteria,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [userCriteria.notionUserId, userCriteria.nichePackId],
+      set: { criteria, updatedAt: now },
+    })
+    .returning();
+  const row = result[0];
+  if (row === undefined) throw new Error("upsertUserCriteria: no row returned");
+  return row;
 }

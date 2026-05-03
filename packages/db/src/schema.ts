@@ -5,6 +5,7 @@ import {
   integer,
   jsonb,
   pgEnum,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
@@ -88,3 +89,27 @@ export type DeployRow = typeof deploys.$inferSelect;
 export type NewDeployRow = typeof deploys.$inferInsert;
 export type AdapterRunRow = typeof adapterRuns.$inferSelect;
 export type NewAdapterRunRow = typeof adapterRuns.$inferInsert;
+
+/**
+ * user_criteria — persists per-user, per-niche onboarding answers.
+ *
+ * Keyed by (notionUserId, nichePackId). Allows each user to have
+ * their own settings (market, budget, etc.) for every niche they deploy.
+ */
+export const userCriteria = pgTable("user_criteria", {
+  id: text("id").primaryKey(),
+  notionUserId: text("notion_user_id").notNull(),
+  nichePackId: text("niche_pack_id")
+    .notNull()
+    .references(() => nichePacks.id),
+  criteria: jsonb("criteria").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (t) => ({ uniq: unique().on(t.notionUserId, t.nichePackId) }));
+
+export type UserCriteriaRow = typeof userCriteria.$inferSelect;
+export type NewUserCriteriaRow = typeof userCriteria.$inferInsert;

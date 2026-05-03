@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getAdapter } from "@niche-factory/adapter-runtime";
 import { runAdapter } from "@niche-factory/sync-engine";
 import { NotionApiClient } from "@niche-factory/notion-client";
+import { getUserCriteria } from "@niche-factory/db";
 import { auth } from "@/auth";
 import "@/lib/load-adapters";
 
@@ -67,13 +68,23 @@ export async function POST(request: NextRequest) {
 
   const client = new NotionApiClient({ auth: notionToken });
 
+  // Load saved criteria from DB if not supplied in the request body
+  const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
+  let criteria = input.data.criteria ?? {};
+  if (Object.keys(criteria).length === 0 && typeof notionUserId === "string") {
+    const saved = await getUserCriteria(notionUserId, input.data.nicheId);
+    if (saved !== undefined) {
+      criteria = saved.criteria as Record<string, unknown>;
+    }
+  }
+
   const seenKeys = new Set<string>();
   const result = await runAdapter(adapter, client, {
     databaseIds: input.data.databaseIds,
     credentials: input.data.credentials ?? {},
     targetDatabaseId: input.data.targetDatabaseId,
     seenKeys,
-  }, input.data.criteria ?? {});
+  }, criteria);
 
   const status = result.error !== undefined ? 502 : 200;
   return NextResponse.json({ result }, { status });

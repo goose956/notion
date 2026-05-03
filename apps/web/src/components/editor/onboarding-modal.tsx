@@ -17,12 +17,15 @@ export interface OnboardingQuestion {
 
 interface OnboardingModalProps {
   questions: OnboardingQuestion[];
+  initialAnswers?: Record<string, unknown>;
   onComplete: (answers: Record<string, string | string[] | boolean | number>) => void;
   onCancel: () => void;
 }
 
-export function OnboardingModal({ questions, onComplete, onCancel }: OnboardingModalProps) {
-  const [answers, setAnswers] = useState<Record<string, string | string[] | boolean | number>>({});
+export function OnboardingModal({ questions, initialAnswers, onComplete, onCancel }: OnboardingModalProps) {
+  const [answers, setAnswers] = useState<Record<string, string | string[] | boolean | number>>(
+    (initialAnswers ?? {}) as Record<string, string | string[] | boolean | number>,
+  );
 
   function set(id: string, value: string | string[] | boolean | number) {
     setAnswers((prev) => ({ ...prev, [id]: value }));

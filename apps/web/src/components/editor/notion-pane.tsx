@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   Loader2,
   Play,
   Plug,
+  Settings2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NichePack } from "@niche-factory/schema";
@@ -38,12 +39,29 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
   const [lastDeploy, setLastDeploy] = useState<DeployResult | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, unknown>>({});
+  const [criteriaLoaded, setCriteriaLoaded] = useState(false);
 
   const onboardingQuestions = (pack.onboardingQuestions ?? []) as OnboardingQuestion[];
 
+  // Load any previously saved criteria for this niche on mount
+  useEffect(() => {
+    if (onboardingQuestions.length === 0) return;
+    void fetch(`/api/criteria/${pack.id}`)
+      .then((r) => r.json() as Promise<{ criteria: Record<string, unknown> | null }>)
+      .then(({ criteria }) => {
+        if (criteria !== null && Object.keys(criteria).length > 0) {
+          setOnboardingAnswers(criteria);
+          setCriteriaLoaded(true);
+        }
+      })
+      .catch(() => undefined);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pack.id]);
+
   function handleDeployClick() {
     if (!parentPageId.trim()) return;
-    if (onboardingQuestions.length > 0 && lastDeploy === null) {
+    // Show onboarding if first deploy AND no saved criteria yet
+    if (onboardingQuestions.length > 0 && lastDeploy === null && !criteriaLoaded) {
       setShowOnboarding(true);
     } else {
       void handleDeploy(onboardingAnswers);
@@ -52,8 +70,27 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
 
   function handleOnboardingComplete(answers: Record<string, unknown>) {
     setOnboardingAnswers(answers);
+    setCriteriaLoaded(true);
     setShowOnboarding(false);
+    // Persist immediately so syncs always use up-to-date criteria
+    void fetch(`/api/criteria/${pack.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ criteria: answers }),
+    });
     void handleDeploy(answers);
+  }
+
+  function handleSettingsComplete(answers: Record<string, unknown>) {
+    setOnboardingAnswers(answers);
+    setShowOnboarding(false);
+    void fetch(`/api/criteria/${pack.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ criteria: answers }),
+    });
+    setStatusMsg("Settings saved — next sync will use updated criteria.");
+    setPanelState("success");
   }
 
   async function handleDeploy(answers: Record<string, unknown> = {}) {
@@ -175,6 +212,16 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
               )}
               Push to Notion
             </Button>
+            {onboardingQuestions.length > 0 && criteriaLoaded && (
+              <Button
+                variant="outline"
+                className="w-full gap-2 text-sm"
+                onClick={() => setShowOnboarding(true)}
+              >
+                <Settings2 className="h-4 w-4" />
+                Edit Settings
+              </Button>
+            )}
             <Button
               variant="outline"
               className="w-full gap-2 text-sm"
@@ -193,6 +240,27 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
               Pull from Notion
             </Button>
           </div>
+
+          {/* Active settings summary */}
+          {criteriaLoaded && Object.keys(onboardingAnswers).length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Active settings
+              </p>
+              <div className="rounded-md border px-3 py-2 space-y-1">
+                {Object.entries(onboardingAnswers).map(([key, value]) => (
+                  <div key={key} className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground capitalize">
+                      {key.replace(/_/g, " ")}
+                    </span>
+                    <span className="text-xs font-medium truncate max-w-[60%] text-right">
+                      {Array.isArray(value) ? value.join(", ") : String(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Schema summary */}
           <div className="space-y-2">
@@ -247,7 +315,8 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
       {showOnboarding && (
         <OnboardingModal
           questions={onboardingQuestions}
-          onComplete={handleOnboardingComplete}
+          initialAnswers={onboardingAnswers}
+          onComplete={lastDeploy !== null ? handleSettingsComplete : handleOnboardingComplete}
           onCancel={() => setShowOnboarding(false)}
         />
       )}

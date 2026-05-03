@@ -3,12 +3,14 @@ import { z } from "zod";
 import { NichePackSchema } from "@niche-factory/schema";
 import { deploy } from "@niche-factory/deployer";
 import { NotionApiClient } from "@niche-factory/notion-client";
-import { createDeploy, updateDeployStatus } from "@niche-factory/db";
+import { createDeploy, updateDeployStatus, upsertUserCriteria } from "@niche-factory/db";
 import { randomUUID } from "node:crypto";
+import { auth } from "@/auth";
 
 const DeployRequestSchema = z.object({
   pack: NichePackSchema,
   parentPageId: z.string().min(1),
+  onboardingAnswers: z.record(z.string(), z.unknown()).optional(),
 });
 
 // POST /api/deploy — push a niche pack to a Notion workspace
@@ -60,6 +62,14 @@ export async function POST(request: NextRequest) {
     status: "success",
     durationMs: result.durationMs,
   });
+
+  // Persist user criteria so sync runs can reload them without re-asking
+  const session = await auth();
+  const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
+  const answers = input.data.onboardingAnswers;
+  if (typeof notionUserId === "string" && answers !== undefined && Object.keys(answers).length > 0) {
+    await upsertUserCriteria(notionUserId, input.data.pack.id, answers);
+  }
 
   return NextResponse.json({ result, deployId });
 }
