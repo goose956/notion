@@ -24,11 +24,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, account }) {
+    async jwt({ token, account, profile }) {
       // Persist Notion access token and user ID into the JWT on first sign-in
-      if (account?.access_token !== undefined) {
-        (token as Record<string, unknown>)["notionToken"] = account.access_token;
-        (token as Record<string, unknown>)["notionUserId"] = account.providerAccountId;
+      const accountRecord = account as Record<string, unknown> | null;
+      const profileRecord = profile as Record<string, unknown> | null;
+
+      const accessToken =
+        (typeof account?.access_token === "string" ? account.access_token : undefined) ??
+        (typeof accountRecord?.["accessToken"] === "string" ? accountRecord["accessToken"] : undefined);
+
+      if (accessToken !== undefined) {
+        (token as Record<string, unknown>)["notionToken"] = accessToken;
+      }
+
+      const notionUserId =
+        (typeof account?.providerAccountId === "string" ? account.providerAccountId : undefined) ??
+        (typeof profileRecord?.["id"] === "string" ? profileRecord["id"] : undefined);
+
+      if (notionUserId !== undefined) {
+        (token as Record<string, unknown>)["notionUserId"] = notionUserId;
       }
       return token;
     },
