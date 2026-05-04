@@ -18,9 +18,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     NotionProvider({
       clientId: process.env["NOTION_CLIENT_ID"] ?? "",
       clientSecret: process.env["NOTION_CLIENT_SECRET"] ?? "",
-      redirectUri: process.env["NEXTAUTH_URL"]
-        ? `${process.env["NEXTAUTH_URL"]}/api/auth/callback/notion`
-        : "http://localhost:3000/api/auth/callback/notion",
     }),
   ],
   callbacks: {
