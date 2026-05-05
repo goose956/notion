@@ -105,6 +105,10 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
         body: JSON.stringify({ pack, parentPageId: parentPageId.trim(), onboardingAnswers: answers }),
       });
 
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("Not authenticated — please sign in with Notion first");
+      }
       const body = await res.json() as { result?: DeployResult; error?: string };
 
       if (!res.ok) throw new Error(body.error ?? "Deploy failed");
@@ -136,6 +140,10 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
         }),
       });
 
+      const exportContentType = res.headers.get("content-type") ?? "";
+      if (!exportContentType.includes("application/json")) {
+        throw new Error("Not authenticated — please sign in with Notion first");
+      }
       const body = await res.json() as { pack?: NichePack; error?: string };
       if (!res.ok) throw new Error(body.error ?? "Export failed");
 
