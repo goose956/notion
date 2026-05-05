@@ -52,9 +52,15 @@ export async function deploy(
     if (db.icon !== undefined) {
       createBody["icon"] = { type: "emoji", emoji: db.icon };
     }
-    const created = await client.call((c) =>
-      c.databases.create(createBody as Parameters<typeof c.databases.create>[0]),
-    );
+    let created: { id: string };
+    try {
+      created = await client.call((c) =>
+        c.databases.create(createBody as Parameters<typeof c.databases.create>[0]),
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(`Failed to create database "${db.name}": ${msg}`);
+    }
 
     databaseIds[db.id] = created.id;
     dbsForRelationPass.push({

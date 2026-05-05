@@ -41,17 +41,17 @@
         {
           "type": "formula",
           "name": "Max Offer (70% Rule)",
-          "expression": "toNumber(prop(\"ARV (After Repair Value)\")) * 0.7 - toNumber(prop(\"Estimated Rehab Cost\"))"
+          "expression": "prop(\"ARV (After Repair Value)\") * 0.7 - prop(\"Estimated Rehab Cost\")"
         },
         {
           "type": "formula",
           "name": "Deal Score",
-          "expression": "if(or(empty(prop(\"Asking Price\")), empty(prop(\"ARV (After Repair Value)\")), empty(prop(\"Estimated Rehab Cost\"))), 0, if((toNumber(prop(\"ARV (After Repair Value)\")) * 0.7 - toNumber(prop(\"Estimated Rehab Cost\"))) == 0, 0, if(toNumber(prop(\"Asking Price\")) <= (toNumber(prop(\"ARV (After Repair Value)\")) * 0.7 - toNumber(prop(\"Estimated Rehab Cost\"))), round(((toNumber(prop(\"ARV (After Repair Value)\")) * 0.7 - toNumber(prop(\"Estimated Rehab Cost\"))) - toNumber(prop(\"Asking Price\"))) / (toNumber(prop(\"ARV (After Repair Value)\")) * 0.7 - toNumber(prop(\"Estimated Rehab Cost\"))) * 100), 0)))"
+          "expression": "if(prop(\"ARV (After Repair Value)\") * 0.7 - prop(\"Estimated Rehab Cost\") == 0, 0, round((prop(\"ARV (After Repair Value)\") * 0.7 - prop(\"Estimated Rehab Cost\") - prop(\"Asking Price\")) / (prop(\"ARV (After Repair Value)\") * 0.7 - prop(\"Estimated Rehab Cost\")) * 100))"
         },
         {
           "type": "formula",
           "name": "Under 70% Rule?",
-          "expression": "toNumber(prop(\"Asking Price\")) <= (toNumber(prop(\"ARV (After Repair Value)\")) * 0.7 - toNumber(prop(\"Estimated Rehab Cost\")))"
+          "expression": "prop(\"Asking Price\") <= prop(\"ARV (After Repair Value)\") * 0.7 - prop(\"Estimated Rehab Cost\")"
         },
         { "type": "number", "name": "Beds", "format": "number" },
         { "type": "number", "name": "Baths", "format": "number" },
@@ -103,7 +103,7 @@
         { "type": "number", "name": "Sale Price", "format": "dollar" },
         { "type": "date", "name": "Sale Date" },
         { "type": "number", "name": "Sqft", "format": "number" },
-        { "type": "formula", "name": "Price / Sqft", "expression": "if(or(empty(prop(\"Sale Price\")), empty(prop(\"Sqft\")), toNumber(prop(\"Sqft\")) == 0), 0, toNumber(prop(\"Sale Price\")) / toNumber(prop(\"Sqft\")))" },
+        { "type": "formula", "name": "Price / Sqft", "expression": "if(prop(\"Sqft\") == 0, 0, prop(\"Sale Price\") / prop(\"Sqft\"))" },
         { "type": "number", "name": "Beds", "format": "number" },
         { "type": "number", "name": "Baths", "format": "number" },
         { "type": "number", "name": "Distance (miles)", "format": "number" },
