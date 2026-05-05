@@ -1,11 +1,21 @@
 import { signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
 
+function resolveSafeCallbackUrl(callbackUrl: string | undefined): string {
+  if (!callbackUrl) return "/niches";
+  if (callbackUrl === "undefined" || callbackUrl.endsWith("/undefined")) return "/niches";
+  // Only allow same-origin relative paths to avoid open redirects.
+  if (!callbackUrl.startsWith("/")) return "/niches";
+  return callbackUrl;
+}
+
 export default function LoginPage({
   searchParams,
 }: {
   searchParams: { callbackUrl?: string };
 }) {
+  const callbackUrl = resolveSafeCallbackUrl(searchParams.callbackUrl);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-sm space-y-6 px-6">
@@ -20,7 +30,7 @@ export default function LoginPage({
           action={async () => {
             "use server";
             await signIn("notion", {
-              redirectTo: searchParams.callbackUrl ?? "/niches",
+              redirectTo: callbackUrl,
             });
           }}
         >
