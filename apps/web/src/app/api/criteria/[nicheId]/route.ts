@@ -15,8 +15,15 @@ export async function GET(
   }
 
   const { nicheId } = await params;
-  const row = await getUserCriteria(notionUserId, nicheId);
-  return NextResponse.json({ criteria: row?.criteria ?? null });
+  try {
+    const row = await getUserCriteria(notionUserId, nicheId);
+    return NextResponse.json({ criteria: row?.criteria ?? null });
+  } catch (err) {
+    // Database unavailable or schema missing — return empty criteria so app continues
+    const msg = err instanceof Error ? err.message : "Database error";
+    console.error(`[GET /api/criteria/${nicheId}] ${msg}`);
+    return NextResponse.json({ criteria: null });
+  }
 }
 
 const PutSchema = z.object({
@@ -50,6 +57,14 @@ export async function PUT(
   }
 
   const { nicheId } = await params;
-  const row = await upsertUserCriteria(notionUserId, nicheId, input.data.criteria);
-  return NextResponse.json({ criteria: row.criteria });
+  try {
+    const row = await upsertUserCriteria(notionUserId, nicheId, input.data.criteria);
+    return NextResponse.json({ criteria: row.criteria });
+  } catch (err) {
+    // Database unavailable or schema missing — just echo back what user sent
+    const msg = err instanceof Error ? err.message : "Database error";
+    console.error(`[PUT /api/criteria/${nicheId}] ${msg}`);
+    // Don't fail the request — let the UI continue with the in-memory state
+    return NextResponse.json({ criteria: input.data.criteria });
+  }
 }

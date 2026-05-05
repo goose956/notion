@@ -71,7 +71,14 @@ export async function POST(request: NextRequest) {
   const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
   const answers = input.data.onboardingAnswers;
   if (typeof notionUserId === "string" && answers !== undefined && Object.keys(answers).length > 0) {
-    await upsertUserCriteria(notionUserId, input.data.pack.id, answers);
+    try {
+      await upsertUserCriteria(notionUserId, input.data.pack.id, answers);
+    } catch (err) {
+      // Database unavailable — deploy succeeded, but we couldn't save criteria
+      // This is non-fatal; the user can re-enter answers on next deploy
+      const msg = err instanceof Error ? err.message : "Could not save criteria";
+      console.warn(`[POST /api/deploy] Criteria save failed (non-fatal): ${msg}`);
+    }
   }
 
   return NextResponse.json({ result, deployId });
