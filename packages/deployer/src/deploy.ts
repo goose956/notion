@@ -31,6 +31,7 @@ export async function deploy(
 ): Promise<DeployResult> {
   const start = Date.now();
   const databaseIds: Record<string, string> = {};
+  const existingByName = await listChildDatabasesByName(parentPageId, client);
 
   // ── Pass 1: Create all databases (without relations) ──────────────────────
   const dbsForRelationPass: Array<{
@@ -41,6 +42,25 @@ export async function deploy(
 
   for (const db of pack.databases) {
     const { notionProperties } = buildPropertiesForCreate(db.properties);
+
+    const existingNotionDbId = existingByName.get(normalizeName(db.name));
+    if (existingNotionDbId !== undefined) {
+      await client.call((c) =>
+        c.databases.update({
+          database_id: existingNotionDbId,
+          title: [{ type: "text", text: { content: db.name } }],
+          properties: notionProperties,
+        } as unknown as Parameters<typeof c.databases.update>[0]),
+      );
+
+      databaseIds[db.id] = existingNotionDbId;
+      dbsForRelationPass.push({
+        packDbId: db.id,
+        notionDbId: existingNotionDbId,
+        properties: db.properties,
+      });
+      continue;
+    }
 
     // Build the create body — use unknown cast to avoid fighting the Notion SDK
     // icon and properties types which are overly complex with exactOptionalPropertyTypes
@@ -95,4 +115,48 @@ export async function deploy(
     databaseIds,
     durationMs: Date.now() - start,
   };
+}
+
+async function listChildDatabasesByName(
+  parentPageId: string,
+  client: NotionApiClient,
+): Promise<Map<string, string>> {
+  const byName = new Map<string, string>();
+  let cursor: string | undefined;
+
+  do {
+    const response = await client.call((c) =>
+      c.blocks.children.list({
+        block_id: parentPageId,
+        ...(cursor !== undefined ? { start_cursor: cursor } : {}),
+      }),
+    );
+
+    for (const block of response.results) {
+      if (!isChildDatabaseBlock(block)) continue;
+      const title = block.child_database.title;
+      if (title.trim().length === 0) continue;
+      byName.set(normalizeName(title), block.id);
+    }
+
+    cursor = response.has_more ? response.next_cursor ?? undefined : undefined;
+  } while (cursor !== undefined);
+
+  return byName;
+}
+
+function normalizeName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function isChildDatabaseBlock(
+  block: unknown,
+): block is { id: string; type: "child_database"; child_database: { title: string } } {
+  if (typeof block !== "object" || block === null) return false;
+  const candidate = block as Record<string, unknown>;
+  if (candidate["type"] !== "child_database") return false;
+  if (typeof candidate["id"] !== "string") return false;
+  const child = candidate["child_database"];
+  if (typeof child !== "object" || child === null) return false;
+  return typeof (child as Record<string, unknown>)["title"] === "string";
 }
