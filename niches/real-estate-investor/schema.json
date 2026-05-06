@@ -182,6 +182,15 @@
       "schedule": "daily"
     },
     {
+      "id": "global-rss",
+      "label": "Global Property RSS",
+      "description": "Fetches listings from user-provided RSS feeds, useful for UK and non-US markets.",
+      "stubFile": "sources/global-rss.ts",
+      "requiredCredentials": [],
+      "targetDatabaseId": "deal-pipeline",
+      "schedule": "daily"
+    },
+    {
       "id": "propstream",
       "label": "PropStream API",
       "description": "Pulls distressed property leads (pre-foreclosure, tax delinquent, absentee owners) from the PropStream API using the customer's subscription key.",
@@ -216,6 +225,27 @@
       "hint": "e.g. 'Kansas City MO, 64101, 64108'"
     },
     {
+      "id": "market-country",
+      "question": "Which country are you monitoring listings in?",
+      "type": "select",
+      "options": ["US", "UK", "Both"],
+      "required": true
+    },
+    {
+      "id": "listing-feed-urls",
+      "question": "Paste one or more property RSS feed URLs (comma or newline separated).",
+      "type": "text",
+      "required": false,
+      "hint": "Used by Zillow/Redfin/Global RSS adapters. Add UK feed URLs here for London or other UK markets."
+    },
+    {
+      "id": "min-purchase-price",
+      "question": "What is your minimum purchase price per deal?",
+      "type": "number",
+      "required": false,
+      "hint": "Optional. Example: 200000"
+    },
+    {
       "id": "investment-strategy",
       "question": "What is your primary investment strategy?",
       "type": "multi_select",
@@ -227,7 +257,7 @@
       "question": "What is your maximum purchase price per deal?",
       "type": "number",
       "required": true,
-      "hint": "Enter in USD, e.g. 150000"
+      "hint": "Example: 500000"
     },
     {
       "id": "min-deal-score",

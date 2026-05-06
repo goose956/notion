@@ -78,14 +78,115 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const resolvedCriteria = resolveAdapterCriteria(input.data.adapterId, criteria);
+
   const seenKeys = new Set<string>();
   const result = await runAdapter(adapter, client, {
     databaseIds: input.data.databaseIds,
     credentials: input.data.credentials ?? {},
     targetDatabaseId: input.data.targetDatabaseId,
     seenKeys,
-  }, criteria);
+  }, resolvedCriteria);
 
   const status = result.error !== undefined ? 502 : 200;
   return NextResponse.json({ result }, { status });
+}
+
+function resolveAdapterCriteria(
+  adapterId: string,
+  criteria: Record<string, unknown>,
+): Record<string, unknown> {
+  const markets = parseList(criteria["target-markets"]);
+  const country = toSafeString(criteria["market-country"]);
+  const minPrice = toOptionalNumber(criteria["min-purchase-price"]);
+  const maxPrice = toOptionalNumber(criteria["max-purchase-price"]);
+
+  const sharedFeedUrls = parseList(criteria["listing-feed-urls"]);
+  const zillowFeedUrls = parseList(criteria["zillow-feed-urls"]);
+  const redfinFeedUrls = parseList(criteria["redfin-feed-urls"]);
+  const ukFeedUrls = parseList(criteria["uk-feed-urls"]);
+
+  const defaultZillow = parseList(process.env["ZILLOW_RSS_FEED_URLS"]);
+  const defaultRedfin = parseList(process.env["REDFIN_RSS_FEED_URLS"]);
+  const defaultGlobal = parseList(process.env["GLOBAL_RSS_FEED_URLS"]);
+
+  if (adapterId === "zillow-rss") {
+    return {
+      feedUrls: firstNonEmpty(zillowFeedUrls, sharedFeedUrls, defaultZillow),
+      market: markets[0] ?? "US Market",
+      markets,
+      country,
+      minPrice,
+      maxPrice,
+    };
+  }
+
+  if (adapterId === "redfin-rss") {
+    return {
+      feedUrls: firstNonEmpty(redfinFeedUrls, sharedFeedUrls, defaultRedfin),
+      market: markets[0] ?? "US Market",
+      markets,
+      country,
+      minPrice,
+      maxPrice,
+    };
+  }
+
+  if (adapterId === "global-rss") {
+    return {
+      feedUrls: firstNonEmpty(ukFeedUrls, sharedFeedUrls, defaultGlobal),
+      market: markets[0] ?? "Global Market",
+      markets,
+      country,
+      minPrice,
+      maxPrice,
+    };
+  }
+
+  if (adapterId === "propstream") {
+    return {
+      markets,
+      distressTypes: ["pre_foreclosure", "tax_delinquent"],
+      maxPrice,
+    };
+  }
+
+  return criteria;
+}
+
+function parseList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((v) => String(v).trim())
+      .filter((v) => v.length > 0);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(/[\n,]/)
+      .map((v) => v.trim())
+      .filter((v) => v.length > 0);
+  }
+  return [];
+}
+
+function toOptionalNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim().length > 0) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : undefined;
+  }
+  return undefined;
+}
+
+function toSafeString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function firstNonEmpty(...lists: string[][]): string[] {
+  for (const list of lists) {
+    if (list.length > 0) return list;
+  }
+  return [];
 }

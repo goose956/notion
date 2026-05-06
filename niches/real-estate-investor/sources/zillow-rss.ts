@@ -34,6 +34,14 @@ export interface ZillowAdapterCriteria extends RssAdapterCriteria {
   feedUrls: string[];
   /** Market label to tag listings with (e.g. 'Kansas City MO') */
   market: string;
+  /** Optional market keywords to match against title/description */
+  markets?: string[];
+  /** Optional country selector (e.g. 'US', 'UK', 'Both') */
+  country?: string;
+  /** Optional minimum listing price */
+  minPrice?: number;
+  /** Optional maximum listing price */
+  maxPrice?: number;
 }
 
 // ─── Adapter ───────────────────────────────────────────────────────────────
@@ -45,7 +53,30 @@ export class ZillowRssAdapter extends RssAdapter<Listing, ZillowAdapterCriteria>
     "Fetches new property listings from Zillow's market-specific RSS feeds.";
   readonly requiredCredentials: readonly string[] = [];
 
-  normalize(raw: RssItem): Listing {
+  override async *fetch(
+    criteria: ZillowAdapterCriteria,
+    credentials: Readonly<Record<string, string>>,
+  ): AsyncIterable<RssItem> {
+    const feedUrls = criteria.feedUrls
+      .map((u) => u.trim())
+      .filter((u) => u.length > 0);
+
+    if (feedUrls.length === 0) {
+      throw new Error(
+        "No RSS feed URLs configured. Add listing-feed-urls (or zillow-feed-urls) in onboarding settings.",
+      );
+    }
+
+    for await (const item of super.fetch({ ...criteria, feedUrls }, credentials)) {
+      if (!matchesCountry(item, criteria.country)) continue;
+      if (!matchesMarkets(item, criteria.markets)) continue;
+      if (!matchesPriceRange(parseDollar(item.title), criteria.minPrice, criteria.maxPrice)) continue;
+      yield item;
+    }
+  }
+
+  override normalize(raw: RssItem): Listing {
+    const market = inferMarket(raw, this.currentCriteria.markets, this.currentCriteria.market);
     return {
       address: raw.title,
       listingUrl: raw.link,
@@ -53,12 +84,12 @@ export class ZillowRssAdapter extends RssAdapter<Listing, ZillowAdapterCriteria>
       beds: parseNumber(raw.title, /(\d+)\s*bd/),
       baths: parseNumber(raw.title, /(\d+)\s*ba/),
       sqft: parseNumber(raw.description ?? "", /(\d[\d,]+)\s*sq\s*ft/i),
-      market: this.currentCriteria.market,
+      market,
       leadDate: raw.pubDate ?? new Date().toISOString(),
     };
   }
 
-  cacheKey(row: Listing): string {
+  override cacheKey(row: Listing): string {
     return `zillow-rss:${row.listingUrl}`;
   }
 }
@@ -75,6 +106,43 @@ function parseNumber(text: string, pattern: RegExp): number | undefined {
   const m = pattern.exec(text);
   if (!m?.[1]) return undefined;
   return parseInt(m[1].replace(/,/g, ""), 10);
+}
+
+function inferMarket(raw: RssItem, markets: string[] | undefined, fallback: string): string {
+  const haystack = `${raw.title} ${raw.description ?? ""}`.toLowerCase();
+  const match = (markets ?? [])
+    .find((m) => m.trim().length > 0 && haystack.includes(m.trim().toLowerCase()));
+  return match ?? fallback;
+}
+
+function matchesCountry(raw: RssItem, country: string | undefined): boolean {
+  if (country === undefined || country.toLowerCase() === "both") return true;
+  const haystack = `${raw.title} ${raw.description ?? ""}`.toLowerCase();
+  const normalized = country.toLowerCase();
+  if (normalized === "us") {
+    return /\b(usa|united states|,\s*[a-z]{2}\b)\b/i.test(haystack);
+  }
+  if (normalized === "uk") {
+    return /\b(uk|united kingdom|england|scotland|wales|london)\b/i.test(haystack);
+  }
+  return true;
+}
+
+function matchesMarkets(raw: RssItem, markets: string[] | undefined): boolean {
+  if (markets === undefined || markets.length === 0) return true;
+  const haystack = `${raw.title} ${raw.description ?? ""}`.toLowerCase();
+  return markets.some((m) => m.trim().length > 0 && haystack.includes(m.trim().toLowerCase()));
+}
+
+function matchesPriceRange(
+  price: number | undefined,
+  minPrice: number | undefined,
+  maxPrice: number | undefined,
+): boolean {
+  if (price === undefined) return true;
+  if (minPrice !== undefined && price < minPrice) return false;
+  if (maxPrice !== undefined && price > maxPrice) return false;
+  return true;
 }
 
 // Register adapter when this module is loaded
