@@ -72,21 +72,31 @@ export async function POST(request: NextRequest) {
   const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
   let criteria = input.data.criteria ?? {};
   if (Object.keys(criteria).length === 0 && typeof notionUserId === "string") {
-    const saved = await getUserCriteria(notionUserId, input.data.nicheId);
-    if (saved !== undefined) {
-      criteria = saved.criteria as Record<string, unknown>;
+    try {
+      const saved = await getUserCriteria(notionUserId, input.data.nicheId);
+      if (saved !== undefined) {
+        criteria = saved.criteria as Record<string, unknown>;
+      }
+    } catch {
+      // DB unavailable or migrations not yet run — proceed with empty criteria
     }
   }
 
   const resolvedCriteria = resolveAdapterCriteria(input.data.adapterId, criteria);
 
   const seenKeys = new Set<string>();
-  const result = await runAdapter(adapter, client, {
-    databaseIds: input.data.databaseIds,
-    credentials: input.data.credentials ?? {},
-    targetDatabaseId: input.data.targetDatabaseId,
-    seenKeys,
-  }, resolvedCriteria);
+  let result: Awaited<ReturnType<typeof runAdapter>>;
+  try {
+    result = await runAdapter(adapter, client, {
+      databaseIds: input.data.databaseIds,
+      credentials: input.data.credentials ?? {},
+      targetDatabaseId: input.data.targetDatabaseId,
+      seenKeys,
+    }, resolvedCriteria);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 
   const status = result.error !== undefined ? 502 : 200;
   return NextResponse.json({ result }, { status });

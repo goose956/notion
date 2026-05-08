@@ -232,13 +232,6 @@
       "required": true
     },
     {
-      "id": "listing-feed-urls",
-      "question": "Paste one or more property RSS feed URLs (comma or newline separated).",
-      "type": "text",
-      "required": false,
-      "hint": "Used by Zillow/Redfin/Global RSS adapters. Add UK feed URLs here for London or other UK markets."
-    },
-    {
       "id": "min-purchase-price",
       "question": "What is your minimum purchase price per deal?",
       "type": "number",

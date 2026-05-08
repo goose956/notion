@@ -33,6 +33,32 @@ interface DeployResult {
   durationMs: number;
 }
 
+function parseCriteriaList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((v) => String(v).trim())
+      .filter((v) => v.length > 0);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(/[\n,]/)
+      .map((v) => v.trim())
+      .filter((v) => v.length > 0);
+  }
+  return [];
+}
+
+function getMissingApifySettings(criteria: Record<string, unknown>): string[] {
+  const missing: string[] = [];
+  if (parseCriteriaList(criteria["lead-keywords"]).length === 0) {
+    missing.push("lead-keywords");
+  }
+  if (parseCriteriaList(criteria["target-locations"]).length === 0) {
+    missing.push("target-locations");
+  }
+  return missing;
+}
+
 export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
   const router = useRouter();
   const [parentPageId, setParentPageId] = useState("");
@@ -137,6 +163,18 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
         try {
           for (let i = 0; i < pack.dataSources.length; i++) {
             const src = pack.dataSources[i]!;
+            const effectiveCriteria =
+              Object.keys(answers).length > 0 ? answers : onboardingAnswers;
+
+            if (src.id === "apify-google-places") {
+              const missing = getMissingApifySettings(effectiveCriteria);
+              if (missing.length > 0) {
+                throw new Error(
+                  `Import failed for ${src.label}: missing required settings (${missing.join(", ")}). Open Edit Settings and complete them first.`,
+                );
+              }
+            }
+
             setImportProgress({
               current: i + 1,
               total: pack.dataSources.length,
@@ -151,12 +189,12 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
                 adapterId: src.id,
                 databaseIds: body.result!.databaseIds,
                 targetDatabaseId: src.targetDatabaseId,
-                criteria: {},
+                criteria: effectiveCriteria,
                 credentials: {},
               }),
             });
 
-            const syncBody = await syncRes.json() as {
+            const syncBody = await syncRes.json().catch(() => ({ error: "Empty response from sync" })) as {
               result?: { rowsProcessed: number; rowsSkipped: number; error?: string };
               error?: string;
             };
@@ -174,7 +212,7 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
           setPanelState("success");
           setStatusMsg(`${deployedMessage}. Imported ${totalProcessed} leads (${totalSkipped} skipped). Redirecting…`);
           setTimeout(() => {
-            router.push(`/niches/${pack.id}`);
+            router.push(`/admin/niches/${pack.id}`);
             router.refresh();
           }, 1200);
         } finally {
@@ -381,6 +419,7 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
                     schedule={src.schedule ?? "daily"}
                     databaseIds={lastDeploy!.databaseIds}
                     targetDatabaseId={src.targetDatabaseId}
+                    criteria={onboardingAnswers}
                   />
                 ))}
               </div>
@@ -435,6 +474,7 @@ interface SyncRowProps {
   schedule: string;
   databaseIds: Record<string, string>;
   targetDatabaseId: string;
+  criteria: Record<string, unknown>;
 }
 
 function SyncRow({
@@ -444,6 +484,7 @@ function SyncRow({
   schedule,
   databaseIds,
   targetDatabaseId,
+  criteria,
 }: SyncRowProps) {
   const [running, setRunning] = useState(false);
   const [lastResult, setLastResult] = useState<{
@@ -455,6 +496,18 @@ function SyncRow({
   async function handleRun() {
     setRunning(true);
     try {
+      if (adapterId === "apify-google-places") {
+        const missing = getMissingApifySettings(criteria);
+        if (missing.length > 0) {
+          setLastResult({
+            rowsProcessed: 0,
+            rowsSkipped: 0,
+            error: `Missing settings (${missing.join(", ")}). Click Edit Settings and fill them in before running this source.`,
+          });
+          return;
+        }
+      }
+
       const res = await fetch("/api/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -463,7 +516,7 @@ function SyncRow({
           adapterId,
           databaseIds,
           targetDatabaseId,
-          criteria: {},
+          criteria,
           credentials: {},
         }),
       });

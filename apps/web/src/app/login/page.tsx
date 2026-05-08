@@ -2,10 +2,10 @@ import { signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
 
 function resolveSafeCallbackUrl(callbackUrl: string | undefined): string {
-  if (!callbackUrl) return "/niches";
-  if (callbackUrl === "undefined" || callbackUrl.endsWith("/undefined")) return "/niches";
+  if (!callbackUrl) return "/admin";
+  if (callbackUrl === "undefined" || callbackUrl.endsWith("/undefined")) return "/admin";
   // Only allow same-origin relative paths to avoid open redirects.
-  if (!callbackUrl.startsWith("/")) return "/niches";
+  if (!callbackUrl.startsWith("/")) return "/admin";
   return callbackUrl;
 }
 

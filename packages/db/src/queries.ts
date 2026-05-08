@@ -5,17 +5,19 @@
  * Import { db } is the lazy singleton from client.ts.
  */
 
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, ilike, or, sql } from "drizzle-orm";
 import { db } from "./client.js";
 import {
   nichePacks,
   deploys,
   userCriteria,
+  templates,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
   type NewDeployRow,
   type UserCriteriaRow,
+  type TemplateRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -163,3 +165,84 @@ export async function upsertUserCriteria(
   if (row === undefined) throw new Error("upsertUserCriteria: no row returned");
   return row;
 }
+
+// ─── Template queries ───────────────────────────────────────────────────────
+
+export async function listTemplates(opts?: {
+  publishedOnly?: boolean;
+  search?: string;
+  category?: string;
+}): Promise<TemplateRow[]> {
+  const conditions = [];
+  if (opts?.publishedOnly) conditions.push(eq(templates.published, true));
+  if (opts?.category) conditions.push(eq(templates.category, opts.category));
+  if (opts?.search) {
+    const q = `%${opts.search}%`;
+    conditions.push(
+      or(ilike(templates.title, q), ilike(templates.tagline, q), ilike(templates.problemStatement, q)),
+    );
+  }
+  return db
+    .select()
+    .from(templates)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(templates.updatedAt));
+}
+
+export async function getTemplateById(id: string): Promise<TemplateRow | undefined> {
+  const rows = await db.select().from(templates).where(eq(templates.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function getTemplateBySlug(slug: string): Promise<TemplateRow | undefined> {
+  const rows = await db.select().from(templates).where(eq(templates.slug, slug)).limit(1);
+  return rows[0];
+}
+
+export async function upsertTemplate(
+  data: Omit<TemplateRow, "createdAt" | "updatedAt" | "viewCount" | "clickCount">,
+): Promise<TemplateRow> {
+  const now = new Date();
+  const result = await db
+    .insert(templates)
+    .values({ ...data, createdAt: now, updatedAt: now })
+    .onConflictDoUpdate({
+      target: templates.id,
+      set: {
+        slug: data.slug,
+        title: data.title,
+        tagline: data.tagline,
+        problemStatement: data.problemStatement,
+        body: data.body,
+        faq: data.faq,
+        category: data.category,
+        tags: data.tags,
+        stripePaymentLink: data.stripePaymentLink,
+        published: data.published,
+        updatedAt: now,
+      },
+    })
+    .returning();
+  const row = result[0];
+  if (row === undefined) throw new Error("upsertTemplate: no row returned");
+  return row;
+}
+
+export async function deleteTemplate(id: string): Promise<void> {
+  await db.delete(templates).where(eq(templates.id, id));
+}
+
+export async function incrementTemplateView(slug: string): Promise<void> {
+  await db
+    .update(templates)
+    .set({ viewCount: sql`${templates.viewCount} + 1` })
+    .where(eq(templates.slug, slug));
+}
+
+export async function incrementTemplateClick(slug: string): Promise<void> {
+  await db
+    .update(templates)
+    .set({ clickCount: sql`${templates.clickCount} + 1` })
+    .where(eq(templates.slug, slug));
+}
+

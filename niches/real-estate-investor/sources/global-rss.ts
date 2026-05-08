@@ -31,7 +31,7 @@ export class GlobalRssAdapter extends RssAdapter<Listing, GlobalRssCriteria> {
 
     if (feedUrls.length === 0) {
       throw new Error(
-        "No RSS feed URLs configured. Add listing-feed-urls (or uk-feed-urls) in onboarding settings.",
+        "No global feed URLs configured. Ask your workspace admin to set GLOBAL_RSS_FEED_URLS.",
       );
     }
 

@@ -63,7 +63,7 @@ export class ZillowRssAdapter extends RssAdapter<Listing, ZillowAdapterCriteria>
 
     if (feedUrls.length === 0) {
       throw new Error(
-        "No RSS feed URLs configured. Add listing-feed-urls (or zillow-feed-urls) in onboarding settings.",
+        "No Zillow feed URLs configured. Ask your workspace admin to set ZILLOW_RSS_FEED_URLS.",
       );
     }
 

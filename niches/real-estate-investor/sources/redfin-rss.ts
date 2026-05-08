@@ -40,7 +40,7 @@ export class RedfinRssAdapter extends RssAdapter<Listing, RedfinAdapterCriteria>
 
     if (feedUrls.length === 0) {
       throw new Error(
-        "No RSS feed URLs configured. Add listing-feed-urls (or redfin-feed-urls) in onboarding settings.",
+        "No Redfin feed URLs configured. Ask your workspace admin to set REDFIN_RSS_FEED_URLS.",
       );
     }
 

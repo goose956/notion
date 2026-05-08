@@ -6,6 +6,7 @@ import {
   jsonb,
   pgEnum,
   unique,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
@@ -113,3 +114,37 @@ export const userCriteria = pgTable("user_criteria", {
 
 export type UserCriteriaRow = typeof userCriteria.$inferSelect;
 export type NewUserCriteriaRow = typeof userCriteria.$inferInsert;
+
+/**
+ * templates — the directory of Notion workflow template listings.
+ *
+ * Each row is a public-facing page at /templates/[slug] with editorial
+ * content optimised for LLM and search discovery.
+ */
+export const templates = pgTable("templates", {
+  id: text("id").primaryKey(),                            // uuid
+  slug: text("slug").notNull().unique(),                  // url-safe slug, e.g. track-youtube-videos-forex
+  title: text("title").notNull(),
+  tagline: text("tagline").notNull(),                     // 1-sentence hook shown in card/og
+  problemStatement: text("problem_statement").notNull(),  // the workflow pain point
+  /** Long-form markdown body (intro, who it's for, what's inside, etc.) */
+  body: text("body").notNull().default(""),
+  /** FAQ as JSON array of { question: string; answer: string } */
+  faq: jsonb("faq").notNull().default([]),
+  category: text("category").notNull().default(""),
+  /** JSON string[] of tags */
+  tags: jsonb("tags").notNull().default([]),
+  stripePaymentLink: text("stripe_payment_link").notNull().default(""),
+  published: boolean("published").notNull().default(false),
+  viewCount: integer("view_count").notNull().default(0),
+  clickCount: integer("click_count").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type TemplateRow = typeof templates.$inferSelect;
+export type NewTemplateRow = typeof templates.$inferInsert;
