@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 import { listTemplates } from "@niche-factory/db";
 import type { TemplateRow } from "@niche-factory/db";
+import { slugifyTemplateCategory } from "@/lib/template-categories";
 
 interface GalleryCard {
   title: string;
@@ -64,17 +65,21 @@ export default async function HomePage() {
     // Fall back to dummy cards if DB is unavailable.
   }
 
-  const galleryItems: GalleryCard[] =
-    liveTemplates.length > 0
-      ? liveTemplates.slice(0, 9).map((template) => ({
-          title: template.title,
-          category: template.category || "Workflow",
-          painPoint: template.problemStatement,
-          tags: ((template.tags as string[]) ?? []).slice(0, 4),
-          metric: `${template.viewCount.toLocaleString()} views`,
-          href: `/templates/${template.slug}` as `/templates/${string}`,
-        }))
-      : dummyWorkflows;
+  const liveCards: GalleryCard[] = liveTemplates.slice(0, 9).map((template) => ({
+    title: template.title,
+    category: template.category || "Workflow",
+    painPoint: template.problemStatement,
+    tags: ((template.tags as string[]) ?? []).slice(0, 4),
+    metric: `${template.viewCount.toLocaleString()} views`,
+    href: `/templates/${template.slug}` as `/templates/${string}`,
+  }));
+
+  const TARGET_GALLERY_SIZE = 9;
+  const dummyNeeded = Math.max(0, TARGET_GALLERY_SIZE - liveCards.length);
+  const dummyCards = dummyWorkflows.slice(0, dummyNeeded);
+  const galleryItems: GalleryCard[] = [...liveCards, ...dummyCards];
+  const categoryLinks = Array.from(new Set(liveTemplates.map((template) => template.category).filter(Boolean)))
+    .slice(0, 8);
 
   return (
     <div className="min-h-screen bg-background">
@@ -105,6 +110,20 @@ export default async function HomePage() {
               Open Admin Panel
             </Link>
           </div>
+
+          {categoryLinks.length > 0 && (
+            <div className="mt-8 flex flex-wrap gap-2">
+              {categoryLinks.map((category) => (
+                <Link
+                  key={category}
+                  href={`/templates/category/${slugifyTemplateCategory(category)}`}
+                  className="rounded-full border bg-background/80 px-3 py-1 text-xs text-muted-foreground hover:bg-background hover:text-foreground transition-colors"
+                >
+                  {category}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -114,7 +133,7 @@ export default async function HomePage() {
             <h2 className="text-2xl font-semibold tracking-tight">Discovery Gallery</h2>
             <p className="text-sm text-muted-foreground mt-1">
               {liveTemplates.length > 0
-                ? "Live published templates from your directory."
+                ? "Live published templates from your directory, plus featured placeholders while your catalog grows."
                 : "Dummy workflows for now. Replace these with your real packs as they are published."}
             </p>
           </div>

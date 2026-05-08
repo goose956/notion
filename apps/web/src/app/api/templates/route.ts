@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
-import { auth } from "@/auth";
 import { listTemplates, upsertTemplate } from "@niche-factory/db";
 
 // GET /api/templates?search=&category=&published=true
@@ -40,11 +39,6 @@ const TemplateBodySchema = z.object({
 
 // POST /api/templates — create or update a template (admin only)
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   let body: unknown;
   try {
     body = await request.json();

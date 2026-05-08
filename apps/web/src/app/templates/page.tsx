@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listTemplates } from "@niche-factory/db";
 import type { TemplateRow } from "@niche-factory/db";
+import { TEMPLATE_CATEGORIES, slugifyTemplateCategory } from "@/lib/template-categories";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export default async function TemplatesPage({
   }
 
   const categories = Array.from(new Set(rows.map((r) => r.category).filter(Boolean)));
+  const categoryMenu = TEMPLATE_CATEGORIES.filter((category) => category === "Other" || categories.includes(category));
 
   return (
     <div className="min-h-screen bg-background">
@@ -40,6 +42,20 @@ export default async function TemplatesPage({
         <p className="text-muted-foreground text-lg max-w-xl mx-auto">
           Ready-made Notion databases for every niche workflow — find the exact system that solves your problem.
         </p>
+        <div className="mt-6 text-sm text-muted-foreground">Browse by category</div>
+        {categories.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-4xl mx-auto">
+            {categoryMenu.map((category) => (
+              <Link
+                key={category}
+                href={`/templates/category/${slugifyTemplateCategory(category)}`}
+                className="rounded-full border bg-background px-3 py-1 text-sm hover:bg-muted transition-colors"
+              >
+                {category}
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Search + filter */}

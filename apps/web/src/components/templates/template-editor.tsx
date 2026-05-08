@@ -3,8 +3,33 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TemplateRow } from "@niche-factory/db";
+import { TEMPLATE_CATEGORIES } from "@/lib/template-categories";
 
 type FaqItem = { question: string; answer: string };
+
+const defaultTemplateBody = `## Quick Answer
+
+Summarize the result this template helps the user get in one or two sentences.
+
+## What This Template Solves
+
+Describe the workflow pain point, what usually breaks, and why this template exists.
+
+## Who This Is For
+
+Call out the exact user type, niche, or operating style this page is built for.
+
+## How It Works
+
+Explain the core workflow steps in plain language so the reader can picture using it.
+
+## What's Included
+
+List the databases, views, prompts, automations, or systems included in the template.
+
+## Common Questions
+
+Answer the most likely objections and usage questions in short, direct language.`;
 
 interface FormState {
   id?: string;
@@ -25,11 +50,25 @@ function toFormState(row?: TemplateRow): FormState {
     return {
       slug: "",
       title: "",
-      tagline: "",
-      problemStatement: "",
-      body: "",
-      faq: [{ question: "", answer: "" }],
-      category: "",
+      tagline: "A focused Notion workflow template for a specific niche",
+      problemStatement:
+        "This template solves the busywork, inconsistency, and context-switching that slow this workflow down.",
+      body: defaultTemplateBody,
+      faq: [
+        {
+          question: "Who is this template best for?",
+          answer: "It is best for people who want a simple, repeatable Notion system for this workflow.",
+        },
+        {
+          question: "What do I get after purchase?",
+          answer: "You get the template structure, the core workflow layout, and the supporting pages or databases.",
+        },
+        {
+          question: "Can I customize it?",
+          answer: "Yes. The structure is meant to be adapted to your workflow, niche, and data model.",
+        },
+      ],
+      category: TEMPLATE_CATEGORIES[2],
       tags: "",
       stripePaymentLink: "",
       published: false,
@@ -269,12 +308,18 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
         </Field>
 
         <Field label="Category">
-          <input
+          <select
             value={form.category}
             onChange={(e) => set("category", e.target.value)}
-            placeholder="Finance, Marketing, Productivity…"
             className={inputCls}
-          />
+          >
+            <option value="">Select a category</option>
+            {TEMPLATE_CATEGORIES.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
         </Field>
 
         <Field label="Tags (comma-separated)">
@@ -306,7 +351,7 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
           value={form.body}
           onChange={(e) => set("body", e.target.value)}
           rows={14}
-          placeholder={"## Who This Is For\n\n## What's Inside\n\n## How It Works"}
+          placeholder={defaultTemplateBody}
           className={`${inputCls} font-mono text-sm`}
         />
       </section>

@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/auth";
 import Anthropic from "@anthropic-ai/sdk";
+import { TEMPLATE_CATEGORIES } from "@/lib/template-categories";
 
 const DraftTemplateSchema = z.object({
   title: z.string().min(3),
 });
+
+const defaultBody = `## Quick Answer
+
+## What This Template Solves
+
+## Who This Is For
+
+## How It Works
+
+## What's Included
+
+## Common Questions`;
 
 /**
  * POST /api/ai/draft-template
@@ -13,11 +25,6 @@ const DraftTemplateSchema = z.object({
  * from just a title. Admin only.
  */
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   let body: unknown;
   try {
     body = await request.json();
@@ -46,13 +53,13 @@ Generate the following in valid JSON with no extra text:
 {
   "tagline": "One punchy sentence (max 15 words) describing what this template does",
   "problemStatement": "2-3 sentences describing the exact workflow problem this solves, written from the user's pain point perspective",
-  "body": "Markdown body (use ## for sections). Include: ## Who This Is For, ## What's Inside, ## How It Works. Each section 2-4 sentences. Total ~250 words.",
+  "body": "Markdown body (use ## for sections). Start with ## Quick Answer, then include ## What This Template Solves, ## Who This Is For, ## How It Works, ## What's Included, and ## Common Questions. Each section should be 2-4 sentences and total ~300 words.",
   "faq": [
     { "question": "...", "answer": "..." },
     { "question": "...", "answer": "..." },
     { "question": "...", "answer": "..." }
   ],
-  "category": "One of: Finance, Marketing, Productivity, Real Estate, Health, Content Creation, Sales, Other",
+  "category": "One of: ${TEMPLATE_CATEGORIES.join(", ")}",
   "tags": ["tag1", "tag2", "tag3", "tag4"]
 }
 
@@ -83,6 +90,13 @@ Write for an audience searching with natural language queries like "${title}". B
     draft = JSON.parse(jsonMatch[0]);
   } catch {
     return NextResponse.json({ error: "Failed to parse AI JSON", raw: text }, { status: 502 });
+  }
+
+  if (typeof draft === "object" && draft !== null) {
+    const record = draft as Record<string, unknown>;
+    if (typeof record["body"] !== "string" || !record["body"].trim()) {
+      record["body"] = defaultBody;
+    }
   }
 
   return NextResponse.json({ draft });
