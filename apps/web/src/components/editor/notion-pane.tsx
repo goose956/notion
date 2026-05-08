@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ interface DeployResult {
 }
 
 export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
+  const router = useRouter();
   const [parentPageId, setParentPageId] = useState("");
   const [panelState, setPanelState] = useState<PanelState>("idle");
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
@@ -40,6 +42,12 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<string, unknown>>({});
   const [criteriaLoaded, setCriteriaLoaded] = useState(false);
+  const [importInProgress, setImportInProgress] = useState(false);
+  const [importProgress, setImportProgress] = useState<{
+    current: number;
+    total: number;
+    label: string;
+  } | null>(null);
 
   const onboardingQuestions = (pack.onboardingQuestions ?? []) as OnboardingQuestion[];
 
@@ -95,6 +103,7 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
 
   async function handleDeploy(answers: Record<string, unknown> = {}) {
     if (!parentPageId.trim()) return;
+    const isInitialDeploy = lastDeploy === null;
     setPanelState("deploying");
     setStatusMsg(null);
 
@@ -114,11 +123,71 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
       if (!res.ok) throw new Error(body.error ?? "Deploy failed");
 
       setLastDeploy(body.result!);
-      setPanelState("success");
-      setStatusMsg(
-        `Deployed ${Object.keys(body.result!.databaseIds).length} databases in ${body.result!.durationMs}ms`,
-      );
+
+      const deployedDatabaseCount = Object.keys(body.result!.databaseIds).length;
+      const deployedMessage =
+        `Deployed ${deployedDatabaseCount} databases in ${body.result!.durationMs}ms`;
+
+      // Auto-import on first deploy so users get value immediately.
+      if (isInitialDeploy && pack.dataSources.length > 0) {
+        setImportInProgress(true);
+        let totalProcessed = 0;
+        let totalSkipped = 0;
+
+        try {
+          for (let i = 0; i < pack.dataSources.length; i++) {
+            const src = pack.dataSources[i]!;
+            setImportProgress({
+              current: i + 1,
+              total: pack.dataSources.length,
+              label: src.label,
+            });
+
+            const syncRes = await fetch("/api/sync", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                nicheId: pack.id,
+                adapterId: src.id,
+                databaseIds: body.result!.databaseIds,
+                targetDatabaseId: src.targetDatabaseId,
+                criteria: {},
+                credentials: {},
+              }),
+            });
+
+            const syncBody = await syncRes.json() as {
+              result?: { rowsProcessed: number; rowsSkipped: number; error?: string };
+              error?: string;
+            };
+
+            const result = syncBody.result;
+            if (!syncRes.ok || result?.error !== undefined) {
+              const msg = result?.error ?? syncBody.error ?? "Sync failed";
+              throw new Error(`Import failed for ${src.label}: ${msg}`);
+            }
+
+            totalProcessed += result?.rowsProcessed ?? 0;
+            totalSkipped += result?.rowsSkipped ?? 0;
+          }
+
+          setPanelState("success");
+          setStatusMsg(`${deployedMessage}. Imported ${totalProcessed} leads (${totalSkipped} skipped). Redirecting…`);
+          setTimeout(() => {
+            router.push(`/niches/${pack.id}`);
+            router.refresh();
+          }, 1200);
+        } finally {
+          setImportInProgress(false);
+          setImportProgress(null);
+        }
+      } else {
+        setPanelState("success");
+        setStatusMsg(deployedMessage);
+      }
     } catch (err) {
+      setImportInProgress(false);
+      setImportProgress(null);
       setPanelState("error");
       setStatusMsg(err instanceof Error ? err.message : "Deploy failed");
     }
@@ -327,6 +396,33 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
           onComplete={lastDeploy !== null ? handleSettingsComplete : handleOnboardingComplete}
           onCancel={() => setShowOnboarding(false)}
         />
+      )}
+
+      {importInProgress && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <div className="w-full max-w-md rounded-lg border bg-background shadow-xl p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <h3 className="text-sm font-semibold">Importing Leads</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Please wait while we import leads from your connected data sources.
+            </p>
+            {importProgress !== null && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium">
+                  {importProgress.current}/{importProgress.total}: {importProgress.label}
+                </p>
+                <div className="h-1.5 rounded bg-muted overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
