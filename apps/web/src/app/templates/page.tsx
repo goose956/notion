@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listTemplates } from "@niche-factory/db";
 import type { TemplateRow } from "@niche-factory/db";
 import { TEMPLATE_CATEGORIES, slugifyTemplateCategory } from "@/lib/template-categories";
+import { Search, Shapes, Sparkles } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,10 @@ export default async function TemplatesPage({
     <div className="min-h-screen bg-background">
       {/* Hero */}
       <section className="border-b bg-muted/30 px-6 py-16 text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border bg-background/90 px-3 py-1 text-xs text-muted-foreground shadow-sm mb-4">
+          <Sparkles className="h-3.5 w-3.5 text-accent" />
+          Curated by niche and workflow goal
+        </div>
         <h1 className="text-4xl font-bold tracking-tight mb-3">
           Notion Workflow Templates
         </h1>
@@ -61,12 +66,15 @@ export default async function TemplatesPage({
       {/* Search + filter */}
       <section className="border-b px-6 py-4">
         <form className="max-w-3xl mx-auto flex gap-3 flex-wrap">
-          <input
-            name="search"
-            defaultValue={search}
-            placeholder="Search templates…"
-            className="flex-1 min-w-[200px] h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
+          <div className="flex-1 min-w-[200px] relative">
+            <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-2.5" />
+            <input
+              name="search"
+              defaultValue={search}
+              placeholder="Search templates…"
+              className="w-full h-9 rounded-md border border-input bg-background pl-9 pr-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </div>
           {categories.length > 0 && (
             <select
               name="category"
@@ -128,10 +136,11 @@ function TemplateCard({ template: t }: { template: TemplateRow }) {
   return (
     <Link
       href={`/templates/${t.slug}`}
-      className="group flex flex-col rounded-lg border bg-card hover:shadow-md transition-shadow p-5 gap-3"
+      className="group flex flex-col surface-card hover:shadow-lg transition-shadow p-5 gap-3"
     >
       {t.category && (
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide inline-flex items-center gap-1.5">
+          <span className="icon-badge h-5 w-5"><Shapes className="h-3 w-3" /></span>
           {t.category}
         </span>
       )}

@@ -2,6 +2,7 @@
 import { listTemplates } from "@niche-factory/db";
 import type { TemplateRow } from "@niche-factory/db";
 import { slugifyTemplateCategory } from "@/lib/template-categories";
+import { ArrowRight, Compass, Sparkles, Workflow } from "lucide-react";
 
 interface GalleryCard {
   title: string;
@@ -86,7 +87,8 @@ export default async function HomePage() {
       <section className="relative overflow-hidden border-b">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,hsl(var(--primary)/0.16),transparent_45%),radial-gradient(circle_at_80%_0%,hsl(var(--foreground)/0.08),transparent_38%)]" />
         <div className="relative max-w-6xl mx-auto px-6 py-16 md:py-20">
-          <div className="inline-flex items-center rounded-full border bg-background/80 px-3 py-1 text-xs text-muted-foreground">
+          <div className="inline-flex items-center gap-2 rounded-full border bg-background/90 px-3 py-1 text-xs text-muted-foreground shadow-sm">
+            <Sparkles className="h-3.5 w-3.5 text-accent" />
             Notion Workflow Template Directory
           </div>
           <h1 className="mt-4 max-w-3xl text-4xl md:text-5xl font-bold tracking-tight leading-tight">
@@ -99,14 +101,16 @@ export default async function HomePage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/templates"
-              className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground h-10 px-5 text-sm font-medium hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground h-10 px-5 text-sm font-medium hover:bg-primary/90 transition-colors"
             >
               Browse Live Templates
+              <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/admin"
-              className="inline-flex items-center justify-center rounded-md border h-10 px-5 text-sm font-medium hover:bg-muted transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-md border h-10 px-5 text-sm font-medium bg-card/70 hover:bg-muted transition-colors"
             >
+              <Workflow className="h-4 w-4 text-primary" />
               Open Admin Panel
             </Link>
           </div>
@@ -117,13 +121,19 @@ export default async function HomePage() {
                 <Link
                   key={category}
                   href={`/templates/category/${slugifyTemplateCategory(category)}`}
-                  className="rounded-full border bg-background/80 px-3 py-1 text-xs text-muted-foreground hover:bg-background hover:text-foreground transition-colors"
+                  className="rounded-full border bg-background/95 px-3 py-1 text-xs text-muted-foreground hover:bg-background hover:text-foreground transition-colors shadow-sm"
                 >
                   {category}
                 </Link>
               ))}
             </div>
           )}
+
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
+            <FeaturePill icon={<Compass className="h-4 w-4" />} label="Niche-specific systems" />
+            <FeaturePill icon={<Sparkles className="h-4 w-4" />} label="LLM-optimized pages" />
+            <FeaturePill icon={<Workflow className="h-4 w-4" />} label="Admin + public workflow" />
+          </div>
         </div>
       </section>
 
@@ -147,9 +157,10 @@ export default async function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {galleryItems.map((workflow) => {
             const card = (
-              <article className="group rounded-xl border bg-card p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
+              <article className="group surface-card p-5 flex flex-col gap-4 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <span className="icon-badge h-5 w-5"><Compass className="h-3 w-3" /></span>
                     {workflow.category}
                   </span>
                   <span className="text-xs text-muted-foreground">{workflow.metric}</span>
@@ -187,6 +198,15 @@ export default async function HomePage() {
           })}
         </div>
       </section>
+    </div>
+  );
+}
+
+function FeaturePill({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="surface-card px-3 py-2 text-sm flex items-center gap-2 bg-card/80">
+      <span className="icon-badge">{icon}</span>
+      <span className="text-muted-foreground">{label}</span>
     </div>
   );
 }

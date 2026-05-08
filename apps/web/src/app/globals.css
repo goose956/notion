@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 38 58% 98%;
+    --foreground: 217 33% 17%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 217 33% 17%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --popover-foreground: 217 33% 17%;
+    --primary: 195 84% 34%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --secondary: 45 92% 94%;
+    --secondary-foreground: 217 33% 17%;
+    --muted: 42 40% 94%;
+    --muted-foreground: 217 18% 42%;
+    --accent: 32 88% 56%;
+    --accent-foreground: 222 47% 11%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 210 22% 87%;
+    --input: 210 22% 87%;
+    --ring: 195 84% 34%;
     --radius: 0.5rem;
   }
 
@@ -54,6 +54,46 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground min-h-screen;
+    font-family: var(--font-sans), "Segoe UI", sans-serif;
+    letter-spacing: -0.01em;
+    line-height: 1.5;
+    background-image:
+      radial-gradient(circle at 12% 12%, hsl(var(--primary) / 0.12), transparent 42%),
+      radial-gradient(circle at 88% 6%, hsl(var(--accent) / 0.1), transparent 40%),
+      linear-gradient(to bottom, hsl(var(--background)), hsl(var(--background)));
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display), Georgia, serif;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    font-variation-settings: "SOFT" 35;
+  }
+
+  p,
+  li,
+  dt,
+  dd,
+  label,
+  input,
+  textarea,
+  select,
+  button {
+    font-family: var(--font-sans), "Segoe UI", sans-serif;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-2xl border bg-card/95 shadow-sm backdrop-blur;
+  }
+
+  .icon-badge {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-full border bg-secondary/70 text-primary;
   }
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listNichePacks } from "@niche-factory/db";
 import type { NichePackRow } from "@niche-factory/db";
+import { ArrowRight, Blocks, Plus, Sparkles } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,10 @@ export default async function AdminNichesPage() {
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
+          <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground bg-background/80 mb-2">
+            <Sparkles className="h-3.5 w-3.5 text-accent" />
+            Niche Pack Control
+          </div>
           <h1 className="text-2xl font-bold tracking-tight">Niche Packs</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Create and manage your Notion niche packs
@@ -26,9 +31,10 @@ export default async function AdminNichesPage() {
         </div>
         <Link
           href="/admin/niches/new"
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-9 px-4 py-2 hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium bg-primary text-primary-foreground h-9 px-4 py-2 hover:bg-primary/90 transition-colors"
         >
-          + New Niche Pack
+          <Plus className="h-4 w-4" />
+          New Niche Pack
         </Link>
       </div>
 
@@ -53,7 +59,7 @@ export default async function AdminNichesPage() {
       )}
 
       {rows.length > 0 && (
-        <div className="rounded-lg border divide-y">
+        <div className="surface-card divide-y overflow-hidden">
           {rows.map((row) => (
             <NichePackRowCard key={row.id} row={row} />
           ))}
@@ -76,12 +82,18 @@ function NichePackRowCard({ row }: { row: NichePackRow }) {
       className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors group"
     >
       <div>
-        <p className="font-medium text-sm group-hover:underline">{row.name}</p>
+        <p className="font-medium text-sm group-hover:underline inline-flex items-center gap-1.5">
+          <span className="icon-badge h-5 w-5"><Blocks className="h-3 w-3" /></span>
+          {row.name}
+        </p>
         <p className="text-xs text-muted-foreground mt-0.5">{row.id}</p>
       </div>
       <div className="text-right">
         <p className="text-xs text-muted-foreground">v{row.version}</p>
-        <p className="text-xs text-muted-foreground">Updated {updatedAt}</p>
+        <p className="text-xs text-muted-foreground inline-flex items-center gap-1 justify-end">
+          Updated {updatedAt}
+          <ArrowRight className="h-3 w-3" />
+        </p>
       </div>
     </Link>
   );

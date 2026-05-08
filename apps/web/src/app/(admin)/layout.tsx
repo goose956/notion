@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
+import { Blocks, LayoutDashboard, LogIn, LogOut, Sparkles } from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -12,18 +13,22 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-6 py-3 flex items-center gap-6">
-        <Link href="/admin" className="font-semibold text-lg tracking-tight">
+      <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur px-6 py-3 flex items-center gap-6">
+        <Link href="/admin" className="font-semibold text-lg tracking-tight inline-flex items-center gap-2">
+          <span className="icon-badge"><Sparkles className="h-4 w-4" /></span>
           Niche Factory
         </Link>
-        <nav className="flex gap-1 text-sm text-muted-foreground border rounded-lg p-1">
-          <Link href="/admin" className="rounded-md px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors">
+        <nav className="flex gap-1 text-sm text-muted-foreground border rounded-xl p-1.5 bg-card/80">
+          <Link href="/admin" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+            <LayoutDashboard className="h-3.5 w-3.5" />
             Dashboard
           </Link>
-          <Link href="/admin/niches" className="rounded-md px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors">
+          <Link href="/admin/niches" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+            <Blocks className="h-3.5 w-3.5" />
             Niches
           </Link>
-          <Link href="/admin/templates" className="rounded-md px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors">
+          <Link href="/admin/templates" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+            <Blocks className="h-3.5 w-3.5" />
             Templates
           </Link>
         </nav>
@@ -39,8 +44,9 @@ export default async function AdminLayout({
               >
                 <button
                   type="submit"
-                  className="hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
                 >
+                  <LogOut className="h-3.5 w-3.5" />
                   Sign out
                 </button>
               </form>
@@ -48,8 +54,9 @@ export default async function AdminLayout({
           ) : (
             <Link
               href="/login?callbackUrl=/admin"
-              className="inline-flex items-center justify-center rounded-md border text-xs font-medium h-8 px-3 hover:bg-muted transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 rounded-md border text-xs font-medium h-8 px-3 hover:bg-muted transition-colors"
             >
+              <LogIn className="h-3.5 w-3.5" />
               Sign in with Notion
             </Link>
           )}

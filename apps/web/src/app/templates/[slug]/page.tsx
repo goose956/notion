@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTemplateBySlug, incrementTemplateView } from "@niche-factory/db";
 import type { Metadata } from "next";
 import { BuyButton } from "./buy-button";
+import { CircleHelp, Compass, Lightbulb, ListChecks, Sparkles, Wallet } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -139,7 +140,8 @@ export default async function TemplatePage({ params }: Props) {
         <div className="max-w-3xl mx-auto px-6 py-12 space-y-10">
           <header className="space-y-4">
             {t.category && (
-              <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground inline-flex items-center gap-1.5">
+                <span className="icon-badge h-5 w-5"><Compass className="h-3 w-3" /></span>
                 {t.category}
               </span>
             )}
@@ -160,19 +162,28 @@ export default async function TemplatePage({ params }: Props) {
           </header>
 
           <section className="rounded-lg border-l-4 border-primary bg-primary/5 px-6 py-5 space-y-2">
-            <h2 className="font-semibold text-base">Quick Answer</h2>
+            <h2 className="font-semibold text-base inline-flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Quick Answer
+            </h2>
             <p className="text-muted-foreground leading-relaxed">
               {t.title} is a Notion workflow template that helps you solve this problem: {t.problemStatement}
             </p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-bold">What Problem This Template Solves</h2>
+            <h2 className="text-xl font-bold inline-flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-accent" />
+              What Problem This Template Solves
+            </h2>
             <p className="text-muted-foreground leading-relaxed">{t.problemStatement}</p>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-bold">Common Queries This Page Answers</h2>
+            <h2 className="text-xl font-bold inline-flex items-center gap-2">
+              <ListChecks className="h-5 w-5 text-primary" />
+              Common Queries This Page Answers
+            </h2>
             <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
               {searchIntents.map((query) => (
                 <li key={query}>{query}</li>
@@ -188,8 +199,11 @@ export default async function TemplatePage({ params }: Props) {
           )}
 
           {t.stripePaymentLink && (
-            <section className="rounded-xl border bg-card p-8 text-center space-y-4 shadow-sm">
-              <h2 className="text-xl font-bold">Get This Template</h2>
+            <section className="surface-card p-8 text-center space-y-4 shadow-sm">
+              <h2 className="text-xl font-bold inline-flex items-center gap-2 justify-center">
+                <Wallet className="h-5 w-5 text-primary" />
+                Get This Template
+              </h2>
               <p className="text-muted-foreground text-sm max-w-sm mx-auto">
                 One-time purchase. Instant access to the full Notion workspace template.
               </p>
@@ -199,7 +213,10 @@ export default async function TemplatePage({ params }: Props) {
 
           {faqItems.length > 0 && (
             <section className="space-y-4">
-              <h2 className="text-xl font-bold">Frequently Asked Questions</h2>
+              <h2 className="text-xl font-bold inline-flex items-center gap-2">
+                <CircleHelp className="h-5 w-5 text-primary" />
+                Frequently Asked Questions
+              </h2>
               <dl className="space-y-6">
                 {faqItems.map((item, i) => (
                   <div key={i} className="space-y-1">

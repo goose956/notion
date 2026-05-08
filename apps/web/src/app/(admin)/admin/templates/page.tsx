@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listTemplates } from "@niche-factory/db";
 import type { TemplateRow } from "@niche-factory/db";
+import { BarChart3, Eye, FileText, MousePointerClick, Plus, Sparkles } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,10 @@ export default async function AdminTemplatesPage() {
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
+          <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground bg-background/80 mb-2">
+            <Sparkles className="h-3.5 w-3.5 text-accent" />
+            Template Directory Control
+          </div>
           <h1 className="text-2xl font-bold tracking-tight">Templates</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Manage your Notion workflow template directory pages
@@ -31,9 +36,10 @@ export default async function AdminTemplatesPage() {
         </div>
         <Link
           href="/admin/templates/new"
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-9 px-4 py-2 hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium bg-primary text-primary-foreground h-9 px-4 py-2 hover:bg-primary/90 transition-colors"
         >
-          + New Template
+          <Plus className="h-4 w-4" />
+          New Template
         </Link>
       </div>
 
@@ -45,13 +51,14 @@ export default async function AdminTemplatesPage() {
 
       {rows.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-          <StatCard label="Total" value={String(rows.length)} />
-          <StatCard label="Published" value={String(publishedCount)} />
-          <StatCard label="Drafts" value={String(draftCount)} />
-          <StatCard label="Views" value={totalViews.toLocaleString()} />
+          <StatCard label="Total" value={String(rows.length)} icon={<FileText className="h-3.5 w-3.5" />} />
+          <StatCard label="Published" value={String(publishedCount)} icon={<Sparkles className="h-3.5 w-3.5" />} />
+          <StatCard label="Drafts" value={String(draftCount)} icon={<BarChart3 className="h-3.5 w-3.5" />} />
+          <StatCard label="Views" value={totalViews.toLocaleString()} icon={<Eye className="h-3.5 w-3.5" />} />
           <StatCard
             label="Clicks / CTR"
             value={`${totalClicks.toLocaleString()} / ${overallCtr.toFixed(1)}%`}
+            icon={<MousePointerClick className="h-3.5 w-3.5" />}
           />
         </div>
       )}
@@ -69,7 +76,7 @@ export default async function AdminTemplatesPage() {
       )}
 
       {rows.length > 0 && (
-        <div className="rounded-lg border divide-y">
+        <div className="surface-card divide-y overflow-hidden">
           {rows.map((row) => (
             <TemplateListRow key={row.id} row={row} />
           ))}
@@ -125,10 +132,13 @@ function TemplateListRow({ row }: { row: TemplateRow }) {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="rounded-lg border bg-card px-3 py-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
+    <div className="surface-card px-3 py-3 bg-card/80">
+      <p className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+        <span className="icon-badge h-5 w-5">{icon}</span>
+        {label}
+      </p>
       <p className="text-lg font-semibold leading-tight mt-1">{value}</p>
     </div>
   );

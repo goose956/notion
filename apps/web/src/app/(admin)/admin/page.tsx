@@ -1,10 +1,15 @@
 import Link from "next/link";
+import { ArrowRight, Blocks, FileText, Sparkles } from "lucide-react";
 
 export default function AdminHomePage() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+      <div className="surface-card p-6 bg-card/80">
+        <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground bg-background/80">
+          <Sparkles className="h-3.5 w-3.5 text-accent" />
+          Admin Command Center
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight mt-3">Admin Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Manage all workspace operations from one place. Templates are one tab of the admin panel.
         </p>
@@ -13,22 +18,32 @@ export default function AdminHomePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link
           href="/admin/niches"
-          className="rounded-lg border bg-card p-5 hover:bg-muted/30 transition-colors"
+          className="surface-card p-5 hover:shadow-lg transition-shadow"
         >
-          <h2 className="font-semibold">Niches</h2>
+          <div className="icon-badge"><Blocks className="h-4 w-4" /></div>
+          <h2 className="font-semibold mt-3">Niches</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Create and manage niche packs, editors, and deployment workflows.
           </p>
+          <span className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-primary">
+            Open niches
+            <ArrowRight className="h-3.5 w-3.5" />
+          </span>
         </Link>
 
         <Link
           href="/admin/templates"
-          className="rounded-lg border bg-card p-5 hover:bg-muted/30 transition-colors"
+          className="surface-card p-5 hover:shadow-lg transition-shadow"
         >
-          <h2 className="font-semibold">Templates</h2>
+          <div className="icon-badge"><FileText className="h-4 w-4" /></div>
+          <h2 className="font-semibold mt-3">Templates</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Build and publish SEO/LLM-optimized directory pages with payment links and stats.
           </p>
+          <span className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-primary">
+            Open templates
+            <ArrowRight className="h-3.5 w-3.5" />
+          </span>
         </Link>
       </div>
     </div>
