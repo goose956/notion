@@ -9,11 +9,10 @@ import postgres from "postgres";
 import { fileURLToPath } from "node:url";
 import { join, dirname } from "node:path";
 import fs from "node:fs";
-import path from "node:path";
 
 // Load .env.local for local development if it exists
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const envLocalPath = path.join(__dirname, "../../apps/web/.env.local");
+const envLocalPath = join(__dirname, "../../../apps/web/.env.local");
 if (fs.existsSync(envLocalPath)) {
   const envContent = fs.readFileSync(envLocalPath, "utf-8");
   for (const line of envContent.split("\n")) {
@@ -34,11 +33,7 @@ if (!url) {
   process.exit(0);
 }
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = join(__dirname, "../drizzle");
-
-const __dirnameForMigrations = dirname(fileURLToPath(import.meta.url));
-const migrationsFolderPath = join(__dirnameForMigrations, "../drizzle");
+const migrationsFolderPath = join(__dirname, "../drizzle");
 
 const client = postgres(url, { max: 1 });
 const db = drizzle(client);
