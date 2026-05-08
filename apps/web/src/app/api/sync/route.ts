@@ -112,7 +112,7 @@ function resolveAdapterCriteria(
 
   if (adapterId === "zillow-rss") {
     return {
-      feedUrls: firstNonEmpty(zillowFeedUrls, sharedFeedUrls, defaultZillow),
+      feedUrls: firstNonEmpty(defaultZillow, zillowFeedUrls, sharedFeedUrls),
       market: markets[0] ?? "US Market",
       markets,
       country,
@@ -123,7 +123,7 @@ function resolveAdapterCriteria(
 
   if (adapterId === "redfin-rss") {
     return {
-      feedUrls: firstNonEmpty(redfinFeedUrls, sharedFeedUrls, defaultRedfin),
+      feedUrls: firstNonEmpty(defaultRedfin, redfinFeedUrls, sharedFeedUrls),
       market: markets[0] ?? "US Market",
       markets,
       country,
@@ -134,7 +134,7 @@ function resolveAdapterCriteria(
 
   if (adapterId === "global-rss") {
     return {
-      feedUrls: firstNonEmpty(ukFeedUrls, sharedFeedUrls, defaultGlobal),
+      feedUrls: firstNonEmpty(defaultGlobal, ukFeedUrls, sharedFeedUrls),
       market: markets[0] ?? "Global Market",
       markets,
       country,
@@ -148,6 +148,25 @@ function resolveAdapterCriteria(
       markets,
       distressTypes: ["pre_foreclosure", "tax_delinquent"],
       maxPrice,
+    };
+  }
+
+  if (adapterId === "apify-google-places") {
+    const keywords = parseList(criteria["lead-keywords"]);
+    const locations = parseList(criteria["target-locations"]);
+    const minRating = toOptionalNumber(criteria["min-rating"]);
+    const minReviews = toOptionalNumber(criteria["min-reviews"]);
+    const maxResults = toOptionalNumber(criteria["max-results"]);
+    const country = toSafeString(criteria["country-filter"]) ?? "Any";
+
+    return {
+      keywords,
+      locations,
+      minRating,
+      minReviews,
+      maxResults,
+      country,
+      actorId: process.env["APIFY_GOOGLE_PLACES_ACTOR_ID"],
     };
   }
 

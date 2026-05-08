@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./real-estate-investor": "./real-estate-investor/index.ts"
+    "./real-estate-investor": "./real-estate-investor/index.ts",
+    "./local-business-lead-tracker": "./local-business-lead-tracker/index.ts"
   },
   "dependencies": {
     "@niche-factory/adapter-runtime": "workspace:*"
