@@ -70,7 +70,7 @@ class ApifyGooglePlacesAdapter
     const actorId =
       criteria.actorId
       ?? process.env["APIFY_GOOGLE_PLACES_ACTOR_ID"]
-      ?? "compass/crawler-google-places";
+      ?? "2Mdma1N6Fd0y3QEjR";
 
     const keywords = criteria.keywords.filter((k) => k.trim().length > 0);
     const locations = criteria.locations.filter((l) => l.trim().length > 0);
