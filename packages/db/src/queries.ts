@@ -12,12 +12,16 @@ import {
   deploys,
   userCriteria,
   templates,
+  customers,
+  purchases,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
   type NewDeployRow,
   type UserCriteriaRow,
   type TemplateRow,
+  type CustomerRow,
+  type PurchaseRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -218,6 +222,7 @@ export async function upsertTemplate(
         category: data.category,
         tags: data.tags,
         stripePaymentLink: data.stripePaymentLink,
+        stripePriceId: data.stripePriceId,
         published: data.published,
         updatedAt: now,
       },
@@ -244,5 +249,134 @@ export async function incrementTemplateClick(slug: string): Promise<void> {
     .update(templates)
     .set({ clickCount: sql`${templates.clickCount} + 1` })
     .where(eq(templates.slug, slug));
+}
+
+// ─── Customer queries ────────────────────────────────────────────────────────
+
+/**
+ * Find a customer by email, or create one if not found.
+ * Optionally links a Stripe customer ID on creation.
+ */
+export async function findOrCreateCustomer(
+  email: string,
+  stripeCustomerId?: string,
+): Promise<CustomerRow> {
+  const { randomUUID } = await import("node:crypto");
+  const now = new Date();
+  const result = await db
+    .insert(customers)
+    .values({
+      id: randomUUID(),
+      email,
+      stripeCustomerId: stripeCustomerId ?? null,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: customers.email,
+      set: {
+        stripeCustomerId: stripeCustomerId ?? null,
+        updatedAt: now,
+      },
+    })
+    .returning();
+  const row = result[0];
+  if (row === undefined) throw new Error("findOrCreateCustomer: no row returned");
+  return row;
+}
+
+/** Link a Notion user ID to an existing customer record (by email). */
+export async function linkNotionUserToCustomer(
+  email: string,
+  notionUserId: string,
+): Promise<void> {
+  await db
+    .update(customers)
+    .set({ notionUserId, updatedAt: new Date() })
+    .where(eq(customers.email, email));
+}
+
+export async function listCustomers(): Promise<CustomerRow[]> {
+  return db.select().from(customers).orderBy(desc(customers.createdAt));
+}
+
+// ─── Purchase queries ────────────────────────────────────────────────────────
+
+export async function createPurchase(data: {
+  customerId: string;
+  templateId: string;
+  stripeSessionId: string;
+  amountPaid: number;
+  currency: string;
+}): Promise<PurchaseRow> {
+  const { randomUUID } = await import("node:crypto");
+  const result = await db
+    .insert(purchases)
+    .values({ id: randomUUID(), ...data, purchasedAt: new Date() })
+    .onConflictDoNothing()
+    .returning();
+  // If the session was already recorded (duplicate webhook), fetch the existing row
+  if (result.length === 0) {
+    const existing = await db
+      .select()
+      .from(purchases)
+      .where(eq(purchases.stripeSessionId, data.stripeSessionId))
+      .limit(1);
+    if (existing[0] === undefined) throw new Error("createPurchase: no row returned");
+    return existing[0];
+  }
+  const row = result[0];
+  if (row === undefined) throw new Error("createPurchase: no row returned");
+  return row;
+}
+
+/** Return all templates purchased by a given customer email. */
+export async function getPurchasedTemplates(email: string): Promise<TemplateRow[]> {
+  const rows = await db
+    .select({ template: templates })
+    .from(purchases)
+    .innerJoin(customers, eq(purchases.customerId, customers.id))
+    .innerJoin(templates, eq(purchases.templateId, templates.id))
+    .where(eq(customers.email, email))
+    .orderBy(desc(purchases.purchasedAt));
+  return rows.map((r) => r.template);
+}
+
+/** Check if a customer (by email) owns a specific template. */
+export async function customerOwnsTemplate(
+  email: string,
+  templateId: string,
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: purchases.id })
+    .from(purchases)
+    .innerJoin(customers, eq(purchases.customerId, customers.id))
+    .where(and(eq(customers.email, email), eq(purchases.templateId, templateId)))
+    .limit(1);
+  return rows.length > 0;
+}
+
+/** List all purchases with customer + template info (for admin). */
+export async function listPurchasesWithDetails(): Promise<
+  Array<PurchaseRow & { customerEmail: string; templateTitle: string; templateSlug: string }>
+> {
+  const rows = await db
+    .select({
+      id: purchases.id,
+      customerId: purchases.customerId,
+      templateId: purchases.templateId,
+      stripeSessionId: purchases.stripeSessionId,
+      amountPaid: purchases.amountPaid,
+      currency: purchases.currency,
+      purchasedAt: purchases.purchasedAt,
+      customerEmail: customers.email,
+      templateTitle: templates.title,
+      templateSlug: templates.slug,
+    })
+    .from(purchases)
+    .innerJoin(customers, eq(purchases.customerId, customers.id))
+    .innerJoin(templates, eq(purchases.templateId, templates.id))
+    .orderBy(desc(purchases.purchasedAt));
+  return rows;
 }
 

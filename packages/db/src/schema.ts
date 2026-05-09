@@ -135,6 +135,7 @@ export const templates = pgTable("templates", {
   /** JSON string[] of tags */
   tags: jsonb("tags").notNull().default([]),
   stripePaymentLink: text("stripe_payment_link").notNull().default(""),
+  stripePriceId: text("stripe_price_id").notNull().default(""),
   published: boolean("published").notNull().default(false),
   viewCount: integer("view_count").notNull().default(0),
   clickCount: integer("click_count").notNull().default(0),
@@ -148,3 +149,51 @@ export const templates = pgTable("templates", {
 
 export type TemplateRow = typeof templates.$inferSelect;
 export type NewTemplateRow = typeof templates.$inferInsert;
+
+// ─── Customers ───────────────────────────────────────────────────────────────
+
+/**
+ * customers — one row per buyer, keyed by email.
+ *
+ * Created automatically when a Stripe checkout.session.completed webhook fires.
+ * notionUserId is populated when the customer signs in with Notion OAuth.
+ */
+export const customers = pgTable("customers", {
+  id: text("id").primaryKey(),                            // uuid
+  email: text("email").notNull().unique(),
+  stripeCustomerId: text("stripe_customer_id"),
+  notionUserId: text("notion_user_id"),                   // set on first sign-in
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type CustomerRow = typeof customers.$inferSelect;
+export type NewCustomerRow = typeof customers.$inferInsert;
+
+// ─── Purchases ───────────────────────────────────────────────────────────────
+
+/**
+ * purchases — one row per completed Stripe checkout, linking a customer to a template.
+ */
+export const purchases = pgTable("purchases", {
+  id: text("id").primaryKey(),                            // uuid
+  customerId: text("customer_id")
+    .notNull()
+    .references(() => customers.id),
+  templateId: text("template_id")
+    .notNull()
+    .references(() => templates.id),
+  stripeSessionId: text("stripe_session_id").notNull().unique(),
+  amountPaid: integer("amount_paid").notNull().default(0), // in cents
+  currency: text("currency").notNull().default("usd"),
+  purchasedAt: timestamp("purchased_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type PurchaseRow = typeof purchases.$inferSelect;
+export type NewPurchaseRow = typeof purchases.$inferInsert;

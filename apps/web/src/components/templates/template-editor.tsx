@@ -42,6 +42,7 @@ interface FormState {
   category: string;
   tags: string;
   stripePaymentLink: string;
+  stripePriceId: string;
   published: boolean;
 }
 
@@ -71,6 +72,7 @@ function toFormState(row?: TemplateRow): FormState {
       category: TEMPLATE_CATEGORIES[2],
       tags: "",
       stripePaymentLink: "",
+      stripePriceId: "",
       published: false,
     };
   }
@@ -85,6 +87,7 @@ function toFormState(row?: TemplateRow): FormState {
     category: row.category,
     tags: ((row.tags as string[]) ?? []).join(", "),
     stripePaymentLink: row.stripePaymentLink,
+    stripePriceId: row.stripePriceId,
     published: row.published,
   };
 }
@@ -190,6 +193,7 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
         .map((t) => t.trim())
         .filter(Boolean),
       stripePaymentLink: form.stripePaymentLink,
+      stripePriceId: form.stripePriceId,
       published: publish !== undefined ? publish : form.published,
     };
 
@@ -338,6 +342,18 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
             placeholder="https://buy.stripe.com/…"
             className={inputCls}
           />
+        </Field>
+
+        <Field label="Stripe Price ID (for dynamic checkout)">
+          <input
+            value={form.stripePriceId}
+            onChange={(e) => set("stripePriceId", e.target.value)}
+            placeholder="price_xxxxxxxxxxxxxxxxxxxxxxxx"
+            className={inputCls}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            If set, purchases go through a tracked Stripe checkout session and are recorded in the database.
+          </p>
         </Field>
       </section>
 

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTemplateBySlug, incrementTemplateView } from "@niche-factory/db";
+import { getTemplateBySlug, incrementTemplateView, customerOwnsTemplate } from "@niche-factory/db";
 import type { Metadata } from "next";
+import { auth } from "@/auth";
 import { BuyButton } from "./buy-button";
 import { CircleHelp, Compass, Lightbulb, ListChecks, Sparkles, Wallet } from "lucide-react";
 
@@ -59,6 +60,11 @@ export default async function TemplatePage({ params }: Props) {
   if (!t || !t.published) notFound();
 
   await incrementTemplateView(slug).catch(() => undefined);
+
+  // Check if the signed-in user already owns this template
+  const session = await auth().catch(() => undefined);
+  const userEmail = session?.user?.email ?? null;
+  const owned = userEmail ? await customerOwnsTemplate(userEmail, t.id).catch(() => false) : false;
 
   const faqItems = (t.faq as FaqItem[]) ?? [];
   const tags = ((t.tags as string[]) ?? []).filter(Boolean);
@@ -207,7 +213,13 @@ export default async function TemplatePage({ params }: Props) {
               <p className="text-muted-foreground text-sm max-w-sm mx-auto">
                 One-time purchase. Instant access to the full Notion workspace template.
               </p>
-              <BuyButton href={t.stripePaymentLink} slug={t.slug} />
+              <BuyButton
+                href={t.stripePaymentLink}
+                slug={t.slug}
+                templateId={t.id}
+                stripePriceId={t.stripePriceId}
+                owned={owned}
+              />
             </section>
           )}
 
