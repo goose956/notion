@@ -7,6 +7,9 @@ const SETTINGS_KEYS = {
   stripeWebhookSecret: "stripe.webhookSecret",
   anthropicApiKey: "anthropic.apiKey",
   anthropicModel: "anthropic.model",
+  serperApiKey: "serper.apiKey",
+  resendApiKey: "resend.apiKey",
+  apifyToken: "apify.token",
 } as const;
 
 const SettingsSchema = z.object({
@@ -14,6 +17,9 @@ const SettingsSchema = z.object({
   stripeWebhookSecret: z.string().optional(),
   anthropicApiKey: z.string().optional(),
   anthropicModel: z.string().optional(),
+  serperApiKey: z.string().optional(),
+  resendApiKey: z.string().optional(),
+  apifyToken: z.string().optional(),
   /** Per-customer key fields — if both are present, skip global settings update */
   customerApiKeyId: z.string().optional(),
   customerApiKey: z.string().optional(),
@@ -27,6 +33,9 @@ export async function GET() {
     stripeWebhookSecretConfigured: Boolean(settings[SETTINGS_KEYS.stripeWebhookSecret]),
     anthropicApiKeyConfigured: Boolean(settings[SETTINGS_KEYS.anthropicApiKey]),
     anthropicModel: settings[SETTINGS_KEYS.anthropicModel] || "claude-sonnet-4-5",
+    serperApiKeyConfigured: Boolean(settings[SETTINGS_KEYS.serperApiKey]),
+    resendApiKeyConfigured: Boolean(settings[SETTINGS_KEYS.resendApiKey]),
+    apifyTokenConfigured: Boolean(settings[SETTINGS_KEYS.apifyToken]),
   });
 }
 
@@ -63,6 +72,9 @@ export async function POST(req: NextRequest) {
     [SETTINGS_KEYS.stripeWebhookSecret]: data.stripeWebhookSecret ?? "",
     [SETTINGS_KEYS.anthropicApiKey]: data.anthropicApiKey ?? "",
     [SETTINGS_KEYS.anthropicModel]: data.anthropicModel ?? "",
+    [SETTINGS_KEYS.serperApiKey]: data.serperApiKey ?? "",
+    [SETTINGS_KEYS.resendApiKey]: data.resendApiKey ?? "",
+    [SETTINGS_KEYS.apifyToken]: data.apifyToken ?? "",
   });
 
   return NextResponse.json({ ok: true });

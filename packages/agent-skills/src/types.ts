@@ -38,6 +38,12 @@ export interface SkillContext {
   customerId: string;
   /** Optional niche scoping */
   nicheId?: string;
+  /**
+   * Additional API keys resolved from DB settings or env vars.
+   * Keys are env-var style, e.g. "SERPER_API_KEY", "RESEND_API_KEY", "APIFY_TOKEN".
+   * Skills should prefer ctx.apiKeys["MY_KEY"] ?? process.env["MY_KEY"].
+   */
+  apiKeys?: Record<string, string>;
 }
 
 /** A fully resolved skill ready to register with the agent loop */

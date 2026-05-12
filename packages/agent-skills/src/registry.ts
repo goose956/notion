@@ -11,6 +11,11 @@ import type { Skill } from "./types.js";
 import { notionWriteSkill } from "../skills/notion_write/notion-write.js";
 import { notionQuerySkill } from "../skills/notion_query/notion-query.js";
 import { enrichRecordSkill } from "../skills/enrich_record/enrich.js";
+import { webSearchSkill } from "../skills/web_search/web-search.js";
+import { fetchUrlSkill } from "../skills/fetch_url/fetch-url.js";
+import { sendEmailSkill } from "../skills/send_email/send-email.js";
+import { callWebhookSkill } from "../skills/call_webhook/call-webhook.js";
+import { runApifySkill } from "../skills/run_apify/run-apify.js";
 
 const _registry = new Map<string, Skill>();
 
@@ -52,3 +57,8 @@ export function resolveSkills(names: string[]): Skill[] {
 registerSkill(notionWriteSkill);
 registerSkill(notionQuerySkill);
 registerSkill(enrichRecordSkill);
+registerSkill(webSearchSkill);
+registerSkill(fetchUrlSkill);
+registerSkill(sendEmailSkill);
+registerSkill(callWebhookSkill);
+registerSkill(runApifySkill);

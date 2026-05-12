@@ -29,6 +29,9 @@ importers:
       '@niche-factory/agent-runtime':
         specifier: workspace:*
         version: link:../../packages/agent-runtime
+      '@niche-factory/agent-skills':
+        specifier: workspace:*
+        version: link:../../packages/agent-skills
       '@niche-factory/ai':
         specifier: workspace:*
         version: link:../../packages/ai

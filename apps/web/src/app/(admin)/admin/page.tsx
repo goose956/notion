@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Blocks, Bot, FileText, SlidersHorizontal, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Blocks, Bot, FileText, SlidersHorizontal, Sparkles, Users, Wrench } from "lucide-react";
 
 export default function AdminHomePage() {
   return (
@@ -72,6 +72,21 @@ export default function AdminHomePage() {
           </p>
           <span className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-primary">
             Open agents
+            <ArrowRight className="h-3.5 w-3.5" />
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/skills"
+          className="surface-card p-5 hover:shadow-lg transition-shadow"
+        >
+          <div className="icon-badge"><Wrench className="h-4 w-4" /></div>
+          <h2 className="font-semibold mt-3">Skills</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Browse all available agent tools — web search, email, webhooks, scraping and more.
+          </p>
+          <span className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-primary">
+            Open skills
             <ArrowRight className="h-3.5 w-3.5" />
           </span>
         </Link>

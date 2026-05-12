@@ -14,6 +14,9 @@ type SettingsResponse = {
   stripeWebhookSecretConfigured: boolean;
   anthropicApiKeyConfigured: boolean;
   anthropicModel: string;
+  serperApiKeyConfigured: boolean;
+  resendApiKeyConfigured: boolean;
+  apifyTokenConfigured: boolean;
 };
 
 export function SettingsForm() {
@@ -21,10 +24,16 @@ export function SettingsForm() {
   const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
   const [anthropicApiKey, setAnthropicApiKey] = useState("");
   const [anthropicModel, setAnthropicModel] = useState("claude-sonnet-4-5");
+  const [serperApiKey, setSerperApiKey] = useState("");
+  const [resendApiKey, setResendApiKey] = useState("");
+  const [apifyToken, setApifyToken] = useState("");
 
   const [stripeSecretConfigured, setStripeSecretConfigured] = useState(false);
   const [stripeWebhookConfigured, setStripeWebhookConfigured] = useState(false);
   const [anthropicConfigured, setAnthropicConfigured] = useState(false);
+  const [serperConfigured, setSerperConfigured] = useState(false);
+  const [resendConfigured, setResendConfigured] = useState(false);
+  const [apifyConfigured, setApifyConfigured] = useState(false);
 
   // Per-customer key section
   const [customerKeyId, setCustomerKeyId] = useState("");
@@ -50,6 +59,9 @@ export function SettingsForm() {
         setStripeWebhookConfigured(data.stripeWebhookSecretConfigured);
         setAnthropicConfigured(data.anthropicApiKeyConfigured);
         setAnthropicModel(data.anthropicModel || "claude-sonnet-4-5");
+        setSerperConfigured(data.serperApiKeyConfigured);
+        setResendConfigured(data.resendApiKeyConfigured);
+        setApifyConfigured(data.apifyTokenConfigured);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load settings");
       } finally {
@@ -74,6 +86,9 @@ export function SettingsForm() {
           stripeWebhookSecret,
           anthropicApiKey,
           anthropicModel,
+          serperApiKey,
+          resendApiKey,
+          apifyToken,
           customerApiKeyId: customerKeyId.trim() || undefined,
           customerApiKey: customerApiKey.trim() || undefined,
         }),
@@ -87,10 +102,16 @@ export function SettingsForm() {
       setStripeSecretConfigured((prev) => prev || stripeSecretKey.trim().length > 0);
       setStripeWebhookConfigured((prev) => prev || stripeWebhookSecret.trim().length > 0);
       setAnthropicConfigured((prev) => prev || anthropicApiKey.trim().length > 0);
+      setSerperConfigured((prev) => prev || serperApiKey.trim().length > 0);
+      setResendConfigured((prev) => prev || resendApiKey.trim().length > 0);
+      setApifyConfigured((prev) => prev || apifyToken.trim().length > 0);
 
       setStripeSecretKey("");
       setStripeWebhookSecret("");
       setAnthropicApiKey("");
+      setSerperApiKey("");
+      setResendApiKey("");
+      setApifyToken("");
 
       setMessage("Settings saved.");
     } catch (err) {
@@ -205,6 +226,84 @@ export function SettingsForm() {
             <span className="text-xs text-muted-foreground">
               Default model for all agent runs. Can be overridden per agent definition.
             </span>
+          </label>
+        </section>
+
+        <section className="surface-card p-5 space-y-3">
+          <h2 className="font-semibold">Web Search (Serper.dev)</h2>
+          <p className="text-xs text-muted-foreground">
+            Powers the <code>web_search</code> agent skill. Get a free API key at{" "}
+            <a href="https://serper.dev" target="_blank" rel="noopener noreferrer" className="underline">
+              serper.dev
+            </a>.
+          </p>
+          <label className="block text-sm space-y-1">
+            <span className="font-medium">API Key</span>
+            <input
+              type="password"
+              value={serperApiKey}
+              onChange={(e) => setSerperApiKey(e.target.value)}
+              className={inputCls}
+              placeholder={serperConfigured ? "Configured (enter new value to replace)" : "...serper API key"}
+              autoComplete="off"
+            />
+            {serperConfigured && (
+              <span className="inline-flex items-center gap-1 text-xs text-green-700">
+                <span>✓</span> Configured
+              </span>
+            )}
+          </label>
+        </section>
+
+        <section className="surface-card p-5 space-y-3">
+          <h2 className="font-semibold">Email (Resend)</h2>
+          <p className="text-xs text-muted-foreground">
+            Powers the <code>send_email</code> agent skill. Get a free API key at{" "}
+            <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="underline">
+              resend.com
+            </a>.
+          </p>
+          <label className="block text-sm space-y-1">
+            <span className="font-medium">API Key</span>
+            <input
+              type="password"
+              value={resendApiKey}
+              onChange={(e) => setResendApiKey(e.target.value)}
+              className={inputCls}
+              placeholder={resendConfigured ? "Configured (enter new value to replace)" : "re_..."}
+              autoComplete="off"
+            />
+            {resendConfigured && (
+              <span className="inline-flex items-center gap-1 text-xs text-green-700">
+                <span>✓</span> Configured
+              </span>
+            )}
+          </label>
+        </section>
+
+        <section className="surface-card p-5 space-y-3">
+          <h2 className="font-semibold">Web Scraping (Apify)</h2>
+          <p className="text-xs text-muted-foreground">
+            Powers the <code>run_apify</code> agent skill. Get a free token at{" "}
+            <a href="https://apify.com" target="_blank" rel="noopener noreferrer" className="underline">
+              apify.com
+            </a>.
+          </p>
+          <label className="block text-sm space-y-1">
+            <span className="font-medium">API Token</span>
+            <input
+              type="password"
+              value={apifyToken}
+              onChange={(e) => setApifyToken(e.target.value)}
+              className={inputCls}
+              placeholder={apifyConfigured ? "Configured (enter new value to replace)" : "apify_api_..."}
+              autoComplete="off"
+            />
+            {apifyConfigured && (
+              <span className="inline-flex items-center gap-1 text-xs text-green-700">
+                <span>✓</span> Configured
+              </span>
+            )}
           </label>
         </section>
 

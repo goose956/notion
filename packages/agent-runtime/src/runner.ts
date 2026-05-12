@@ -128,10 +128,13 @@ export async function runAgent(opts: RunAgentOptions): Promise<AgentRunResult> {
     throw new Error(`Agent definition "${agentDefId}" not found.`);
   }
 
-  // 2. Resolve API key and model
-  const [apiKey, model] = await Promise.all([
+  // 2. Resolve API key, model, and additional tool API keys
+  const [apiKey, model, serperKey, resendKey, apifyToken] = await Promise.all([
     resolveApiKey(customerId),
     resolveModel(agentDef.model),
+    getSettingValue("serper.apiKey"),
+    getSettingValue("resend.apiKey"),
+    getSettingValue("apify.token"),
   ]);
 
   // 3. Resolve skills
@@ -159,9 +162,21 @@ export async function runAgent(opts: RunAgentOptions): Promise<AgentRunResult> {
   });
 
   // 5. Run the loop
-  const skillContext: SkillContext = nicheId !== undefined
-    ? { notionToken, customerId, nicheId }
-    : { notionToken, customerId };
+  const apiKeys: Record<string, string> = {};
+  if (serperKey !== undefined && serperKey.trim() !== "") apiKeys["SERPER_API_KEY"] = serperKey.trim();
+  if (resendKey !== undefined && resendKey.trim() !== "") apiKeys["RESEND_API_KEY"] = resendKey.trim();
+  if (apifyToken !== undefined && apifyToken.trim() !== "") apiKeys["APIFY_TOKEN"] = apifyToken.trim();
+  // Also include env var fallbacks
+  if (!apiKeys["SERPER_API_KEY"] && process.env["SERPER_API_KEY"]) apiKeys["SERPER_API_KEY"] = process.env["SERPER_API_KEY"]!;
+  if (!apiKeys["RESEND_API_KEY"] && process.env["RESEND_API_KEY"]) apiKeys["RESEND_API_KEY"] = process.env["RESEND_API_KEY"]!;
+  if (!apiKeys["APIFY_TOKEN"] && process.env["APIFY_TOKEN"]) apiKeys["APIFY_TOKEN"] = process.env["APIFY_TOKEN"]!;
+
+  const skillContext: SkillContext = {
+    notionToken,
+    customerId,
+    apiKeys,
+    ...(nicheId !== undefined ? { nicheId } : {}),
+  };
   const userMessage = buildUserMessage(
     input,
     agentDef.defaultConfig as JsonValue,
