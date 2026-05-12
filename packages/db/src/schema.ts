@@ -197,3 +197,22 @@ export const purchases = pgTable("purchases", {
 
 export type PurchaseRow = typeof purchases.$inferSelect;
 export type NewPurchaseRow = typeof purchases.$inferInsert;
+
+// ─── App Settings ───────────────────────────────────────────────────────────
+
+/**
+ * app_settings — simple key/value settings store for runtime integrations.
+ */
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull().default(""),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type AppSettingRow = typeof appSettings.$inferSelect;
+export type NewAppSettingRow = typeof appSettings.$inferInsert;

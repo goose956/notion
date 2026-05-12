@@ -3,6 +3,7 @@ import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/auth";
 import { NotionApiClient } from "@niche-factory/notion-client";
+import { getSettings } from "@niche-factory/db";
 
 const EnrichRequestSchema = z.object({
   /** The Notion page ID to enrich */
@@ -25,7 +26,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
   const { pageId, prompt, context, targetProperty } = parsed.data;
 
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
+  const settings = await getSettings(["anthropic.apiKey", "anthropic.model"]);
+  const apiKey = settings["anthropic.apiKey"] || process.env["ANTHROPIC_API_KEY"];
+  const model = settings["anthropic.model"] || process.env["ANTHROPIC_MODEL"] || "claude-3-5-sonnet-20241022";
   if (!apiKey) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 503 });
   }
@@ -41,7 +44,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   let result: string;
   try {
     const message = await client.messages.create({
-      model: "claude-3-5-sonnet-20241022",
+      model,
       max_tokens: 1024,
       messages: [{ role: "user", content: resolvedPrompt }],
     });

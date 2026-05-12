@@ -15,11 +15,12 @@ import NotionProvider from "next-auth/providers/notion";
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
+    // Keep a stable callback base URL for local/dev/prod auth redirects.
+    // NextAuth handles OAuth checks by default; avoid disabling them.
     NotionProvider({
       clientId: process.env["NOTION_CLIENT_ID"] ?? "",
       clientSecret: process.env["NOTION_CLIENT_SECRET"] ?? "",
-      redirectUri: `${process.env["AUTH_URL"] ?? "http://localhost:3000"}/api/auth/callback/notion`,
-      checks: ["none"],
+      redirectUri: `${process.env["AUTH_URL"] ?? process.env["NEXTAUTH_URL"] ?? "http://localhost:3000"}/api/auth/callback/notion`,
     }),
   ],
   callbacks: {

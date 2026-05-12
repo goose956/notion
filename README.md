@@ -65,6 +65,16 @@ Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to 
 | `pnpm db:generate` | Generate Drizzle migration files |
 | `pnpm db:migrate` | Apply migrations to the database |
 | `pnpm db:studio` | Open Drizzle Studio (DB GUI) |
+| `pnpm exec tsx scripts/debug-apify-smoke.ts` | Smoke-test the `apify-google-places` adapter |
+
+## Recent updates (May 2026)
+
+- Added runtime integration settings at `/admin/settings` backed by a persistent `app_settings` table and `/api/settings`.
+- Updated checkout, Stripe webhook, and enrichment APIs to read configured secrets/model from DB settings first, then fall back to environment variables.
+- Improved sync engine row writes by mapping values to real Notion property types (title, rich_text, number, checkbox, date, url, phone, email, status, select, multi_select) using target database metadata.
+- Added sync run observability with structured logs in `/api/sync` and the Apify adapter.
+- Hardened the local-business lead adapter (`apify-google-places`) by switching to run polling and adding detailed filter summary logging.
+- Added `scripts/debug-apify-smoke.ts` for quick local verification of Apify credentials and first-item fetch behavior.
 
 ## Adding a new niche pack
 
@@ -78,7 +88,7 @@ Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to 
 - `schema.json` is the contract. Validated by Zod at every boundary.
 - Direct `@notionhq/client` calls only in `packages/notion-client`.
 - AI prompts live in versioned `.txt` files — never inline JS strings.
-- The sync engine (running adapters on a schedule) is v0.2 — adapters are scaffolded but not executed in v0.1.
+- Sync runs are supported via API/manual triggers; scheduled orchestration remains an incremental follow-up.
 
 ## Deployment
 

@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { findOrCreateCustomer, createPurchase } from "@niche-factory/db";
-
-const webhookSecret = process.env["STRIPE_WEBHOOK_SECRET"] ?? "";
+import { findOrCreateCustomer, createPurchase, getSettings } from "@niche-factory/db";
 
 // Required: disable body parsing so we can verify the Stripe signature
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const stripe = new Stripe(process.env["STRIPE_SECRET_KEY"] ?? "", {
+  const settings = await getSettings(["stripe.secretKey", "stripe.webhookSecret"]);
+  const stripeSecret = settings["stripe.secretKey"] || process.env["STRIPE_SECRET_KEY"] || "";
+  const webhookSecret = settings["stripe.webhookSecret"] || process.env["STRIPE_WEBHOOK_SECRET"] || "";
+
+  if (!stripeSecret) {
+    return NextResponse.json({ error: "Stripe secret key is not configured" }, { status: 503 });
+  }
+
+  const stripe = new Stripe(stripeSecret, {
     apiVersion: "2026-04-22.dahlia",
   });
 

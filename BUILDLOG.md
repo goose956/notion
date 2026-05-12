@@ -313,13 +313,70 @@ Pure domain math, zero dependencies:
 
 | Item | Notes |
 |------|-------|
-| Sync engine | `adapterRuns` table is scaffolded; running adapters on a cron schedule is v0.2 |
+| Sync engine scheduler | Manual/API sync runs are live; cron-style scheduling/orchestration is still pending |
 | shadcn/ui components | Tailwind + CSS vars are configured; component CLI not yet run |
 | Interactive editor panes | Chat input and JSON editor are structural shells — need client components |
 | `fast-xml-parser` upgrade | RSS adapter uses regex parser; `fast-xml-parser` is the planned v0.2 replacement |
 | CI / tests | No test suite yet; round-trip invariant (deploy → export → re-deploy) is the priority test to write |
-| Stripe integration | `config.yaml` pricing fields are present; Stripe billing not wired |
 | Multi-tenancy | Auth/users not yet modelled in the DB schema |
+
+---
+
+## Phase 11 — Runtime Settings, Sync Mapping, and Apify Hardening (May 2026)
+
+### Runtime app settings
+
+Added a DB-backed settings layer for operational secrets and model configuration.
+
+| File | Purpose |
+|------|---------|
+| `packages/db/src/schema.ts` | Added `app_settings` table schema and row types |
+| `packages/db/drizzle/0004_app_settings.sql` | Migration creating `app_settings` |
+| `packages/db/src/queries.ts` | Added `getSetting`, `getSettings`, `upsertSetting`, and `upsertSettings` helpers |
+| `apps/web/src/app/api/settings/route.ts` | API for reading configured-state and writing settings values |
+| `apps/web/src/app/(admin)/admin/settings/page.tsx` | Admin settings route |
+| `apps/web/src/components/settings/settings-form.tsx` | Client form for Stripe + Anthropic settings |
+
+### Runtime credential/model resolution
+
+Updated API routes to prefer DB settings and retain environment variable fallback:
+
+- `apps/web/src/app/api/checkout/route.ts`
+- `apps/web/src/app/api/webhooks/stripe/route.ts`
+- `apps/web/src/app/api/enrich/route.ts`
+
+Also added admin navigation entry points for settings in:
+
+- `apps/web/src/app/(admin)/layout.tsx`
+- `apps/web/src/app/(admin)/admin/page.tsx`
+
+### Sync engine typed Notion property mapping
+
+`packages/sync-engine/src/runner.ts` now retrieves target database property metadata and maps row values by property type instead of generic first-string title behavior.
+
+Implemented mappings include: `title`, `rich_text`, `number`, `checkbox`, `date`, `url`, `phone_number`, `email`, `status`, `select`, and `multi_select`.
+
+`packages/sync-engine/src/runner.test.ts` now includes coverage validating typed mapping payloads.
+
+### Sync and adapter observability
+
+Added structured logs around sync lifecycle in `apps/web/src/app/api/sync/route.ts`:
+
+- run start payload
+- run error payload
+- run result payload
+
+### Apify Google Places adapter hardening
+
+`niches/local-business-lead-tracker/sources/apify-google-places.ts` was upgraded to:
+
+- create actor runs without `waitForFinish`
+- poll run status via actor-run endpoint with bounded retries
+- fail fast on terminal non-success statuses
+- emit fetch/request/poll/summary logs
+- track filter rejection reasons for diagnostics
+
+Added `scripts/debug-apify-smoke.ts` to run a quick local smoke test against the adapter.
 
 ---
 
@@ -338,4 +395,4 @@ Pure domain math, zero dependencies:
 
 ---
 
-*Last updated: 2 May 2026*
+*Last updated: 12 May 2026*

@@ -14,6 +14,7 @@ import {
   templates,
   customers,
   purchases,
+  appSettings,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
@@ -22,6 +23,7 @@ import {
   type TemplateRow,
   type CustomerRow,
   type PurchaseRow,
+  type AppSettingRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -378,5 +380,49 @@ export async function listPurchasesWithDetails(): Promise<
     .innerJoin(templates, eq(purchases.templateId, templates.id))
     .orderBy(desc(purchases.purchasedAt));
   return rows;
+}
+
+// ─── App settings queries ───────────────────────────────────────────────────
+
+export async function getSetting(key: string): Promise<AppSettingRow | undefined> {
+  const rows = await db.select().from(appSettings).where(eq(appSettings.key, key)).limit(1);
+  return rows[0];
+}
+
+export async function getSettingValue(key: string): Promise<string | undefined> {
+  const row = await getSetting(key);
+  return row?.value;
+}
+
+export async function getSettings(keys: string[]): Promise<Record<string, string>> {
+  if (keys.length === 0) return {};
+  const rows = await db.select().from(appSettings);
+  const keySet = new Set(keys);
+  return rows.reduce<Record<string, string>>((acc, row) => {
+    if (keySet.has(row.key)) acc[row.key] = row.value;
+    return acc;
+  }, {});
+}
+
+export async function upsertSetting(key: string, value: string): Promise<AppSettingRow> {
+  const now = new Date();
+  const result = await db
+    .insert(appSettings)
+    .values({ key, value, createdAt: now, updatedAt: now })
+    .onConflictDoUpdate({
+      target: appSettings.key,
+      set: { value, updatedAt: now },
+    })
+    .returning();
+  const row = result[0];
+  if (row === undefined) throw new Error("upsertSetting: no row returned");
+  return row;
+}
+
+export async function upsertSettings(values: Record<string, string>): Promise<void> {
+  const entries = Object.entries(values).filter(([, v]) => v.trim().length > 0);
+  for (const [key, value] of entries) {
+    await upsertSetting(key, value);
+  }
 }
 

@@ -62,6 +62,10 @@ class ApifyGooglePlacesAdapter
     criteria: ApifyGooglePlacesCriteria,
     credentials: Readonly<Record<string, string>>,
   ): AsyncIterable<GooglePlaceRaw> {
+    console.info("[apify-google-places] fetch:start", {
+      criteria,
+    });
+
     const token = credentials["APIFY_TOKEN"] ?? process.env["APIFY_TOKEN"];
     if (token === undefined || token.trim().length === 0) {
       throw new Error("APIFY_TOKEN is required to run apify-google-places adapter");
@@ -90,8 +94,17 @@ class ApifyGooglePlacesAdapter
         ? Math.max(1, Math.min(500, Math.floor(criteria.maxResults)))
         : 100;
 
+    console.info("[apify-google-places] fetch:request", {
+      actorId,
+      searchStringsArray,
+      maxResults,
+      country: criteria.country ?? "Any",
+      minRating: criteria.minRating,
+      minReviews: criteria.minReviews,
+    });
+
     const runResponse = await fetch(
-      `https://api.apify.com/v2/acts/${encodeURIComponent(actorId)}/runs?token=${encodeURIComponent(token)}&waitForFinish=180`,
+      `https://api.apify.com/v2/acts/${encodeURIComponent(actorId)}/runs?token=${encodeURIComponent(token)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -109,18 +122,30 @@ class ApifyGooglePlacesAdapter
     }
 
     const runJson = await runResponse.json() as {
-      data?: { defaultDatasetId?: string; status?: string };
+      data?: { id?: string; defaultDatasetId?: string; status?: string };
     };
 
-    const status = runJson.data?.status;
-    if (status !== undefined && status !== "SUCCEEDED") {
-      throw new Error(`Apify actor run did not succeed (status: ${status})`);
+    const runId = runJson.data?.id;
+    if (runId === undefined || runId.length === 0) {
+      throw new Error("Apify run did not return run id");
     }
 
-    const datasetId = runJson.data?.defaultDatasetId;
+    console.info("[apify-google-places] run:created", {
+      runId,
+      initialStatus: runJson.data?.status,
+    });
+
+    const finalRun = await waitForRunCompletion(runId, token);
+    const datasetId = finalRun.defaultDatasetId;
     if (datasetId === undefined || datasetId.length === 0) {
       throw new Error("Apify run did not return defaultDatasetId");
     }
+
+    console.info("[apify-google-places] run:completed", {
+      runId,
+      finalStatus: finalRun.status,
+      datasetId,
+    });
 
     const itemsResponse = await fetch(
       `https://api.apify.com/v2/datasets/${encodeURIComponent(datasetId)}/items?token=${encodeURIComponent(token)}&clean=true&format=json`,
@@ -132,11 +157,29 @@ class ApifyGooglePlacesAdapter
     }
 
     const items = await itemsResponse.json() as unknown[];
+    let yielded = 0;
+    let filtered = 0;
+    const filterReasons: Record<string, number> = {};
+
     for (const item of items) {
       const raw = item as GooglePlaceRaw;
-      if (!passesFilters(raw, criteria)) continue;
+      const filter = evaluateFilters(raw, criteria);
+      if (!filter.ok) {
+        filtered++;
+        const reason = filter.reason ?? "unknown";
+        filterReasons[reason] = (filterReasons[reason] ?? 0) + 1;
+        continue;
+      }
+      yielded++;
       yield raw;
     }
+
+    console.info("[apify-google-places] fetch:summary", {
+      totalFetched: items.length,
+      yielded,
+      filtered,
+      filterReasons,
+    });
   }
 
   normalize(raw: GooglePlaceRaw): LeadRow {
@@ -182,35 +225,90 @@ class ApifyGooglePlacesAdapter
   }
 }
 
-function passesFilters(raw: GooglePlaceRaw, criteria: ApifyGooglePlacesCriteria): boolean {
+type ApifyRunInfo = {
+  status?: string;
+  defaultDatasetId?: string;
+};
+
+async function waitForRunCompletion(runId: string, token: string): Promise<ApifyRunInfo> {
+  const maxAttempts = 60;
+  const pollIntervalMs = 3_000;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const runStatusResponse = await fetch(
+      `https://api.apify.com/v2/actor-runs/${encodeURIComponent(runId)}?token=${encodeURIComponent(token)}`,
+    );
+
+    if (!runStatusResponse.ok) {
+      const body = await runStatusResponse.text();
+      throw new Error(`Apify run status failed: HTTP ${runStatusResponse.status} ${body}`);
+    }
+
+    const runStatusJson = await runStatusResponse.json() as { data?: ApifyRunInfo };
+    const run = runStatusJson.data ?? {};
+    const status = run.status ?? "UNKNOWN";
+
+    if (attempt === 0 || attempt % 5 === 0 || status === "SUCCEEDED") {
+      console.info("[apify-google-places] run:poll", {
+        runId,
+        attempt: attempt + 1,
+        status,
+      });
+    }
+
+    if (status === "SUCCEEDED") {
+      return run;
+    }
+
+    if (status === "FAILED" || status === "TIMED-OUT" || status === "ABORTED") {
+      throw new Error(`Apify actor run did not succeed (status: ${status})`);
+    }
+
+    await delay(pollIntervalMs);
+  }
+
+  throw new Error("Apify actor run did not finish within timeout");
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function evaluateFilters(
+  raw: GooglePlaceRaw,
+  criteria: ApifyGooglePlacesCriteria,
+): { ok: boolean; reason?: string } {
   const rating = toNumber(raw.totalScore) ?? toNumber(raw.rating);
   const reviews = toNumber(raw.reviewsCount) ?? toNumber(raw.totalReviews);
 
   if (criteria.minRating !== undefined && rating !== undefined && rating < criteria.minRating) {
-    return false;
+    return { ok: false, reason: "below-min-rating" };
   }
 
   if (criteria.minReviews !== undefined && reviews !== undefined && reviews < criteria.minReviews) {
-    return false;
+    return { ok: false, reason: "below-min-reviews" };
   }
 
   const country = (criteria.country ?? "Any").toUpperCase();
   if (country !== "ANY") {
     const code = toStringSafe(raw.countryCode).toUpperCase();
-    if (code.length > 0 && code !== country) return false;
+    const acceptedCodes = country === "UK" ? new Set(["UK", "GB", "GBR"]) : new Set([country]);
 
-    const address = toStringSafe(raw.address).toLowerCase();
-    if (code.length === 0) {
-      if (country === "US" && !address.includes("usa") && !address.includes("united states")) {
-        return false;
-      }
-      if (country === "UK" && !address.includes("uk") && !address.includes("united kingdom")) {
-        return false;
+    if (code.length > 0 && !acceptedCodes.has(code)) {
+      return { ok: false, reason: `country-code-mismatch:${code}` };
+    }
+
+    if (code.length === 0 && country === "US") {
+      const address = toStringSafe(raw.address).toLowerCase();
+      if (!address.includes("usa") && !address.includes("united states")) {
+        return { ok: false, reason: "country-address-mismatch:US" };
       }
     }
   }
 
-  return true;
+  return { ok: true };
 }
 
 function inferCity(address: string): string {

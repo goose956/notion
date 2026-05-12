@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getTemplateById } from "@niche-factory/db";
+import { getSettings, getTemplateById } from "@niche-factory/db";
 
 export async function POST(req: NextRequest) {
-  const stripe = new Stripe(process.env["STRIPE_SECRET_KEY"] ?? "", {
+  const settings = await getSettings(["stripe.secretKey"]);
+  const stripeSecret = settings["stripe.secretKey"] || process.env["STRIPE_SECRET_KEY"] || "";
+
+  if (!stripeSecret) {
+    return NextResponse.json({ error: "Stripe secret key is not configured" }, { status: 503 });
+  }
+
+  const stripe = new Stripe(stripeSecret, {
     apiVersion: "2026-04-22.dahlia",
   });
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
-import { Blocks, LayoutDashboard, LogIn, LogOut, Sparkles, Users } from "lucide-react";
+import { Blocks, LayoutDashboard, LogIn, LogOut, SlidersHorizontal, Sparkles, Users } from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -34,6 +34,10 @@ export default async function AdminLayout({
           <Link href="/admin/customers" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
             <Users className="h-3.5 w-3.5" />
             Customers
+          </Link>
+          <Link href="/admin/settings" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Settings
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground">

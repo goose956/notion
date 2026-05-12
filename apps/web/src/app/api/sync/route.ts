@@ -84,6 +84,14 @@ export async function POST(request: NextRequest) {
 
   const resolvedCriteria = resolveAdapterCriteria(input.data.adapterId, criteria);
 
+  console.info("[sync] run:start", {
+    nicheId: input.data.nicheId,
+    adapterId: input.data.adapterId,
+    targetDatabaseId: input.data.targetDatabaseId,
+    databaseIds: input.data.databaseIds,
+    resolvedCriteria,
+  });
+
   const seenKeys = new Set<string>();
   let result: Awaited<ReturnType<typeof runAdapter>>;
   try {
@@ -95,8 +103,23 @@ export async function POST(request: NextRequest) {
     }, resolvedCriteria);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    console.error("[sync] run:error", {
+      nicheId: input.data.nicheId,
+      adapterId: input.data.adapterId,
+      targetDatabaseId: input.data.targetDatabaseId,
+      message,
+    });
     return NextResponse.json({ error: message }, { status: 502 });
   }
+
+  console.info("[sync] run:result", {
+    nicheId: input.data.nicheId,
+    adapterId: input.data.adapterId,
+    targetDatabaseId: input.data.targetDatabaseId,
+    rowsProcessed: result.rowsProcessed,
+    rowsSkipped: result.rowsSkipped,
+    error: result.error,
+  });
 
   const status = result.error !== undefined ? 502 : 200;
   return NextResponse.json({ result }, { status });
