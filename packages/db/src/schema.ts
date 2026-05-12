@@ -216,3 +216,111 @@ export const appSettings = pgTable("app_settings", {
 
 export type AppSettingRow = typeof appSettings.$inferSelect;
 export type NewAppSettingRow = typeof appSettings.$inferInsert;
+
+// ─── Agent Definitions ───────────────────────────────────────────────────────
+
+/**
+ * agent_definitions — reusable agent blueprints.
+ *
+ * Each row defines a named agent: its system prompt, which skills it can use,
+ * the model it runs on, and optional per-niche scoping.
+ */
+export const agentDefinitions = pgTable("agent_definitions", {
+  id: text("id").primaryKey(),                            // kebab-case slug
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  systemPrompt: text("system_prompt").notNull(),
+  model: text("model").notNull().default("claude-sonnet-4-5"),
+  /** JSON string[] of skill IDs available to this agent */
+  skillList: jsonb("skill_list").notNull().default([]),
+  /** JSON object — agent-level defaults (maxTurns, timeoutMs, etc.) */
+  defaultConfig: jsonb("default_config").notNull().default({}),
+  /** Optional niche scoping — null means the definition is global */
+  nicheId: text("niche_id"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type AgentDefinitionRow = typeof agentDefinitions.$inferSelect;
+export type NewAgentDefinitionRow = typeof agentDefinitions.$inferInsert;
+
+// ─── Agent Runs ──────────────────────────────────────────────────────────────
+
+export const agentRunStatusEnum = pgEnum("agent_run_status", [
+  "pending",
+  "running",
+  "success",
+  "failed",
+  "timeout",
+]);
+
+/**
+ * agent_runs — one row per execution of an agent.
+ *
+ * Records everything needed for billing, debugging, and auditing:
+ * token usage, cost, duration, which tools were called, and the final output.
+ */
+export const agentRuns = pgTable("agent_runs", {
+  id: text("id").primaryKey(),                            // uuid
+  customerId: text("customer_id").notNull(),              // fk to customers.id (soft ref for flexibility)
+  agentDefId: text("agent_def_id")
+    .notNull()
+    .references(() => agentDefinitions.id),
+  trigger: text("trigger").notNull(),                     // 'manual' | 'scheduled' | 'api'
+  status: agentRunStatusEnum("status").notNull().default("pending"),
+  startedAt: timestamp("started_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  /** Caller-supplied input (e.g. pageId, prompt, context) */
+  input: jsonb("input").notNull().default({}),
+  /** Final agent output — the result string + any structured output */
+  output: jsonb("output").notNull().default({}),
+  /** Notion page/database IDs written during the run */
+  notionArtifacts: jsonb("notion_artifacts").notNull().default([]),
+  /** { inputTokens, outputTokens, cacheReadTokens } */
+  tokenUsage: jsonb("token_usage").notNull().default({}),
+  /** Estimated cost in USD */
+  costUsd: text("cost_usd"),
+  errorMessage: text("error_message"),
+  durationMs: integer("duration_ms"),
+});
+
+export type AgentRunRow = typeof agentRuns.$inferSelect;
+export type NewAgentRunRow = typeof agentRuns.$inferInsert;
+
+// ─── Agent Schedules ─────────────────────────────────────────────────────────
+
+/**
+ * agent_schedules — cron-style scheduling for agent runs.
+ *
+ * The scheduler tick queries for rows where next_run_at <= now() AND active = true,
+ * fires each via runAgent(), then advances next_run_at.
+ */
+export const agentSchedules = pgTable("agent_schedules", {
+  id: text("id").primaryKey(),                            // uuid
+  customerId: text("customer_id").notNull(),
+  agentDefId: text("agent_def_id")
+    .notNull()
+    .references(() => agentDefinitions.id),
+  /** Standard cron expression e.g. "0 9 * * 1" */
+  cron: text("cron").notNull(),
+  nextRunAt: timestamp("next_run_at", { withTimezone: true }).notNull(),
+  lastRunAt: timestamp("last_run_at", { withTimezone: true }),
+  active: boolean("active").notNull().default(true),
+  /** Optional static input merged into every scheduled run */
+  defaultInput: jsonb("default_input").notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type AgentScheduleRow = typeof agentSchedules.$inferSelect;
+export type NewAgentScheduleRow = typeof agentSchedules.$inferInsert;

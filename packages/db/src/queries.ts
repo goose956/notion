@@ -5,7 +5,7 @@
  * Import { db } is the lazy singleton from client.ts.
  */
 
-import { eq, desc, and, ilike, or, sql } from "drizzle-orm";
+import { eq, desc, and, ilike, or, sql, lte } from "drizzle-orm";
 import { db } from "./client.js";
 import {
   nichePacks,
@@ -15,6 +15,9 @@ import {
   customers,
   purchases,
   appSettings,
+  agentDefinitions,
+  agentRuns,
+  agentSchedules,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
@@ -24,6 +27,11 @@ import {
   type CustomerRow,
   type PurchaseRow,
   type AppSettingRow,
+  type AgentDefinitionRow,
+  type NewAgentDefinitionRow,
+  type AgentRunRow,
+  type NewAgentRunRow,
+  type AgentScheduleRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -424,5 +432,106 @@ export async function upsertSettings(values: Record<string, string>): Promise<vo
   for (const [key, value] of entries) {
     await upsertSetting(key, value);
   }
+}
+
+// ─── Agent definition queries ────────────────────────────────────────────────
+
+export async function listAgentDefinitions(): Promise<AgentDefinitionRow[]> {
+  return db.select().from(agentDefinitions).orderBy(desc(agentDefinitions.updatedAt));
+}
+
+export async function getAgentDefinition(id: string): Promise<AgentDefinitionRow | undefined> {
+  const rows = await db.select().from(agentDefinitions).where(eq(agentDefinitions.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function upsertAgentDefinition(row: NewAgentDefinitionRow): Promise<AgentDefinitionRow> {
+  const now = new Date();
+  const result = await db
+    .insert(agentDefinitions)
+    .values({ ...row, updatedAt: now })
+    .onConflictDoUpdate({
+      target: agentDefinitions.id,
+      set: {
+        name: row.name,
+        description: row.description ?? "",
+        systemPrompt: row.systemPrompt,
+        model: row.model ?? "claude-sonnet-4-5",
+        skillList: row.skillList ?? [],
+        defaultConfig: row.defaultConfig ?? {},
+        nicheId: row.nicheId ?? null,
+        updatedAt: now,
+      },
+    })
+    .returning();
+  const inserted = result[0];
+  if (inserted === undefined) throw new Error("upsertAgentDefinition: no row returned");
+  return inserted;
+}
+
+// ─── Agent run queries ───────────────────────────────────────────────────────
+
+export async function createAgentRun(row: NewAgentRunRow): Promise<AgentRunRow> {
+  const result = await db.insert(agentRuns).values(row).returning();
+  const inserted = result[0];
+  if (inserted === undefined) throw new Error("createAgentRun: no row returned");
+  return inserted;
+}
+
+export async function updateAgentRun(
+  id: string,
+  update: Partial<Pick<AgentRunRow,
+    "status" | "completedAt" | "output" | "notionArtifacts" | "tokenUsage" | "costUsd" | "errorMessage" | "durationMs"
+  >>,
+): Promise<void> {
+  await db.update(agentRuns).set(update).where(eq(agentRuns.id, id));
+}
+
+export async function getAgentRun(id: string): Promise<AgentRunRow | undefined> {
+  const rows = await db.select().from(agentRuns).where(eq(agentRuns.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function listAgentRunsByCustomer(customerId: string, limit = 50): Promise<AgentRunRow[]> {
+  return db
+    .select()
+    .from(agentRuns)
+    .where(eq(agentRuns.customerId, customerId))
+    .orderBy(desc(agentRuns.startedAt))
+    .limit(limit);
+}
+
+// ─── Agent schedule queries ──────────────────────────────────────────────────
+
+export async function listDueSchedules(): Promise<AgentScheduleRow[]> {
+  return db
+    .select()
+    .from(agentSchedules)
+    .where(and(eq(agentSchedules.active, true), lte(agentSchedules.nextRunAt, new Date())));
+}
+
+export async function updateScheduleAfterRun(
+  id: string,
+  nextRunAt: Date,
+): Promise<void> {
+  await db
+    .update(agentSchedules)
+    .set({ lastRunAt: new Date(), nextRunAt, updatedAt: new Date() })
+    .where(eq(agentSchedules.id, id));
+}
+
+export async function upsertAgentSchedule(row: AgentScheduleRow): Promise<AgentScheduleRow> {
+  const now = new Date();
+  const result = await db
+    .insert(agentSchedules)
+    .values({ ...row, updatedAt: now })
+    .onConflictDoUpdate({
+      target: agentSchedules.id,
+      set: { ...row, updatedAt: now },
+    })
+    .returning();
+  const inserted = result[0];
+  if (inserted === undefined) throw new Error("upsertAgentSchedule: no row returned");
+  return inserted;
 }
 

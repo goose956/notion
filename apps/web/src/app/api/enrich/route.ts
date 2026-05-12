@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/auth";
-import { NotionApiClient } from "@niche-factory/notion-client";
-import { getSettings } from "@niche-factory/db";
 
 const EnrichRequestSchema = z.object({
   /** The Notion page ID to enrich */
@@ -18,6 +15,7 @@ const EnrichRequestSchema = z.object({
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const session = await auth();
+  const sessionRecord = session as Record<string, unknown> | null;
 
   const body: unknown = await req.json();
   const parsed = EnrichRequestSchema.safeParse(body);
@@ -26,64 +24,63 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
   const { pageId, prompt, context, targetProperty } = parsed.data;
 
-  const settings = await getSettings(["anthropic.apiKey", "anthropic.model"]);
-  const apiKey = settings["anthropic.apiKey"] || process.env["ANTHROPIC_API_KEY"];
-  const model = settings["anthropic.model"] || process.env["ANTHROPIC_MODEL"] || "claude-3-5-sonnet-20241022";
-  if (!apiKey) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 503 });
+  // Resolve customer identity from session
+  const customerId =
+    typeof sessionRecord?.["notionUserId"] === "string"
+      ? sessionRecord["notionUserId"]
+      : typeof (sessionRecord?.["user"] as Record<string, unknown> | undefined)?.["email"] ===
+          "string"
+        ? ((sessionRecord?.["user"] as Record<string, unknown>)["email"] as string)
+        : "anonymous";
+
+  const notionToken =
+    typeof sessionRecord?.["notionToken"] === "string"
+      ? sessionRecord["notionToken"]
+      : process.env["NOTION_TOKEN"];
+
+  const { runAgent } = await import("@niche-factory/agent-runtime");
+
+  let agentResult: Awaited<ReturnType<typeof runAgent>>;
+  try {
+    agentResult = await runAgent({
+      agentDefId: "default-enrichment-agent",
+      customerId,
+      trigger: "api",
+      input: { pageId, prompt, context: context ?? {}, targetProperty },
+      ...(notionToken !== undefined ? { notionToken } : {}),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Agent run failed";
+    // Surface missing API key as 503 to preserve backward compat
+    if (message.includes("No Anthropic API key")) {
+      return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 503 });
+    }
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  // Substitute context values into the prompt
-  const resolvedPrompt = Object.entries(context ?? {}).reduce(
-    (p, [k, v]) => p.replaceAll(`{{${k}}}`, v),
-    prompt,
-  );
-
-  // Call Claude
-  const client = new Anthropic({ apiKey });
-  let result: string;
-  try {
-    const message = await client.messages.create({
-      model,
-      max_tokens: 1024,
-      messages: [{ role: "user", content: resolvedPrompt }],
-    });
-    const block = message.content.find((b): b is Anthropic.TextBlock => b.type === "text");
-    result = block?.type === "text" ? block.text.trim() : "";
-  } catch (err) {
+  if (agentResult.status === "failed") {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "AI call failed" },
+      { error: agentResult.errorMessage ?? "Agent run failed" },
       { status: 502 },
     );
   }
 
-  // Write result back to the Notion page property
-  const notionToken =
-    (session as typeof session & { notionToken?: string })?.notionToken ??
-    process.env["NOTION_TOKEN"];
+  const enriched =
+    typeof agentResult.output["result"] === "string" ? agentResult.output["result"] : "";
 
-  if (!notionToken) {
-    return NextResponse.json({ enriched: result });
+  // If the agent wrote to Notion, return plain success
+  if (agentResult.notionArtifacts.length > 0) {
+    return NextResponse.json({ enriched });
   }
 
-  const notionClient = new NotionApiClient({ auth: notionToken });
-  try {
-    await notionClient.call((c) =>
-      c.pages.update({
-        page_id: pageId,
-        properties: {
-          [targetProperty]: {
-            rich_text: [{ type: "text", text: { content: result.slice(0, 2000) } }],
-          },
-        },
-      }),
-    );
-  } catch (err) {
-    return NextResponse.json(
-      { enriched: result, writeError: err instanceof Error ? err.message : "Notion write failed" },
-      { status: 207 },
-    );
+  // Agent ran but didn't write (no notionToken or write error captured as text)
+  // Check if the result text contains a write error indicator
+  if (enriched.includes("Error writing to Notion:")) {
+    const writeError = enriched.split("Error writing to Notion:")[1]?.trim() ?? "Notion write failed";
+    // Return the actual enriched text minus the error suffix, or fall back to the full string
+    return NextResponse.json({ enriched, writeError }, { status: 207 });
   }
 
-  return NextResponse.json({ enriched: result });
+  return NextResponse.json({ enriched });
 }
+

@@ -14,6 +14,9 @@ const SettingsSchema = z.object({
   stripeWebhookSecret: z.string().optional(),
   anthropicApiKey: z.string().optional(),
   anthropicModel: z.string().optional(),
+  /** Per-customer key fields — if both are present, skip global settings update */
+  customerApiKeyId: z.string().optional(),
+  customerApiKey: z.string().optional(),
 });
 
 export async function GET() {
@@ -23,7 +26,7 @@ export async function GET() {
     stripeSecretKeyConfigured: Boolean(settings[SETTINGS_KEYS.stripeSecretKey]),
     stripeWebhookSecretConfigured: Boolean(settings[SETTINGS_KEYS.stripeWebhookSecret]),
     anthropicApiKeyConfigured: Boolean(settings[SETTINGS_KEYS.anthropicApiKey]),
-    anthropicModel: settings[SETTINGS_KEYS.anthropicModel] || "claude-3-5-sonnet-20241022",
+    anthropicModel: settings[SETTINGS_KEYS.anthropicModel] || "claude-sonnet-4-5",
   });
 }
 
@@ -42,6 +45,19 @@ export async function POST(req: NextRequest) {
 
   const data = parsed.data;
 
+  // Per-customer key path — save and return immediately
+  if (
+    typeof data.customerApiKeyId === "string" &&
+    data.customerApiKeyId.trim() !== "" &&
+    typeof data.customerApiKey === "string" &&
+    data.customerApiKey.trim() !== ""
+  ) {
+    const settingKey = `customer.${data.customerApiKeyId.trim()}.anthropic.apiKey`;
+    await upsertSettings({ [settingKey]: data.customerApiKey.trim() });
+    return NextResponse.json({ ok: true });
+  }
+
+  // Global settings path
   await upsertSettings({
     [SETTINGS_KEYS.stripeSecretKey]: data.stripeSecretKey ?? "",
     [SETTINGS_KEYS.stripeWebhookSecret]: data.stripeWebhookSecret ?? "",
@@ -51,3 +67,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true });
 }
+
