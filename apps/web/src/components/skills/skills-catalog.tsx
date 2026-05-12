@@ -420,7 +420,10 @@ export function SkillsCatalog() {
       ]);
 
       if (!skillsRes.ok) throw new Error("Failed to load built-in skills");
-      if (!customRes.ok) throw new Error("Failed to load custom skills");
+      if (!customRes.ok) {
+        const body = await customRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Custom skills API error ${customRes.status}`);
+      }
       if (!settingsRes.ok) throw new Error("Failed to load settings");
 
       const [skillsData, customData, settingsData] = await Promise.all([

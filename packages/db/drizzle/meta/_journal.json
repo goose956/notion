@@ -22,6 +22,34 @@
       "when": 1746700001000,
       "tag": "0002_templates",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1746700002000,
+      "tag": "0003_customers_purchases",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1746700003000,
+      "tag": "0004_app_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1746700004000,
+      "tag": "0005_agent_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1746700005000,
+      "tag": "0006_custom_skills",
+      "breakpoints": true
     }
   ]
 }

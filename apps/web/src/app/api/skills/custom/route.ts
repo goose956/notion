@@ -47,8 +47,16 @@ function buildInputSchema(params: z.infer<typeof InputParamSchema>[]) {
 }
 
 export async function GET() {
-  const rows = await listCustomSkills();
-  return NextResponse.json(rows);
+  try {
+    const rows = await listCustomSkills();
+    return NextResponse.json(rows);
+  } catch (err) {
+    console.error("[GET /api/skills/custom]", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Failed to load custom skills" },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(req: NextRequest) {
