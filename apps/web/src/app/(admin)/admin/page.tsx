@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Blocks, FileText, SlidersHorizontal, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Blocks, Bot, FileText, SlidersHorizontal, Sparkles, Users } from "lucide-react";
 
 export default function AdminHomePage() {
   return (
@@ -15,7 +15,7 @@ export default function AdminHomePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
           href="/admin/niches"
           className="surface-card p-5 hover:shadow-lg transition-shadow"
@@ -57,6 +57,21 @@ export default function AdminHomePage() {
           </p>
           <span className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-primary">
             Open customers
+            <ArrowRight className="h-3.5 w-3.5" />
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/agents"
+          className="surface-card p-5 hover:shadow-lg transition-shadow"
+        >
+          <div className="icon-badge"><Bot className="h-4 w-4" /></div>
+          <h2 className="font-semibold mt-3">Agents</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Create, configure, and run Claude AI agents with Notion skills.
+          </p>
+          <span className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-primary">
+            Open agents
             <ArrowRight className="h-3.5 w-3.5" />
           </span>
         </Link>

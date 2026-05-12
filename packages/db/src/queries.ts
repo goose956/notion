@@ -501,6 +501,15 @@ export async function listAgentRunsByCustomer(customerId: string, limit = 50): P
     .limit(limit);
 }
 
+export async function listAgentRunsByDef(agentDefId: string, limit = 50): Promise<AgentRunRow[]> {
+  return db
+    .select()
+    .from(agentRuns)
+    .where(eq(agentRuns.agentDefId, agentDefId))
+    .orderBy(desc(agentRuns.startedAt))
+    .limit(limit);
+}
+
 // ─── Agent schedule queries ──────────────────────────────────────────────────
 
 export async function listDueSchedules(): Promise<AgentScheduleRow[]> {
