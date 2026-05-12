@@ -19,8 +19,9 @@ import {
   createAgentRun,
   updateAgentRun,
   getSettingValue,
+  listCustomSkills,
 } from "@niche-factory/db";
-import { resolveSkills } from "@niche-factory/agent-skills";
+import { resolveSkills, buildCustomSkill } from "@niche-factory/agent-skills";
 import type { SkillContext } from "@niche-factory/agent-skills";
 import { runAgentLoop } from "./loop.js";
 import type { RunAgentOptions, AgentRunResult, JsonValue } from "./types.js";
@@ -137,11 +138,28 @@ export async function runAgent(opts: RunAgentOptions): Promise<AgentRunResult> {
     getSettingValue("apify.token"),
   ]);
 
-  // 3. Resolve skills
+  // 3. Resolve skills — built-ins first, then custom skills from DB
   const skillList = Array.isArray(agentDef.skillList)
     ? (agentDef.skillList as string[])
     : [];
-  const skills = resolveSkills(skillList);
+
+  // Separate built-in skill names from custom skill IDs
+  const builtinNames = new Set(["notion_write", "notion_query", "enrich_record", "web_search", "fetch_url", "send_email", "call_webhook", "run_apify"]);
+  const builtinSkillIds = skillList.filter((id) => builtinNames.has(id));
+  const customSkillIds = skillList.filter((id) => !builtinNames.has(id));
+
+  const builtinSkills = resolveSkills(builtinSkillIds);
+
+  // Load custom skills from DB (only the ones in this agent's skill_list)
+  const allCustomRows = customSkillIds.length > 0
+    ? await listCustomSkills(true)
+    : [];
+  const customSkillObjects = allCustomRows
+    .filter((row) => customSkillIds.includes(row.id))
+    .map((row) => buildCustomSkill(row))
+    .filter((s): s is NonNullable<typeof s> => s !== null);
+
+  const skills = [...builtinSkills, ...customSkillObjects];
 
   // 4. Create the agent_runs row (status: pending)
   const runId = randomUUID();

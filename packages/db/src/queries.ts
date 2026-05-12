@@ -18,6 +18,7 @@ import {
   agentDefinitions,
   agentRuns,
   agentSchedules,
+  customSkills,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
@@ -32,6 +33,8 @@ import {
   type AgentRunRow,
   type NewAgentRunRow,
   type AgentScheduleRow,
+  type CustomSkillRow,
+  type NewCustomSkillRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -527,6 +530,52 @@ export async function updateScheduleAfterRun(
     .update(agentSchedules)
     .set({ lastRunAt: new Date(), nextRunAt, updatedAt: new Date() })
     .where(eq(agentSchedules.id, id));
+}
+
+// ─── Custom skill queries ────────────────────────────────────────────────────
+
+export async function listCustomSkills(enabledOnly = false): Promise<CustomSkillRow[]> {
+  if (enabledOnly) {
+    return db
+      .select()
+      .from(customSkills)
+      .where(eq(customSkills.enabled, true))
+      .orderBy(customSkills.name);
+  }
+  return db.select().from(customSkills).orderBy(customSkills.name);
+}
+
+export async function getCustomSkill(id: string): Promise<CustomSkillRow | undefined> {
+  const rows = await db
+    .select()
+    .from(customSkills)
+    .where(eq(customSkills.id, id))
+    .limit(1);
+  return rows[0];
+}
+
+export async function upsertCustomSkill(row: NewCustomSkillRow): Promise<CustomSkillRow> {
+  const [result] = await db
+    .insert(customSkills)
+    .values({ ...row, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: customSkills.id,
+      set: {
+        name: row.name,
+        description: row.description,
+        ...(row.skillType !== undefined ? { skillType: row.skillType } : {}),
+        config: row.config,
+        inputSchema: row.inputSchema,
+        ...(row.enabled !== undefined ? { enabled: row.enabled } : {}),
+        updatedAt: new Date(),
+      },
+    })
+    .returning();
+  return result!;
+}
+
+export async function deleteCustomSkill(id: string): Promise<void> {
+  await db.delete(customSkills).where(eq(customSkills.id, id));
 }
 
 export async function upsertAgentSchedule(row: AgentScheduleRow): Promise<AgentScheduleRow> {

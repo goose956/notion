@@ -324,3 +324,36 @@ export const agentSchedules = pgTable("agent_schedules", {
 
 export type AgentScheduleRow = typeof agentSchedules.$inferSelect;
 export type NewAgentScheduleRow = typeof agentSchedules.$inferInsert;
+
+// ─── Custom Skills ───────────────────────────────────────────────────────────
+
+/**
+ * custom_skills — user-created agent skills configured via the admin UI.
+ *
+ * Each row is a skill that agents can use without writing any code.
+ * Currently supported skill_types:
+ *   - "webhook": POSTs agent args to a URL, returns the response body
+ *
+ * input_schema is an Anthropic-compatible tool input schema (JSON Schema object).
+ * config holds skill-type-specific settings (url, method, headers for webhook type).
+ */
+export const customSkills = pgTable("custom_skills", {
+  id: text("id").primaryKey(),                            // kebab-case slug (also the skill name)
+  name: text("name").notNull().unique(),                  // same as id — used as tool name in Claude
+  description: text("description").notNull(),
+  skillType: text("skill_type").notNull().default("webhook"), // "webhook" | future types
+  /** Type-specific config. For webhook: { url, method, headers } */
+  config: jsonb("config").notNull().default({}),
+  /** Anthropic-compatible input_schema for the tool */
+  inputSchema: jsonb("input_schema").notNull().default({ type: "object", properties: {} }),
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type CustomSkillRow = typeof customSkills.$inferSelect;
+export type NewCustomSkillRow = typeof customSkills.$inferInsert;
