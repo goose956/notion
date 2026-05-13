@@ -8,6 +8,8 @@
  * Custom tools can be registered dynamically at runtime.
  */
 import type { Skill } from "./types.js";
+import { notionArchiveSkill } from "../skills/notion_archive/notion-archive.js";
+import { notionCreateSkill } from "../skills/notion_create/notion-create.js";
 import { notionWriteSkill } from "../skills/notion_write/notion-write.js";
 import { notionQuerySkill } from "../skills/notion_query/notion-query.js";
 import { enrichRecordSkill } from "../skills/enrich_record/enrich.js";
@@ -63,6 +65,8 @@ export const listSkills = listTools;
 export const resolveSkills = resolveTools;
 
 // Register all built-in tools
+registerTool(notionArchiveSkill);
+registerTool(notionCreateSkill);
 registerTool(notionWriteSkill);
 registerTool(notionQuerySkill);
 registerTool(enrichRecordSkill);

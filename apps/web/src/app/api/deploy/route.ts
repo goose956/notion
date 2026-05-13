@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
   await updateDeployStatus(deployId, {
     status: "success",
     durationMs: result.durationMs,
+    databaseIdMap: result.databaseIds,
   });
 
   // Persist user criteria so sync runs can reload them without re-asking

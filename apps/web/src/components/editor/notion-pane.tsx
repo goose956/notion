@@ -155,14 +155,18 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
         `Deployed ${deployedDatabaseCount} databases in ${body.result!.durationMs}ms`;
 
       // Auto-import on first deploy so users get value immediately.
-      if (isInitialDeploy && pack.dataSources.length > 0) {
+      // Skip sources with schedule: "manual" — they require explicit user action.
+      const autoImportSources = pack.dataSources.filter(
+        (src) => src.schedule !== "manual",
+      );
+      if (isInitialDeploy && autoImportSources.length > 0) {
         setImportInProgress(true);
         let totalProcessed = 0;
         let totalSkipped = 0;
 
         try {
-          for (let i = 0; i < pack.dataSources.length; i++) {
-            const src = pack.dataSources[i]!;
+          for (let i = 0; i < autoImportSources.length; i++) {
+            const src = autoImportSources[i]!;
             const effectiveCriteria =
               Object.keys(answers).length > 0 ? answers : onboardingAnswers;
 
@@ -177,7 +181,7 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
 
             setImportProgress({
               current: i + 1,
-              total: pack.dataSources.length,
+              total: autoImportSources.length,
               label: src.label,
             });
 

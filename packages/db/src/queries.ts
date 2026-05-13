@@ -116,6 +116,7 @@ export async function updateDeployStatus(
     status: DeployRow["status"];
     durationMs?: number;
     errorMessage?: string;
+    databaseIdMap?: Record<string, string>;
   },
 ): Promise<void> {
   await db
@@ -124,9 +125,22 @@ export async function updateDeployStatus(
       status: update.status,
       durationMs: update.durationMs ?? null,
       errorMessage: update.errorMessage ?? null,
+      ...(update.databaseIdMap !== undefined ? { databaseIdMap: update.databaseIdMap } : {}),
       completedAt: new Date(),
     })
     .where(eq(deploys.id, id));
+}
+
+export async function getLatestDeployByNiche(
+  nichePackId: string,
+): Promise<DeployRow | undefined> {
+  const rows = await db
+    .select()
+    .from(deploys)
+    .where(and(eq(deploys.nichePackId, nichePackId), eq(deploys.status, "success")))
+    .orderBy(desc(deploys.createdAt))
+    .limit(1);
+  return rows[0];
 }
 
 export async function listDeploysByNiche(nichePackId: string): Promise<DeployRow[]> {

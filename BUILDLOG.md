@@ -380,6 +380,91 @@ Added `scripts/debug-apify-smoke.ts` to run a quick local smoke test against the
 
 ---
 
+## Phase 12 — Bidirectional Notion Writes, Members Chat, and Split-Panel Research UI (May 2026)
+
+### New agent tools
+
+Added two new skills to `packages/agent-tools`:
+
+**`notion_create` (`skills/notion_create/notion-create.ts`)**
+Creates new pages in a Notion database. On each call it:
+1. Calls `databases.retrieve` to fetch the live DB schema
+2. Maps each incoming property value to the correct Notion property shape (`title`, `select`, `multi_select`, `url`, `email`, `phone_number`, `date`, `status`, `number`, `checkbox`, `rich_text`)
+3. Calls `pages.create` and returns a success / error string
+
+**`notion_archive` (`skills/notion_archive/notion-archive.ts`)**
+Soft-deletes a Notion page via `pages.update({ archived: true })`. The tool description instructs the AI to run `notion_query` first to resolve the target `page_id`. Pages are recoverable from Notion Trash (Notion API has no hard-delete endpoint).
+
+Both skills are registered in `packages/agent-tools/src/registry.ts` above the existing `notionWriteSkill` / `notionQuerySkill` entries.
+
+### Members chat — tool enablement and model configuration
+
+`apps/web/src/app/api/members/chat/route.ts` was updated:
+
+- **Tool set expanded** — `MEMBER_TOOL_IDS` now includes `notion_create` and `notion_archive` in addition to the existing six tools.
+- **Dynamic model resolution** — `resolveModel()` reads the `anthropic.model` setting from the `app_settings` DB table; falls back to `process.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5"`. Default changed from `claude-sonnet-4-5` to `claude-haiku-4-5` to reduce per-request cost for tool-use tasks.
+- **Structured output system prompt** — `BASE_SYSTEM_PROMPT` instructs Claude to respond with one summary sentence followed by a fenced `json` array when the user asks for lists. The array items must use the exact Notion property names from the deployed database.
+- **Dynamic DB context injection** — On every request the route:
+  1. Calls `listNichePacks()` to enumerate all packs
+  2. Calls `getLatestDeployByNiche(id)` for each pack to retrieve `database_id_map`
+  3. Calls `databases.retrieve` on each Notion DB to get property names + types
+  4. Injects `database_id` and a property list (`Name (type)`) into the system prompt so Claude uses exact field names
+
+### New DB query: `getLatestDeployByNiche`
+
+Added to `packages/db/src/queries.ts`. Returns the most recent `status = 'success'` deploy row for a niche pack. Used by the chat route and the new databases endpoint.
+
+### Deploy route saves `databaseIdMap`
+
+`apps/web/src/app/api/deploy/route.ts` now passes `databaseIdMap: result.databaseIds` to `updateDeployStatus()`. Previously the map was discarded after deploy, so the members chat system prompt had no database IDs to inject.
+
+`updateDeployStatus` in `packages/db/src/queries.ts` accepts an optional `databaseIdMap?: Record<string, string>` and persists it to the `database_id_map` column.
+
+### New API endpoints
+
+**`/api/members/databases` (GET)**
+Returns all deployed Notion database IDs for the authenticated member. Response shape:
+```typescript
+{ databases: Array<{ nicheId, nicheName, dbId, dbName, notionId }> }
+```
+Enumerates all niche packs, gets their latest successful deploy, and flattens `databaseIdMap` into named entries.
+
+**`/api/members/notion-add` (POST)**
+Direct Notion page creation from the members UI — bypasses the AI layer. Body:
+```typescript
+{ notionDatabaseId: string, properties: Record<string, unknown> }
+```
+Calls `notionCreateSkill.handler` directly. Returns `502` if the skill returns an error string.
+
+### Split-panel research UI
+
+`apps/web/src/app/(members)/members/chat/page.tsx` was fully rewritten from a chat-bubble conversation view to a two-column research interface:
+
+**Left panel (340 px, fixed)**
+- Header with bot icon
+- Live `ActivityFeed` — animated badges for each tool call (searching, fetching, writing) that turn solid on completion
+- Suggested prompts list when idle
+- Textarea + Send button pinned to the bottom
+
+**Right panel (flex)**
+- Idle splash screen with call-to-action copy
+- Animated loading skeleton (3 cards) while Claude is researching
+- On completion: summary paragraph + responsive card grid (1 col → 2 col on lg)
+- Per-card **Add** button → `POST /api/members/notion-add`
+- Toolbar with:
+  - Result count + "N added to Notion" counter
+  - Database selector (populated from `/api/members/databases`)
+  - **Add all (N)** bulk button
+- Error banner for failed Notion writes
+
+Key helper functions added to the page:
+- `parseResultItems(text)` — extracts the fenced `json` array from Claude's response
+- `getSummaryText(text)` — returns the leading prose before the code fence
+- `getItemTitle(item)` — picks the most likely title field from a result object
+- `TOOL_LABELS` / `TOOL_ICON` / `resolveToolLabel()` — maps tool IDs to human-readable labels and Lucide icons for the activity feed
+
+---
+
 ## Dependency versions
 
 | Package | Version | Notes |
@@ -395,4 +480,4 @@ Added `scripts/debug-apify-smoke.ts` to run a quick local smoke test against the
 
 ---
 
-*Last updated: 12 May 2026*
+*Last updated: 13 May 2026*

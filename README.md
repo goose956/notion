@@ -23,9 +23,11 @@ packages/
   deployer/        # Niche pack → Notion workspace
   exporter/        # Notion workspace → niche pack JSON
   ai/              # Claude generation + adapter scaffolding
-  db/              # Drizzle ORM schema (niche_packs, deploys, adapter_runs)
+  agent-tools/     # Skill registry (web_search, notion_query/create/archive/write, …)
+  db/              # Drizzle ORM schema (niche_packs, deploys, adapter_runs, app_settings)
 niches/
-  real-estate-investor/  # First shipped niche pack
+  real-estate-investor/        # First shipped niche pack
+  local-business-lead-tracker/ # Apify-backed local business lead adapter
 ```
 
 ## Prerequisites
@@ -68,6 +70,20 @@ Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to 
 | `pnpm exec tsx scripts/debug-apify-smoke.ts` | Smoke-test the `apify-google-places` adapter |
 
 ## Recent updates (May 2026)
+
+### 13 May 2026 — Bidirectional Notion writes + split-panel research UI
+
+- Added `notion_create` and `notion_archive` agent skills so the members chatbot can add and remove Notion database rows.
+- Members chat model switched to `claude-haiku-4-5` (configurable via Admin → Settings → Anthropic Model).
+- Chat system prompt now dynamically injects deployed database IDs and exact property names so Claude outputs structured JSON matching Notion's schema.
+- Added `/api/members/databases` endpoint (returns all deployed Notion DB IDs for the authenticated member).
+- Added `/api/members/notion-add` endpoint (direct Notion page creation from the UI, no AI round-trip).
+- Deploy route now persists `databaseIdMap` to the `deploys` table so downstream features can resolve pack database IDs.
+- Members chat page rewritten as a split-panel research interface:
+  - **Left panel** — input, live tool activity feed, suggested prompts
+  - **Right panel** — structured result cards with per-item and bulk "Add to Notion" buttons, database selector
+
+### 12 May 2026
 
 - Added runtime integration settings at `/admin/settings` backed by a persistent `app_settings` table and `/api/settings`.
 - Updated checkout, Stripe webhook, and enrichment APIs to read configured secrets/model from DB settings first, then fall back to environment variables.
