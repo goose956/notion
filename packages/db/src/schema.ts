@@ -222,7 +222,7 @@ export type NewAppSettingRow = typeof appSettings.$inferInsert;
 /**
  * agent_definitions — reusable agent blueprints.
  *
- * Each row defines a named agent: its system prompt, which skills it can use,
+ * Each row defines a named agent: its system prompt, which tools it can use,
  * the model it runs on, and optional per-niche scoping.
  */
 export const agentDefinitions = pgTable("agent_definitions", {
@@ -231,8 +231,8 @@ export const agentDefinitions = pgTable("agent_definitions", {
   description: text("description").notNull().default(""),
   systemPrompt: text("system_prompt").notNull(),
   model: text("model").notNull().default("claude-sonnet-4-5"),
-  /** JSON string[] of skill IDs available to this agent */
-  skillList: jsonb("skill_list").notNull().default([]),
+  /** JSON string[] of tool IDs available to this agent */
+  toolList: jsonb("tool_list").notNull().default([]),
   /** JSON object — agent-level defaults (maxTurns, timeoutMs, etc.) */
   defaultConfig: jsonb("default_config").notNull().default({}),
   /** Optional niche scoping — null means the definition is global */
@@ -325,23 +325,23 @@ export const agentSchedules = pgTable("agent_schedules", {
 export type AgentScheduleRow = typeof agentSchedules.$inferSelect;
 export type NewAgentScheduleRow = typeof agentSchedules.$inferInsert;
 
-// ─── Custom Skills ───────────────────────────────────────────────────────────
+// ─── Custom Tools ────────────────────────────────────────────────────────────
 
 /**
- * custom_skills — user-created agent skills configured via the admin UI.
+ * custom_tools — user-created agent tools configured via the admin UI.
  *
- * Each row is a skill that agents can use without writing any code.
- * Currently supported skill_types:
+ * Each row is a tool that agents can use without writing any code.
+ * Currently supported tool_types:
  *   - "webhook": POSTs agent args to a URL, returns the response body
  *
  * input_schema is an Anthropic-compatible tool input schema (JSON Schema object).
- * config holds skill-type-specific settings (url, method, headers for webhook type).
+ * config holds tool-type-specific settings (url, method, headers for webhook type).
  */
-export const customSkills = pgTable("custom_skills", {
-  id: text("id").primaryKey(),                            // kebab-case slug (also the skill name)
+export const customTools = pgTable("custom_tools", {
+  id: text("id").primaryKey(),                            // kebab-case slug (also the tool name)
   name: text("name").notNull().unique(),                  // same as id — used as tool name in Claude
   description: text("description").notNull(),
-  skillType: text("skill_type").notNull().default("webhook"), // "webhook" | future types
+  toolType: text("tool_type").notNull().default("webhook"), // "webhook" | future types
   /** Type-specific config. For webhook: { url, method, headers } */
   config: jsonb("config").notNull().default({}),
   /** Anthropic-compatible input_schema for the tool */
@@ -355,5 +355,10 @@ export const customSkills = pgTable("custom_skills", {
     .defaultNow(),
 });
 
-export type CustomSkillRow = typeof customSkills.$inferSelect;
-export type NewCustomSkillRow = typeof customSkills.$inferInsert;
+export type CustomToolRow = typeof customTools.$inferSelect;
+export type NewCustomToolRow = typeof customTools.$inferInsert;
+
+/** @deprecated Use CustomToolRow instead */
+export type CustomSkillRow = CustomToolRow;
+/** @deprecated Use NewCustomToolRow instead */
+export type NewCustomSkillRow = NewCustomToolRow;

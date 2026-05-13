@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type InputProp = {
   type: string;
@@ -16,17 +16,17 @@ type InputSchema = {
   required?: string[];
 };
 
-type BuiltinSkill = {
+type BuiltinTool = {
   name: string;
   description: string;
   inputSchema: InputSchema;
 };
 
-type CustomSkillRow = {
+type CustomToolRow = {
   id: string;
   name: string;
   description: string;
-  skillType: string;
+  toolType: string;
   config: Record<string, unknown>;
   inputSchema: InputSchema;
   enabled: boolean;
@@ -46,15 +46,15 @@ type ParamDef = {
   required: boolean;
 };
 
-// â”€â”€â”€ Built-in skill API key requirements â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Built-in tool API key requirements ────────────────────────────────────────
 
-const SKILL_API_KEY: Record<string, { label: string; settingsKey: keyof SettingsState }> = {
+const TOOL_API_KEY: Record<string, { label: string; settingsKey: keyof SettingsState }> = {
   web_search: { label: "SERPER_API_KEY", settingsKey: "serperApiKeyConfigured" },
   send_email: { label: "RESEND_API_KEY", settingsKey: "resendApiKeyConfigured" },
   run_apify: { label: "APIFY_TOKEN", settingsKey: "apifyTokenConfigured" },
 };
 
-// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Sub-components ──────────────────────────────────────────────────────────
 
 function InputSchemaTable({ schema }: { schema: InputSchema }) {
   const props = Object.entries(schema.properties ?? {});
@@ -86,54 +86,54 @@ function InputSchemaTable({ schema }: { schema: InputSchema }) {
   );
 }
 
-function BuiltinSkillCard({ skill, settings }: { skill: BuiltinSkill; settings: SettingsState | null }) {
-  const keyInfo = SKILL_API_KEY[skill.name];
+function BuiltinToolCard({ tool, settings }: { tool: BuiltinTool; settings: SettingsState | null }) {
+  const keyInfo = TOOL_API_KEY[tool.name];
   const configured = keyInfo && settings ? settings[keyInfo.settingsKey] : null;
 
   return (
     <div className="surface-card p-4 space-y-2">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <span className="font-mono text-sm font-semibold">{skill.name}</span>
+          <span className="font-mono text-sm font-semibold">{tool.name}</span>
           <span className="ml-2 text-xs bg-blue-100 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5">built-in</span>
-          <p className="text-sm text-muted-foreground mt-0.5">{skill.description}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{tool.description}</p>
         </div>
         {keyInfo && (
           configured === true ? (
-            <span className="shrink-0 inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">âœ“ {keyInfo.label}</span>
+            <span className="shrink-0 inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">✓ {keyInfo.label}</span>
           ) : configured === false ? (
             <Link href="/admin/settings" className="shrink-0 inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 hover:bg-amber-100">
-              âš  {keyInfo.label} â€” configure
+              ⚠ {keyInfo.label} – configure
             </Link>
           ) : null
         )}
       </div>
-      <InputSchemaTable schema={skill.inputSchema} />
+      <InputSchemaTable schema={tool.inputSchema} />
     </div>
   );
 }
 
-function CustomSkillCard({
-  skill,
+function CustomToolCard({
+  tool,
   onToggle,
   onDelete,
 }: {
-  skill: CustomSkillRow;
+  tool: CustomToolRow;
   onToggle: (id: string, enabled: boolean) => void;
   onDelete: (id: string) => void;
 }) {
-  const cfg = skill.config as { url?: string; method?: string };
+  const cfg = tool.config as { url?: string; method?: string };
 
   return (
     <div className="surface-card p-4 space-y-2">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <span className="font-mono text-sm font-semibold">{skill.name}</span>
-          <span className="ml-2 text-xs bg-purple-100 text-purple-700 border border-purple-200 rounded-full px-2 py-0.5">custom Â· {skill.skillType}</span>
-          {!skill.enabled && (
+          <span className="font-mono text-sm font-semibold">{tool.name}</span>
+          <span className="ml-2 text-xs bg-purple-100 text-purple-700 border border-purple-200 rounded-full px-2 py-0.5">custom · {tool.toolType}</span>
+          {!tool.enabled && (
             <span className="ml-1 text-xs bg-muted text-muted-foreground border rounded-full px-2 py-0.5">disabled</span>
           )}
-          <p className="text-sm text-muted-foreground mt-0.5">{skill.description}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{tool.description}</p>
           {cfg.url && (
             <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate max-w-sm">
               {cfg.method ?? "POST"} {cfg.url}
@@ -142,27 +142,27 @@ function CustomSkillCard({
         </div>
         <div className="shrink-0 flex items-center gap-3">
           <button
-            onClick={() => onToggle(skill.id, !skill.enabled)}
+            onClick={() => onToggle(tool.id, !tool.enabled)}
             className="text-xs text-muted-foreground hover:text-foreground underline"
           >
-            {skill.enabled ? "Disable" : "Enable"}
+            {tool.enabled ? "Disable" : "Enable"}
           </button>
           <button
-            onClick={() => onDelete(skill.id)}
+            onClick={() => onDelete(tool.id)}
             className="text-xs text-red-600 hover:text-red-800 underline"
           >
             Delete
           </button>
         </div>
       </div>
-      <InputSchemaTable schema={skill.inputSchema} />
+      <InputSchemaTable schema={tool.inputSchema} />
     </div>
   );
 }
 
-// â”€â”€â”€ Create form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Create form ─────────────────────────────────────────────────────────────
 
-function CreateSkillForm({ onCreated }: { onCreated: () => void }) {
+function CreateToolForm({ onCreated }: { onCreated: () => void }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -196,22 +196,22 @@ function CreateSkillForm({ onCreated }: { onCreated: () => void }) {
     setError(null);
 
     try {
-      const res = await fetch("/api/skills/custom", {
+      const res = await fetch("/api/tools/custom", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, name: id, description, skillType: "webhook", url, method, authHeader, params }),
+        body: JSON.stringify({ id, name: id, description, toolType: "webhook", url, method, authHeader, params }),
       });
 
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string; issues?: { message: string }[] };
-        throw new Error(body.issues?.[0]?.message ?? body.error ?? "Failed to create skill");
+        throw new Error(body.issues?.[0]?.message ?? body.error ?? "Failed to create tool");
       }
 
       reset();
       setOpen(false);
       onCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create skill");
+      setError(err instanceof Error ? err.message : "Failed to create tool");
     } finally {
       setSaving(false);
     }
@@ -225,7 +225,7 @@ function CreateSkillForm({ onCreated }: { onCreated: () => void }) {
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground text-sm font-medium h-9 px-4 hover:bg-primary/90"
       >
-        + New Custom Skill
+        + New Custom Tool
       </button>
     );
   }
@@ -233,7 +233,7 @@ function CreateSkillForm({ onCreated }: { onCreated: () => void }) {
   return (
     <form onSubmit={handleSubmit} className="surface-card p-5 space-y-4 border-2 border-primary/20">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Create Custom Skill</h3>
+        <h3 className="font-semibold">Create Custom Tool</h3>
         <button type="button" onClick={() => { setOpen(false); reset(); }} className="text-muted-foreground hover:text-foreground text-sm">
           Cancel
         </button>
@@ -241,13 +241,13 @@ function CreateSkillForm({ onCreated }: { onCreated: () => void }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <label className="block text-sm space-y-1">
-          <span className="font-medium">Skill ID / Name <span className="text-red-500">*</span></span>
+          <span className="font-medium">Tool ID / Name <span className="text-red-500">*</span></span>
           <input
             type="text"
             value={id}
             onChange={(e) => setId(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_"))}
             className={inputCls}
-            placeholder="my_skill_name"
+            placeholder="my_tool_name"
             required
           />
           <span className="text-xs text-muted-foreground">
@@ -271,7 +271,7 @@ function CreateSkillForm({ onCreated }: { onCreated: () => void }) {
           onChange={(e) => setDescription(e.target.value)}
           className={inputCls}
           rows={2}
-          placeholder="Describe what this skill does and when Claude should use it. Be specific â€” this text is how Claude decides to call it."
+          placeholder="Describe what this tool does and when Claude should use it. Be specific – this text is how Claude decides to call it."
           required
         />
       </label>
@@ -331,12 +331,12 @@ function CreateSkillForm({ onCreated }: { onCreated: () => void }) {
           </button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Define what data Claude can pass to this skill. The full set of args is sent as a JSON body to your webhook.
+          Define what data Claude can pass to this tool. The full set of args is sent as a JSON body to your webhook.
         </p>
 
         {params.length === 0 && (
           <p className="text-xs text-muted-foreground italic">
-            No parameters â€” webhook will receive an empty JSON object.
+            No parameters – webhook will receive an empty JSON object.
           </p>
         )}
 
@@ -381,7 +381,7 @@ function CreateSkillForm({ onCreated }: { onCreated: () => void }) {
             </div>
             <div className="col-span-1 flex items-center justify-center">
               <button type="button" onClick={() => removeParam(i)} className="text-red-500 hover:text-red-700">
-                âœ•
+                ✕
               </button>
             </div>
           </div>
@@ -394,7 +394,7 @@ function CreateSkillForm({ onCreated }: { onCreated: () => void }) {
           disabled={saving}
           className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-medium h-9 px-4 hover:bg-primary/90 disabled:opacity-60"
         >
-          {saving ? "Creating..." : "Create Skill"}
+          {saving ? "Creating..." : "Create Tool"}
         </button>
         {error && <p className="text-sm text-red-700">{error}</p>}
       </div>
@@ -402,37 +402,37 @@ function CreateSkillForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-// â”€â”€â”€ Main catalog component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main catalog component ──────────────────────────────────────────────────
 
-export function SkillsCatalog() {
-  const [builtins, setBuiltins] = useState<BuiltinSkill[]>([]);
-  const [customs, setCustoms] = useState<CustomSkillRow[]>([]);
+export function ToolsCatalog() {
+  const [builtins, setBuiltins] = useState<BuiltinTool[]>([]);
+  const [customs, setCustoms] = useState<CustomToolRow[]>([]);
   const [settings, setSettings] = useState<SettingsState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [skillsRes, customRes, settingsRes] = await Promise.all([
-        fetch("/api/skills", { cache: "no-store" }),
-        fetch("/api/skills/custom", { cache: "no-store" }),
+      const [toolsRes, customRes, settingsRes] = await Promise.all([
+        fetch("/api/tools", { cache: "no-store" }),
+        fetch("/api/tools/custom", { cache: "no-store" }),
         fetch("/api/settings", { cache: "no-store" }),
       ]);
 
-      if (!skillsRes.ok) throw new Error("Failed to load built-in skills");
+      if (!toolsRes.ok) throw new Error("Failed to load built-in tools");
       if (!customRes.ok) {
         const body = await customRes.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Custom skills API error ${customRes.status}`);
+        throw new Error(body.error ?? `Custom tools API error ${customRes.status}`);
       }
       if (!settingsRes.ok) throw new Error("Failed to load settings");
 
-      const [skillsData, customData, settingsData] = await Promise.all([
-        skillsRes.json() as Promise<BuiltinSkill[]>,
-        customRes.json() as Promise<CustomSkillRow[]>,
+      const [toolsData, customData, settingsData] = await Promise.all([
+        toolsRes.json() as Promise<BuiltinTool[]>,
+        customRes.json() as Promise<CustomToolRow[]>,
         settingsRes.json() as Promise<SettingsState>,
       ]);
 
-      setBuiltins(skillsData);
+      setBuiltins(toolsData);
       setCustoms(customData);
       setSettings(settingsData);
     } catch (err) {
@@ -447,7 +447,7 @@ export function SkillsCatalog() {
   }, [load]);
 
   async function handleToggle(id: string, enabled: boolean) {
-    await fetch(`/api/skills/custom/${id}`, {
+    await fetch(`/api/tools/custom/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ enabled }),
@@ -456,17 +456,17 @@ export function SkillsCatalog() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm(`Delete custom skill "${id}"? This cannot be undone.`)) return;
-    await fetch(`/api/skills/custom/${id}`, { method: "DELETE" });
+    if (!confirm(`Delete custom tool "${id}"? This cannot be undone.`)) return;
+    await fetch(`/api/tools/custom/${id}`, { method: "DELETE" });
     setCustoms((prev) => prev.filter((s) => s.id !== id));
   }
 
-  if (loading) return <div className="text-sm text-muted-foreground">Loading skills...</div>;
+  if (loading) return <div className="text-sm text-muted-foreground">Loading tools...</div>;
   if (error) return <div className="text-sm text-red-700">Error: {error}</div>;
 
-  const needingKeys = builtins.filter((s) => SKILL_API_KEY[s.name] !== undefined);
+  const needingKeys = builtins.filter((s) => TOOL_API_KEY[s.name] !== undefined);
   const configuredCount = needingKeys.filter((s) => {
-    const k = SKILL_API_KEY[s.name];
+    const k = TOOL_API_KEY[s.name];
     return k !== undefined && settings !== null && settings[k.settingsKey];
   }).length;
 
@@ -474,52 +474,52 @@ export function SkillsCatalog() {
     <div className="space-y-6">
       {/* Summary bar */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-        <span>{builtins.length} built-in skills</span>
-        <span>Â·</span>
-        <span>{customs.length} custom skill{customs.length !== 1 ? "s" : ""}</span>
-        <span>Â·</span>
+        <span>{builtins.length} built-in tools</span>
+        <span>·</span>
+        <span>{customs.length} custom tool{customs.length !== 1 ? "s" : ""}</span>
+        <span>·</span>
         <span>{configuredCount}/{needingKeys.length} API keys configured</span>
         {configuredCount < needingKeys.length && (
           <>
-            <span>Â·</span>
+            <span>·</span>
             <Link href="/admin/settings" className="underline text-primary">
-              Configure missing keys â†’
+              Configure missing keys →
             </Link>
           </>
         )}
       </div>
 
-      {/* Custom skills */}
+      {/* Custom tools */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-base">Custom Skills</h2>
-          <CreateSkillForm onCreated={() => { load().catch(() => undefined); }} />
+          <h2 className="font-semibold text-base">Custom Tools</h2>
+          <CreateToolForm onCreated={() => { load().catch(() => undefined); }} />
         </div>
 
         {customs.length === 0 && (
           <div className="surface-card p-6 text-center space-y-1">
-            <p className="text-sm font-medium">No custom skills yet.</p>
+            <p className="text-sm font-medium">No custom tools yet.</p>
             <p className="text-sm text-muted-foreground">
-              Create a custom skill to let agents call any webhook, Zapier flow, Make scenario, or REST API â€” no code needed.
+              Create a custom tool to let agents call any webhook, Zapier flow, Make scenario, or REST API – no code needed.
             </p>
           </div>
         )}
 
-        {customs.map((skill) => (
-          <CustomSkillCard
-            key={skill.id}
-            skill={skill}
+        {customs.map((tool) => (
+          <CustomToolCard
+            key={tool.id}
+            tool={tool}
             onToggle={handleToggle}
             onDelete={handleDelete}
           />
         ))}
       </section>
 
-      {/* Built-in skills */}
+      {/* Built-in tools */}
       <section className="space-y-3">
-        <h2 className="font-semibold text-base">Built-in Skills</h2>
-        {builtins.map((skill) => (
-          <BuiltinSkillCard key={skill.name} skill={skill} settings={settings} />
+        <h2 className="font-semibold text-base">Built-in Tools</h2>
+        {builtins.map((tool) => (
+          <BuiltinToolCard key={tool.name} tool={tool} settings={settings} />
         ))}
       </section>
     </div>

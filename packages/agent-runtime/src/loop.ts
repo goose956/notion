@@ -6,7 +6,7 @@
  * the turn limit / timeout is reached.
  */
 import Anthropic from "@anthropic-ai/sdk";
-import type { Skill, SkillContext } from "@niche-factory/agent-skills";
+import type { Skill, SkillContext } from "@niche-factory/agent-tools";
 
 export interface LoopOptions {
   /** Initialised Anthropic client with the correct API key */

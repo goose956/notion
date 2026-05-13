@@ -13,7 +13,7 @@ const CreateSchema = z.object({
   description: z.string().default(""),
   systemPrompt: z.string().min(1),
   model: z.string().default("claude-sonnet-4-5"),
-  skillList: z.array(z.string()).default([]),
+  toolList: z.array(z.string()).default([]),
   defaultConfig: z.record(z.unknown()).default({}),
   nicheId: z.string().optional(),
 });
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     description: data.description,
     systemPrompt: data.systemPrompt,
     model: data.model,
-    skillList: data.skillList,
+    toolList: data.toolList,
     defaultConfig: data.defaultConfig,
     ...(data.nicheId !== undefined ? { nicheId: data.nicheId } : {}),
     createdAt: now,

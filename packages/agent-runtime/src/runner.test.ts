@@ -10,10 +10,10 @@ vi.mock("@niche-factory/db", () => ({
   getSettingValue: vi.fn(),
 }));
 
-// ─── agent-skills mock ────────────────────────────────────────────────────────
+// ─── agent-tools mock ────────────────────────────────────────────────────────
 
-vi.mock("@niche-factory/agent-skills", () => ({
-  resolveSkills: vi.fn(() => []),
+vi.mock("@niche-factory/agent-tools", () => ({
+  resolveTools: vi.fn(() => []),
 }));
 
 // ─── Anthropic SDK mock ───────────────────────────────────────────────────────

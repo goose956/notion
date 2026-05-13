@@ -68,7 +68,7 @@ export default function AdminHomePage() {
           <div className="icon-badge"><Bot className="h-4 w-4" /></div>
           <h2 className="font-semibold mt-3">Agents</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Create, configure, and run Claude AI agents with Notion skills.
+            Create, configure, and run Claude AI agents with Notion tools.
           </p>
           <span className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-primary">
             Open agents
@@ -77,16 +77,16 @@ export default function AdminHomePage() {
         </Link>
 
         <Link
-          href="/admin/skills"
+          href="/admin/tools"
           className="surface-card p-5 hover:shadow-lg transition-shadow"
         >
           <div className="icon-badge"><Wrench className="h-4 w-4" /></div>
-          <h2 className="font-semibold mt-3">Skills</h2>
+          <h2 className="font-semibold mt-3">Tools</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Browse all available agent tools — web search, email, webhooks, scraping and more.
           </p>
           <span className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-primary">
-            Open skills
+            Open tools
             <ArrowRight className="h-3.5 w-3.5" />
           </span>
         </Link>

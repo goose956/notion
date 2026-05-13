@@ -19,10 +19,10 @@ import {
   createAgentRun,
   updateAgentRun,
   getSettingValue,
-  listCustomSkills,
+  listCustomTools,
 } from "@niche-factory/db";
-import { resolveSkills, buildCustomSkill } from "@niche-factory/agent-skills";
-import type { SkillContext } from "@niche-factory/agent-skills";
+import { resolveTools, buildCustomTool } from "@niche-factory/agent-tools";
+import type { ToolContext } from "@niche-factory/agent-tools";
 import { runAgentLoop } from "./loop.js";
 import type { RunAgentOptions, AgentRunResult, JsonValue } from "./types.js";
 
@@ -138,28 +138,28 @@ export async function runAgent(opts: RunAgentOptions): Promise<AgentRunResult> {
     getSettingValue("apify.token"),
   ]);
 
-  // 3. Resolve skills — built-ins first, then custom skills from DB
-  const skillList = Array.isArray(agentDef.skillList)
-    ? (agentDef.skillList as string[])
+  // 3. Resolve tools — built-ins first, then custom tools from DB
+  const toolList = Array.isArray(agentDef.toolList)
+    ? (agentDef.toolList as string[])
     : [];
 
-  // Separate built-in skill names from custom skill IDs
+  // Separate built-in tool names from custom tool IDs
   const builtinNames = new Set(["notion_write", "notion_query", "enrich_record", "web_search", "fetch_url", "send_email", "call_webhook", "run_apify"]);
-  const builtinSkillIds = skillList.filter((id) => builtinNames.has(id));
-  const customSkillIds = skillList.filter((id) => !builtinNames.has(id));
+  const builtinToolIds = toolList.filter((id) => builtinNames.has(id));
+  const customToolIds = toolList.filter((id) => !builtinNames.has(id));
 
-  const builtinSkills = resolveSkills(builtinSkillIds);
+  const builtinTools = resolveTools(builtinToolIds);
 
-  // Load custom skills from DB (only the ones in this agent's skill_list)
-  const allCustomRows = customSkillIds.length > 0
-    ? await listCustomSkills(true)
+  // Load custom tools from DB (only the ones in this agent's tool_list)
+  const allCustomRows = customToolIds.length > 0
+    ? await listCustomTools(true)
     : [];
-  const customSkillObjects = allCustomRows
-    .filter((row) => customSkillIds.includes(row.id))
-    .map((row) => buildCustomSkill(row))
+  const customToolObjects = allCustomRows
+    .filter((row) => customToolIds.includes(row.id))
+    .map((row) => buildCustomTool(row))
     .filter((s): s is NonNullable<typeof s> => s !== null);
 
-  const skills = [...builtinSkills, ...customSkillObjects];
+  const skills = [...builtinTools, ...customToolObjects];
 
   // 4. Create the agent_runs row (status: pending)
   const runId = randomUUID();
@@ -189,7 +189,7 @@ export async function runAgent(opts: RunAgentOptions): Promise<AgentRunResult> {
   if (!apiKeys["RESEND_API_KEY"] && process.env["RESEND_API_KEY"]) apiKeys["RESEND_API_KEY"] = process.env["RESEND_API_KEY"]!;
   if (!apiKeys["APIFY_TOKEN"] && process.env["APIFY_TOKEN"]) apiKeys["APIFY_TOKEN"] = process.env["APIFY_TOKEN"]!;
 
-  const skillContext: SkillContext = {
+  const toolContext: ToolContext = {
     notionToken,
     customerId,
     apiKeys,
@@ -223,7 +223,7 @@ export async function runAgent(opts: RunAgentOptions): Promise<AgentRunResult> {
       systemPrompt: agentDef.systemPrompt,
       userMessage,
       skills,
-      skillContext,
+      skillContext: toolContext,
       maxTurns,
       timeoutMs,
     });

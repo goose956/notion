@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { listCustomSkills, upsertCustomSkill } from "@niche-factory/db";
+import { listCustomTools, upsertCustomTool } from "@niche-factory/db";
 
 const InputParamSchema = z.object({
   name: z.string().min(1),
@@ -9,7 +9,7 @@ const InputParamSchema = z.object({
   required: z.boolean().default(false),
 });
 
-const CreateCustomSkillSchema = z.object({
+const CreateCustomToolSchema = z.object({
   id: z
     .string()
     .min(1)
@@ -19,7 +19,7 @@ const CreateCustomSkillSchema = z.object({
     .min(1)
     .regex(/^[a-z0-9_]+$/, "Name must be lowercase letters, numbers, and underscores only"),
   description: z.string().min(1, "Description is required"),
-  skillType: z.enum(["webhook"]).default("webhook"),
+  toolType: z.enum(["webhook"]).default("webhook"),
   /** Webhook config */
   url: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   method: z.enum(["GET", "POST", "PUT", "PATCH"]).default("POST"),
@@ -48,12 +48,12 @@ function buildInputSchema(params: z.infer<typeof InputParamSchema>[]) {
 
 export async function GET() {
   try {
-    const rows = await listCustomSkills();
+    const rows = await listCustomTools();
     return NextResponse.json(rows);
   } catch (err) {
-    console.error("[GET /api/skills/custom]", err);
+    console.error("[GET /api/tools/custom]", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to load custom skills" },
+      { error: err instanceof Error ? err.message : "Failed to load custom tools" },
       { status: 500 },
     );
   }
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = CreateCustomSkillSchema.safeParse(body);
+  const parsed = CreateCustomToolSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation failed", issues: parsed.error.issues },
@@ -86,11 +86,11 @@ export async function POST(req: NextRequest) {
     config["headers"] = { Authorization: data.authHeader.trim() };
   }
 
-  const row = await upsertCustomSkill({
+  const row = await upsertCustomTool({
     id: data.id,
     name: data.name,
     description: data.description,
-    skillType: data.skillType,
+    toolType: data.toolType,
     config,
     inputSchema,
     enabled: data.enabled,

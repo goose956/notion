@@ -29,9 +29,9 @@ importers:
       '@niche-factory/agent-runtime':
         specifier: workspace:*
         version: link:../../packages/agent-runtime
-      '@niche-factory/agent-skills':
+      '@niche-factory/agent-tools':
         specifier: workspace:*
-        version: link:../../packages/agent-skills
+        version: link:../../packages/agent-tools
       '@niche-factory/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -160,9 +160,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.24.3
         version: 0.24.3
-      '@niche-factory/agent-skills':
+      '@niche-factory/agent-tools':
         specifier: workspace:*
-        version: link:../agent-skills
+        version: link:../agent-tools
       '@niche-factory/db':
         specifier: workspace:*
         version: link:../db
@@ -174,7 +174,7 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@22.19.19)(lightningcss@1.32.0)
 
-  packages/agent-skills:
+  packages/agent-tools:
     dependencies:
       '@anthropic-ai/sdk':
         specifier: ^0.24.3

@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.3",
-    "@niche-factory/agent-skills": "workspace:*",
+    "@niche-factory/agent-tools": "workspace:*",
     "@niche-factory/db": "workspace:*"
   },
   "devDependencies": {

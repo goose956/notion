@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getCustomSkill, upsertCustomSkill, deleteCustomSkill } from "@niche-factory/db";
+import { getCustomTool, upsertCustomTool, deleteCustomTool } from "@niche-factory/db";
 
 const PatchSchema = z.object({
   enabled: z.boolean().optional(),
@@ -8,9 +8,9 @@ const PatchSchema = z.object({
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { skillId: string } },
+  { params }: { params: { toolId: string } },
 ) {
-  const { skillId } = params;
+  const { toolId } = params;
 
   let body: unknown;
   try {
@@ -24,12 +24,12 @@ export async function PATCH(
     return NextResponse.json({ error: "Validation failed" }, { status: 422 });
   }
 
-  const existing = await getCustomSkill(skillId);
+  const existing = await getCustomTool(toolId);
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const updated = await upsertCustomSkill({
+  const updated = await upsertCustomTool({
     ...existing,
     ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}),
     updatedAt: new Date(),
@@ -40,8 +40,8 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { skillId: string } },
+  { params }: { params: { toolId: string } },
 ) {
-  await deleteCustomSkill(params.skillId);
+  await deleteCustomTool(params.toolId);
   return NextResponse.json({ ok: true });
 }

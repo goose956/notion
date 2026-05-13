@@ -1,5 +1,5 @@
-/**
- * loader.ts — reads SKILL.md files and builds Skill definitions.
+﻿/**
+ * loader.ts â€” reads SKILL.md files and builds Skill definitions.
  *
  * SKILL.md format (YAML frontmatter + markdown body):
  *
@@ -18,10 +18,10 @@
  *
  * The markdown body is documentation-only (not parsed at runtime).
  */
-import type { SkillFrontmatter, SkillInputField } from "./types.js";
+import type { ToolFrontmatter, ToolInputField } from "./types.js";
 
 /** Extract YAML frontmatter between the first --- and second --- markers */
-export function parseFrontmatter(raw: string): SkillFrontmatter {
+export function parseFrontmatter(raw: string): ToolFrontmatter {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (match === null) {
     throw new Error("SKILL.md is missing YAML frontmatter (--- ... ---)");
@@ -31,17 +31,17 @@ export function parseFrontmatter(raw: string): SkillFrontmatter {
 }
 
 /**
- * Minimal YAML parser — only handles the subset used in SKILL.md files.
+ * Minimal YAML parser â€” only handles the subset used in SKILL.md files.
  * Supports top-level keys + one level of nested objects (for `inputs`).
  * Avoids a heavy YAML dependency for this small, controlled format.
  */
-function parseYamlFrontmatter(yaml: string): SkillFrontmatter {
+function parseYamlFrontmatter(yaml: string): ToolFrontmatter {
   const lines = yaml.split(/\r?\n/);
 
   let name = "";
   let description = "";
   let when_to_use = "";
-  const inputs: Record<string, SkillInputField> = {};
+  const inputs: Record<string, ToolInputField> = {};
 
   let i = 0;
   while (i < lines.length) {
@@ -66,7 +66,7 @@ function parseYamlFrontmatter(yaml: string): SkillFrontmatter {
           if (fieldMatch === null) break;
 
           const fieldName = fieldMatch[1] ?? "";
-          const field: Partial<SkillInputField> = {};
+          const field: Partial<ToolInputField> = {};
 
           i++;
           while (i < lines.length) {
@@ -78,7 +78,7 @@ function parseYamlFrontmatter(yaml: string): SkillFrontmatter {
             const trimmedVal = (propVal ?? "").trim();
 
             if (propKey === "type") {
-              field.type = trimmedVal as SkillInputField["type"];
+              field.type = trimmedVal as ToolInputField["type"];
             } else if (propKey === "description") {
               field.description = trimmedVal;
             } else if (propKey === "required") {
@@ -109,7 +109,7 @@ function parseYamlFrontmatter(yaml: string): SkillFrontmatter {
  * Build the Anthropic-compatible input_schema from SKILL.md inputs.
  */
 export function buildInputSchema(
-  inputs: Record<string, SkillInputField>,
+  inputs: Record<string, ToolInputField>,
 ): { type: "object"; properties: Record<string, unknown>; required: string[] } {
   const properties: Record<string, unknown> = {};
   const required: string[] = [];

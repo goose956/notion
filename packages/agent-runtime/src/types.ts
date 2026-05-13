@@ -1,7 +1,7 @@
 /**
  * types.ts — public types for @niche-factory/agent-runtime
  */
-import type { JsonValue } from "@niche-factory/agent-skills";
+import type { JsonValue } from "@niche-factory/agent-tools";
 
 export type { JsonValue };
 

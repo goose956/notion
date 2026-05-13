@@ -18,7 +18,7 @@ import {
   agentDefinitions,
   agentRuns,
   agentSchedules,
-  customSkills,
+  customTools,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
@@ -33,8 +33,8 @@ import {
   type AgentRunRow,
   type NewAgentRunRow,
   type AgentScheduleRow,
-  type CustomSkillRow,
-  type NewCustomSkillRow,
+  type CustomToolRow,
+  type NewCustomToolRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -460,7 +460,7 @@ export async function upsertAgentDefinition(row: NewAgentDefinitionRow): Promise
         description: row.description ?? "",
         systemPrompt: row.systemPrompt,
         model: row.model ?? "claude-sonnet-4-5",
-        skillList: row.skillList ?? [],
+        toolList: row.toolList ?? [],
         defaultConfig: row.defaultConfig ?? {},
         nicheId: row.nicheId ?? null,
         updatedAt: now,
@@ -532,38 +532,38 @@ export async function updateScheduleAfterRun(
     .where(eq(agentSchedules.id, id));
 }
 
-// ─── Custom skill queries ────────────────────────────────────────────────────
+// ─── Custom tool queries ──────────────────────────────────────────────────────
 
-export async function listCustomSkills(enabledOnly = false): Promise<CustomSkillRow[]> {
+export async function listCustomTools(enabledOnly = false): Promise<CustomToolRow[]> {
   if (enabledOnly) {
     return db
       .select()
-      .from(customSkills)
-      .where(eq(customSkills.enabled, true))
-      .orderBy(customSkills.name);
+      .from(customTools)
+      .where(eq(customTools.enabled, true))
+      .orderBy(customTools.name);
   }
-  return db.select().from(customSkills).orderBy(customSkills.name);
+  return db.select().from(customTools).orderBy(customTools.name);
 }
 
-export async function getCustomSkill(id: string): Promise<CustomSkillRow | undefined> {
+export async function getCustomTool(id: string): Promise<CustomToolRow | undefined> {
   const rows = await db
     .select()
-    .from(customSkills)
-    .where(eq(customSkills.id, id))
+    .from(customTools)
+    .where(eq(customTools.id, id))
     .limit(1);
   return rows[0];
 }
 
-export async function upsertCustomSkill(row: NewCustomSkillRow): Promise<CustomSkillRow> {
+export async function upsertCustomTool(row: NewCustomToolRow): Promise<CustomToolRow> {
   const [result] = await db
-    .insert(customSkills)
+    .insert(customTools)
     .values({ ...row, updatedAt: new Date() })
     .onConflictDoUpdate({
-      target: customSkills.id,
+      target: customTools.id,
       set: {
         name: row.name,
         description: row.description,
-        ...(row.skillType !== undefined ? { skillType: row.skillType } : {}),
+        ...(row.toolType !== undefined ? { toolType: row.toolType } : {}),
         config: row.config,
         inputSchema: row.inputSchema,
         ...(row.enabled !== undefined ? { enabled: row.enabled } : {}),
@@ -574,9 +574,18 @@ export async function upsertCustomSkill(row: NewCustomSkillRow): Promise<CustomS
   return result!;
 }
 
-export async function deleteCustomSkill(id: string): Promise<void> {
-  await db.delete(customSkills).where(eq(customSkills.id, id));
+export async function deleteCustomTool(id: string): Promise<void> {
+  await db.delete(customTools).where(eq(customTools.id, id));
 }
+
+/** @deprecated Use listCustomTools instead */
+export const listCustomSkills = listCustomTools;
+/** @deprecated Use getCustomTool instead */
+export const getCustomSkill = getCustomTool;
+/** @deprecated Use upsertCustomTool instead */
+export const upsertCustomSkill = upsertCustomTool;
+/** @deprecated Use deleteCustomTool instead */
+export const deleteCustomSkill = deleteCustomTool;
 
 export async function upsertAgentSchedule(row: AgentScheduleRow): Promise<AgentScheduleRow> {
   const now = new Date();

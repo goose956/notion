@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { listSkills } from "@niche-factory/agent-skills";
+import { listTools } from "@niche-factory/agent-tools";
 
 export async function GET() {
-  const skills = listSkills().map((s) => ({
+  const tools = listTools().map((s) => ({
     name: s.name,
     description: s.description,
     inputSchema: s.inputSchema,
   }));
 
-  return NextResponse.json(skills);
+  return NextResponse.json(tools);
 }

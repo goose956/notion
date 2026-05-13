@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Bot, Play, Plus, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, Loader2 } from "lucide-react";
 
-const AVAILABLE_SKILLS = ["notion_write", "notion_query", "enrich_record"] as const;
+const AVAILABLE_TOOLS = ["notion_write", "notion_query", "enrich_record"] as const;
 const CLAUDE_MODELS = [
   { value: "claude-sonnet-4-5", label: "Claude Sonnet 4.5" },
   { value: "claude-opus-4-5", label: "Claude Opus 4.5" },
@@ -17,7 +17,7 @@ type AgentDef = {
   description: string;
   systemPrompt: string;
   model: string;
-  skillList: unknown;
+  toolList: unknown;
   defaultConfig: unknown;
   nicheId: string | null;
   createdAt: string;
@@ -115,7 +115,7 @@ function AgentCard({ agent, onRunComplete }: { agent: AgentDef; onRunComplete: (
     }
   }
 
-  const skills = Array.isArray(agent.skillList) ? (agent.skillList as string[]) : [];
+  const tools = Array.isArray(agent.toolList) ? (agent.toolList as string[]) : [];
 
   return (
     <div className="border rounded-xl bg-card/80 overflow-hidden">
@@ -128,9 +128,9 @@ function AgentCard({ agent, onRunComplete }: { agent: AgentDef; onRunComplete: (
             <span className="text-xs text-muted-foreground">{agent.model}</span>
           </div>
           {agent.description && <p className="text-xs text-muted-foreground mt-0.5">{agent.description}</p>}
-          {skills.length > 0 && (
+          {tools.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
-              {skills.map(s => (
+              {tools.map(s => (
                 <span key={s} className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{s}</span>
               ))}
             </div>
@@ -242,7 +242,7 @@ function CreateAgentForm({ onCreated }: { onCreated: () => void }) {
       const res = await fetch("/api/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, name, description, systemPrompt, model, skillList: selectedSkills }),
+        body: JSON.stringify({ id, name, description, systemPrompt, model, toolList: selectedSkills }),
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
@@ -300,9 +300,9 @@ function CreateAgentForm({ onCreated }: { onCreated: () => void }) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-muted-foreground mb-1">Skills</label>
+        <label className="block text-xs font-medium text-muted-foreground mb-1">Tools</label>
         <div className="flex flex-wrap gap-2">
-          {AVAILABLE_SKILLS.map(skill => (
+          {AVAILABLE_TOOLS.map(skill => (
             <button
               key={skill}
               type="button"
