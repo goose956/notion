@@ -226,10 +226,10 @@ export default async function TemplatePage({ params }: Props) {
               </Link>
             ) : (
               <Link
-                href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}` as never}
+                href={`/signup?callbackUrl=${encodeURIComponent(callbackUrl)}&title=${encodeURIComponent(t.title)}` as never}
                 className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-8 py-3 text-base font-semibold shadow-sm hover:bg-primary/90 transition-colors"
               >
-                Sign up free with Notion
+                Sign up free →
               </Link>
             )}
             <p className="text-xs text-muted-foreground">25 free credits included. No payment required.</p>
