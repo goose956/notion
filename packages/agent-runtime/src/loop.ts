@@ -132,7 +132,7 @@ export async function runAgentLoop(opts: LoopOptions): Promise<LoopResult> {
 
         let resultText: string;
         try {
-          const inputArgs = (block.input ?? {}) as Record<string, import("@niche-factory/agent-skills").JsonValue>;
+          const inputArgs = (block.input ?? {}) as Record<string, import("@niche-factory/agent-tools").JsonValue>;
           resultText = await skill.handler(inputArgs, skillContext);
         } catch (err) {
           resultText = `Error executing ${block.name}: ${err instanceof Error ? err.message : String(err)}`;

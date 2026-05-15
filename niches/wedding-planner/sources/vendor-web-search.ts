@@ -56,10 +56,14 @@ class VendorWebSearchAdapter
     "Finds local wedding vendors using web search, by category and location.";
   readonly requiredCredentials: readonly string[] = [];
 
+  /** Stored during fetch() so normalize() can access criteria. */
+  private currentCriteria: VendorSearchCriteria = { category: "", location: "" };
+
   async *fetch(
     criteria: VendorSearchCriteria,
     credentials: Readonly<Record<string, string>>,
   ): AsyncIterable<VendorSearchRaw> {
+    this.currentCriteria = criteria;
     const serperKey =
       credentials["SERPER_API_KEY"] ?? process.env["SERPER_API_KEY"];
     if (!serperKey) {
@@ -100,7 +104,8 @@ class VendorWebSearchAdapter
     }
   }
 
-  normalize(raw: VendorSearchRaw, criteria: VendorSearchCriteria): VendorRow {
+  normalize(raw: VendorSearchRaw): VendorRow {
+    const criteria = this.currentCriteria;
     // Extract a clean vendor name from the page title — strip common suffixes
     const name = raw.title
       .replace(/\s*[-|–]\s*.+$/, "")
