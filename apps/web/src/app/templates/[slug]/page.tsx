@@ -219,14 +219,14 @@ export default async function TemplatePage({ params }: Props) {
             </p>
             {isLoggedIn ? (
               <Link
-                href={callbackUrl}
+                href={callbackUrl as never}
                 className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-8 py-3 text-base font-semibold shadow-sm hover:bg-primary/90 transition-colors"
               >
                 Go to your workspace →
               </Link>
             ) : (
               <Link
-                href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}` as never}
                 className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-8 py-3 text-base font-semibold shadow-sm hover:bg-primary/90 transition-colors"
               >
                 Sign up free with Notion
