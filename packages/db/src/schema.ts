@@ -165,6 +165,7 @@ export const customers = pgTable("customers", {
   email: text("email").notNull().unique(),
   stripeCustomerId: text("stripe_customer_id"),
   notionUserId: text("notion_user_id"),                   // set on first sign-in
+  credits: integer("credits").notNull().default(25),      // free tier starts at 25
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

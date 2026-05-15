@@ -361,6 +361,50 @@ export async function listCustomers(): Promise<CustomerRow[]> {
   return db.select().from(customers).orderBy(desc(customers.createdAt));
 }
 
+/** Get the current credit balance for a customer by email. Returns 0 if not found. */
+export async function getCustomerCredits(email: string): Promise<number> {
+  const rows = await db
+    .select({ credits: customers.credits })
+    .from(customers)
+    .where(eq(customers.email, email))
+    .limit(1);
+  return rows[0]?.credits ?? 0;
+}
+
+/**
+ * Deduct `amount` credits from a customer, floored at 0.
+ * Returns the new balance. Creates the customer row with 25 credits if missing.
+ */
+export async function deductCredits(email: string, amount: number): Promise<number> {
+  const { randomUUID } = await import("node:crypto");
+  const now = new Date();
+  // Upsert so we never fail on a missing row (e.g. user signed in but never hit the upsert path)
+  await db
+    .insert(customers)
+    .values({ id: randomUUID(), email, credits: Math.max(0, 25 - amount), createdAt: now, updatedAt: now })
+    .onConflictDoUpdate({
+      target: customers.email,
+      set: {
+        credits: sql`GREATEST(${customers.credits} - ${amount}, 0)`,
+        updatedAt: now,
+      },
+    });
+  return getCustomerCredits(email);
+}
+
+/** Set a customer's credit balance to an exact value (admin use). */
+export async function setCustomerCredits(email: string, credits: number): Promise<void> {
+  const { randomUUID } = await import("node:crypto");
+  const now = new Date();
+  await db
+    .insert(customers)
+    .values({ id: randomUUID(), email, credits, createdAt: now, updatedAt: now })
+    .onConflictDoUpdate({
+      target: customers.email,
+      set: { credits, updatedAt: now },
+    });
+}
+
 // ─── Purchase queries ────────────────────────────────────────────────────────
 
 export async function createPurchase(data: {

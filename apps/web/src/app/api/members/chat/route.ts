@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/auth";
 import { listTools } from "@niche-factory/agent-tools";
 import type { ToolContext, JsonValue } from "@niche-factory/agent-tools";
-import { getSettingValue, listNichePacks, getLatestDeployByNiche } from "@niche-factory/db";
+import { getSettingValue, listNichePacks, getLatestDeployByNiche, findOrCreateCustomer, getCustomerCredits, deductCredits } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 
 /**
@@ -95,6 +95,18 @@ export async function POST(req: NextRequest) {
   }
 
   const userEmail = session.user.email ?? "member";
+
+  // ── Credits check ────────────────────────────────────────────────────────
+  // Ensure customer row exists (so credits column is populated), then gate.
+  await findOrCreateCustomer(userEmail).catch(() => null);
+  const currentCredits = await getCustomerCredits(userEmail).catch(() => 0);
+  if (currentCredits <= 0) {
+    return new Response(
+      JSON.stringify({ error: "no_credits", message: "You have no credits left. Top up to continue." }),
+      { status: 402, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   const [apiKey, model] = await Promise.all([resolveApiKey(userEmail), resolveModel()]);
   if (!apiKey) {
     return new Response(
@@ -218,6 +230,12 @@ export async function POST(req: NextRequest) {
                 } catch (err) {
                   result = `Error: ${err instanceof Error ? err.message : String(err)}`;
                 }
+              }
+
+              // Deduct 1 credit per tool invocation
+              const newBalance = await deductCredits(userEmail, 1).catch(() => null);
+              if (newBalance !== null) {
+                enqueue({ type: "credits_updated", credits: newBalance });
               }
 
               enqueue({ type: "tool_end", name: block.name });

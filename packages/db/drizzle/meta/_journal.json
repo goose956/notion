@@ -64,6 +64,13 @@
       "when": 1747300000000,
       "tag": "0008_deploy_user_id",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1747400000000,
+      "tag": "0009_customer_credits",
+      "breakpoints": true
     }
   ]
 }

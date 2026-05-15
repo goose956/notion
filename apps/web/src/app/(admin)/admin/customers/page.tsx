@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listCustomers, listPurchasesWithDetails } from "@niche-factory/db";
-import { ShoppingBag, Sparkles, Users } from "lucide-react";
+import { Coins, ShoppingBag, Sparkles, Users } from "lucide-react";
+import { CreditsEditor } from "./credits-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,13 @@ export default async function AdminCustomersPage() {
           <div className="icon-badge"><Sparkles className="h-4 w-4" /></div>
           <p className="text-2xl font-bold mt-2">${totalRevenue}</p>
           <p className="text-xs text-muted-foreground">Total revenue</p>
+        </div>
+        <div className="surface-card p-4 space-y-1">
+          <div className="icon-badge"><Coins className="h-4 w-4" /></div>
+          <p className="text-2xl font-bold mt-2">
+            {customers.reduce((s, c) => s + (c.credits ?? 0), 0)}
+          </p>
+          <p className="text-xs text-muted-foreground">Total credits outstanding</p>
         </div>
       </div>
 
@@ -97,9 +105,12 @@ export default async function AdminCustomersPage() {
                       {c.notionUserId ? " · Notion linked" : ""}
                     </p>
                   </div>
-                  <p className="text-xs text-muted-foreground shrink-0 ml-4">
-                    {new Date(c.createdAt).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center gap-4 shrink-0 ml-4">
+                    <CreditsEditor email={c.email} initialCredits={c.credits ?? 25} />
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(c.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
               );
             })}

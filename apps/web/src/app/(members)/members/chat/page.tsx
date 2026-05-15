@@ -46,7 +46,8 @@ type SseEvent =
   | { type: "tool_end"; name: string }
   | { type: "text"; content: string }
   | { type: "done"; tokenUsage: { input: number; output: number } }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "credits_updated"; credits: number };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -249,6 +250,7 @@ export default function ChatPage() {
   const [addAllInProgress, setAddAllInProgress] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -289,7 +291,15 @@ export default function ChatPage() {
           signal: abort.signal,
         });
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        if (!res.ok) {
+          if (res.status === 402) {
+            setSummaryText("You have no credits left. Contact support to top up.");
+            setCredits(0);
+            setHasResult(true);
+            return;
+          }
+          throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        }
         if (!res.body) throw new Error("No response body");
 
         const reader = res.body.getReader();
@@ -328,6 +338,8 @@ export default function ChatPage() {
             } else if (event.type === "error") {
               setSummaryText(`Error: ${event.message}`);
               setHasResult(true);
+            } else if (event.type === "credits_updated") {
+              setCredits(event.credits);
             }
           }
         }
@@ -388,6 +400,23 @@ export default function ChatPage() {
           <p style={{ fontSize: "14px", fontWeight: 600, color: N_FG, marginBottom: "2px" }}>Research Assistant</p>
           <p style={{ fontSize: "12px", color: N_MUTED }}>Search the web · save to Notion</p>
         </div>
+        {credits !== null && (
+          <div style={{
+            margin: "0 10px 4px",
+            padding: "4px 8px",
+            borderRadius: "4px",
+            background: credits === 0 ? "rgba(239,68,68,0.08)" : credits <= 5 ? "rgba(245,158,11,0.08)" : "rgba(55,53,47,0.04)",
+            border: `1px solid ${credits === 0 ? "rgba(239,68,68,0.18)" : credits <= 5 ? "rgba(245,158,11,0.18)" : "rgba(55,53,47,0.08)"}`,
+            fontSize: "11px",
+            color: credits === 0 ? "#ef4444" : credits <= 5 ? "#d97706" : N_MUTED,
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+          }}>
+            <span style={{ fontWeight: 600 }}>{credits}</span>
+            <span>credit{credits !== 1 ? "s" : ""} remaining</span>
+          </div>
+        )}
 
         {/* Activity feed */}
         <ActivityFeed items={toolActivity} isLoading={isLoading} />

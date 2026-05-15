@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
-import { Settings2, LogOut } from "lucide-react";
+import { getCustomerCredits } from "@niche-factory/db";
+import { Settings2, LogOut, Coins } from "lucide-react";
 import { MembersNav } from "./members-nav";
 
 const N_FONT =
@@ -20,6 +21,8 @@ export default async function MembersLayout({
   const userName = session.user?.name ?? session.user?.email ?? "Account";
   const userImage = session.user?.image ?? null;
   const initials = (userName[0] ?? "?").toUpperCase();
+  const userEmail = session.user?.email ?? "";
+  const credits = userEmail ? await getCustomerCredits(userEmail).catch(() => 0) : 0;
 
   return (
     <div
@@ -144,6 +147,49 @@ export default async function MembersLayout({
         <MembersNav />
 
         <div style={{ flex: 1 }} />
+
+        {/* Credits widget */}
+        <div
+          style={{
+            margin: "0 8px 4px",
+            padding: "8px 10px",
+            borderRadius: "6px",
+            background: credits === 0
+              ? "rgba(239,68,68,0.08)"
+              : credits <= 5
+              ? "rgba(245,158,11,0.08)"
+              : "rgba(55,53,47,0.04)",
+            border: `1px solid ${credits === 0 ? "rgba(239,68,68,0.2)" : credits <= 5 ? "rgba(245,158,11,0.2)" : "rgba(55,53,47,0.09)"}`,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+            <Coins style={{
+              width: "13px", height: "13px", flexShrink: 0,
+              color: credits === 0 ? "#ef4444" : credits <= 5 ? "#f59e0b" : "#37352F",
+            }} />
+            <span style={{
+              fontSize: "12px", fontWeight: 600,
+              color: credits === 0 ? "#ef4444" : credits <= 5 ? "#d97706" : "#37352F",
+            }}>
+              {credits} credit{credits !== 1 ? "s" : ""} remaining
+            </span>
+          </div>
+          {/* Progress bar */}
+          <div style={{ height: "4px", borderRadius: "2px", background: "rgba(55,53,47,0.1)", overflow: "hidden" }}>
+            <div style={{
+              height: "100%",
+              borderRadius: "2px",
+              width: `${Math.min(100, (credits / 25) * 100)}%`,
+              background: credits === 0 ? "#ef4444" : credits <= 5 ? "#f59e0b" : "rgb(35,131,226)",
+              transition: "width 0.3s ease",
+            }} />
+          </div>
+          {credits === 0 && (
+            <p style={{ fontSize: "11px", color: "#ef4444", marginTop: "4px" }}>
+              Contact support to top up.
+            </p>
+          )}
+        </div>
 
         {/* Bottom: admin + sign out */}
         <div
