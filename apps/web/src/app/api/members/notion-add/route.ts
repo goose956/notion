@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { notionCreateSkill } from "@niche-factory/agent-tools/skills/notion_create/notion-create.js";
-import type { SkillContext } from "@niche-factory/agent-tools";
+import type { SkillContext, JsonValue } from "@niche-factory/agent-tools";
 
 const BodySchema = z.object({
   notionDatabaseId: z.string().min(1),
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   const result = await notionCreateSkill.handler(
     {
       database_id: parsed.data.notionDatabaseId,
-      properties: parsed.data.properties,
+      properties: parsed.data.properties as Record<string, JsonValue>,
     },
     ctx,
   );
