@@ -67,7 +67,7 @@ export default async function ProfilePage() {
   const name = user.name ?? "Member";
   const email = user.email ?? "";
   const image = user.image ?? null;
-  const notionUserId = (s as Record<string, unknown>)["notionUserId"] as
+  const notionUserId = (s as unknown as Record<string, unknown>)["notionUserId"] as
     | string
     | undefined;
 
