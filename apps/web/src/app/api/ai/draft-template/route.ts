@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
+import { getSettingValue } from "@niche-factory/db";
 import { TEMPLATE_CATEGORIES } from "@/lib/template-categories";
 
 const DraftTemplateSchema = z.object({
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Validation failed", issues: input.error.issues }, { status: 422 });
   }
 
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
+  const apiKey = process.env["ANTHROPIC_API_KEY"] ?? await getSettingValue("anthropic.apiKey").catch(() => null);
   if (!apiKey) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
   }
