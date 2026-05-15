@@ -72,7 +72,6 @@ export async function POST(request: NextRequest) {
   });
 
   // Persist user criteria so sync runs can reload them without re-asking
-  const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
   const answers = input.data.onboardingAnswers;
   if (typeof notionUserId === "string" && answers !== undefined && Object.keys(answers).length > 0) {
     try {

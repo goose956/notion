@@ -316,24 +316,6 @@ export default async function ProfilePage() {
 }
 
 
-export const metadata = { title: "Profile — Niche Factory" };
-
-export default async function ProfilePage() {
-  const session = await auth();
-  // Layout guarantees session is non-null; cast for TS
-  const s = session!;
-  const user = s.user ?? {};
-
-  const name = user.name ?? "Member";
-  const email = user.email ?? "";
-  const image = user.image ?? null;
-  const notionUserId = (s as Record<string, unknown>)["notionUserId"] as
-    | string
-    | undefined;
-
-  const purchasedTemplates = email ? await getPurchasedTemplates(email) : [];
-  const deployedPacks = notionUserId ? await listDeploysByUser(notionUserId) : [];
-
   return (
     <div className="p-8 max-w-2xl space-y-8">
       {/* Header */}
