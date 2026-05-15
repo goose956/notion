@@ -15,7 +15,7 @@ const EnrichRequestSchema = z.object({
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const session = await auth();
-  const sessionRecord = session as Record<string, unknown> | null;
+  const sessionRecord = session as unknown as Record<string, unknown> | null;
 
   const body: unknown = await req.json();
   const parsed = EnrichRequestSchema.safeParse(body);

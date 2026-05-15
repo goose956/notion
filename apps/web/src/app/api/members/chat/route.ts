@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
   const allTools = listTools();
   const memberTools = allTools.filter((t) => MEMBER_TOOL_IDS.includes(t.name));
 
-  const notionToken = (session as Record<string, unknown>)["notionToken"] as
+  const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
     | string
     | undefined;
   const toolContext: ToolContext = {
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
   };
 
   // Build system prompt with deployed database context
-  const notionUserId = (session as Record<string, unknown>)["notionUserId"] as string | undefined;
+  const notionUserId = (session as unknown as Record<string, unknown>)["notionUserId"] as string | undefined;
   let systemPrompt = BASE_SYSTEM_PROMPT;
   try {
     const packs = await listNichePacks();

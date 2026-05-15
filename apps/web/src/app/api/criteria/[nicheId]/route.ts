@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ nicheId: string }> },
 ) {
   const session = await auth();
-  const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
+  const notionUserId = (session as unknown as Record<string, unknown> | null)?.["notionUserId"];
   if (typeof notionUserId !== "string") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -36,7 +36,7 @@ export async function PUT(
   { params }: { params: Promise<{ nicheId: string }> },
 ) {
   const session = await auth();
-  const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
+  const notionUserId = (session as unknown as Record<string, unknown> | null)?.["notionUserId"];
   if (typeof notionUserId !== "string") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

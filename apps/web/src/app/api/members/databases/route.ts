@@ -17,7 +17,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const notionUserId = (session as Record<string, unknown>)["notionUserId"] as string | undefined;
+  const notionUserId = (session as unknown as Record<string, unknown>)["notionUserId"] as string | undefined;
   const databases: DeployedDatabase[] = [];
 
   try {

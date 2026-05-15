@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
   const client = new NotionApiClient({ auth: notionToken });
 
   // Load saved criteria from DB if not supplied in the request body
-  const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
+  const notionUserId = (session as unknown as Record<string, unknown> | null)?.["notionUserId"];
   let criteria = input.data.criteria ?? {};
   if (Object.keys(criteria).length === 0 && typeof notionUserId === "string") {
     try {

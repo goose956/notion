@@ -17,7 +17,7 @@ const DeployRequestSchema = z.object({
 export async function POST(request: NextRequest) {
   const session = await auth();
   const notionToken =
-    (session as Record<string, unknown> | null)?.["notionToken"] as string | undefined ??
+    (session as unknown as Record<string, unknown> | null)?.["notionToken"] as string | undefined ??
     process.env["NOTION_TOKEN"];
 
   if (!notionToken) {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
+  const notionUserId = (session as unknown as Record<string, unknown> | null)?.["notionUserId"];
 
   const deployId = randomUUID();
   await createDeploy({

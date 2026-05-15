@@ -26,13 +26,13 @@ export async function POST(
   }
 
   // Resolve the customer ID: explicitly provided, or from session
-  const sessionRecord = session as Record<string, unknown> | null;
+  const sessionRecord = session as unknown as Record<string, unknown> | null;
   const sessionUserId =
     typeof sessionRecord?.["notionUserId"] === "string"
       ? sessionRecord["notionUserId"]
-      : typeof (session as Record<string, unknown> | null)?.["user"] === "object"
+      : typeof (session as unknown as Record<string, unknown> | null)?.["user"] === "object"
         ? (
-            (session as Record<string, unknown> | null)?.["user"] as
+            (session as unknown as Record<string, unknown> | null)?.["user"] as
               | Record<string, unknown>
               | undefined
           )?.["email"] ?? "anonymous"

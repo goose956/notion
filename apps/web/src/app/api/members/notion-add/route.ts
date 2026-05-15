@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const notionToken = (session as Record<string, unknown>)["notionToken"] as
+  const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
     | string
     | undefined;
   if (!notionToken) {
