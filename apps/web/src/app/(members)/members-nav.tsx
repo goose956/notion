@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const ITEMS = [
-  { emoji: "🔍", label: "Research Assistant", href: "/members/chat" },
+  { emoji: "�", label: "Get Started", href: "/members/get-started" },
+  { emoji: "�🔍", label: "Research Assistant", href: "/members/chat" },
   { emoji: "👤", label: "Profile", href: "/members/profile" },
 ] as const;
 
