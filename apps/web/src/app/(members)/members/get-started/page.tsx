@@ -93,46 +93,28 @@ const STEPS = [
     done: false,
     body: (
       <>
-        <p style={{ margin: "0 0 10px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
-          To write research results into your Notion page, you need to share it with the Niche
-          Factory connection. Do this once:
+        <p style={{ margin: "0 0 12px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
+          Click the button below to connect your Notion pages. Notion will ask you to select
+          which pages to share — pick the one you just created. You only need to do this once.
         </p>
-        <ol
+        <a
+          href="/login?callbackUrl=/members/get-started"
           style={{
-            margin: 0,
-            paddingLeft: "20px",
-            fontSize: "14px",
-            color: N_MUTED,
-            lineHeight: 1.8,
-          }}
-        >
-          <li>
-            Open the page you just created and click{" "}
-            <strong style={{ color: N_FG }}>Share</strong> (top-right)
-          </li>
-          <li>
-            Click <strong style={{ color: N_FG }}>Connections</strong> in the share dialog
-          </li>
-          <li>
-            Find <strong style={{ color: N_FG }}>Niche Factory</strong> and click{" "}
-            <strong style={{ color: N_FG }}>Confirm</strong>
-          </li>
-        </ol>
-        <p
-          style={{
-            margin: "10px 0 0",
-            padding: "8px 12px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            padding: "7px 16px",
             borderRadius: "4px",
-            background: "rgba(251,191,36,0.1)",
-            border: "1px solid rgba(251,191,36,0.3)",
-            fontSize: "13px",
-            color: "rgba(120,80,0,0.85)",
-            lineHeight: 1.5,
+            fontSize: "14px",
+            fontWeight: 500,
+            background: N_BLUE_BG,
+            color: N_BLUE,
+            textDecoration: "none",
+            border: `1px solid rgba(35,131,226,0.25)`,
           }}
         >
-          💡 You only need to do this once per page. You can add more pages later by repeating
-          this step.
-        </p>
+          Connect a Notion page →
+        </a>
       </>
     ),
   },
@@ -393,8 +375,8 @@ export default async function GetStartedPage() {
         }}
       >
         <strong style={{ color: N_FG }}>Need help?</strong> If you run into trouble connecting
-        Notion, make sure you selected the correct pages during sign-in. You can reconnect at any
-        time by signing out and signing back in — Notion will show you the page selector again.
+        Notion, click the "Connect a Notion page" button in step 3 again — Notion will let you
+        add more pages. You can also reconnect by signing out and signing back in.
       </div>
     </div>
   );
