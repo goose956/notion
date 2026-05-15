@@ -108,7 +108,7 @@ class VendorWebSearchAdapter
       .trim();
 
     return {
-      "Vendor Name": name || raw.displayLink ?? raw.title,
+      "Vendor Name": name || (raw.displayLink ?? raw.title),
       "Category": toNotionCategory(criteria.category),
       "Status": "Shortlisted",
       "Website": raw.link,
