@@ -1,6 +1,13 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
-import { Blocks, Bot, LayoutDashboard, LogIn, LogOut, SlidersHorizontal, Sparkles, Users, Wrench } from "lucide-react";
+import { Blocks, Bot, LayoutDashboard, LogOut, SlidersHorizontal, Sparkles, Users, Wrench } from "lucide-react";
+
+function isAdminEmail(email: string | null | undefined): boolean {
+  const raw = process.env["ADMIN_EMAIL"] ?? "";
+  if (!raw.trim()) return true; // not configured — allow all (dev fallback)
+  return raw.split(",").map((e) => e.trim().toLowerCase()).includes((email ?? "").toLowerCase());
+}
 
 export default async function AdminLayout({
   children,
@@ -8,8 +15,11 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  const isLoggedIn = session !== null && session !== undefined;
   const userName = session?.user?.name ?? session?.user?.email ?? "Account";
+
+  if (!isAdminEmail(session?.user?.email)) {
+    redirect("/members/get-started");
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,33 +59,21 @@ export default async function AdminLayout({
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground">
-          {isLoggedIn ? (
-            <>
-              <span className="truncate max-w-[160px]">{userName}</span>
-              <form
-                action={async () => {
-                  "use server";
-                  await signOut({ redirectTo: "/login" });
-                }}
-              >
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  Sign out
-                </button>
-              </form>
-            </>
-          ) : (
-            <Link
-              href="/login?callbackUrl=/admin"
-              className="inline-flex items-center justify-center gap-1.5 rounded-md border text-xs font-medium h-8 px-3 hover:bg-muted transition-colors"
+          <span className="truncate max-w-[160px]">{userName}</span>
+          <form
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/login" });
+            }}
+          >
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
             >
-              <LogIn className="h-3.5 w-3.5" />
-              Sign in with Notion
-            </Link>
-          )}
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </button>
+          </form>
         </div>
       </header>
       <main>{children}</main>

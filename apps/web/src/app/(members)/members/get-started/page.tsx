@@ -125,10 +125,15 @@ const STEPS = [
     done: false,
     body: (
       <>
-        <p style={{ margin: "0 0 12px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
-          You're ready! Head to the Research Assistant, select your niche, and ask it to find
-          leads, analyse markets, or surface opportunities. Results are written directly into your
-          Notion page.
+        <p style={{ margin: "0 0 10px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
+          Open the Research Assistant and select your niche. The <strong style={{ color: N_FG }}>first time</strong> you
+          use a niche, a short setup form will appear asking a few questions — things like your
+          target location or budget range. Once you submit, your Notion databases are created
+          automatically in the page you connected above.
+        </p>
+        <p style={{ margin: "0 0 14px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
+          After that, just type your research question and results will appear ready to save
+          straight into Notion.
         </p>
         <Link
           href="/members/chat"
