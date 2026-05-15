@@ -97,7 +97,7 @@ export async function deleteNichePack(id: string): Promise<void> {
 // ─── Deploy queries ─────────────────────────────────────────────────────────
 
 export async function createDeploy(
-  row: Omit<NewDeployRow, "createdAt">,
+  row: Omit<NewDeployRow, "createdAt"> & { notionUserId?: string | null },
 ): Promise<DeployRow> {
   const result = await db
     .insert(deploys)
@@ -133,11 +133,17 @@ export async function updateDeployStatus(
 
 export async function getLatestDeployByNiche(
   nichePackId: string,
+  notionUserId?: string,
 ): Promise<DeployRow | undefined> {
+  const conditions = [
+    eq(deploys.nichePackId, nichePackId),
+    eq(deploys.status, "success"),
+    ...(notionUserId ? [eq(deploys.notionUserId, notionUserId)] : []),
+  ];
   const rows = await db
     .select()
     .from(deploys)
-    .where(and(eq(deploys.nichePackId, nichePackId), eq(deploys.status, "success")))
+    .where(and(...conditions))
     .orderBy(desc(deploys.createdAt))
     .limit(1);
   return rows[0];
@@ -149,6 +155,34 @@ export async function listDeploysByNiche(nichePackId: string): Promise<DeployRow
     .from(deploys)
     .where(eq(deploys.nichePackId, nichePackId))
     .orderBy(desc(deploys.createdAt));
+}
+
+/**
+ * Returns all successful deploys for a given Notion user, joined with their
+ * niche pack name — used by the profile page.
+ */
+export async function listDeploysByUser(notionUserId: string): Promise<
+  Array<DeployRow & { nicheName: string }>
+> {
+  const rows = await db
+    .select({
+      id: deploys.id,
+      nichePackId: deploys.nichePackId,
+      notionUserId: deploys.notionUserId,
+      notionParentPageId: deploys.notionParentPageId,
+      databaseIdMap: deploys.databaseIdMap,
+      status: deploys.status,
+      errorMessage: deploys.errorMessage,
+      durationMs: deploys.durationMs,
+      createdAt: deploys.createdAt,
+      completedAt: deploys.completedAt,
+      nicheName: nichePacks.name,
+    })
+    .from(deploys)
+    .innerJoin(nichePacks, eq(deploys.nichePackId, nichePacks.id))
+    .where(and(eq(deploys.notionUserId, notionUserId), eq(deploys.status, "success")))
+    .orderBy(desc(deploys.createdAt));
+  return rows;
 }
 
 // ─── UserCriteria queries ───────────────────────────────────────────────────

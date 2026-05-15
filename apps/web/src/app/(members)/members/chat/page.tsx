@@ -1,23 +1,29 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowUp,
   Globe,
   Link2,
   Loader2,
   DatabaseZap,
-  Bot,
   Check,
-  PlusCircle,
-  Sparkles,
-  ListChecks,
+  ExternalLink,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Notion design tokens ─────────────────────────────────────────────────────
+
+const N_FG = "#37352F";
+const N_MUTED = "rgba(55,53,47,0.65)";
+const N_SUBTLE = "rgba(55,53,47,0.45)";
+const N_BORDER = "rgba(55,53,47,0.09)";
+const N_BORDER_MED = "rgba(55,53,47,0.16)";
+const N_ACTIVE = "rgba(55,53,47,0.08)";
+const N_BLUE = "rgb(35,131,226)";
+const N_FONT =
+  'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ToolActivity {
   name: string;
@@ -35,7 +41,6 @@ interface DeployedDatabase {
 
 type ResultItem = Record<string, unknown>;
 
-// SSE event shapes from the API
 type SseEvent =
   | { type: "tool_start"; name: string; args: Record<string, unknown> }
   | { type: "tool_end"; name: string }
@@ -76,23 +81,23 @@ const TOOL_LABELS: Record<string, string> = {
   web_search: "Searching the web",
   fetch_url: "Reading URL",
   notion_query: "Querying Notion",
-  notion_create: "Adding to Notion",
+  notion_create: "Saving to Notion",
   notion_write: "Updating Notion",
   notion_archive: "Removing from Notion",
 };
 
 const TOOL_ICON: Record<string, React.ReactNode> = {
-  web_search: <Globe className="h-3.5 w-3.5" />,
-  fetch_url: <Link2 className="h-3.5 w-3.5" />,
-  notion_query: <DatabaseZap className="h-3.5 w-3.5" />,
-  notion_create: <DatabaseZap className="h-3.5 w-3.5" />,
-  notion_write: <DatabaseZap className="h-3.5 w-3.5" />,
-  notion_archive: <DatabaseZap className="h-3.5 w-3.5" />,
+  web_search: <Globe style={{ width: "12px", height: "12px" }} />,
+  fetch_url: <Link2 style={{ width: "12px", height: "12px" }} />,
+  notion_query: <DatabaseZap style={{ width: "12px", height: "12px" }} />,
+  notion_create: <DatabaseZap style={{ width: "12px", height: "12px" }} />,
+  notion_write: <DatabaseZap style={{ width: "12px", height: "12px" }} />,
+  notion_archive: <DatabaseZap style={{ width: "12px", height: "12px" }} />,
 };
 
 function resolveToolLabel(name: string, args: Record<string, unknown>): string {
   if (name === "web_search" && typeof args["query"] === "string") {
-    return `Searching: "${args["query"]}"`;
+    return `Searching "${args["query"]}"`;
   }
   if (name === "fetch_url" && typeof args["url"] === "string") {
     try { return `Reading ${new URL(args["url"] as string).hostname}`; } catch { return "Reading URL"; }
@@ -105,22 +110,26 @@ function resolveToolLabel(name: string, args: Record<string, unknown>): string {
 function ActivityFeed({ items, isLoading }: { items: ToolActivity[]; isLoading: boolean }) {
   if (items.length === 0 && !isLoading) return null;
   return (
-    <div className="flex flex-col gap-1.5 px-4 py-3 border-b">
-      {items.map((a, i) => (
-        <span
-          key={i}
-          className={cn(
-            "inline-flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border w-fit",
-            a.done
-              ? "bg-muted text-muted-foreground border-border"
-              : "bg-primary/5 text-primary border-primary/20 animate-pulse",
-          )}
-        >
-          {TOOL_ICON[a.name] ?? <Globe className="h-3.5 w-3.5" />}
-          {resolveToolLabel(a.name, a.args)}
-          {!a.done && <Loader2 className="h-3 w-3 animate-spin ml-0.5" />}
-        </span>
-      ))}
+    <div style={{ padding: "10px 16px 12px", borderBottom: `1px solid ${N_BORDER}` }}>
+      <p style={{ fontSize: "11px", fontWeight: 500, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "6px" }}>
+        Activity
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+        {items.map((a, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: a.done ? N_MUTED : N_FG }}>
+            <span style={{ color: a.done ? N_SUBTLE : N_BLUE, flexShrink: 0, display: "flex" }}>
+              {a.done
+                ? <Check style={{ width: "12px", height: "12px" }} />
+                : (TOOL_ICON[a.name] ?? <Globe style={{ width: "12px", height: "12px" }} />)
+              }
+            </span>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+              {resolveToolLabel(a.name, a.args)}
+            </span>
+            {!a.done && <Loader2 style={{ width: "11px", height: "11px", color: N_SUBTLE, flexShrink: 0 }} className="animate-spin" />}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -136,47 +145,84 @@ function ResultCard({
   const bodyEntries = Object.entries(item)
     .filter(([k, v]) => k !== titleKey && v !== null && v !== undefined && v !== "")
     .slice(0, 6);
+  const urlVal = Object.entries(item).find(
+    ([k, v]) => typeof v === "string" && /^https?:\/\//.test(v as string) && /url|website|link/i.test(k)
+  )?.[1] as string | undefined;
 
   return (
-    <div className={cn(
-      "rounded-xl border bg-card p-4 flex flex-col gap-3 transition-colors",
-      added && "border-green-300 bg-green-50/50",
-    )}>
-      <div className="flex items-start justify-between gap-2">
-        <p className="font-medium text-sm leading-snug flex-1">{title}</p>
-        <Button
-          size="sm"
-          variant={added ? "secondary" : "default"}
-          className={cn(
-            "shrink-0 h-7 px-3 text-xs gap-1.5",
-            added && "text-green-700 bg-green-100 border-green-200 hover:bg-green-100",
-          )}
-          disabled={added || adding || disabled}
-          onClick={() => onAdd(index, item)}
-        >
-          {adding ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : added ? (
-            <><Check className="h-3 w-3" /> Added</>
-          ) : (
-            <><PlusCircle className="h-3 w-3" /> Add</>
-          )}
-        </Button>
+    <div
+      style={{
+        background: added ? "rgba(15,123,108,0.04)" : "white",
+        border: `1px solid ${added ? "rgba(15,123,108,0.3)" : N_BORDER_MED}`,
+        borderRadius: "3px",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+      className="hover:shadow-sm transition-shadow"
+    >
+      {/* Title row */}
+      <div style={{ padding: "10px 12px 6px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" }}>
+        <p style={{ fontSize: "14px", fontWeight: 500, color: N_FG, lineHeight: 1.4, flex: 1 }}>
+          {title}
+        </p>
+        {urlVal && (
+          <a href={urlVal} target="_blank" rel="noopener noreferrer"
+            style={{ color: N_SUBTLE, flexShrink: 0, marginTop: "2px", display: "flex" }}
+            title="Open website"
+          >
+            <ExternalLink style={{ width: "13px", height: "13px" }} />
+          </a>
+        )}
       </div>
+
+      {/* Properties */}
       {bodyEntries.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+        <div style={{ padding: "0 12px 10px", display: "flex", flexDirection: "column", gap: "3px", flex: 1 }}>
           {bodyEntries.map(([key, val]) => (
-            <div key={key} className="min-w-0">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium truncate">{key}</p>
-              <p className="text-xs text-foreground truncate">
+            <div key={key} style={{ display: "flex", alignItems: "baseline", gap: "6px", minWidth: 0 }}>
+              <span style={{ fontSize: "11px", color: N_SUBTLE, fontWeight: 500, whiteSpace: "nowrap", width: "88px", flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+                {key}
+              </span>
+              <span style={{ fontSize: "12px", color: N_FG, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                 {typeof val === "number" ? val.toString()
                   : Array.isArray(val) ? (val as unknown[]).join(", ")
                   : String(val)}
-              </p>
+              </span>
             </div>
           ))}
         </div>
       )}
+
+      {/* Footer */}
+      <div style={{ borderTop: `1px solid ${N_BORDER}`, padding: "6px 12px", display: "flex", justifyContent: "flex-end" }}>
+        <button
+          disabled={added || adding || disabled}
+          onClick={() => onAdd(index, item)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "3px 10px",
+            borderRadius: "3px",
+            fontSize: "13px",
+            fontWeight: 500,
+            border: "none",
+            cursor: added || adding || disabled ? "default" : "pointer",
+            background: added ? "rgba(15,123,108,0.1)" : N_ACTIVE,
+            color: added ? "rgb(15,123,108)" : N_FG,
+            fontFamily: N_FONT,
+          }}
+        >
+          {adding ? (
+            <Loader2 style={{ width: "12px", height: "12px" }} className="animate-spin" />
+          ) : added ? (
+            <><Check style={{ width: "12px", height: "12px" }} /> Saved</>
+          ) : (
+            "Save to Notion"
+          )}
+        </button>
+      </div>
     </div>
   );
 }
@@ -188,7 +234,7 @@ const SUGGESTED_PROMPTS = [
   "Find catering companies in Bristol for wedding receptions",
 ];
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Main component ────────────────────────────────────────────────────────────
 
 export default function ChatPage() {
   const [input, setInput] = useState("");
@@ -332,92 +378,137 @@ export default function ChatPage() {
   const pendingCount = resultItems ? resultItems.filter((_, i) => !addedIndices.has(i)).length : 0;
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* ── Left panel ────────────────────────────────────────── */}
-      <div className="w-[340px] shrink-0 border-r flex flex-col bg-card/30">
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: N_FONT, color: N_FG }}>
+
+      {/* ── Left panel ──────────────────────────────────────────────────── */}
+      <div style={{ width: "300px", flexShrink: 0, display: "flex", flexDirection: "column", background: "#F7F6F3", borderRight: `1px solid ${N_BORDER}` }}>
+
         {/* Header */}
-        <div className="px-5 py-4 border-b shrink-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <Bot className="h-4 w-4 text-primary" />
-            <span className="font-semibold text-sm">Research Assistant</span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Search the web · save results to Notion
-          </p>
+        <div style={{ padding: "16px 16px 10px", borderBottom: `1px solid ${N_BORDER}`, flexShrink: 0 }}>
+          <p style={{ fontSize: "14px", fontWeight: 600, color: N_FG, marginBottom: "2px" }}>Research Assistant</p>
+          <p style={{ fontSize: "12px", color: N_MUTED }}>Search the web · save to Notion</p>
         </div>
 
-        {/* Live tool activity */}
+        {/* Activity feed */}
         <ActivityFeed items={toolActivity} isLoading={isLoading} />
 
-        {/* Suggested prompts (idle state only) */}
+        {/* Suggested prompts (idle only) */}
         {!isLoading && !hasResult && (
-          <div className="flex-1 overflow-y-auto px-4 py-4">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-3">
-              Try asking…
+          <div style={{ flex: 1, overflowY: "auto", padding: "10px 8px" }}>
+            <p style={{ fontSize: "11px", fontWeight: 500, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.05em", padding: "0 8px 6px" }}>
+              Try asking
             </p>
-            <div className="space-y-2">
-              {SUGGESTED_PROMPTS.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => void sendMessage(p)}
-                  className="w-full text-left text-xs px-3 py-2.5 rounded-lg border bg-background hover:bg-muted/50 hover:border-primary/30 transition-colors text-muted-foreground hover:text-foreground"
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+            {SUGGESTED_PROMPTS.map((p) => (
+              <button
+                key={p}
+                onClick={() => void sendMessage(p)}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "left",
+                  fontSize: "13px",
+                  color: N_FG,
+                  background: "transparent",
+                  border: "none",
+                  padding: "4px 8px",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                  lineHeight: 1.5,
+                  fontFamily: N_FONT,
+                }}
+                className="hover:bg-[rgba(55,53,47,0.06)]"
+              >
+                {p}
+              </button>
+            ))}
           </div>
         )}
-        {(isLoading || hasResult) && <div className="flex-1" />}
+        {(isLoading || hasResult) && <div style={{ flex: 1 }} />}
 
-        {/* Input */}
-        <div className="shrink-0 p-4 border-t bg-background">
-          <form
-            onSubmit={(e: FormEvent) => { e.preventDefault(); void sendMessage(input); }}
-            className="flex flex-col gap-2"
-          >
-            <Textarea
+        {/* Input area */}
+        <div style={{ padding: "10px 12px 14px", borderTop: `1px solid ${N_BORDER}`, flexShrink: 0 }}>
+          <form onSubmit={(e: FormEvent) => { e.preventDefault(); void sendMessage(input); }}>
+            <textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(input); }
               }}
-              placeholder="Ask anything… (Enter to send)"
+              placeholder="Ask anything… (⏎ to send)"
               disabled={isLoading}
               rows={3}
-              className="resize-none text-sm"
+              style={{
+                width: "100%",
+                resize: "none",
+                border: `1px solid ${N_BORDER_MED}`,
+                borderRadius: "3px",
+                padding: "8px 10px",
+                fontSize: "14px",
+                color: N_FG,
+                background: "white",
+                outline: "none",
+                fontFamily: N_FONT,
+                boxSizing: "border-box",
+                marginBottom: "6px",
+                lineHeight: 1.5,
+              }}
             />
-            <Button type="submit" disabled={isLoading || !input.trim()} className="w-full gap-2">
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
-              {isLoading ? "Researching…" : "Send"}
-            </Button>
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              style={{
+                width: "100%",
+                padding: "6px",
+                borderRadius: "3px",
+                border: "none",
+                cursor: isLoading || !input.trim() ? "default" : "pointer",
+                background: isLoading || !input.trim() ? N_ACTIVE : N_BLUE,
+                color: isLoading || !input.trim() ? N_MUTED : "white",
+                fontSize: "14px",
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                fontFamily: N_FONT,
+                transition: "background 0.1s ease",
+              }}
+            >
+              {isLoading
+                ? <><Loader2 style={{ width: "14px", height: "14px" }} className="animate-spin" /> Researching…</>
+                : <><ArrowUp style={{ width: "14px", height: "14px" }} /> Send</>
+              }
+            </button>
           </form>
         </div>
       </div>
 
-      {/* ── Right panel ───────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Results toolbar */}
+      {/* ── Right panel ─────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "white" }}>
+
+        {/* Toolbar */}
         {hasResult && resultItems !== null && (
-          <div className="shrink-0 px-6 py-3 border-b bg-background flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <ListChecks className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">
-                {resultItems.length} result{resultItems.length !== 1 ? "s" : ""}
-              </span>
-              {addedIndices.size > 0 && (
-                <span className="text-xs text-green-600 font-medium">
-                  · {addedIndices.size} added to Notion
-                </span>
-              )}
-            </div>
+          <div style={{ padding: "8px 32px", borderBottom: `1px solid ${N_BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexShrink: 0 }}>
+            <span style={{ fontSize: "13px", color: N_MUTED }}>
+              {resultItems.length} result{resultItems.length !== 1 ? "s" : ""}
+              {addedIndices.size > 0 && ` · ${addedIndices.size} saved to Notion`}
+            </span>
             {deployedDbs.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <select
                   value={selectedNotionId}
                   onChange={(e) => setSelectedNotionId(e.target.value)}
-                  className="text-xs border rounded-md px-2 py-1.5 bg-background text-foreground max-w-[220px]"
+                  style={{
+                    fontSize: "13px",
+                    border: `1px solid ${N_BORDER_MED}`,
+                    borderRadius: "3px",
+                    padding: "3px 6px",
+                    color: N_FG,
+                    background: "white",
+                    fontFamily: N_FONT,
+                    maxWidth: "220px",
+                  }}
                 >
                   {deployedDbs.map((db) => (
                     <option key={db.notionId} value={db.notionId}>
@@ -425,16 +516,26 @@ export default function ChatPage() {
                     </option>
                   ))}
                 </select>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs gap-1.5 h-8"
+                <button
                   disabled={pendingCount === 0 || addAllInProgress || !selectedNotionId}
                   onClick={() => void addAllToNotion()}
+                  style={{
+                    padding: "3px 10px",
+                    borderRadius: "3px",
+                    border: `1px solid ${N_BORDER_MED}`,
+                    background: "white",
+                    fontSize: "13px",
+                    color: pendingCount === 0 ? N_SUBTLE : N_FG,
+                    cursor: pendingCount === 0 || addAllInProgress ? "default" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontFamily: N_FONT,
+                  }}
                 >
-                  {addAllInProgress ? <Loader2 className="h-3 w-3 animate-spin" /> : <PlusCircle className="h-3 w-3" />}
-                  Add all{pendingCount > 0 ? ` (${pendingCount})` : ""}
-                </Button>
+                  {addAllInProgress && <Loader2 style={{ width: "12px", height: "12px" }} className="animate-spin" />}
+                  Save all{pendingCount > 0 ? ` (${pendingCount})` : ""}
+                </button>
               </div>
             )}
           </div>
@@ -442,37 +543,38 @@ export default function ChatPage() {
 
         {/* Error banner */}
         {addError && (
-          <div className="shrink-0 px-6 py-2 bg-destructive/10 border-b border-destructive/20 text-xs text-destructive">
+          <div style={{ padding: "6px 32px", background: "rgba(235,87,87,0.08)", borderBottom: "1px solid rgba(235,87,87,0.2)", fontSize: "13px", color: "rgb(235,87,87)", flexShrink: 0 }}>
             {addError}
           </div>
         )}
 
-        {/* Content area */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        {/* Content */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "40px 48px" }}>
+
           {/* Idle state */}
           {!isLoading && !hasResult && (
-            <div className="flex flex-col items-center justify-center h-full text-center gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Sparkles className="h-7 w-7 text-primary" />
-              </div>
-              <h2 className="text-lg font-semibold">Results appear here</h2>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Ask the assistant to find venues, vendors, or businesses — then add them directly to your Notion workspace.
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", gap: "12px" }}>
+              <span style={{ fontSize: "56px", lineHeight: 1 }}>🔍</span>
+              <p style={{ fontSize: "20px", fontWeight: 600, color: N_FG, margin: 0 }}>Start researching</p>
+              <p style={{ fontSize: "14px", color: N_MUTED, maxWidth: "340px", lineHeight: 1.6, margin: 0 }}>
+                Ask the assistant to find venues, vendors, or businesses — results appear here and can be saved directly to your Notion workspace.
               </p>
             </div>
           )}
 
           {/* Loading skeleton */}
           {isLoading && (
-            <div className="space-y-4 max-w-2xl">
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "700px" }}>
               {[1, 2, 3].map((n) => (
-                <div key={n} className="rounded-xl border bg-card p-4 animate-pulse space-y-3">
-                  <div className="h-4 bg-muted rounded w-2/3" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="h-3 bg-muted rounded" />
-                    <div className="h-3 bg-muted rounded" />
-                    <div className="h-3 bg-muted rounded w-3/4" />
-                    <div className="h-3 bg-muted rounded w-1/2" />
+                <div key={n} style={{ border: `1px solid ${N_BORDER_MED}`, borderRadius: "3px", padding: "12px" }} className="animate-pulse">
+                  <div style={{ height: "14px", background: "rgba(55,53,47,0.07)", borderRadius: "2px", width: "55%", marginBottom: "12px" }} />
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} style={{ display: "flex", gap: "8px" }}>
+                        <div style={{ height: "11px", background: "rgba(55,53,47,0.05)", borderRadius: "2px", width: "80px", flexShrink: 0 }} />
+                        <div style={{ height: "11px", background: "rgba(55,53,47,0.05)", borderRadius: "2px", flex: 1 }} />
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -481,14 +583,14 @@ export default function ChatPage() {
 
           {/* Results */}
           {hasResult && !isLoading && (
-            <div className="max-w-3xl space-y-4">
+            <div style={{ maxWidth: "900px" }}>
               {summaryText && (
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                <p style={{ fontSize: "14px", color: N_MUTED, marginBottom: "20px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
                   {summaryText}
                 </p>
               )}
               {resultItems !== null && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "10px" }}>
                   {resultItems.map((item, i) => (
                     <ResultCard
                       key={i}
@@ -498,6 +600,17 @@ export default function ChatPage() {
                       adding={addingIndex === i}
                       onAdd={(idx, it) => void addToNotion(idx, it)}
                       disabled={addAllInProgress || !selectedNotionId}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
                     />
                   ))}
                 </div>

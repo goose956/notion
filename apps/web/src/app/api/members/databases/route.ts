@@ -17,12 +17,13 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const notionUserId = (session as Record<string, unknown>)["notionUserId"] as string | undefined;
   const databases: DeployedDatabase[] = [];
 
   try {
     const packs = await listNichePacks();
     for (const packRow of packs) {
-      const deploy = await getLatestDeployByNiche(packRow.id);
+      const deploy = await getLatestDeployByNiche(packRow.id, notionUserId);
       if (deploy === undefined) continue;
       const dbMap = deploy.databaseIdMap as Record<string, string> | null | undefined;
       if (!dbMap || Object.keys(dbMap).length === 0) continue;

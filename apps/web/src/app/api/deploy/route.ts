@@ -42,11 +42,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const notionUserId = (session as Record<string, unknown> | null)?.["notionUserId"];
+
   const deployId = randomUUID();
   await createDeploy({
     id: deployId,
     nichePackId: input.data.pack.id,
     notionParentPageId: input.data.parentPageId,
+    notionUserId: typeof notionUserId === "string" ? notionUserId : null,
     databaseIdMap: {},
     status: "in_progress",
   });

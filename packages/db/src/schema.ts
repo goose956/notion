@@ -49,6 +49,8 @@ export const deploys = pgTable("deploys", {
   nichePackId: text("niche_pack_id")
     .notNull()
     .references(() => nichePacks.id),
+  /** The Notion user ID who triggered this deploy */
+  notionUserId: text("notion_user_id"),
   /** The Notion workspace page ID this pack was deployed to */
   notionParentPageId: text("notion_parent_page_id").notNull(),
   /** Serialized map of pack DB id → Notion DB id */

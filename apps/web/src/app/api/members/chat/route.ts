@@ -116,12 +116,13 @@ export async function POST(req: NextRequest) {
   };
 
   // Build system prompt with deployed database context
+  const notionUserId = (session as Record<string, unknown>)["notionUserId"] as string | undefined;
   let systemPrompt = BASE_SYSTEM_PROMPT;
   try {
     const packs = await listNichePacks();
     const deployedSections: string[] = [];
     for (const packRow of packs) {
-      const deploy = await getLatestDeployByNiche(packRow.id);
+      const deploy = await getLatestDeployByNiche(packRow.id, notionUserId);
       if (deploy === undefined) continue;
       const dbMap = deploy.databaseIdMap as Record<string, string> | null | undefined;
       if (dbMap === null || dbMap === undefined || Object.keys(dbMap).length === 0) continue;
