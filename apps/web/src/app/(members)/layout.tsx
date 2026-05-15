@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
-import { getCustomerCredits } from "@niche-factory/db";
+import { getCustomerCredits, findOrCreateCustomer } from "@niche-factory/db";
 import { Settings2, LogOut, Coins } from "lucide-react";
 import { MembersNav } from "./members-nav";
 
@@ -22,6 +22,8 @@ export default async function MembersLayout({
   const userImage = session.user?.image ?? null;
   const initials = (userName[0] ?? "?").toUpperCase();
   const userEmail = session.user?.email ?? "";
+  // Ensure customer row exists (creates with 25 credits if new)
+  if (userEmail) await findOrCreateCustomer(userEmail).catch(() => null);
   const credits = userEmail ? await getCustomerCredits(userEmail).catch(() => 0) : 0;
 
   return (
