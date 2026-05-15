@@ -369,7 +369,7 @@ export default function ChatPage() {
     setAddAllInProgress(true);
     for (let i = 0; i < resultItems.length; i++) {
       if (!addedIndices.has(i) && resultItems[i]) {
-        await addToNotion(i, resultItems[i]);
+        await addToNotion(i, resultItems[i]!);
       }
     }
     setAddAllInProgress(false);
