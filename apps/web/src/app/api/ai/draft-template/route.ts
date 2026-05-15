@@ -38,7 +38,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Validation failed", issues: input.error.issues }, { status: 422 });
   }
 
-  const apiKey = process.env["ANTHROPIC_API_KEY"] ?? await getSettingValue("anthropic.apiKey").catch(() => null);
+  const [apiKey, model] = await Promise.all([
+    (process.env["ANTHROPIC_API_KEY"] ?? getSettingValue("anthropic.apiKey").catch(() => null)),
+    getSettingValue("anthropic.model").catch(() => null),
+  ]);
   if (!apiKey) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
   }
@@ -69,7 +72,7 @@ Write for an audience searching with natural language queries like "${title}". B
   let text: string;
   try {
     const message = await client.messages.create({
-      model: "claude-3-5-haiku-20241022",
+      model: model ?? "claude-sonnet-4-5",
       max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
     });
