@@ -57,6 +57,13 @@
       "when": 1777755977430,
       "tag": "0007_rename_skills_to_tools",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1747300000000,
+      "tag": "0008_deploy_user_id",
+      "breakpoints": true
     }
   ]
 }

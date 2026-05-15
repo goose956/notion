@@ -71,8 +71,12 @@ export default async function ProfilePage() {
     | string
     | undefined;
 
-  const purchasedTemplates = email ? await getPurchasedTemplates(email) : [];
-  const deployedPacks = notionUserId ? await listDeploysByUser(notionUserId) : [];
+  const purchasedTemplates = email
+    ? await getPurchasedTemplates(email).catch(() => [])
+    : [];
+  const deployedPacks = notionUserId
+    ? await listDeploysByUser(notionUserId).catch(() => [])
+    : [];
 
   return (
     <div style={{ fontFamily: N_FONT, color: N_FG, minHeight: "100%" }}>
