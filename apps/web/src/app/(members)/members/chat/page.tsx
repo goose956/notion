@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
+import { useState, useRef, useEffect, useCallback, type FormEvent, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowUp,
   Globe,
@@ -237,7 +238,9 @@ const SUGGESTED_PROMPTS = [
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-export default function ChatPage() {
+function ChatPageInner() {
+  const searchParams = useSearchParams();
+  const nicheIdFromUrl = searchParams.get("nicheId");
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [toolActivity, setToolActivity] = useState<ToolActivity[]>([]);
@@ -261,10 +264,16 @@ export default function ChatPage() {
       .then((r) => r.json() as Promise<{ databases: DeployedDatabase[] }>)
       .then(({ databases }) => {
         setDeployedDbs(databases ?? []);
-        if (databases?.[0]) setSelectedNotionId(databases[0].notionId);
+        // Pre-select niche from URL param if present, otherwise pick first
+        if (databases && databases.length > 0) {
+          const match = nicheIdFromUrl
+            ? databases.find((d) => d.nicheId === nicheIdFromUrl)
+            : undefined;
+          setSelectedNotionId((match ?? databases[0]!).notionId);
+        }
       })
       .catch(() => undefined);
-  }, []);
+  }, [nicheIdFromUrl]);
 
   const sendMessage = useCallback(
     async (userText: string) => {
@@ -638,5 +647,13 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense>
+      <ChatPageInner />
+    </Suspense>
   );
 }

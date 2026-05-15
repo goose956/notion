@@ -284,6 +284,7 @@ export async function upsertTemplate(
         tags: data.tags,
         stripePaymentLink: data.stripePaymentLink,
         stripePriceId: data.stripePriceId,
+        nichePackId: data.nichePackId,
         published: data.published,
         updatedAt: now,
       },

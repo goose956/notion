@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTemplateBySlug, incrementTemplateView, customerOwnsTemplate } from "@niche-factory/db";
+import { getTemplateBySlug, incrementTemplateView } from "@niche-factory/db";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
-import { BuyButton } from "./buy-button";
-import { CircleHelp, Compass, Lightbulb, ListChecks, Sparkles, Wallet } from "lucide-react";
+import { CircleHelp, Compass, Lightbulb, ListChecks, Sparkles, Zap } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -61,10 +60,14 @@ export default async function TemplatePage({ params }: Props) {
 
   await incrementTemplateView(slug).catch(() => undefined);
 
-  // Check if the signed-in user already owns this template
+  // Check if user is already signed in
   const session = await auth().catch(() => undefined);
-  const userEmail = session?.user?.email ?? null;
-  const owned = userEmail ? await customerOwnsTemplate(userEmail, t.id).catch(() => false) : false;
+  const isLoggedIn = !!session?.user?.email;
+
+  // Build post-login redirect URL
+  const callbackUrl = t.nichePackId
+    ? `/members/chat?nicheId=${t.nichePackId}`
+    : "/members/profile";
 
   const faqItems = (t.faq as FaqItem[]) ?? [];
   const tags = ((t.tags as string[]) ?? []).filter(Boolean);
@@ -204,24 +207,33 @@ export default async function TemplatePage({ params }: Props) {
             </section>
           )}
 
-          {t.stripePaymentLink && (
-            <section className="surface-card p-8 text-center space-y-4 shadow-sm">
-              <h2 className="text-xl font-bold inline-flex items-center gap-2 justify-center">
-                <Wallet className="h-5 w-5 text-primary" />
-                Get This Template
-              </h2>
-              <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-                One-time purchase. Instant access to the full Notion workspace template.
-              </p>
-              <BuyButton
-                href={t.stripePaymentLink}
-                slug={t.slug}
-                templateId={t.id}
-                stripePriceId={t.stripePriceId}
-                owned={owned}
-              />
-            </section>
-          )}
+          {/* Free sign-up CTA */}
+          <section className="surface-card p-8 text-center space-y-4 shadow-sm">
+            <div className="inline-flex items-center justify-center gap-2 text-xs font-medium uppercase tracking-widest text-primary mb-1">
+              <Zap className="h-3.5 w-3.5" />
+              Free access — no credit card needed
+            </div>
+            <h2 className="text-xl font-bold">Get This Template Free</h2>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+              Sign up with Notion and get instant access — plus 25 free research credits to use the AI assistant.
+            </p>
+            {isLoggedIn ? (
+              <Link
+                href={callbackUrl}
+                className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-8 py-3 text-base font-semibold shadow-sm hover:bg-primary/90 transition-colors"
+              >
+                Go to your workspace →
+              </Link>
+            ) : (
+              <Link
+                href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-8 py-3 text-base font-semibold shadow-sm hover:bg-primary/90 transition-colors"
+              >
+                Sign up free with Notion
+              </Link>
+            )}
+            <p className="text-xs text-muted-foreground">25 free credits included. No payment required.</p>
+          </section>
 
           {faqItems.length > 0 && (
             <section className="space-y-4">

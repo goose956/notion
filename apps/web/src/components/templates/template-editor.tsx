@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { TemplateRow } from "@niche-factory/db";
 import { TEMPLATE_CATEGORIES } from "@/lib/template-categories";
 
 type FaqItem = { question: string; answer: string };
+type NicheOption = { id: string; name: string };
 
 const defaultTemplateBody = `## Quick Answer
 
@@ -43,6 +44,7 @@ interface FormState {
   tags: string;
   stripePaymentLink: string;
   stripePriceId: string;
+  nichePackId: string;
   published: boolean;
 }
 
@@ -73,6 +75,7 @@ function toFormState(row?: TemplateRow): FormState {
       tags: "",
       stripePaymentLink: "",
       stripePriceId: "",
+      nichePackId: "",
       published: false,
     };
   }
@@ -88,6 +91,7 @@ function toFormState(row?: TemplateRow): FormState {
     tags: ((row.tags as string[]) ?? []).join(", "),
     stripePaymentLink: row.stripePaymentLink,
     stripePriceId: row.stripePriceId,
+    nichePackId: row.nichePackId ?? "",
     published: row.published,
   };
 }
@@ -106,6 +110,14 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
   const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [niches, setNiches] = useState<NicheOption[]>([]);
+
+  useEffect(() => {
+    fetch("/api/niche")
+      .then((r) => r.json() as Promise<{ nichePacks?: { id: string; name: string }[] }>)
+      .then(({ nichePacks }) => setNiches(nichePacks ?? []))
+      .catch(() => undefined);
+  }, []);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -194,6 +206,7 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
         .filter(Boolean),
       stripePaymentLink: form.stripePaymentLink,
       stripePriceId: form.stripePriceId,
+      nichePackId: form.nichePackId || null,
       published: publish !== undefined ? publish : form.published,
     };
 
@@ -353,6 +366,22 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
           />
           <p className="text-xs text-muted-foreground mt-1">
             If set, purchases go through a tracked Stripe checkout session and are recorded in the database.
+          </p>
+        </Field>
+
+        <Field label="Linked Niche Pack (post-signup redirect)">
+          <select
+            value={form.nichePackId}
+            onChange={(e) => set("nichePackId", e.target.value)}
+            className={inputCls}
+          >
+            <option value="">— None (redirect to /members/profile) —</option>
+            {niches.map((n) => (
+              <option key={n.id} value={n.id}>{n.name}</option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground mt-1">
+            When set, the sign-up CTA on this template page redirects new users directly to this niche pack in the members area.
           </p>
         </Field>
       </section>

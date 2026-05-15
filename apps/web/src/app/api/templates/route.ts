@@ -35,6 +35,7 @@ const TemplateBodySchema = z.object({
   tags: z.array(z.string()).default([]),
   stripePaymentLink: z.string().default(""),
   stripePriceId: z.string().default(""),
+  nichePackId: z.string().nullable().optional(),
   published: z.boolean().default(false),
 });
 
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
       tags: data.tags,
       stripePaymentLink: data.stripePaymentLink,
       stripePriceId: data.stripePriceId,
+      nichePackId: data.nichePackId ?? null,
       published: data.published,
     });
     return NextResponse.json({ template: row }, { status: data.id ? 200 : 201 });

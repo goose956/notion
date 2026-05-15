@@ -138,6 +138,8 @@ export const templates = pgTable("templates", {
   tags: jsonb("tags").notNull().default([]),
   stripePaymentLink: text("stripe_payment_link").notNull().default(""),
   stripePriceId: text("stripe_price_id").notNull().default(""),
+  /** Optional link to a niche pack — drives post-signup redirect */
+  nichePackId: text("niche_pack_id"),
   published: boolean("published").notNull().default(false),
   viewCount: integer("view_count").notNull().default(0),
   clickCount: integer("click_count").notNull().default(0),
