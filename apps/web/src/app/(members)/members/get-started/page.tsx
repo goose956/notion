@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
+import { listDeploysByUser } from "@niche-factory/db";
 
 export const metadata = { title: "Get Started — Niche Factory" };
 
@@ -173,6 +174,11 @@ const STEPS = [
 export default async function GetStartedPage() {
   const session = await auth();
   const userName = session?.user?.name?.split(" ")[0] ?? "there";
+  const notionUserId = (session as unknown as Record<string, unknown>)?.["notionUserId"] as string | undefined;
+
+  const deploys = notionUserId
+    ? await listDeploysByUser(notionUserId).catch(() => [])
+    : [];
 
   return (
     <div
@@ -213,6 +219,71 @@ export default async function GetStartedPage() {
           your pages. Follow these steps to get everything connected.
         </p>
       </div>
+
+      {/* ── Connected Workspaces (shown once at least one deploy exists) ── */}
+      {deploys.length > 0 && (
+        <div
+          style={{
+            marginBottom: "36px",
+            padding: "16px 18px",
+            borderRadius: "6px",
+            background: "rgba(15,123,108,0.06)",
+            border: "1px solid rgba(15,123,108,0.2)",
+          }}
+        >
+          <p
+            style={{
+              margin: "0 0 12px",
+              fontSize: "12px",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+              color: "rgb(15,123,108)",
+            }}
+          >
+            ✓ Connected Workspaces
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {deploys.map((d) => (
+              <div
+                key={d.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                }}
+              >
+                <span style={{ fontSize: "14px", color: N_FG, fontWeight: 500 }}>
+                  {d.nicheName}
+                </span>
+                <a
+                  href={`https://notion.so/${d.notionParentPageId.replace(/-/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 12px",
+                    borderRadius: "4px",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    background: "white",
+                    color: "rgb(15,123,108)",
+                    textDecoration: "none",
+                    border: "1px solid rgba(15,123,108,0.3)",
+                    flexShrink: 0,
+                  }}
+                >
+                  Open in Notion
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Steps */}
       <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
