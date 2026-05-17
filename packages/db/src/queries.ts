@@ -19,6 +19,7 @@ import {
   agentRuns,
   agentSchedules,
   customTools,
+  pageViews,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
@@ -35,6 +36,7 @@ import {
   type AgentScheduleRow,
   type CustomToolRow,
   type NewCustomToolRow,
+  type PageViewRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -679,6 +681,139 @@ export const getCustomSkill = getCustomTool;
 export const upsertCustomSkill = upsertCustomTool;
 /** @deprecated Use deleteCustomTool instead */
 export const deleteCustomSkill = deleteCustomTool;
+
+// ─── Analytics queries ───────────────────────────────────────────────────────
+
+/** Known LLM crawler user-agent substrings (case-insensitive). */
+const LLM_BOT_PATTERNS = [
+  "GPTBot",
+  "ChatGPT-User",
+  "OAI-SearchBot",
+  "ClaudeBot",
+  "Claude-Web",
+  "anthropic-ai",
+  "PerplexityBot",
+  "YouBot",
+  "Cohere-ai",
+  "Google-Extended",
+  "DuckAssistBot",
+  "Applebot-Extended",
+  "Bytespider",
+  "PetalBot",
+] as const;
+
+/** Classify a User-Agent string into "human" | "llm" | "bot". */
+export function classifyVisitor(ua: string | null | undefined): "human" | "llm" | "bot" {
+  if (!ua) return "human";
+  const lower = ua.toLowerCase();
+  if (LLM_BOT_PATTERNS.some((p) => lower.includes(p.toLowerCase()))) return "llm";
+  // Generic bot heuristics
+  if (
+    lower.includes("bot") ||
+    lower.includes("crawler") ||
+    lower.includes("spider") ||
+    lower.includes("slurp") ||
+    lower.includes("facebookexternalhit")
+  ) {
+    return "bot";
+  }
+  return "human";
+}
+
+/** Record a page view. Fire-and-forget safe — never throws. */
+export async function recordPageView(data: {
+  path: string;
+  referrer?: string | null;
+  userAgent?: string | null;
+  country?: string | null;
+}): Promise<void> {
+  try {
+    const { randomUUID } = await import("node:crypto");
+    const visitorType = classifyVisitor(data.userAgent);
+    await db.insert(pageViews).values({
+      id: randomUUID(),
+      path: data.path,
+      referrer: data.referrer ?? null,
+      userAgent: data.userAgent ?? null,
+      visitorType,
+      country: data.country ?? null,
+    });
+  } catch {
+    // analytics must never break the main request
+  }
+}
+
+/** Total views grouped by day for the last N days. */
+export async function getDailyViews(
+  days = 30,
+): Promise<{ date: string; human: number; llm: number; bot: number }[]> {
+  const rows = await db.execute(sql`
+    SELECT
+      DATE_TRUNC('day', created_at AT TIME ZONE 'UTC') AS day,
+      visitor_type,
+      COUNT(*)::int AS cnt
+    FROM page_views
+    WHERE created_at >= NOW() - (${days} || ' days')::interval
+    GROUP BY 1, 2
+    ORDER BY 1
+  `);
+  const map = new Map<string, { human: number; llm: number; bot: number }>();
+  for (const r of rows as unknown as Array<{ day: Date; visitor_type: string; cnt: number }>) {
+    const key = r.day.toISOString().slice(0, 10);
+    if (!map.has(key)) map.set(key, { human: 0, llm: 0, bot: 0 });
+    const entry = map.get(key)!;
+    const t = r.visitor_type as "human" | "llm" | "bot";
+    if (t === "human" || t === "llm" || t === "bot") entry[t] += Number(r.cnt);
+  }
+  return Array.from(map.entries()).map(([date, v]) => ({ date, ...v }));
+}
+
+/** Top N paths by total views. */
+export async function getTopPages(
+  limit = 20,
+  days = 30,
+): Promise<{ path: string; total: number; human: number; llm: number }[]> {
+  const rows = await db.execute(sql`
+    SELECT
+      path,
+      COUNT(*)::int AS total,
+      SUM(CASE WHEN visitor_type = 'human' THEN 1 ELSE 0 END)::int AS human,
+      SUM(CASE WHEN visitor_type = 'llm' THEN 1 ELSE 0 END)::int AS llm
+    FROM page_views
+    WHERE created_at >= NOW() - (${days} || ' days')::interval
+    GROUP BY path
+    ORDER BY total DESC
+    LIMIT ${limit}
+  `);
+  return rows as unknown as Array<{ path: string; total: number; human: number; llm: number }>;
+}
+
+/** Summary totals for dashboard cards. */
+export async function getAnalyticsSummary(): Promise<{
+  totalViews: number;
+  totalLlm: number;
+  totalHuman: number;
+  todayViews: number;
+  todayLlm: number;
+}> {
+  const rows = await db.execute(sql`
+    SELECT
+      COUNT(*)::int AS total_views,
+      SUM(CASE WHEN visitor_type = 'llm' THEN 1 ELSE 0 END)::int AS total_llm,
+      SUM(CASE WHEN visitor_type = 'human' THEN 1 ELSE 0 END)::int AS total_human,
+      SUM(CASE WHEN created_at >= DATE_TRUNC('day', NOW()) THEN 1 ELSE 0 END)::int AS today_views,
+      SUM(CASE WHEN visitor_type = 'llm' AND created_at >= DATE_TRUNC('day', NOW()) THEN 1 ELSE 0 END)::int AS today_llm
+    FROM page_views
+  `);
+  const r = (rows as unknown as Array<{ total_views: number; total_llm: number; total_human: number; today_views: number; today_llm: number }>)[0];
+  return {
+    totalViews: Number(r?.total_views ?? 0),
+    totalLlm: Number(r?.total_llm ?? 0),
+    totalHuman: Number(r?.total_human ?? 0),
+    todayViews: Number(r?.today_views ?? 0),
+    todayLlm: Number(r?.today_llm ?? 0),
+  };
+}
 
 export async function upsertAgentSchedule(row: AgentScheduleRow): Promise<AgentScheduleRow> {
   const now = new Date();

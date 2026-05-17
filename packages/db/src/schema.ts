@@ -363,6 +363,30 @@ export const customTools = pgTable("custom_tools", {
 export type CustomToolRow = typeof customTools.$inferSelect;
 export type NewCustomToolRow = typeof customTools.$inferInsert;
 
+// ─── Page Views ──────────────────────────────────────────────────────────────
+
+/**
+ * page_views — lightweight analytics event log.
+ *
+ * visitor_type: "human" | "llm" | "bot"
+ *   LLM crawlers (GPTBot, ClaudeBot, PerplexityBot, etc.) are classified as "llm".
+ *   Other automated agents are "bot". Normal browsers are "human".
+ */
+export const pageViews = pgTable("page_views", {
+  id: text("id").primaryKey(),                            // uuid
+  path: text("path").notNull(),                           // e.g. /templates/wedding-planner
+  referrer: text("referrer"),                             // HTTP Referer header
+  userAgent: text("user_agent"),                          // raw User-Agent string
+  visitorType: text("visitor_type").notNull().default("human"), // "human" | "llm" | "bot"
+  country: text("country"),                               // optional, from CF-IPCountry header
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type PageViewRow = typeof pageViews.$inferSelect;
+export type NewPageViewRow = typeof pageViews.$inferInsert;
+
 /** @deprecated Use CustomToolRow instead */
 export type CustomSkillRow = CustomToolRow;
 /** @deprecated Use NewCustomToolRow instead */

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
-import { Blocks, Bot, LayoutDashboard, LogOut, SlidersHorizontal, Sparkles, Users, Wrench } from "lucide-react";
+import { BarChart2, Blocks, Bot, LayoutDashboard, LogOut, SlidersHorizontal, Sparkles, Users, Wrench } from "lucide-react";
 
 function isAdminEmail(email: string | null | undefined): boolean {
   const raw = process.env["ADMIN_EMAIL"] ?? "";
@@ -56,6 +56,10 @@ export default async function AdminLayout({
           <Link href="/admin/settings" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
             <SlidersHorizontal className="h-3.5 w-3.5" />
             Settings
+          </Link>
+          <Link href="/admin/stats" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+            <BarChart2 className="h-3.5 w-3.5" />
+            Stats
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground">

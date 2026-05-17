@@ -4,6 +4,7 @@ import { getTemplateBySlug, incrementTemplateView } from "@niche-factory/db";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { CircleHelp, Compass, Lightbulb, ListChecks, Sparkles, Zap } from "lucide-react";
+import { PageViewBeacon } from "@/components/page-view-beacon";
 
 export const dynamic = "force-dynamic";
 
@@ -131,6 +132,7 @@ export default async function TemplatePage({ params }: Props) {
 
   return (
     <>
+      <PageViewBeacon path={`/templates/${t.slug}`} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       {faqSchema !== null && (
