@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { AiToolBuilder } from "./ai-tool-builder";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -113,6 +114,18 @@ function BuiltinToolCard({ tool, settings }: { tool: BuiltinTool; settings: Sett
   );
 }
 
+const TOOL_TYPE_BADGE: Record<string, string> = {
+  webhook: "bg-blue-100 text-blue-700 border-blue-200",
+  python: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  sql: "bg-green-100 text-green-700 border-green-200",
+  http_scraper: "bg-orange-100 text-orange-700 border-orange-200",
+  llm_chain: "bg-purple-100 text-purple-700 border-purple-200",
+};
+
+function toolTypeLabel(t: string) {
+  return { webhook: "webhook", python: "python", sql: "sql", http_scraper: "http scraper", llm_chain: "llm chain" }[t] ?? t;
+}
+
 function CustomToolCard({
   tool,
   onToggle,
@@ -122,14 +135,15 @@ function CustomToolCard({
   onToggle: (id: string, enabled: boolean) => void;
   onDelete: (id: string) => void;
 }) {
-  const cfg = tool.config as { url?: string; method?: string };
+  const cfg = tool.config as { url?: string; method?: string; code?: string; query?: string; prompt_template?: string; url_template?: string };
+  const badgeCls = TOOL_TYPE_BADGE[tool.toolType] ?? "bg-muted text-muted-foreground border";
 
   return (
     <div className="surface-card p-4 space-y-2">
       <div className="flex items-start justify-between gap-2">
         <div>
           <span className="font-mono text-sm font-semibold">{tool.name}</span>
-          <span className="ml-2 text-xs bg-purple-100 text-purple-700 border border-purple-200 rounded-full px-2 py-0.5">custom · {tool.toolType}</span>
+          <span className={`ml-2 text-xs border rounded-full px-2 py-0.5 ${badgeCls}`}>custom · {toolTypeLabel(tool.toolType)}</span>
           {!tool.enabled && (
             <span className="ml-1 text-xs bg-muted text-muted-foreground border rounded-full px-2 py-0.5">disabled</span>
           )}
@@ -137,6 +151,26 @@ function CustomToolCard({
           {cfg.url && (
             <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate max-w-sm">
               {cfg.method ?? "POST"} {cfg.url}
+            </p>
+          )}
+          {cfg.url_template && (
+            <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate max-w-sm">
+              GET {cfg.url_template}
+            </p>
+          )}
+          {cfg.query && (
+            <p className="text-xs text-muted-foreground font-mono mt-0.5 truncate max-w-sm">
+              SQL: {String(cfg.query).slice(0, 80)}{String(cfg.query).length > 80 ? "…" : ""}
+            </p>
+          )}
+          {cfg.prompt_template && (
+            <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-sm italic">
+              Prompt: {String(cfg.prompt_template).slice(0, 80)}…
+            </p>
+          )}
+          {cfg.code && (
+            <p className="text-xs text-muted-foreground font-mono mt-0.5">
+              Python · {String(cfg.code).split("\n").length} lines
             </p>
           )}
         </div>
@@ -491,16 +525,19 @@ export function ToolsCatalog() {
 
       {/* Custom tools */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="font-semibold text-base">Custom Tools</h2>
-          <CreateToolForm onCreated={() => { load().catch(() => undefined); }} />
+          <div className="flex items-center gap-2">
+            <AiToolBuilder onToolSaved={() => { load().catch(() => undefined); }} />
+            <CreateToolForm onCreated={() => { load().catch(() => undefined); }} />
+          </div>
         </div>
 
         {customs.length === 0 && (
           <div className="surface-card p-6 text-center space-y-1">
             <p className="text-sm font-medium">No custom tools yet.</p>
             <p className="text-sm text-muted-foreground">
-              Create a custom tool to let agents call any webhook, Zapier flow, Make scenario, or REST API – no code needed.
+              Use <strong>Build with AI</strong> to create any kind of tool through conversation, or use <strong>+ New Custom Tool</strong> to configure a webhook manually.
             </p>
           </div>
         )}
