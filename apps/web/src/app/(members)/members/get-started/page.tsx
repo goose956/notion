@@ -5,6 +5,8 @@ import { listDeploysByUser } from "@niche-factory/db";
 
 export const metadata = { title: "Get Started — Niche Factory" };
 
+export const dynamic = "force-dynamic";
+
 const N_FG = "#37352F";
 const N_MUTED = "rgba(55,53,47,0.65)";
 const N_SUBTLE = "rgba(55,53,47,0.45)";
@@ -158,7 +160,11 @@ const STEPS = [
   },
 ] as const;
 
-export default async function GetStartedPage() {
+export default async function GetStartedPage({
+  searchParams,
+}: {
+  searchParams: { next?: string };
+}) {
   const session = await auth();
   const userName = session?.user?.name?.split(" ")[0] ?? "there";
   const notionUserId = (session as unknown as Record<string, unknown>)?.["notionUserId"] as string | undefined;
@@ -166,6 +172,10 @@ export default async function GetStartedPage() {
   const deploys = notionUserId
     ? await listDeploysByUser(notionUserId).catch(() => [])
     : [];
+
+  // Only allow same-origin relative paths to prevent open-redirect
+  const rawNext = searchParams.next ?? "";
+  const nextUrl = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
 
   return (
     <div
@@ -206,6 +216,52 @@ export default async function GetStartedPage() {
           your pages. Follow these steps to get everything connected.
         </p>
       </div>
+
+      {/* ── "You're almost there" banner when coming from a template sign-up ── */}
+      {nextUrl && (
+        <div
+          style={{
+            marginBottom: "28px",
+            padding: "14px 18px",
+            borderRadius: "6px",
+            background: "rgba(35,131,226,0.06)",
+            border: "1px solid rgba(35,131,226,0.2)",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
+          }}
+        >
+          <span style={{ fontSize: "20px", lineHeight: 1 }}>🎉</span>
+          <div>
+            <p style={{ margin: "0 0 4px", fontSize: "14px", fontWeight: 600, color: N_FG }}>
+              Account created — you&apos;re almost there!
+            </p>
+            <p style={{ margin: "0 0 10px", fontSize: "13px", color: N_MUTED, lineHeight: 1.5 }}>
+              Just connect your Notion workspace below (step 3) and you&apos;ll be ready to go.
+              Once connected, click <strong style={{ color: N_FG }}>Open Research Assistant</strong> at
+              the bottom to pick up where you left off.
+            </p>
+            <a
+              href={nextUrl}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "5px 12px",
+                borderRadius: "4px",
+                fontSize: "13px",
+                fontWeight: 500,
+                background: N_BLUE_BG,
+                color: N_BLUE,
+                textDecoration: "none",
+                border: "1px solid rgba(35,131,226,0.25)",
+              }}
+            >
+              Skip to Research Assistant →
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* ── Connected Workspaces (shown once at least one deploy exists) ── */}
       {deploys.length > 0 && (
@@ -274,96 +330,134 @@ export default async function GetStartedPage() {
 
       {/* Steps */}
       <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
-        {STEPS.map((step, i) => (
-          <div key={step.number} style={{ display: "flex", gap: "0" }}>
-            {/* Timeline spine */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                width: "40px",
-                flexShrink: 0,
-              }}
-            >
-              <div
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  background: step.done ? "rgb(15,123,108)" : N_BLUE_BG,
-                  border: `2px solid ${step.done ? "rgb(15,123,108)" : N_BLUE}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  fontSize: "15px",
-                }}
-              >
-                {step.done ? (
-                  <CheckCircle2 size={16} color="white" />
-                ) : (
-                  <span>{step.emoji}</span>
-                )}
-              </div>
-              {i < STEPS.length - 1 && (
-                <div
+        {STEPS.map((step, i) => {
+          // For step 4, override the "Open Research Assistant" button if we have a next URL
+          let body: React.ReactNode = step.body;
+          if (step.number === 4 && nextUrl) {
+            body = (
+              <>
+                <p style={{ margin: "0 0 10px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
+                  Open the Research Assistant and select your niche. The <strong style={{ color: N_FG }}>first time</strong> you
+                  use a niche, a short setup form will appear asking a few questions — things like your
+                  target location or budget range. Once you submit, your Notion databases are created
+                  automatically in the page you connected above.
+                </p>
+                <p style={{ margin: "0 0 14px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
+                  After that, just type your research question and results will appear ready to save
+                  straight into Notion.
+                </p>
+                <Link
+                  href={nextUrl as never}
                   style={{
-                    flex: 1,
-                    width: "2px",
-                    background: N_BORDER,
-                    minHeight: "24px",
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Content */}
-            <div
-              style={{
-                flex: 1,
-                paddingBottom: i < STEPS.length - 1 ? "28px" : "0",
-                paddingLeft: "16px",
-                paddingTop: "4px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginBottom: "8px",
-                }}
-              >
-                <h2
-                  style={{
-                    margin: 0,
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    color: N_FG,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "7px 16px",
+                    borderRadius: "4px",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    background: N_FG,
+                    color: "white",
+                    textDecoration: "none",
                   }}
                 >
-                  {step.title}
-                </h2>
-                {step.done && (
-                  <span
+                  Open Research Assistant
+                  <ArrowRight size={14} />
+                </Link>
+              </>
+            );
+          }
+          return (
+            <div key={step.number} style={{ display: "flex", gap: "0" }}>
+              {/* Timeline spine */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  width: "40px",
+                  flexShrink: 0,
+                }}
+              >
+                <div
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    background: step.done ? "rgb(15,123,108)" : N_BLUE_BG,
+                    border: `2px solid ${step.done ? "rgb(15,123,108)" : N_BLUE}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    fontSize: "15px",
+                  }}
+                >
+                  {step.done ? (
+                    <CheckCircle2 size={16} color="white" />
+                  ) : (
+                    <span>{step.emoji}</span>
+                  )}
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div
                     style={{
-                      fontSize: "11px",
-                      fontWeight: 500,
-                      padding: "2px 7px",
-                      borderRadius: "12px",
-                      background: "rgba(15,123,108,0.1)",
-                      color: "rgb(15,123,108)",
+                      flex: 1,
+                      width: "2px",
+                      background: N_BORDER,
+                      minHeight: "24px",
                     }}
-                  >
-                    Done
-                  </span>
+                  />
                 )}
               </div>
-              {step.body}
+
+              {/* Content */}
+              <div
+                style={{
+                  flex: 1,
+                  paddingBottom: i < STEPS.length - 1 ? "28px" : "0",
+                  paddingLeft: "16px",
+                  paddingTop: "4px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <h2
+                    style={{
+                      margin: 0,
+                      fontSize: "16px",
+                      fontWeight: 600,
+                      color: N_FG,
+                    }}
+                  >
+                    {step.title}
+                  </h2>
+                  {step.done && (
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 500,
+                        padding: "2px 7px",
+                        borderRadius: "12px",
+                        background: "rgba(15,123,108,0.1)",
+                        color: "rgb(15,123,108)",
+                      }}
+                    >
+                      Done
+                    </span>
+                  )}
+                </div>
+                {body}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Footer help */}

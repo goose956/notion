@@ -34,8 +34,14 @@ function SignupForm() {
         setLoading(false);
         return;
       }
-      // Pre-registration done — send to Notion OAuth
-      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+      // Pre-registration done — send to get-started so they see the onboarding
+      // steps before being asked to connect Notion. Thread the original
+      // callbackUrl as `next` so step 4 can deep-link back to the right place.
+      const getStartedUrl =
+        callbackUrl && callbackUrl !== "/members/get-started"
+          ? `/members/get-started?next=${encodeURIComponent(callbackUrl)}`
+          : "/members/get-started";
+      router.push(`/login?callbackUrl=${encodeURIComponent(getStartedUrl)}`);
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
