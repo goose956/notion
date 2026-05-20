@@ -210,7 +210,7 @@ function SignupForm() {
             lineHeight: 1.5,
           }}
         >
-          Next step: connect your Notion account to create your workspace.
+          Next step: create a Notion page for your workspace, then connect your account.
           <br />No credit card needed.
         </p>
       </div>

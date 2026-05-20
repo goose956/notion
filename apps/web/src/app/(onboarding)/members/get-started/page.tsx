@@ -56,70 +56,7 @@ export default async function GetStartedPage({
   const STEPS = [
     {
       number: 1,
-      emoji: "🔐",
-      title: isLoggedIn ? "You're signed in with Notion" : "Connect with Notion",
-      done: isLoggedIn,
-      body: isLoggedIn ? (
-        <p
-          style={{ margin: 0, fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}
-        >
-          You authenticated with your Notion account — you&apos;re all set here.
-          If you don&apos;t have a Notion account yet you can{" "}
-          <a
-            href="https://www.notion.so/signup"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: N_BLUE, textDecoration: "underline" }}
-          >
-            sign up for free at notion.so
-          </a>
-          , then come back and sign in.
-        </p>
-      ) : (
-        <>
-          <p
-            style={{
-              margin: "0 0 12px",
-              fontSize: "14px",
-              color: N_MUTED,
-              lineHeight: 1.6,
-            }}
-          >
-            Click below to sign in with your Notion account. If you don&apos;t
-            have one yet you can{" "}
-            <a
-              href="https://www.notion.so/signup"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: N_BLUE, textDecoration: "underline" }}
-            >
-              create a free account at notion.so
-            </a>{" "}
-            first.
-          </p>
-          <a
-            href={connectHref}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "7px 16px",
-              borderRadius: "4px",
-              fontSize: "14px",
-              fontWeight: 600,
-              background: N_FG,
-              color: "white",
-              textDecoration: "none",
-            }}
-          >
-            Continue with Notion →
-          </a>
-        </>
-      ),
-    },
-    {
-      number: 2,
-      emoji: "📄",
+      emoji: "�",
       title: "Create a new page in Notion",
       done: false,
       body: (
@@ -132,12 +69,17 @@ export default async function GetStartedPage({
               lineHeight: 1.6,
             }}
           >
-            Open Notion and create a blank page — this will be your niche
-            research workspace. Give it a name like{" "}
-            <strong style={{ color: N_FG, fontWeight: 600 }}>
-              &quot;My Niche Research&quot;
-            </strong>
-            .
+            First, create a blank page in Notion — this will become your niche
+            research workspace. If you don&apos;t have a Notion account yet,{" "}
+            <a
+              href="https://www.notion.so/signup"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: N_BLUE, textDecoration: "underline" }}
+            >
+              sign up for free
+            </a>{" "}
+            first.
           </p>
           <ol
             style={{
@@ -149,8 +91,7 @@ export default async function GetStartedPage({
             }}
           >
             <li>
-              Click{" "}
-              <strong style={{ color: N_FG }}>+ New page</strong> in your
+              Click <strong style={{ color: N_FG }}>+ New page</strong> in your
               Notion sidebar
             </li>
             <li>
@@ -186,11 +127,37 @@ export default async function GetStartedPage({
       ),
     },
     {
-      number: 3,
+      number: 2,
       emoji: "🔗",
-      title: "Grant Niche Factory access to your page",
-      done: false,
-      body: (
+      title: isLoggedIn ? "You're connected with Notion" : "Connect with Notion",
+      done: isLoggedIn,
+      body: isLoggedIn ? (
+        <>
+          <p style={{ margin: "0 0 10px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
+            Your Notion account is connected. If you need to share an additional
+            page with Niche Factory, click below to open the Notion access
+            settings.
+          </p>
+          <a
+            href={connectHref}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "7px 16px",
+              borderRadius: "4px",
+              fontSize: "14px",
+              fontWeight: 500,
+              background: N_BLUE_BG,
+              color: N_BLUE,
+              textDecoration: "none",
+              border: `1px solid rgba(35,131,226,0.25)`,
+            }}
+          >
+            Add a Notion page →
+          </a>
+        </>
+      ) : (
         <>
           <p
             style={{
@@ -200,35 +167,32 @@ export default async function GetStartedPage({
               lineHeight: 1.6,
             }}
           >
-            {isLoggedIn
-              ? "Click below to grant access to additional Notion pages, or to reconnect."
-              : "After signing in with Notion (step 1), you'll be asked which pages to share — pick the one you just created."}
+            Once your Notion page is ready, click below to connect your account.
+            Notion will ask which pages to share with Niche Factory — select the
+            page you just created.
           </p>
-          {isLoggedIn && (
-            <a
-              href={connectHref}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "7px 16px",
-                borderRadius: "4px",
-                fontSize: "14px",
-                fontWeight: 500,
-                background: N_BLUE_BG,
-                color: N_BLUE,
-                textDecoration: "none",
-                border: `1px solid rgba(35,131,226,0.25)`,
-              }}
-            >
-              Connect a Notion page →
-            </a>
-          )}
+          <a
+            href={connectHref}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "7px 16px",
+              borderRadius: "4px",
+              fontSize: "14px",
+              fontWeight: 600,
+              background: N_FG,
+              color: "white",
+              textDecoration: "none",
+            }}
+          >
+            Continue with Notion →
+          </a>
         </>
       ),
     },
     {
-      number: 4,
+      number: 3,
       emoji: nicheName ? "🚀" : "🔍",
       title: nicheName
         ? `Set up your ${nicheName} workspace`
@@ -443,11 +407,11 @@ export default async function GetStartedPage({
               >
                 {isLoggedIn
                   ? nicheName
-                    ? `Connect a Notion page (step 3), then click "Set up ${nicheName}" to publish your workspace.`
-                    : "Connect your Notion workspace (step 3) and you'll be ready to go."
+                    ? `Connect a Notion page (step 2) if you haven't already, then click "Set up ${nicheName}" to publish your workspace.`
+                    : "Connect your Notion workspace (step 2) and you'll be ready to go."
                   : nicheName
-                  ? `Sign in with Notion (step 1) and we'll walk you through publishing your ${nicheName} workspace.`
-                  : "Sign in with Notion (step 1) and you'll be good to go."}
+                  ? `Connect with Notion (step 2) and we'll walk you through publishing your ${nicheName} workspace.`
+                  : "Connect with Notion (step 2) and you'll be good to go."}
               </p>
               {isLoggedIn && (
                 <a
