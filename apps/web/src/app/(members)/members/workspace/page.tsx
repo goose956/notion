@@ -1,0 +1,885 @@
+"use client";
+
+import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react";
+import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
+import type { WorkspaceDatabase, WorkspaceProperty, WorkspaceRow } from "@/app/api/members/workspace/route";
+
+// ─── Notion design tokens ──────────────────────────────────────────────────────
+const N_FG = "#37352F";
+const N_MUTED = "rgba(55,53,47,0.65)";
+const N_SUBTLE = "rgba(55,53,47,0.45)";
+const N_BORDER = "rgba(55,53,47,0.09)";
+const N_BORDER_MED = "rgba(55,53,47,0.16)";
+const N_ACTIVE = "rgba(55,53,47,0.06)";
+const N_BLUE = "rgb(35,131,226)";
+const N_FONT =
+  'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
+
+// ─── Readonly property types (can't inline-edit these) ─────────────────────
+const READONLY_TYPES = new Set(["formula", "rollup", "relation", "created_time", "last_edited_time", "created_by", "last_edited_by"]);
+
+// ─── Format a cell value for display ───────────────────────────────────────
+function formatCell(value: string | number | boolean | null, type: string): string {
+  if (value === null || value === undefined) return "";
+  if (type === "checkbox") return value ? "✓" : "✗";
+  if (type === "number" && typeof value === "number") {
+    return value.toLocaleString();
+  }
+  return String(value);
+}
+
+// ─── Cell editor ───────────────────────────────────────────────────────────
+function CellEditor({
+  value,
+  type,
+  options,
+  onSave,
+  onCancel,
+}: {
+  value: string | number | boolean | null;
+  type: string;
+  options?: string[];
+  onSave: (val: string | number | boolean | null) => void;
+  onCancel: () => void;
+}) {
+  const [draft, setDraft] = useState<string>(
+    value === null || value === undefined ? "" : String(value),
+  );
+  const inputRef = useRef<HTMLInputElement & HTMLSelectElement & HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const inputStyle: React.CSSProperties = {
+    padding: "4px 6px",
+    fontSize: "13px",
+    color: N_FG,
+    border: `1px solid ${N_BLUE}`,
+    borderRadius: "3px",
+    outline: "none",
+    fontFamily: N_FONT,
+    width: "100%",
+    boxSizing: "border-box",
+    background: "white",
+  };
+
+  function commit() {
+    if (type === "number") {
+      const n = parseFloat(draft);
+      onSave(isNaN(n) ? null : n);
+    } else if (type === "checkbox") {
+      onSave(draft === "true");
+    } else {
+      onSave(draft.trim() === "" ? null : draft.trim());
+    }
+  }
+
+  function handleKey(e: KeyboardEvent) {
+    if (e.key === "Enter" && type !== "rich_text") { e.preventDefault(); commit(); }
+    if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+  }
+
+  if (type === "checkbox") {
+    return (
+      <input
+        type="checkbox"
+        checked={draft === "true"}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+          const val = e.target.checked;
+          setDraft(String(val));
+          onSave(val);
+        }}
+        style={{ width: "16px", height: "16px", cursor: "pointer" }}
+      />
+    );
+  }
+
+  if (type === "select" && options && options.length > 0) {
+    return (
+      <select
+        ref={inputRef as React.RefObject<HTMLSelectElement>}
+        value={draft}
+        onChange={(e: ChangeEvent<HTMLSelectElement>) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={handleKey}
+        style={{ ...inputStyle, appearance: "auto" }}
+      >
+        <option value="">—</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    );
+  }
+
+  if (type === "date") {
+    return (
+      <input
+        ref={inputRef as React.RefObject<HTMLInputElement>}
+        type="date"
+        value={draft}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={handleKey}
+        style={inputStyle}
+      />
+    );
+  }
+
+  if (type === "rich_text") {
+    return (
+      <textarea
+        ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+        value={draft}
+        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={handleKey}
+        rows={3}
+        style={{ ...inputStyle, resize: "vertical" }}
+      />
+    );
+  }
+
+  return (
+    <input
+      ref={inputRef as React.RefObject<HTMLInputElement>}
+      type={type === "number" ? "number" : type === "url" || type === "email" ? type : "text"}
+      value={draft}
+      onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={handleKey}
+      style={inputStyle}
+    />
+  );
+}
+
+// ─── Single database table ─────────────────────────────────────────────────
+function DatabaseTable({
+  db,
+  onRowUpdated,
+  onRowDeleted,
+  onRowAdded,
+}: {
+  db: WorkspaceDatabase;
+  onRowUpdated: (pageId: string, name: string, val: string | number | boolean | null) => void;
+  onRowDeleted: (pageId: string) => void;
+  onRowAdded: (row: WorkspaceRow) => void;
+}) {
+  const [editingCell, setEditingCell] = useState<{ pageId: string; prop: string } | null>(null);
+  const [savingCell, setSavingCell] = useState<{ pageId: string; prop: string } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [addingRow, setAddingRow] = useState(false);
+  const [cellError, setCellError] = useState<string | null>(null);
+
+  // Visible columns: skip formula/rollup/relation by default, always show title first
+  const titleCol = db.properties.find((p) => p.type === "title");
+  const otherCols = db.properties.filter(
+    (p) => p.type !== "title" && p.type !== "created_time" && p.type !== "last_edited_time" && p.type !== "created_by" && p.type !== "last_edited_by",
+  );
+  const visibleCols: WorkspaceProperty[] = titleCol
+    ? [titleCol, ...otherCols]
+    : otherCols;
+
+  // Type map for quick lookups
+  const typeMap: Record<string, string> = {};
+  for (const p of db.properties) typeMap[p.name] = p.type;
+
+  // Options map (select/status) — we derive from existing row values
+  const optionsMap: Record<string, string[]> = {};
+  for (const row of db.rows) {
+    for (const [name, val] of Object.entries(row.properties)) {
+      const type = typeMap[name];
+      if ((type === "select" || type === "status") && val && !optionsMap[name]) {
+        // We'll collect from all rows
+        optionsMap[name] = optionsMap[name] ?? [];
+      }
+    }
+  }
+  for (const row of db.rows) {
+    for (const [name, val] of Object.entries(row.properties)) {
+      const type = typeMap[name];
+      if ((type === "select" || type === "status") && typeof val === "string" && val) {
+        if (!optionsMap[name]) optionsMap[name] = [];
+        if (!optionsMap[name]!.includes(val)) optionsMap[name]!.push(val);
+      }
+    }
+  }
+
+  async function handleSave(
+    pageId: string,
+    propName: string,
+    val: string | number | boolean | null,
+  ) {
+    setEditingCell(null);
+    setSavingCell({ pageId, prop: propName });
+    setCellError(null);
+    try {
+      const res = await fetch(`/api/members/workspace/${pageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          properties: { [propName]: val },
+          propertyTypes: { [propName]: typeMap[propName] ?? "rich_text" },
+        }),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(d.error ?? "Save failed");
+      }
+      onRowUpdated(pageId, propName, val);
+    } catch (err) {
+      setCellError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSavingCell(null);
+    }
+  }
+
+  async function handleDelete(pageId: string) {
+    if (!confirm("Archive this row?")) return;
+    setDeletingId(pageId);
+    try {
+      await fetch(`/api/members/workspace/${pageId}`, { method: "DELETE" });
+      onRowDeleted(pageId);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleAddRow() {
+    setAddingRow(true);
+    try {
+      // Create with empty title
+      const titleProp = db.properties.find((p) => p.type === "title");
+      const props: Record<string, string> = {};
+      const propTypes: Record<string, string> = {};
+      if (titleProp) {
+        props[titleProp.name] = "New entry";
+        propTypes[titleProp.name] = "title";
+      }
+
+      const res = await fetch("/api/members/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          databaseId: db.notionId,
+          properties: props,
+          propertyTypes: propTypes,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to create row");
+      const data = (await res.json()) as { pageId: string };
+      const newRow: WorkspaceRow = {
+        pageId: data.pageId,
+        properties: {},
+      };
+      if (titleProp) newRow.properties[titleProp.name] = "New entry";
+      onRowAdded(newRow);
+    } catch (err) {
+      setCellError(err instanceof Error ? err.message : "Failed to add row");
+    } finally {
+      setAddingRow(false);
+    }
+  }
+
+  if (visibleCols.length === 0) {
+    return (
+      <p style={{ fontSize: "14px", color: N_MUTED, padding: "20px" }}>
+        No displayable columns in this database.
+      </p>
+    );
+  }
+
+  return (
+    <div style={{ overflowX: "auto" }}>
+      {cellError && (
+        <div
+          style={{
+            padding: "8px 12px",
+            marginBottom: "8px",
+            borderRadius: "4px",
+            background: "rgba(220,38,38,0.06)",
+            border: "1px solid rgba(220,38,38,0.2)",
+            fontSize: "13px",
+            color: "rgb(220,38,38)",
+          }}
+        >
+          {cellError}
+        </div>
+      )}
+
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          fontSize: "13px",
+          color: N_FG,
+          fontFamily: N_FONT,
+        }}
+      >
+        <thead>
+          <tr style={{ background: "#F7F6F3" }}>
+            {visibleCols.map((col) => (
+              <th
+                key={col.id}
+                style={{
+                  padding: "7px 10px",
+                  textAlign: "left",
+                  fontWeight: 500,
+                  fontSize: "11px",
+                  color: N_SUBTLE,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  border: `1px solid ${N_BORDER}`,
+                  whiteSpace: "nowrap",
+                  minWidth: col.type === "title" ? "180px" : "120px",
+                  maxWidth: "260px",
+                }}
+              >
+                {col.name}
+              </th>
+            ))}
+            <th
+              style={{
+                padding: "7px 8px",
+                border: `1px solid ${N_BORDER}`,
+                width: "32px",
+              }}
+            />
+          </tr>
+        </thead>
+        <tbody>
+          {db.rows.length === 0 && (
+            <tr>
+              <td
+                colSpan={visibleCols.length + 1}
+                style={{
+                  padding: "20px",
+                  textAlign: "center",
+                  color: N_MUTED,
+                  border: `1px solid ${N_BORDER}`,
+                }}
+              >
+                No rows yet — click &quot;Add row&quot; to get started.
+              </td>
+            </tr>
+          )}
+          {db.rows.map((row) => (
+            <tr
+              key={row.pageId}
+              style={{ background: "white" }}
+              className="hover:bg-[rgba(55,53,47,0.02)]"
+            >
+              {visibleCols.map((col) => {
+                const val = row.properties[col.name] ?? null;
+                const isEditing =
+                  editingCell?.pageId === row.pageId &&
+                  editingCell?.prop === col.name;
+                const isSaving =
+                  savingCell?.pageId === row.pageId &&
+                  savingCell?.prop === col.name;
+                const readonly = READONLY_TYPES.has(col.type);
+
+                return (
+                  <td
+                    key={col.id}
+                    onClick={() => {
+                      if (!readonly && !isSaving)
+                        setEditingCell({ pageId: row.pageId, prop: col.name });
+                    }}
+                    style={{
+                      padding: isEditing ? "4px 6px" : "7px 10px",
+                      border: `1px solid ${N_BORDER}`,
+                      cursor: readonly ? "default" : "pointer",
+                      background: isEditing ? "rgba(35,131,226,0.04)" : undefined,
+                      maxWidth: "260px",
+                      overflow: "hidden",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    {isSaving ? (
+                      <Loader2
+                        size={12}
+                        style={{ color: N_SUBTLE, animation: "spin 1s linear infinite" }}
+                      />
+                    ) : isEditing ? (
+                      <CellEditor
+                        value={val}
+                        type={col.type}
+                        options={optionsMap[col.name]}
+                        onSave={(v) => void handleSave(row.pageId, col.name, v)}
+                        onCancel={() => setEditingCell(null)}
+                      />
+                    ) : (
+                      <span
+                        style={{
+                          display: "block",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          color: val === null ? N_SUBTLE : col.type === "url" ? N_BLUE : N_FG,
+                          fontWeight: col.type === "title" ? 500 : 400,
+                        }}
+                      >
+                        {col.type === "url" && val ? (
+                          <a
+                            href={String(val)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ color: N_BLUE, textDecoration: "none" }}
+                          >
+                            {String(val)}
+                          </a>
+                        ) : (
+                          formatCell(val, col.type) || (
+                            <span style={{ color: N_SUBTLE, fontStyle: "italic" }}>
+                              {readonly ? "—" : "Empty"}
+                            </span>
+                          )
+                        )}
+                      </span>
+                    )}
+                  </td>
+                );
+              })}
+              {/* Delete button */}
+              <td
+                style={{
+                  padding: "4px",
+                  border: `1px solid ${N_BORDER}`,
+                  textAlign: "center",
+                  verticalAlign: "middle",
+                }}
+              >
+                {deletingId === row.pageId ? (
+                  <Loader2
+                    size={12}
+                    style={{ color: N_SUBTLE, animation: "spin 1s linear infinite" }}
+                  />
+                ) : (
+                  <button
+                    onClick={() => void handleDelete(row.pageId)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "2px",
+                      color: N_SUBTLE,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    title="Archive row"
+                    className="hover:text-red-500"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Add row */}
+      <button
+        onClick={() => void handleAddRow()}
+        disabled={addingRow}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "5px",
+          marginTop: "6px",
+          padding: "5px 10px",
+          fontSize: "13px",
+          color: N_MUTED,
+          background: "transparent",
+          border: "none",
+          cursor: addingRow ? "default" : "pointer",
+          fontFamily: N_FONT,
+          borderRadius: "3px",
+        }}
+        className="hover:bg-[rgba(55,53,47,0.06)] hover:text-[#37352F]"
+      >
+        {addingRow ? (
+          <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+        ) : (
+          <Plus size={13} />
+        )}
+        Add row
+      </button>
+
+      {db.hasMore && (
+        <p style={{ fontSize: "12px", color: N_SUBTLE, marginTop: "8px", padding: "0 4px" }}>
+          Showing first 50 rows. Open in Notion to see all.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Main workspace page component ────────────────────────────────────────────
+export default function WorkspacePage() {
+  const [databases, setDatabases] = useState<WorkspaceDatabase[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
+
+  async function loadDatabases(isRefresh = false) {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/members/workspace");
+      if (!res.ok) throw new Error("Failed to load workspace data");
+      const data = (await res.json()) as { databases: WorkspaceDatabase[] };
+      setDatabases(data.databases);
+
+      // Auto-expand all niches and select first tab
+      const nicheIds = [...new Set(data.databases.map((d) => d.nicheId))];
+      setExpandedNiches(new Set(nicheIds));
+      if (data.databases.length > 0 && !activeTab) {
+        setActiveTab(data.databases[0]!.notionId);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadDatabases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleRowUpdated(dbNotionId: string, pageId: string, name: string, val: string | number | boolean | null) {
+    setDatabases((prev) =>
+      prev.map((db) =>
+        db.notionId !== dbNotionId
+          ? db
+          : {
+              ...db,
+              rows: db.rows.map((r) =>
+                r.pageId !== pageId ? r : { ...r, properties: { ...r.properties, [name]: val } },
+              ),
+            },
+      ),
+    );
+  }
+
+  function handleRowDeleted(dbNotionId: string, pageId: string) {
+    setDatabases((prev) =>
+      prev.map((db) =>
+        db.notionId !== dbNotionId
+          ? db
+          : { ...db, rows: db.rows.filter((r) => r.pageId !== pageId) },
+      ),
+    );
+  }
+
+  function handleRowAdded(dbNotionId: string, row: WorkspaceRow) {
+    setDatabases((prev) =>
+      prev.map((db) =>
+        db.notionId !== dbNotionId ? db : { ...db, rows: [...db.rows, row] },
+      ),
+    );
+  }
+
+  // Group databases by niche
+  const nicheGroups: Array<{ nicheId: string; nicheName: string; dbs: WorkspaceDatabase[] }> = [];
+  for (const db of databases) {
+    const existing = nicheGroups.find((g) => g.nicheId === db.nicheId);
+    if (existing) {
+      existing.dbs.push(db);
+    } else {
+      nicheGroups.push({ nicheId: db.nicheId, nicheName: db.nicheName, dbs: [db] });
+    }
+  }
+
+  const activeDb = databases.find((d) => d.notionId === activeTab);
+
+  return (
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: N_FONT }}>
+
+      {/* ── Left sidebar: database list ───────────────────────────────────── */}
+      <div
+        style={{
+          width: "220px",
+          flexShrink: 0,
+          borderRight: `1px solid ${N_BORDER}`,
+          display: "flex",
+          flexDirection: "column",
+          background: "#F7F6F3",
+          overflowY: "auto",
+        }}
+      >
+        <div
+          style={{
+            padding: "14px 14px 10px",
+            borderBottom: `1px solid ${N_BORDER}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span style={{ fontSize: "13px", fontWeight: 600, color: N_FG }}>My Databases</span>
+          <button
+            onClick={() => void loadDatabases(true)}
+            disabled={refreshing}
+            title="Refresh"
+            style={{
+              background: "none",
+              border: "none",
+              cursor: refreshing ? "default" : "pointer",
+              padding: "2px",
+              color: N_SUBTLE,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <RefreshCw
+              size={13}
+              style={refreshing ? { animation: "spin 1s linear infinite" } : undefined}
+            />
+          </button>
+        </div>
+
+        {loading && (
+          <div style={{ padding: "16px", display: "flex", alignItems: "center", gap: "8px", color: N_MUTED, fontSize: "13px" }}>
+            <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+            Loading…
+          </div>
+        )}
+
+        {!loading && databases.length === 0 && (
+          <p style={{ padding: "16px", fontSize: "13px", color: N_MUTED, lineHeight: 1.5 }}>
+            No databases yet. Set up a niche pack first.
+          </p>
+        )}
+
+        {nicheGroups.map((group) => {
+          const expanded = expandedNiches.has(group.nicheId);
+          return (
+            <div key={group.nicheId}>
+              <button
+                onClick={() =>
+                  setExpandedNiches((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(group.nicheId)) next.delete(group.nicheId);
+                    else next.add(group.nicheId);
+                    return next;
+                  })
+                }
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  width: "100%",
+                  padding: "6px 10px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: N_SUBTLE,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  fontFamily: N_FONT,
+                  textAlign: "left",
+                }}
+              >
+                {expanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                {group.nicheName}
+              </button>
+
+              {expanded &&
+                group.dbs.map((db) => {
+                  const active = activeTab === db.notionId;
+                  return (
+                    <button
+                      key={db.notionId}
+                      onClick={() => setActiveTab(db.notionId)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "7px",
+                        width: "100%",
+                        padding: "5px 10px 5px 20px",
+                        background: active ? N_ACTIVE : "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        color: N_FG,
+                        fontFamily: N_FONT,
+                        textAlign: "left",
+                        borderRadius: "3px",
+                      }}
+                      className="hover:bg-[rgba(55,53,47,0.06)]"
+                    >
+                      <span style={{ fontSize: "14px", flexShrink: 0 }}>
+                        {db.icon ?? "📋"}
+                      </span>
+                      <span
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontWeight: active ? 500 : 400,
+                        }}
+                      >
+                        {db.dbName}
+                      </span>
+                      <span
+                        style={{
+                          marginLeft: "auto",
+                          fontSize: "11px",
+                          color: N_SUBTLE,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {db.rows.length}
+                      </span>
+                    </button>
+                  );
+                })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Main content ─────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {loading ? (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              color: N_MUTED,
+              fontSize: "14px",
+            }}
+          >
+            <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
+            Loading your databases from Notion…
+          </div>
+        ) : error ? (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              gap: "12px",
+              padding: "40px",
+            }}
+          >
+            <p style={{ fontSize: "15px", color: "rgb(220,38,38)", fontWeight: 500 }}>
+              {error}
+            </p>
+            <button
+              onClick={() => void loadDatabases()}
+              style={{
+                padding: "6px 16px",
+                borderRadius: "4px",
+                border: `1px solid ${N_BORDER_MED}`,
+                background: "white",
+                fontSize: "13px",
+                color: N_FG,
+                cursor: "pointer",
+                fontFamily: N_FONT,
+              }}
+            >
+              Try again
+            </button>
+          </div>
+        ) : databases.length === 0 ? (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              gap: "12px",
+              padding: "60px",
+              textAlign: "center",
+            }}
+          >
+            <span style={{ fontSize: "48px" }}>📂</span>
+            <p style={{ fontSize: "18px", fontWeight: 600, color: N_FG, margin: 0 }}>
+              No databases yet
+            </p>
+            <p style={{ fontSize: "14px", color: N_MUTED, maxWidth: "360px", lineHeight: 1.6, margin: 0 }}>
+              Go to <strong>Get Started</strong> and complete the setup to create your first Notion workspace. Once deployed, your databases will appear here.
+            </p>
+          </div>
+        ) : !activeDb ? null : (
+          <>
+            {/* Header */}
+            <div
+              style={{
+                padding: "16px 24px 12px",
+                borderBottom: `1px solid ${N_BORDER}`,
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ fontSize: "20px" }}>{activeDb.icon ?? "📋"}</span>
+              <div style={{ flex: 1 }}>
+                <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: N_FG }}>
+                  {activeDb.dbName}
+                </h1>
+                <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
+                  {activeDb.nicheName} · {activeDb.rows.length} row{activeDb.rows.length !== 1 ? "s" : ""}
+                  {activeDb.hasMore ? "+" : ""}
+                </p>
+              </div>
+              <a
+                href={`https://notion.so/${activeDb.notionId.replace(/-/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "5px 12px",
+                  borderRadius: "4px",
+                  fontSize: "13px",
+                  color: N_MUTED,
+                  textDecoration: "none",
+                  border: `1px solid ${N_BORDER_MED}`,
+                  background: "white",
+                  flexShrink: 0,
+                }}
+              >
+                Open in Notion
+                <ExternalLink size={12} />
+              </a>
+            </div>
+
+            {/* Table */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+              <DatabaseTable
+                db={activeDb}
+                onRowUpdated={(pageId, name, val) =>
+                  handleRowUpdated(activeDb.notionId, pageId, name, val)
+                }
+                onRowDeleted={(pageId) => handleRowDeleted(activeDb.notionId, pageId)}
+                onRowAdded={(row) => handleRowAdded(activeDb.notionId, row)}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
