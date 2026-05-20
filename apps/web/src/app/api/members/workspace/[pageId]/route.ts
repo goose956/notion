@@ -98,7 +98,8 @@ export async function PATCH(
     await notion.call((c) =>
       c.pages.update({
         page_id: pageId,
-        properties: notionProperties as Parameters<typeof c.pages.update>[0]["properties"],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        properties: notionProperties as any,
       }),
     );
   } catch (err) {

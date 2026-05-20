@@ -294,7 +294,8 @@ export async function POST(req: NextRequest) {
     const page = await notion.call((c) =>
       c.pages.create({
         parent: { database_id: parsed.data.databaseId },
-        properties: notionProperties as Parameters<typeof c.pages.create>[0]["properties"],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        properties: notionProperties as any,
       }),
     );
     return NextResponse.json({ pageId: page.id });
