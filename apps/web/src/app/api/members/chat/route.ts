@@ -54,6 +54,14 @@ async function resolveApiKey(email: string): Promise<string | undefined> {
   return process.env["ANTHROPIC_API_KEY"];
 }
 
+async function resolveSerperKey(email: string): Promise<string | undefined> {
+  const customerKey = await getSettingValue(`customer.${email}.serper.apiKey`);
+  if (customerKey?.trim()) return customerKey.trim();
+  const globalKey = await getSettingValue("serper.apiKey");
+  if (globalKey?.trim()) return globalKey.trim();
+  return process.env["SERPER_API_KEY"];
+}
+
 async function resolveModel(): Promise<string> {
   const model = await getSettingValue("anthropic.model");
   if (model?.trim()) return model.trim();
@@ -107,7 +115,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const [apiKey, model] = await Promise.all([resolveApiKey(userEmail), resolveModel()]);
+  const [apiKey, model, serperKey] = await Promise.all([resolveApiKey(userEmail), resolveModel(), resolveSerperKey(userEmail)]);
   if (!apiKey) {
     return new Response(
       JSON.stringify({ error: "Agent not configured — ANTHROPIC_API_KEY is missing." }),
@@ -125,6 +133,9 @@ export async function POST(req: NextRequest) {
   const toolContext: ToolContext = {
     notionToken,
     customerId: userEmail,
+    apiKeys: {
+      ...(serperKey ? { SERPER_API_KEY: serperKey } : {}),
+    },
   };
 
   // Build system prompt with deployed database context
