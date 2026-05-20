@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listTemplates } from "@niche-factory/db";
 import type { TemplateRow } from "@niche-factory/db";
 import { BarChart3, Eye, FileText, MousePointerClick, Plus, Sparkles } from "lucide-react";
+import { DeleteTemplateButton } from "./delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -127,6 +128,7 @@ function TemplateListRow({ row }: { row: TemplateRow }) {
         >
           Edit
         </Link>
+        <DeleteTemplateButton id={row.id} title={row.title} />
       </div>
     </div>
   );
