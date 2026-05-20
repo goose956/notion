@@ -43,7 +43,7 @@ function SignupForm() {
         callbackUrl && callbackUrl !== "/members/get-started"
           ? `/members/get-started?next=${encodeURIComponent(callbackUrl)}`
           : "/members/get-started";
-      router.push(getStartedUrl);
+      router.push(getStartedUrl as never);
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
