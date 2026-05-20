@@ -65,9 +65,10 @@ export default async function TemplatePage({ params }: Props) {
   const session = await auth().catch(() => undefined);
   const isLoggedIn = !!session?.user?.email;
 
-  // Build post-login redirect URL
+  // Build post-login redirect URL — goes to setup page so user fills in
+  // their details and deploys the niche pack before landing in chat.
   const callbackUrl = t.nichePackId
-    ? `/members/chat?nicheId=${t.nichePackId}`
+    ? `/members/setup/${t.nichePackId}`
     : "/members/profile";
 
   const faqItems = (t.faq as FaqItem[]) ?? [];

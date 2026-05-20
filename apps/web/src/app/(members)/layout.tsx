@@ -14,8 +14,11 @@ export default async function MembersLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+
+  // get-started lives in (onboarding) group — not protected here.
+  // All other /members/* routes require a Notion session.
   if (!session) {
-    redirect("/login?callbackUrl=/members/profile");
+    redirect("/members/get-started");
   }
 
   const userName = session.user?.name ?? session.user?.email ?? "Account";
