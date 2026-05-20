@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
       id: deployId,
       nichePackId: input.data.pack.id,
       notionParentPageId: input.data.parentPageId,
-      notionUserId: typeof notionUserId === "string" ? notionUserId : null,
       databaseIdMap: {},
       status: "in_progress",
     });
