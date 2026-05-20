@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type FormEvent, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, useCallback, type FormEvent, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { NichePack, OnboardingQuestion } from "@niche-factory/schema";
-import { ArrowRight, CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
+import type { NotionPageResult } from "@/app/api/members/notion-pages/route";
+import { ArrowRight, CheckCircle2, ExternalLink, Loader2, Search, ChevronDown, X } from "lucide-react";
 
 const N_FG = "#37352F";
 const N_MUTED = "rgba(55,53,47,0.65)";
@@ -14,23 +15,6 @@ const N_BLUE = "rgb(35,131,226)";
 const N_BLUE_BG = "rgba(35,131,226,0.08)";
 const N_FONT =
   'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
-
-/** Extract a 32-char hex Notion page ID from a URL or raw input. */
-function extractPageId(input: string): string | null {
-  const s = input.trim();
-  // Already a UUID with dashes
-  const uuid = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.exec(s);
-  if (uuid) return uuid[1]!.replace(/-/g, "");
-  // 32 bare hex chars
-  if (/^[0-9a-f]{32}$/i.test(s)) return s.toLowerCase();
-  // URL — last 32 hex chars before optional query string
-  const fromUrl = /([0-9a-f]{32})(?:\?.*)?$/i.exec(s);
-  if (fromUrl) return fromUrl[1]!.toLowerCase();
-  // UUID inside URL
-  const uuidUrl = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\?.*)?$/i.exec(s);
-  if (uuidUrl) return uuidUrl[1]!.replace(/-/g, "").toLowerCase();
-  return null;
-}
 
 function fieldLabel(q: OnboardingQuestion) {
   return (
@@ -244,7 +228,56 @@ export function SetupForm({ pack }: { pack: NichePack }) {
   const router = useRouter();
   const questions: OnboardingQuestion[] = pack.onboardingQuestions ?? [];
 
-  const [notionUrl, setNotionUrl] = useState("");
+  // Page picker state
+  const [pickerQuery, setPickerQuery] = useState("");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerPages, setPickerPages] = useState<NotionPageResult[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [selectedPage, setSelectedPage] = useState<NotionPageResult | null>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Search Notion pages as user types
+  const searchPages = useCallback(async (q: string) => {
+    setPickerLoading(true);
+    try {
+      const res = await fetch(`/api/members/notion-pages?q=${encodeURIComponent(q)}`);
+      const data = (await res.json()) as { pages?: NotionPageResult[]; error?: string };
+      setPickerPages(data.pages ?? []);
+    } catch {
+      setPickerPages([]);
+    } finally {
+      setPickerLoading(false);
+    }
+  }, []);
+
+  // Load all pages on first open
+  useEffect(() => {
+    if (pickerOpen) {
+      void searchPages(pickerQuery);
+      setTimeout(() => searchRef.current?.focus(), 50);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickerOpen]);
+
+  // Debounce search as user types
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const t = setTimeout(() => void searchPages(pickerQuery), 300);
+    return () => clearTimeout(t);
+  }, [pickerQuery, pickerOpen, searchPages]);
+
+  // Close on outside click
+  useEffect(() => {
+    function onPointerDown(e: PointerEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, []);
+
   const [answers, setAnswers] = useState<AnswerMap>(() => {
     const init: AnswerMap = {};
     for (const q of questions) {
@@ -255,7 +288,7 @@ export function SetupForm({ pack }: { pack: NichePack }) {
   const [status, setStatus] = useState<"idle" | "deploying" | "done" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const pageId = extractPageId(notionUrl);
+  const pageId = selectedPage?.id.replace(/-/g, "") ?? null;
   const pageIdValid = pageId !== null;
 
   function handleAnswerChange(id: string, val: string | string[]) {
@@ -432,10 +465,9 @@ export function SetupForm({ pack }: { pack: NichePack }) {
         </div>
       ) : (
         <form onSubmit={(e) => void handleSubmit(e)}>
-          {/* Notion page URL */}
-          <div style={{ marginBottom: "28px" }}>
+          {/* Notion page picker */}
+          <div style={{ marginBottom: "28px" }} ref={pickerRef}>
             <label
-              htmlFor="notion-url"
               style={{
                 display: "block",
                 fontSize: "14px",
@@ -444,84 +476,156 @@ export function SetupForm({ pack }: { pack: NichePack }) {
                 marginBottom: "6px",
               }}
             >
-              Your Notion page URL{" "}
+              Choose a Notion page{" "}
               <span style={{ color: N_BLUE }}>*</span>
             </label>
-            <p
-              style={{
-                fontSize: "13px",
-                color: N_MUTED,
-                marginBottom: "8px",
-                lineHeight: 1.5,
-              }}
-            >
-              Paste the URL of the Notion page where you want your workspace
-              created. Open the page in Notion, click the{" "}
-              <strong style={{ color: N_FG }}>Share</strong> button, and copy the
-              link.
+            <p style={{ fontSize: "13px", color: N_MUTED, marginBottom: "10px", lineHeight: 1.5 }}>
+              Pick which page in your Notion workspace to add the databases to.
+              Don&apos;t have one yet?{" "}
+              <a
+                href="https://www.notion.so/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: N_BLUE, textDecoration: "none" }}
+              >
+                Create a page in Notion
+                <ExternalLink size={10} style={{ marginLeft: "3px", verticalAlign: "middle" }} />
+              </a>
+              {" "}then come back and it will appear below.
             </p>
-            <input
-              id="notion-url"
-              type="text"
-              value={notionUrl}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setNotionUrl(e.target.value)
-              }
-              placeholder="https://www.notion.so/My-Research-Workspace-abc123..."
-              required
+
+            {/* Trigger button */}
+            <button
+              type="button"
+              onClick={() => setPickerOpen((o) => !o)}
               style={{
                 width: "100%",
-                padding: "8px 10px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "9px 12px",
                 fontSize: "14px",
-                color: N_FG,
+                color: selectedPage ? N_FG : N_SUBTLE,
                 background: "white",
-                border: `1px solid ${notionUrl && !pageIdValid ? "rgb(220,38,38)" : N_BORDER_MED}`,
+                border: `1px solid ${N_BORDER_MED}`,
                 borderRadius: "4px",
                 fontFamily: N_FONT,
-                boxSizing: "border-box",
-                outline: "none",
-              }}
-            />
-            {notionUrl && pageIdValid && (
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "rgb(15,123,108)",
-                  marginTop: "5px",
-                }}
-              >
-                ✓ Page ID: {pageId}
-              </p>
-            )}
-            {notionUrl && !pageIdValid && (
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "rgb(220,38,38)",
-                  marginTop: "5px",
-                }}
-              >
-                Couldn&apos;t find a Notion page ID in that URL. Make sure
-                you&apos;re copying the full page link.
-              </p>
-            )}
-            <a
-              href="https://www.notion.so/new"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-                marginTop: "8px",
-                fontSize: "12px",
-                color: N_BLUE,
-                textDecoration: "none",
+                cursor: "pointer",
+                textAlign: "left",
               }}
             >
-              Create a new Notion page first
-              <ExternalLink size={11} />
-            </a>
+              {selectedPage ? (
+                <>
+                  <span style={{ fontSize: "16px", flexShrink: 0 }}>{selectedPage.icon ?? "📄"}</span>
+                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {selectedPage.title}
+                  </span>
+                  <X
+                    size={14}
+                    style={{ color: N_SUBTLE, flexShrink: 0 }}
+                    onClick={(e) => { e.stopPropagation(); setSelectedPage(null); setPickerOpen(false); }}
+                  />
+                </>
+              ) : (
+                <>
+                  <Search size={14} style={{ flexShrink: 0 }} />
+                  <span>Search your Notion pages…</span>
+                  <ChevronDown size={14} style={{ marginLeft: "auto", flexShrink: 0 }} />
+                </>
+              )}
+            </button>
+
+            {/* Dropdown */}
+            {pickerOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  zIndex: 50,
+                  marginTop: "4px",
+                  width: "min(520px, calc(100vw - 48px))",
+                  background: "white",
+                  border: `1px solid ${N_BORDER_MED}`,
+                  borderRadius: "6px",
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Search input */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 12px",
+                    borderBottom: `1px solid ${N_BORDER}`,
+                  }}
+                >
+                  <Search size={14} style={{ color: N_SUBTLE, flexShrink: 0 }} />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    value={pickerQuery}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setPickerQuery(e.target.value)}
+                    placeholder="Search pages…"
+                    style={{
+                      flex: 1,
+                      border: "none",
+                      outline: "none",
+                      fontSize: "14px",
+                      color: N_FG,
+                      fontFamily: N_FONT,
+                      background: "transparent",
+                    }}
+                  />
+                  {pickerLoading && <Loader2 size={13} style={{ color: N_SUBTLE, animation: "spin 1s linear infinite", flexShrink: 0 }} />}
+                </div>
+
+                {/* Results */}
+                <div style={{ maxHeight: "240px", overflowY: "auto" }}>
+                  {!pickerLoading && pickerPages.length === 0 && (
+                    <div style={{ padding: "20px 16px", textAlign: "center" }}>
+                      <p style={{ fontSize: "13px", color: N_MUTED, margin: "0 0 8px" }}>
+                        {pickerQuery ? "No pages found" : "No pages in your workspace yet"}
+                      </p>
+                      <a
+                        href="https://www.notion.so/new"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: "13px", color: N_BLUE, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                      >
+                        Create a new page in Notion
+                        <ExternalLink size={11} />
+                      </a>
+                    </div>
+                  )}
+                  {pickerPages.map((page) => (
+                    <button
+                      key={page.id}
+                      type="button"
+                      onClick={() => { setSelectedPage(page); setPickerOpen(false); setPickerQuery(""); }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        width: "100%",
+                        padding: "8px 14px",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontFamily: N_FONT,
+                        textAlign: "left",
+                      }}
+                      className="hover:bg-[rgba(55,53,47,0.06)]"
+                    >
+                      <span style={{ fontSize: "17px", flexShrink: 0, width: "22px", textAlign: "center" }}>{page.icon ?? "📄"}</span>
+                      <span style={{ fontSize: "14px", color: N_FG, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {page.title}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Onboarding questions */}
