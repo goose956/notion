@@ -466,7 +466,7 @@ export function SetupForm({ pack }: { pack: NichePack }) {
       ) : (
         <form onSubmit={(e) => void handleSubmit(e)}>
           {/* Notion page picker */}
-          <div style={{ marginBottom: "28px" }} ref={pickerRef}>
+          <div style={{ marginBottom: "28px", position: "relative" }} ref={pickerRef}>
             <label
               style={{
                 display: "block",
