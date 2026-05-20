@@ -5,7 +5,7 @@
  * Import { db } is the lazy singleton from client.ts.
  */
 
-import { eq, desc, and, ilike, or, sql, lte } from "drizzle-orm";
+import { eq, desc, and, ilike, or, sql, lte, isNull } from "drizzle-orm";
 import { db } from "./client.js";
 import {
   nichePacks,
@@ -140,7 +140,8 @@ export async function getLatestDeployByNiche(
   const conditions = [
     eq(deploys.nichePackId, nichePackId),
     eq(deploys.status, "success"),
-    ...(notionUserId ? [eq(deploys.notionUserId, notionUserId)] : []),
+    // Match the specific user OR rows where notion_user_id was not recorded (legacy deploys)
+    ...(notionUserId ? [or(eq(deploys.notionUserId, notionUserId), isNull(deploys.notionUserId))] : []),
   ];
   const rows = await db
     .select()
