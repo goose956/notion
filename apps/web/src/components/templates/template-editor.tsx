@@ -108,6 +108,7 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
   const [form, setForm] = useState<FormState>(toFormState(initialRow));
   const [saving, setSaving] = useState(false);
   const [drafting, setDrafting] = useState(false);
+  const [draftStep, setDraftStep] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [niches, setNiches] = useState<NicheOption[]>([]);
@@ -146,8 +147,10 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
       return;
     }
     setDrafting(true);
+    setDraftStep("Drafting template content…");
     setError(null);
     try {
+      // Step 1 — draft the template page content
       const res = await fetch("/api/ai/draft-template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -178,11 +181,47 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
         category: d.category ?? prev.category,
         tags: d.tags ? d.tags.join(", ") : prev.tags,
       }));
-      setSuccess("AI draft applied — review and edit before saving");
+
+      // Step 2 — generate + save a linked niche pack
+      setDraftStep("Generating niche pack databases…");
+      const nicheDescription = `${form.title}${
+        d.problemStatement ? " — " + d.problemStatement : ""
+      }`;
+      const nicheRes = await fetch("/api/ai/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nicheDescription }),
+      });
+      const nicheBody = await nicheRes.json().catch(() => ({})) as {
+        pack?: { id: string; name: string };
+        error?: string;
+      };
+
+      if (nicheRes.ok && nicheBody.pack) {
+        setDraftStep("Saving niche pack…");
+        const saveRes = await fetch("/api/niche", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(nicheBody.pack),
+        });
+        if (saveRes.ok) {
+          const { nichePack } = await saveRes.json() as { nichePack?: { id: string; name: string } };
+          if (nichePack) {
+            setNiches((prev) => [
+              ...prev.filter((n) => n.id !== nichePack.id),
+              { id: nichePack.id, name: nichePack.name },
+            ]);
+            setForm((prev) => ({ ...prev, nichePackId: nichePack.id }));
+          }
+        }
+      }
+
+      setSuccess("AI draft applied with linked niche pack — review and save");
     } catch (err) {
       setError(err instanceof Error ? err.message : "AI draft failed");
     } finally {
       setDrafting(false);
+      setDraftStep(null);
     }
   }
 
@@ -254,7 +293,7 @@ export function TemplateEditor({ initialRow }: { initialRow?: TemplateRow }) {
           disabled={drafting}
           className="inline-flex items-center gap-1.5 rounded-md border text-sm font-medium h-9 px-4 hover:bg-muted transition-colors disabled:opacity-60"
         >
-          {drafting ? "Drafting…" : "✦ AI Draft"}
+          {drafting ? (draftStep ?? "Drafting…") : "✦ AI Draft"}
         </button>
         <button
           type="button"
