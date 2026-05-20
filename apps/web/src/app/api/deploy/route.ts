@@ -3,7 +3,7 @@ import { z } from "zod";
 import { NichePackSchema } from "@niche-factory/schema";
 import { deploy } from "@niche-factory/deployer";
 import { NotionApiClient } from "@niche-factory/notion-client";
-import { createDeploy, updateDeployStatus, upsertUserCriteria } from "@niche-factory/db";
+import { createDeploy, updateDeployStatus, upsertUserCriteria, upsertNichePack } from "@niche-factory/db";
 import { randomUUID } from "node:crypto";
 import { auth } from "@/auth";
 
@@ -45,14 +45,30 @@ export async function POST(request: NextRequest) {
   const notionUserId = (session as unknown as Record<string, unknown> | null)?.["notionUserId"];
 
   const deployId = randomUUID();
-  await createDeploy({
-    id: deployId,
-    nichePackId: input.data.pack.id,
-    notionParentPageId: input.data.parentPageId,
-    notionUserId: typeof notionUserId === "string" ? notionUserId : null,
-    databaseIdMap: {},
-    status: "in_progress",
-  });
+
+  // Ensure the niche pack row exists so the FK on deploys is satisfied.
+  // (The pack may not be in the DB if it came from a local file or AI draft.)
+  try {
+    await upsertNichePack(input.data.pack);
+  } catch (err) {
+    console.error("[POST /api/deploy] upsertNichePack failed:", err);
+    // Non-fatal: proceed anyway; if the FK fails createDeploy will surface it.
+  }
+
+  try {
+    await createDeploy({
+      id: deployId,
+      nichePackId: input.data.pack.id,
+      notionParentPageId: input.data.parentPageId,
+      notionUserId: typeof notionUserId === "string" ? notionUserId : null,
+      databaseIdMap: {},
+      status: "in_progress",
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create deploy record";
+    console.error("[POST /api/deploy] createDeploy failed:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 
   const client = new NotionApiClient({ auth: notionToken });
 
@@ -61,15 +77,25 @@ export async function POST(request: NextRequest) {
     result = await deploy(input.data.pack, input.data.parentPageId, client);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Deploy failed";
-    await updateDeployStatus(deployId, { status: "failed", errorMessage: message });
+    console.error("[POST /api/deploy] deploy() failed:", message);
+    try {
+      await updateDeployStatus(deployId, { status: "failed", errorMessage: message });
+    } catch (dbErr) {
+      console.error("[POST /api/deploy] updateDeployStatus (failed) threw:", dbErr);
+    }
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  await updateDeployStatus(deployId, {
-    status: "success",
-    durationMs: result.durationMs,
-    databaseIdMap: result.databaseIds,
-  });
+  try {
+    await updateDeployStatus(deployId, {
+      status: "success",
+      durationMs: result.durationMs,
+      databaseIdMap: result.databaseIds,
+    });
+  } catch (err) {
+    console.error("[POST /api/deploy] updateDeployStatus (success) threw:", err);
+    // Deploy succeeded — don't fail the response just because the audit update failed
+  }
 
   // Persist user criteria so sync runs can reload them without re-asking
   const answers = input.data.onboardingAnswers;
