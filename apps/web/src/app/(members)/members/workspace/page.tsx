@@ -38,7 +38,7 @@ function CellEditor({
 }: {
   value: string | number | boolean | null;
   type: string;
-  options?: string[];
+  options?: string[] | undefined;
   onSave: (val: string | number | boolean | null) => void;
   onCancel: () => void;
 }) {
