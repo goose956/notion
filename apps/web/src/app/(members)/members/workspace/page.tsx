@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react";
+import Link from "next/link";
 import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
 import type { WorkspaceDatabase, WorkspaceProperty, WorkspaceRow } from "@/app/api/members/workspace/route";
 
@@ -627,25 +628,47 @@ export default function WorkspacePage() {
           }}
         >
           <span style={{ fontSize: "13px", fontWeight: 600, color: N_FG }}>My Databases</span>
-          <button
-            onClick={() => void loadDatabases(true)}
-            disabled={refreshing}
-            title="Refresh"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: refreshing ? "default" : "pointer",
-              padding: "2px",
-              color: N_SUBTLE,
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <RefreshCw
-              size={13}
-              style={refreshing ? { animation: "spin 1s linear infinite" } : undefined}
-            />
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <Link
+              href="/templates"
+              title="Browse niches"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "3px 7px",
+                borderRadius: "3px",
+                fontSize: "12px",
+                color: N_MUTED,
+                background: "none",
+                border: `1px solid ${N_BORDER_MED}`,
+                textDecoration: "none",
+                gap: "3px",
+                fontFamily: N_FONT,
+              }}
+            >
+              <Plus size={11} />
+              Add niche
+            </Link>
+            <button
+              onClick={() => void loadDatabases(true)}
+              disabled={refreshing}
+              title="Refresh"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: refreshing ? "default" : "pointer",
+                padding: "3px",
+                color: N_SUBTLE,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <RefreshCw
+                size={13}
+                style={refreshing ? { animation: "spin 1s linear infinite" } : undefined}
+              />
+            </button>
+          </div>
         </div>
 
         {loading && (
@@ -656,9 +679,31 @@ export default function WorkspacePage() {
         )}
 
         {!loading && databases.length === 0 && (
-          <p style={{ padding: "16px", fontSize: "13px", color: N_MUTED, lineHeight: 1.5 }}>
-            No databases yet. Set up a niche pack first.
-          </p>
+          <div style={{ padding: "12px 10px" }}>
+            <p style={{ fontSize: "12px", color: N_MUTED, lineHeight: 1.5, margin: "0 0 10px" }}>
+              No niches deployed yet.
+            </p>
+            <Link
+              href="/templates"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "5px",
+                padding: "7px 10px",
+                borderRadius: "4px",
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "white",
+                background: N_FG,
+                textDecoration: "none",
+                fontFamily: N_FONT,
+              }}
+            >
+              <Plus size={13} />
+              Set up a niche
+            </Link>
+          </div>
         )}
 
         {nicheGroups.map((group) => {
@@ -813,12 +858,32 @@ export default function WorkspacePage() {
             }}
           >
             <span style={{ fontSize: "48px" }}>📂</span>
-            <p style={{ fontSize: "18px", fontWeight: 600, color: N_FG, margin: 0 }}>
-              No databases yet
+            <p style={{ fontSize: "20px", fontWeight: 700, color: N_FG, margin: 0 }}>
+              No niches set up yet
             </p>
-            <p style={{ fontSize: "14px", color: N_MUTED, maxWidth: "360px", lineHeight: 1.6, margin: 0 }}>
-              Go to <strong>Get Started</strong> and complete the setup to create your first Notion workspace. Once deployed, your databases will appear here.
+            <p style={{ fontSize: "14px", color: N_MUTED, maxWidth: "340px", lineHeight: 1.6, margin: 0 }}>
+              Browse the template library, pick a niche, and deploy it to your Notion workspace in one click.
             </p>
+            <Link
+              href="/templates"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px",
+                marginTop: "4px",
+                padding: "10px 22px",
+                borderRadius: "5px",
+                fontSize: "15px",
+                fontWeight: 600,
+                color: "white",
+                background: N_FG,
+                textDecoration: "none",
+                fontFamily: N_FONT,
+              }}
+            >
+              <Plus size={15} />
+              Browse niches
+            </Link>
           </div>
         ) : !activeDb ? null : (
           <>
