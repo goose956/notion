@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { listNichePacks, getLatestDeployByNiche } from "@niche-factory/db";
+import { listNichePacks, getLatestDeployByNiche, getUserCriteria } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 
 export interface DeployedDatabase {
@@ -11,6 +11,11 @@ export interface DeployedDatabase {
   notionId: string;
 }
 
+export interface NicheCriteria {
+  nicheId: string;
+  criteria: Record<string, unknown>;
+}
+
 export async function GET() {
   const session = await auth();
   if (!session?.user) {
@@ -19,6 +24,7 @@ export async function GET() {
 
   const notionUserId = (session as unknown as Record<string, unknown>)["notionUserId"] as string | undefined;
   const databases: DeployedDatabase[] = [];
+  const criteria: NicheCriteria[] = [];
 
   try {
     const packs = await listNichePacks();
@@ -40,10 +46,17 @@ export async function GET() {
           });
         }
       }
+      // Fetch user criteria for this niche (location, preferences, etc.)
+      if (notionUserId) {
+        const crit = await getUserCriteria(notionUserId, packRow.id).catch(() => undefined);
+        if (crit) {
+          criteria.push({ nicheId: pack.id, criteria: crit.criteria as Record<string, unknown> });
+        }
+      }
     }
   } catch {
     // Return empty list if DB unavailable
   }
 
-  return NextResponse.json({ databases });
+  return NextResponse.json({ databases, criteria });
 }

@@ -229,12 +229,57 @@ function ResultCard({
   );
 }
 
-const SUGGESTED_PROMPTS = [
-  "Find wedding venues in Manchester with a capacity of 100+",
-  "Search for florists in London specialising in romantic weddings",
-  "What are the top photographers in Edinburgh under £2000?",
-  "Find catering companies in Bristol for wedding receptions",
-];
+// ─── Location helpers ─────────────────────────────────────────────────────────
+
+const LOCATION_KEYS = ["location", "city", "area", "region", "town", "county", "market",
+  "target-markets", "target_markets", "markets", "postcode", "zip", "place"];
+
+function extractLocation(criteria: Record<string, unknown>): string | null {
+  for (const key of LOCATION_KEYS) {
+    const val = criteria[key];
+    if (typeof val === "string" && val.trim()) {
+      return val.split(",")[0]!.trim();
+    }
+  }
+  return null;
+}
+
+interface NicheCriteriaEntry {
+  nicheId: string;
+  criteria: Record<string, unknown>;
+}
+
+function buildSuggestedPrompts(
+  databases: DeployedDatabase[],
+  criteria: NicheCriteriaEntry[],
+): string[] {
+  if (databases.length === 0) {
+    return [
+      "Find wedding venues with a capacity of 100+",
+      "Search for photographers specialising in weddings",
+      "What are the top florists for wedding receptions?",
+      "Find catering companies near me",
+    ];
+  }
+
+  const prompts: string[] = [];
+  const seenNiches = new Set<string>();
+
+  for (const db of databases) {
+    if (seenNiches.has(db.nicheId)) continue;
+    seenNiches.add(db.nicheId);
+
+    const crit = criteria.find((c) => c.nicheId === db.nicheId);
+    const location = crit ? extractLocation(crit.criteria) : null;
+    const locSuffix = location ? ` in ${location}` : "";
+    const nicheLower = db.nicheName.toLowerCase();
+
+    prompts.push(`Find ${nicheLower} vendors${locSuffix}`);
+    prompts.push(`Search for ${db.dbName.toLowerCase()}${locSuffix}`);
+  }
+
+  return prompts.slice(0, 6);
+}
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
@@ -247,6 +292,7 @@ function ChatPageInner() {
   const [summaryText, setSummaryText] = useState<string>("");
   const [resultItems, setResultItems] = useState<ResultItem[] | null>(null);
   const [deployedDbs, setDeployedDbs] = useState<DeployedDatabase[]>([]);
+  const [nicheCriteria, setNicheCriteria] = useState<NicheCriteriaEntry[]>([]);
   const [selectedNotionId, setSelectedNotionId] = useState<string>("");
   const [addedIndices, setAddedIndices] = useState<Set<number>>(new Set());
   const [addingIndex, setAddingIndex] = useState<number | null>(null);
@@ -261,9 +307,10 @@ function ChatPageInner() {
   // Load deployed databases on mount
   useEffect(() => {
     void fetch("/api/members/databases")
-      .then((r) => r.json() as Promise<{ databases: DeployedDatabase[] }>)
-      .then(({ databases }) => {
+      .then((r) => r.json() as Promise<{ databases: DeployedDatabase[]; criteria: NicheCriteriaEntry[] }>)
+      .then(({ databases, criteria }) => {
         setDeployedDbs(databases ?? []);
+        setNicheCriteria(criteria ?? []);
         // Pre-select niche from URL param if present, otherwise pick first
         if (databases && databases.length > 0) {
           const match = nicheIdFromUrl
@@ -436,7 +483,7 @@ function ChatPageInner() {
             <p style={{ fontSize: "11px", fontWeight: 500, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.05em", padding: "0 8px 6px" }}>
               Try asking
             </p>
-            {SUGGESTED_PROMPTS.map((p) => (
+            {buildSuggestedPrompts(deployedDbs, nicheCriteria).map((p) => (
               <button
                 key={p}
                 onClick={() => void sendMessage(p)}

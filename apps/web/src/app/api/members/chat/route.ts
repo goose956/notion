@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/auth";
 import { listTools } from "@niche-factory/agent-tools";
 import type { ToolContext, JsonValue } from "@niche-factory/agent-tools";
-import { getSettingValue, listNichePacks, getLatestDeployByNiche, findOrCreateCustomer, getCustomerCredits, deductCredits } from "@niche-factory/db";
+import { getSettingValue, listNichePacks, getLatestDeployByNiche, getUserCriteria, findOrCreateCustomer, getCustomerCredits, deductCredits } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 
 /**
@@ -176,6 +176,27 @@ export async function POST(req: NextRequest) {
       systemPrompt +=
         "\n\n## Deployed Notion Databases\nUse these database IDs directly with notion_create, notion_query, and notion_write:\n\n" +
         deployedSections.join("\n\n");
+    }
+
+    // Add user's setup criteria (location, preferences) so the AI searches in the right area
+    if (notionUserId) {
+      const criteriaLines: string[] = [];
+      for (const packRow of packs) {
+        const crit = await getUserCriteria(notionUserId, packRow.id).catch(() => undefined);
+        if (!crit) continue;
+        const pack = packRow.schemaSnapshot as unknown as NichePack;
+        const entries = Object.entries(crit.criteria as Record<string, unknown>)
+          .filter(([, v]) => v !== null && v !== undefined && v !== "")
+          .map(([k, v]) => `- ${k}: ${Array.isArray(v) ? (v as unknown[]).join(", ") : String(v)}`);
+        if (entries.length > 0) {
+          criteriaLines.push(`**${pack.name}**\n${entries.join("\n")}`);
+        }
+      }
+      if (criteriaLines.length > 0) {
+        systemPrompt +=
+          "\n\n## User's Setup\nUnless the user explicitly specifies otherwise, use this location and preferences for all searches:\n\n" +
+          criteriaLines.join("\n\n");
+      }
     }
   } catch {
     // Non-fatal — proceed without DB context
