@@ -24,6 +24,15 @@ Help members find venues, vendors, businesses, and other items for their project
 Use web_search and fetch_url proactively to get current data. \
 Be concise — skip filler phrases and get straight to results.
 
+## Search limits (IMPORTANT)
+
+You have a hard cap of **4 tool calls** per response. Use them wisely.
+- Do NOT repeat a search with only a slightly different query if the first returned no useful results.
+- If you cannot find the specific data after 2 searches (e.g. prices that vendors don't publish online), \
+STOP searching and tell the user clearly: what you did find, why the data isn't available (e.g. "most photographers don't list prices publicly"), \
+and what they should do instead (e.g. "contact them directly for a quote").
+- Never burn all searches trying to find information that simply isn't on the web.
+
 ## Response format
 
 When the user asks for a list of items (venues, vendors, businesses, places, etc.) \
@@ -188,9 +197,11 @@ export async function POST(req: NextRequest) {
 
       try {
         const history: Anthropic.MessageParam[] = [...messages];
-        const maxTurns = 8;
+        const maxTurns = 4;
+        const maxToolCalls = 4;
         let totalInput = 0;
         let totalOutput = 0;
+        let totalToolCalls = 0;
 
         for (let turn = 0; turn < maxTurns; turn++) {
           const response = await client.messages.create({
@@ -222,6 +233,14 @@ export async function POST(req: NextRequest) {
           const toolUseBlocks = response.content.filter(
             (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
           );
+
+          // Guard: if this batch would exceed the total tool call cap, stop the loop
+          totalToolCalls += toolUseBlocks.length;
+          if (totalToolCalls > maxToolCalls) {
+            enqueue({ type: "text", content: "I wasn't able to find the information you need within the allowed number of searches. The data may not be publicly available online — try contacting vendors directly for pricing or specific details." });
+            enqueue({ type: "done", tokenUsage: { input: totalInput, output: totalOutput } });
+            break;
+          }
 
           // Execute each tool call, streaming activity events
           const toolResults: Anthropic.ToolResultBlockParam[] = await Promise.all(
