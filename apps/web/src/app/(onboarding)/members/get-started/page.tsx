@@ -6,6 +6,7 @@ import {
   listDeploysByUser,
   getNichePack,
   getLatestAppWorkspaceByNiche,
+  getUserCriteria,
   createAppWorkspace,
   createAppDatabase,
   updateAppWorkspaceStatus,
@@ -213,6 +214,27 @@ export default async function GetStartedPage({
           autoNicheId,
         );
 
+        const schema = autoNichePackRow.schemaSnapshot as {
+          onboardingQuestions?: unknown[];
+          databases: Array<{ id: string; name: string; properties: unknown[] }>;
+        };
+        const hasOnboardingQuestions =
+          Array.isArray(schema.onboardingQuestions) &&
+          schema.onboardingQuestions.length > 0;
+
+        // First-time in-app users should fill setup details (date, budget, etc.)
+        // before provisioning so the hosted workspace can use this context.
+        if (!existing && hasOnboardingQuestions) {
+          const savedCriteria = await getUserCriteria(
+            session.user.email,
+            autoNicheId,
+          ).catch(() => undefined);
+
+          if (!savedCriteria) {
+            redirect(`/members/setup/${encodeURIComponent(autoNicheId)}`);
+          }
+        }
+
         if (!existing) {
           const workspaceId = randomUUID();
           await createAppWorkspace({
@@ -229,10 +251,6 @@ export default async function GetStartedPage({
           const start = Date.now();
 
           try {
-            const schema = autoNichePackRow.schemaSnapshot as {
-              databases: Array<{ id: string; name: string; properties: unknown[] }>;
-            };
-
             for (const db of schema.databases) {
               const dbId = randomUUID();
               await createAppDatabase({
