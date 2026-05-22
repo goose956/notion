@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/auth";
 import { listTools } from "@niche-factory/agent-tools";
 import type { ToolContext, JsonValue } from "@niche-factory/agent-tools";
-import { getSettingValue, listNichePacks, getLatestDeployByNiche, getUserCriteria, findOrCreateCustomer, getCustomerCredits, deductCredits } from "@niche-factory/db";
+import { getSettingValue, listNichePacks, getLatestDeployByNiche, getLatestAppWorkspaceByNiche, getUserCriteria, findOrCreateCustomer, getCustomerCredits, deductCredits } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 
 /**
@@ -133,12 +133,18 @@ export async function POST(req: NextRequest) {
   }
 
   // Resolve only the allowed tools that are actually registered
-  const allTools = listTools();
-  const memberTools = allTools.filter((t) => MEMBER_TOOL_IDS.includes(t.name));
-
+  // In-app users don't have a Notion token — strip out all Notion tools
   const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
     | string
     | undefined;
+  const isInApp = !notionToken;
+  const allowedToolIds = isInApp
+    ? MEMBER_TOOL_IDS.filter((id) => !id.startsWith("notion_"))
+    : MEMBER_TOOL_IDS;
+  const allTools = listTools();
+  const memberTools = allTools.filter((t) => allowedToolIds.includes(t.name));
+
+  const notionUserId = (session as unknown as Record<string, unknown>)["notionUserId"] as string | undefined;
   const toolContext: ToolContext = {
     notionToken,
     customerId: userEmail,
@@ -148,41 +154,62 @@ export async function POST(req: NextRequest) {
   };
 
   // Build system prompt with deployed database context
-  const notionUserId = (session as unknown as Record<string, unknown>)["notionUserId"] as string | undefined;
   let systemPrompt = BASE_SYSTEM_PROMPT;
   try {
     const packs = await listNichePacks();
     const deployedSections: string[] = [];
+
     for (const packRow of packs) {
-      const deploy = await getLatestDeployByNiche(packRow.id, notionUserId);
-      if (deploy === undefined) continue;
-      const dbMap = deploy.databaseIdMap as Record<string, string> | null | undefined;
-      if (dbMap === null || dbMap === undefined || Object.keys(dbMap).length === 0) continue;
       const pack = packRow.schemaSnapshot as unknown as NichePack;
-      const lines: string[] = [`**${pack.name}**`];
-      for (const db of pack.databases) {
-        const notionDbId = dbMap[db.id];
-        if (typeof notionDbId === "string") {
-          const propList = db.properties
-            .map((p) => `${p.name} (${p.type})`)
-            .join(", ");
-          lines.push(`- ${db.name} → database_id: \`${notionDbId}\``);
-          lines.push(`  Properties: ${propList}`);
+
+      if (isInApp) {
+        // In-app: load from app_workspaces / app_databases
+        const workspace = await getLatestAppWorkspaceByNiche(userEmail, packRow.id);
+        if (!workspace) continue;
+        const dbMap = workspace.databaseIdMap as Record<string, string> | null | undefined;
+        if (!dbMap || Object.keys(dbMap).length === 0) continue;
+        const lines: string[] = [`**${pack.name}**`];
+        for (const db of pack.databases) {
+          const appDbId = dbMap[db.id];
+          if (typeof appDbId === "string") {
+            const propList = db.properties.map((p) => `${p.name} (${p.type})`).join(", ");
+            lines.push(`- ${db.name} → database_id: \`${appDbId}\``);
+            lines.push(`  Properties: ${propList}`);
+          }
         }
+        if (lines.length > 1) deployedSections.push(lines.join("\n"));
+      } else {
+        // Notion: load from deploys
+        const deploy = await getLatestDeployByNiche(packRow.id, notionUserId);
+        if (deploy === undefined) continue;
+        const dbMap = deploy.databaseIdMap as Record<string, string> | null | undefined;
+        if (dbMap === null || dbMap === undefined || Object.keys(dbMap).length === 0) continue;
+        const lines: string[] = [`**${pack.name}**`];
+        for (const db of pack.databases) {
+          const notionDbId = dbMap[db.id];
+          if (typeof notionDbId === "string") {
+            const propList = db.properties.map((p) => `${p.name} (${p.type})`).join(", ");
+            lines.push(`- ${db.name} → database_id: \`${notionDbId}\``);
+            lines.push(`  Properties: ${propList}`);
+          }
+        }
+        if (lines.length > 1) deployedSections.push(lines.join("\n"));
       }
-      if (lines.length > 1) deployedSections.push(lines.join("\n"));
-    }
-    if (deployedSections.length > 0) {
-      systemPrompt +=
-        "\n\n## Deployed Notion Databases\nUse these database IDs directly with notion_create, notion_query, and notion_write:\n\n" +
-        deployedSections.join("\n\n");
     }
 
-    // Add user's setup criteria (location, preferences) so the AI searches in the right area
-    if (notionUserId) {
+    if (deployedSections.length > 0) {
+      const sectionHeader = isInApp
+        ? "\n\n## Deployed Workspace Databases\nUse these database IDs with the save tools:\n\n"
+        : "\n\n## Deployed Notion Databases\nUse these database IDs directly with notion_create, notion_query, and notion_write:\n\n";
+      systemPrompt += sectionHeader + deployedSections.join("\n\n");
+    }
+
+    // Add user's setup criteria
+    const criteriaKey = notionUserId ?? userEmail;
+    if (criteriaKey) {
       const criteriaLines: string[] = [];
       for (const packRow of packs) {
-        const crit = await getUserCriteria(notionUserId, packRow.id).catch(() => undefined);
+        const crit = await getUserCriteria(criteriaKey, packRow.id).catch(() => undefined);
         if (!crit) continue;
         const pack = packRow.schemaSnapshot as unknown as NichePack;
         const entries = Object.entries(crit.criteria as Record<string, unknown>)

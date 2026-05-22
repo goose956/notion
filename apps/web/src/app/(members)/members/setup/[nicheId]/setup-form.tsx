@@ -224,7 +224,7 @@ function QuestionField({
 
 type AnswerMap = Record<string, string | string[]>;
 
-export function SetupForm({ pack }: { pack: NichePack }) {
+export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?: boolean }) {
   const router = useRouter();
   const questions: OnboardingQuestion[] = pack.onboardingQuestions ?? [];
 
@@ -289,7 +289,8 @@ export function SetupForm({ pack }: { pack: NichePack }) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const pageId = selectedPage?.id.replace(/-/g, "") ?? null;
-  const pageIdValid = pageId !== null;
+  // In-app deploys don't require a Notion page selection
+  const pageIdValid = isInApp || pageId !== null;
 
   function handleAnswerChange(id: string, val: string | string[]) {
     setAnswers((prev) => ({ ...prev, [id]: val }));
@@ -316,14 +317,16 @@ export function SetupForm({ pack }: { pack: NichePack }) {
     setErrorMsg(null);
 
     try {
+      const deployBody: Record<string, unknown> = { pack, onboardingAnswers };
+      // Only include parentPageId for Notion deploys
+      if (!isInApp && pageId) {
+        deployBody["parentPageId"] = pageId;
+      }
+
       const res = await fetch("/api/deploy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pack,
-          parentPageId: pageId,
-          onboardingAnswers,
-        }),
+        body: JSON.stringify(deployBody),
       });
 
       if (!res.ok) {
@@ -408,7 +411,7 @@ export function SetupForm({ pack }: { pack: NichePack }) {
             color: N_SUBTLE,
           }}
         >
-          This will create in your Notion workspace:
+          {isInApp ? "This will create in your workspace:" : "This will create in your Notion workspace:"}
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
           {pack.databases.map((db) => (
@@ -465,8 +468,8 @@ export function SetupForm({ pack }: { pack: NichePack }) {
         </div>
       ) : (
         <form onSubmit={(e) => void handleSubmit(e)}>
-          {/* Notion page picker */}
-          <div style={{ marginBottom: "28px", position: "relative" }} ref={pickerRef}>
+          {/* Notion page picker — shown only for Notion users */}
+          {!isInApp && <div style={{ marginBottom: "28px", position: "relative" }} ref={pickerRef}>
             <label
               style={{
                 display: "block",
@@ -626,7 +629,7 @@ export function SetupForm({ pack }: { pack: NichePack }) {
                 </div>
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Onboarding questions */}
           {questions.length > 0 && (
@@ -723,8 +726,9 @@ export function SetupForm({ pack }: { pack: NichePack }) {
                 lineHeight: 1.5,
               }}
             >
-              This usually takes 10–30 seconds. Notion databases are being
-              created in your workspace…
+              {isInApp
+                ? "Setting up your workspace…"
+                : "This usually takes 10–30 seconds. Notion databases are being created in your workspace…"}
             </p>
           )}
         </form>

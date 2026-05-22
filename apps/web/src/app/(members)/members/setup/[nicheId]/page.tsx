@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getNichePack } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 import { SetupForm } from "./setup-form.js";
+import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -27,5 +28,10 @@ export default async function SetupPage({
 
   const pack = packRow.schemaSnapshot as unknown as NichePack;
 
-  return <SetupForm pack={pack} />;
+  const session = await auth();
+  const notionToken = (session as unknown as Record<string, unknown> | null)?.["notionToken"] as string | undefined;
+  const isInApp = !notionToken;
+
+  return <SetupForm pack={pack} isInApp={isInApp} />;
 }
+

@@ -20,6 +20,9 @@ import {
   agentSchedules,
   customTools,
   pageViews,
+  appWorkspaces,
+  appDatabases,
+  appRows,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
@@ -37,6 +40,12 @@ import {
   type CustomToolRow,
   type NewCustomToolRow,
   type PageViewRow,
+  type AppWorkspaceRow,
+  type NewAppWorkspaceRow,
+  type AppDatabaseRow,
+  type NewAppDatabaseRow,
+  type AppRowRow,
+  type NewAppRowRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -829,5 +838,94 @@ export async function upsertAgentSchedule(row: AgentScheduleRow): Promise<AgentS
   const inserted = result[0];
   if (inserted === undefined) throw new Error("upsertAgentSchedule: no row returned");
   return inserted;
+}
+
+// ─── In-App Workspace queries ─────────────────────────────────────────────────
+
+export async function createAppWorkspace(
+  row: NewAppWorkspaceRow,
+): Promise<AppWorkspaceRow> {
+  const result = await db.insert(appWorkspaces).values(row).returning();
+  const created = result[0];
+  if (created === undefined) throw new Error("createAppWorkspace: no row returned");
+  return created;
+}
+
+export async function updateAppWorkspaceStatus(
+  id: string,
+  update: {
+    status: AppWorkspaceRow["status"];
+    durationMs?: number;
+    errorMessage?: string;
+    databaseIdMap?: Record<string, string>;
+  },
+): Promise<void> {
+  await db
+    .update(appWorkspaces)
+    .set({
+      status: update.status,
+      durationMs: update.durationMs ?? null,
+      errorMessage: update.errorMessage ?? null,
+      ...(update.databaseIdMap !== undefined ? { databaseIdMap: update.databaseIdMap } : {}),
+      completedAt: new Date(),
+    })
+    .where(eq(appWorkspaces.id, id));
+}
+
+export async function getLatestAppWorkspaceByNiche(
+  userId: string,
+  nichePackId: string,
+): Promise<AppWorkspaceRow | undefined> {
+  const rows = await db
+    .select()
+    .from(appWorkspaces)
+    .where(
+      and(
+        eq(appWorkspaces.userId, userId),
+        eq(appWorkspaces.nichePackId, nichePackId),
+        eq(appWorkspaces.status, "success"),
+      ),
+    )
+    .orderBy(desc(appWorkspaces.createdAt))
+    .limit(1);
+  return rows[0];
+}
+
+export async function createAppDatabase(
+  row: NewAppDatabaseRow,
+): Promise<AppDatabaseRow> {
+  const result = await db.insert(appDatabases).values(row).returning();
+  const created = result[0];
+  if (created === undefined) throw new Error("createAppDatabase: no row returned");
+  return created;
+}
+
+export async function getAppDatabase(id: string): Promise<AppDatabaseRow | undefined> {
+  const rows = await db
+    .select()
+    .from(appDatabases)
+    .where(eq(appDatabases.id, id))
+    .limit(1);
+  return rows[0];
+}
+
+export async function createAppRow(row: NewAppRowRow): Promise<AppRowRow> {
+  const result = await db.insert(appRows).values(row).returning();
+  const created = result[0];
+  if (created === undefined) throw new Error("createAppRow: no row returned");
+  return created;
+}
+
+/** Return the workspace row for a given app database (for ownership checks). */
+export async function getAppWorkspaceForDatabase(
+  databaseId: string,
+): Promise<AppWorkspaceRow | undefined> {
+  const rows = await db
+    .select({ workspace: appWorkspaces })
+    .from(appDatabases)
+    .innerJoin(appWorkspaces, eq(appDatabases.workspaceId, appWorkspaces.id))
+    .where(eq(appDatabases.id, databaseId))
+    .limit(1);
+  return rows[0]?.workspace;
 }
 

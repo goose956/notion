@@ -3,26 +3,38 @@ import { z } from "zod";
 import { NichePackSchema } from "@niche-factory/schema";
 import { deploy } from "@niche-factory/deployer";
 import { NotionApiClient } from "@niche-factory/notion-client";
-import { createDeploy, updateDeployStatus, upsertUserCriteria, upsertNichePack } from "@niche-factory/db";
+import {
+  createDeploy,
+  updateDeployStatus,
+  upsertUserCriteria,
+  upsertNichePack,
+  createAppWorkspace,
+  updateAppWorkspaceStatus,
+  createAppDatabase,
+} from "@niche-factory/db";
 import { randomUUID } from "node:crypto";
 import { auth } from "@/auth";
 
 const DeployRequestSchema = z.object({
   pack: NichePackSchema,
-  parentPageId: z.string().min(1),
+  // Required for Notion deploys; omit for in-app deploys
+  parentPageId: z.string().min(1).optional(),
   onboardingAnswers: z.record(z.string(), z.unknown()).optional(),
 });
 
-// POST /api/deploy — push a niche pack to a Notion workspace
+// POST /api/deploy — push a niche pack to a Notion workspace OR an in-app workspace
 export async function POST(request: NextRequest) {
   const session = await auth();
   const notionToken =
     (session as unknown as Record<string, unknown> | null)?.["notionToken"] as string | undefined ??
     process.env["NOTION_TOKEN"];
 
-  if (!notionToken) {
+  const userEmail = session?.user?.email;
+
+  // Must be authenticated by either Notion OAuth or email credentials
+  if (!notionToken && !userEmail) {
     return NextResponse.json(
-      { error: "Not authenticated — sign in with Notion first" },
+      { error: "Not authenticated — sign in first" },
       { status: 401 },
     );
   }
@@ -42,23 +54,91 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const { pack, onboardingAnswers: answers } = input.data;
   const notionUserId = (session as unknown as Record<string, unknown> | null)?.["notionUserId"];
 
-  const deployId = randomUUID();
-
-  // Ensure the niche pack row exists so the FK on deploys is satisfied.
-  // (The pack may not be in the DB if it came from a local file or AI draft.)
+  // Ensure the niche pack row exists so FK constraints are satisfied.
   try {
-    await upsertNichePack(input.data.pack);
+    await upsertNichePack(pack);
   } catch (err) {
     console.error("[POST /api/deploy] upsertNichePack failed:", err);
-    // Non-fatal: proceed anyway; if the FK fails createDeploy will surface it.
   }
+
+  // ── In-App deploy (no Notion token) ────────────────────────────────────────
+  if (!notionToken) {
+    const userId = userEmail!;
+    const workspaceId = randomUUID();
+
+    try {
+      await createAppWorkspace({
+        id: workspaceId,
+        userId,
+        nichePackId: pack.id,
+        name: pack.name,
+        databaseIdMap: {},
+        status: "in_progress",
+        createdAt: new Date(),
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create workspace";
+      console.error("[POST /api/deploy] createAppWorkspace failed:", message);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+
+    const databaseIds: Record<string, string> = {};
+    const start = Date.now();
+    try {
+      for (const db of pack.databases) {
+        const dbId = randomUUID();
+        await createAppDatabase({
+          id: dbId,
+          workspaceId,
+          packDbId: db.id,
+          name: db.name,
+          propertiesSchema: db.properties as unknown as Record<string, unknown>[],
+          createdAt: new Date(),
+        });
+        databaseIds[db.id] = dbId;
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create databases";
+      console.error("[POST /api/deploy] createAppDatabase failed:", message);
+      await updateAppWorkspaceStatus(workspaceId, { status: "failed", errorMessage: message }).catch(() => null);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+
+    const durationMs = Date.now() - start;
+    await updateAppWorkspaceStatus(workspaceId, { status: "success", durationMs, databaseIdMap: databaseIds }).catch((err) => {
+      console.error("[POST /api/deploy] updateAppWorkspaceStatus failed:", err);
+    });
+
+    if (answers && Object.keys(answers).length > 0) {
+      await upsertUserCriteria(userId, pack.id, answers).catch((err) => {
+        console.warn("[POST /api/deploy] upsertUserCriteria (in-app) failed (non-fatal):", err);
+      });
+    }
+
+    return NextResponse.json({
+      result: { databaseIds, workspaceId, durationMs },
+      deployId: workspaceId,
+      backend: "app",
+    });
+  }
+
+  // ── Notion deploy ───────────────────────────────────────────────────────────
+  if (!input.data.parentPageId) {
+    return NextResponse.json(
+      { error: "parentPageId is required for Notion deploys" },
+      { status: 422 },
+    );
+  }
+
+  const deployId = randomUUID();
 
   try {
     await createDeploy({
       id: deployId,
-      nichePackId: input.data.pack.id,
+      nichePackId: pack.id,
       notionParentPageId: input.data.parentPageId,
       notionUserId: typeof notionUserId === "string" ? notionUserId : null,
       databaseIdMap: {},
@@ -74,7 +154,7 @@ export async function POST(request: NextRequest) {
 
   let result;
   try {
-    result = await deploy(input.data.pack, input.data.parentPageId, client);
+    result = await deploy(pack, input.data.parentPageId, client);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Deploy failed";
     console.error("[POST /api/deploy] deploy() failed:", message);
@@ -94,21 +174,17 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error("[POST /api/deploy] updateDeployStatus (success) threw:", err);
-    // Deploy succeeded — don't fail the response just because the audit update failed
   }
 
-  // Persist user criteria so sync runs can reload them without re-asking
-  const answers = input.data.onboardingAnswers;
   if (typeof notionUserId === "string" && answers !== undefined && Object.keys(answers).length > 0) {
     try {
-      await upsertUserCriteria(notionUserId, input.data.pack.id, answers);
+      await upsertUserCriteria(notionUserId, pack.id, answers);
     } catch (err) {
-      // Database unavailable — deploy succeeded, but we couldn't save criteria
-      // This is non-fatal; the user can re-enter answers on next deploy
       const msg = err instanceof Error ? err.message : "Could not save criteria";
       console.warn(`[POST /api/deploy] Criteria save failed (non-fatal): ${msg}`);
     }
   }
 
-  return NextResponse.json({ result, deployId });
+  return NextResponse.json({ result, deployId, backend: "notion" });
 }
+

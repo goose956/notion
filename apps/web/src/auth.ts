@@ -1,12 +1,15 @@
 import NextAuth from "next-auth";
 import NotionProvider from "next-auth/providers/notion";
+import Credentials from "next-auth/providers/credentials";
 
 /**
  * Auth.js (NextAuth v5) configuration.
  *
- * Uses Notion OAuth so users sign in with the same Notion account they'll
- * be deploying packs to. The access_token from Notion OAuth is stored in
- * the session so we can use it for Notion API calls on behalf of the user.
+ * Two providers:
+ *  1. Notion OAuth — power users who want to sync to Notion.
+ *     notionToken + notionUserId are stored in the JWT.
+ *  2. Credentials (email-only) — users who prefer the in-app workspace.
+ *     No notionToken is stored; the session is identified by email alone.
  *
  * Required env vars:
  *   AUTH_SECRET            — random secret (openssl rand -base64 32)
@@ -21,6 +24,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env["NOTION_CLIENT_ID"] ?? "",
       clientSecret: process.env["NOTION_CLIENT_SECRET"] ?? "",
       redirectUri: `${process.env["AUTH_URL"] ?? process.env["NEXTAUTH_URL"] ?? "http://localhost:3000"}/api/auth/callback/notion`,
+    }),
+    // Email-only credentials — no password required.
+    // Used for users who sign up without a Notion account.
+    Credentials({
+      id: "email",
+      name: "Email",
+      credentials: {
+        email: { label: "Email", type: "email" },
+      },
+      authorize(credentials) {
+        const email = credentials?.email;
+        if (typeof email !== "string" || !email.trim()) return null;
+        const trimmed = email.toLowerCase().trim();
+        // Basic email format check
+        if (!trimmed.includes("@")) return null;
+        return {
+          id: trimmed,
+          email: trimmed,
+          name: trimmed.split("@")[0],
+        };
+      },
     }),
   ],
   callbacks: {

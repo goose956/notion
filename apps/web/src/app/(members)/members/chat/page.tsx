@@ -137,10 +137,10 @@ function ActivityFeed({ items, isLoading }: { items: ToolActivity[]; isLoading: 
 }
 
 function ResultCard({
-  item, index, added, adding, onAdd, disabled,
+  item, index, added, adding, onAdd, disabled, saveLabel,
 }: {
   item: ResultItem; index: number; added: boolean; adding: boolean;
-  onAdd: (index: number, item: ResultItem) => void; disabled: boolean;
+  onAdd: (index: number, item: ResultItem) => void; disabled: boolean; saveLabel: string;
 }) {
   const title = getItemTitle(item);
   const titleKey = Object.keys(item).find((k) => item[k] === title);
@@ -221,7 +221,7 @@ function ResultCard({
           ) : added ? (
             <><Check style={{ width: "12px", height: "12px" }} /> Saved</>
           ) : (
-            "Save to Notion"
+            saveLabel
           )}
         </button>
       </div>
@@ -300,6 +300,7 @@ function ChatPageInner() {
   const [addError, setAddError] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [backend, setBackend] = useState<"notion" | "app">("notion");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -307,10 +308,11 @@ function ChatPageInner() {
   // Load deployed databases on mount
   useEffect(() => {
     void fetch("/api/members/databases")
-      .then((r) => r.json() as Promise<{ databases: DeployedDatabase[]; criteria: NicheCriteriaEntry[] }>)
-      .then(({ databases, criteria }) => {
+      .then((r) => r.json() as Promise<{ databases: DeployedDatabase[]; criteria: NicheCriteriaEntry[]; backend?: "notion" | "app" }>)
+      .then(({ databases, criteria, backend: b }) => {
         setDeployedDbs(databases ?? []);
         setNicheCriteria(criteria ?? []);
+        if (b) setBackend(b);
         // Pre-select niche from URL param if present, otherwise pick first
         if (databases && databases.length > 0) {
           const match = nicheIdFromUrl
@@ -417,16 +419,21 @@ function ChatPageInner() {
     setAddingIndex(index);
     setAddError(null);
     try {
-      const res = await fetch("/api/members/notion-add", {
+      const isApp = backend === "app";
+      const res = await fetch(isApp ? "/api/members/workspace-save" : "/api/members/notion-add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notionDatabaseId: selectedNotionId, properties: item }),
+        body: JSON.stringify(
+          isApp
+            ? { databaseId: selectedNotionId, properties: item }
+            : { notionDatabaseId: selectedNotionId, properties: item },
+        ),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(body.error ?? "Failed to add");
+      if (!res.ok) throw new Error(body.error ?? "Failed to save");
       setAddedIndices((prev) => new Set([...prev, index]));
     } catch (err) {
-      setAddError(err instanceof Error ? err.message : "Failed to add to Notion");
+      setAddError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setAddingIndex(null);
     }
@@ -454,7 +461,7 @@ function ChatPageInner() {
         {/* Header */}
         <div style={{ padding: "16px 16px 10px", borderBottom: `1px solid ${N_BORDER}`, flexShrink: 0 }}>
           <p style={{ fontSize: "14px", fontWeight: 600, color: N_FG, marginBottom: "2px" }}>Research Assistant</p>
-          <p style={{ fontSize: "12px", color: N_MUTED }}>Search the web · save to Notion</p>
+          <p style={{ fontSize: "12px", color: N_MUTED }}>Search the web · save to {backend === "app" ? "workspace" : "Notion"}</p>
         </div>
         {credits !== null && (
           <div style={{
@@ -577,7 +584,7 @@ function ChatPageInner() {
           <div style={{ padding: "8px 32px", borderBottom: `1px solid ${N_BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexShrink: 0 }}>
             <span style={{ fontSize: "13px", color: N_MUTED }}>
               {resultItems.length} result{resultItems.length !== 1 ? "s" : ""}
-              {addedIndices.size > 0 && ` · ${addedIndices.size} saved to Notion`}
+              {addedIndices.size > 0 && ` · ${addedIndices.size} saved to ${backend === "app" ? "Workspace" : "Notion"}`}
             </span>
             {deployedDbs.length > 0 && (
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -642,7 +649,7 @@ function ChatPageInner() {
               <span style={{ fontSize: "56px", lineHeight: 1 }}>🔍</span>
               <p style={{ fontSize: "20px", fontWeight: 600, color: N_FG, margin: 0 }}>Start researching</p>
               <p style={{ fontSize: "14px", color: N_MUTED, maxWidth: "340px", lineHeight: 1.6, margin: 0 }}>
-                Ask the assistant to find venues, vendors, or businesses — results appear here and can be saved directly to your Notion workspace.
+                Ask the assistant to find venues, vendors, or businesses — results appear here and can be saved directly to your {backend === "app" ? "workspace" : "Notion workspace"}.
               </p>
             </div>
           )}
@@ -685,6 +692,7 @@ function ChatPageInner() {
                       adding={addingIndex === i}
                       onAdd={(idx, it) => void addToNotion(idx, it)}
                       disabled={addAllInProgress || !selectedNotionId}
+                      saveLabel={backend === "app" ? "Save to Workspace" : "Save to Notion"}
                     />
                   ))}
                 </div>

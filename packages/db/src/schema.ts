@@ -391,3 +391,75 @@ export type NewPageViewRow = typeof pageViews.$inferInsert;
 export type CustomSkillRow = CustomToolRow;
 /** @deprecated Use NewCustomToolRow instead */
 export type NewCustomSkillRow = NewCustomToolRow;
+
+// ─── In-App Workspace ────────────────────────────────────────────────────────
+
+/**
+ * app_workspaces — one row per in-app deploy (no Notion required).
+ *
+ * Mirrors the `deploys` table but stores data in Postgres instead of Notion.
+ * userId is the customer email used as the stable identity for non-Notion users.
+ */
+export const appWorkspaces = pgTable("app_workspaces", {
+  id: text("id").primaryKey(),                            // uuid
+  userId: text("user_id").notNull(),                      // customer email
+  nichePackId: text("niche_pack_id")
+    .notNull()
+    .references(() => nichePacks.id),
+  name: text("name").notNull(),
+  /** Serialised map of pack DB id → app_database id */
+  databaseIdMap: jsonb("database_id_map").notNull(),
+  status: deployStatusEnum("status").notNull().default("pending"),
+  errorMessage: text("error_message"),
+  durationMs: integer("duration_ms"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
+export type AppWorkspaceRow = typeof appWorkspaces.$inferSelect;
+export type NewAppWorkspaceRow = typeof appWorkspaces.$inferInsert;
+
+/**
+ * app_databases — one row per niche-pack database inside an in-app workspace.
+ */
+export const appDatabases = pgTable("app_databases", {
+  id: text("id").primaryKey(),                            // uuid — used as the "database ID" in the UI
+  workspaceId: text("workspace_id")
+    .notNull()
+    .references(() => appWorkspaces.id),
+  packDbId: text("pack_db_id").notNull(),                 // e.g. "vendors", "guests"
+  name: text("name").notNull(),
+  /** Array of { name: string; type: string } property definitions */
+  propertiesSchema: jsonb("properties_schema").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type AppDatabaseRow = typeof appDatabases.$inferSelect;
+export type NewAppDatabaseRow = typeof appDatabases.$inferInsert;
+
+/**
+ * app_rows — actual data rows saved to an in-app database.
+ *
+ * properties is a free-form JSON object keyed by property name — same shape
+ * the AI returns in the ```json block so it can be saved directly.
+ */
+export const appRows = pgTable("app_rows", {
+  id: text("id").primaryKey(),                            // uuid
+  databaseId: text("database_id")
+    .notNull()
+    .references(() => appDatabases.id),
+  properties: jsonb("properties").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type AppRowRow = typeof appRows.$inferSelect;
+export type NewAppRowRow = typeof appRows.$inferInsert;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { listNichePacks, getLatestDeployByNiche, getUserCriteria } from "@niche-factory/db";
+import { listNichePacks, getLatestDeployByNiche, getUserCriteria, getLatestAppWorkspaceByNiche } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 
 export interface DeployedDatabase {
@@ -23,34 +23,48 @@ export async function GET() {
   }
 
   const notionUserId = (session as unknown as Record<string, unknown>)["notionUserId"] as string | undefined;
+  const userEmail = session.user.email;
+  const isInApp = !notionUserId;
   const databases: DeployedDatabase[] = [];
   const criteria: NicheCriteria[] = [];
 
   try {
     const packs = await listNichePacks();
     for (const packRow of packs) {
-      const deploy = await getLatestDeployByNiche(packRow.id, notionUserId);
-      if (deploy === undefined) continue;
-      const dbMap = deploy.databaseIdMap as Record<string, string> | null | undefined;
+      let dbMap: Record<string, string> | undefined;
+
+      if (notionUserId) {
+        const deployRow = await getLatestDeployByNiche(packRow.id, notionUserId);
+        if (deployRow === undefined) continue;
+        dbMap = deployRow.databaseIdMap as Record<string, string> | null | undefined ?? undefined;
+      } else if (userEmail) {
+        const workspaceRow = await getLatestAppWorkspaceByNiche(userEmail, packRow.id);
+        if (workspaceRow === undefined) continue;
+        dbMap = workspaceRow.databaseIdMap as Record<string, string> | null | undefined ?? undefined;
+      }
+
       if (!dbMap || Object.keys(dbMap).length === 0) continue;
+
       const pack = packRow.schemaSnapshot as unknown as NichePack;
       for (const db of pack.databases) {
-        const notionId = dbMap[db.id];
-        if (typeof notionId === "string") {
+        const dbId = dbMap[db.id];
+        if (typeof dbId === "string") {
           databases.push({
             nicheId: pack.id,
             nicheName: pack.name,
             dbId: db.id,
             dbName: db.name,
-            notionId,
+            notionId: dbId, // Notion DB ID for Notion users; appDatabase.id for in-app users
           });
         }
       }
-      // Fetch user criteria for this niche (location, preferences, etc.)
-      if (notionUserId) {
-        const crit = await getUserCriteria(notionUserId, packRow.id).catch(() => undefined);
+
+      // Criteria keyed by notionUserId for Notion users, email for in-app users
+      const criteriaKey = notionUserId ?? userEmail;
+      if (criteriaKey) {
+        const crit = await getUserCriteria(criteriaKey, packRow.id).catch(() => undefined);
         if (crit) {
-          criteria.push({ nicheId: pack.id, criteria: crit.criteria as Record<string, unknown> });
+          criteria.push({ nicheId: packRow.id, criteria: crit.criteria as Record<string, unknown> });
         }
       }
     }
@@ -58,5 +72,6 @@ export async function GET() {
     // Return empty list if DB unavailable
   }
 
-  return NextResponse.json({ databases, criteria });
+  return NextResponse.json({ databases, criteria, backend: isInApp ? "app" : "notion" });
 }
+

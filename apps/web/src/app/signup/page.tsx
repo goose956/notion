@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Suspense } from "react";
 
 function SignupForm() {
@@ -34,15 +35,23 @@ function SignupForm() {
         setLoading(false);
         return;
       }
-      // Pre-registration done — send to get-started so they see the onboarding
-      // steps before being asked to connect Notion. Thread the original
-      // callbackUrl as `next` so step 4 can deep-link back to the right place.
-      // Go directly to get-started (no Notion OAuth yet). The next param lets
-      // step 4 deep-link back to the original template page after OAuth.
+
+      // Create an in-app session immediately so the user is authenticated
+      // without needing to connect Notion. They can connect Notion later from
+      // get-started if they want the full Notion sync experience.
       const getStartedUrl =
         callbackUrl && callbackUrl !== "/members/get-started"
           ? `/members/get-started?next=${encodeURIComponent(callbackUrl)}`
           : "/members/get-started";
+
+      const result = await signIn("email", { email: email.trim(), redirect: false });
+      if (result?.error) {
+        // Credentials sign-in failed — fall back to redirecting without a session
+        // (they can still connect Notion on the get-started page)
+        router.push(getStartedUrl as never);
+        return;
+      }
+
       router.push(getStartedUrl as never);
     } catch {
       setError("Something went wrong. Please try again.");
