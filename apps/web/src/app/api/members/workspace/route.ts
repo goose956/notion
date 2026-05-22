@@ -4,14 +4,19 @@ import { auth } from "@/auth";
 import {
   listNichePacks,
   getNichePack,
+  getUserCriteria,
   getLatestDeployByNiche,
   listAppWorkspacesByUser,
   listAppDatabasesByWorkspace,
   listAppRowsByDatabase,
   createAppRow,
+  createAppWorkspace,
+  createAppDatabase,
+  updateAppWorkspaceStatus,
 } from "@niche-factory/db";
 import { NotionApiClient } from "@niche-factory/notion-client";
 import type { NichePack } from "@niche-factory/schema";
+import { randomUUID } from "node:crypto";
 
 // ─── Types returned to the client ────────────────────────────────────────────
 
@@ -42,6 +47,50 @@ export interface WorkspaceDatabase {
 export interface WorkspaceResponse {
   databases: WorkspaceDatabase[];
   backend: "app" | "notion";
+}
+
+async function provisionAppWorkspace(userId: string, pack: NichePack): Promise<void> {
+  const workspaceId = randomUUID();
+  await createAppWorkspace({
+    id: workspaceId,
+    userId,
+    nichePackId: pack.id,
+    name: pack.name,
+    databaseIdMap: {},
+    status: "in_progress",
+    createdAt: new Date(),
+  });
+
+  const databaseIdMap: Record<string, string> = {};
+  const start = Date.now();
+
+  try {
+    for (const db of pack.databases) {
+      const appDbId = randomUUID();
+      await createAppDatabase({
+        id: appDbId,
+        workspaceId,
+        packDbId: db.id,
+        name: db.name,
+        propertiesSchema: db.properties as unknown as Record<string, unknown>[],
+        createdAt: new Date(),
+      });
+      databaseIdMap[db.id] = appDbId;
+    }
+
+    await updateAppWorkspaceStatus(workspaceId, {
+      status: "success",
+      durationMs: Date.now() - start,
+      databaseIdMap,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create app databases";
+    await updateAppWorkspaceStatus(workspaceId, {
+      status: "failed",
+      errorMessage: message,
+    }).catch(() => null);
+    throw err;
+  }
 }
 
 // ─── Helpers: extract a display value from any Notion property ───────────────
@@ -134,14 +183,57 @@ export async function GET(_req: NextRequest) {
     const databases: WorkspaceDatabase[] = [];
 
     try {
-      const workspaces = await listAppWorkspacesByUser(userId);
+      let workspaces = await listAppWorkspacesByUser(userId);
+
+      // Self-heal: if no successful in-app workspace exists, provision default wedding workspace
+      // when onboarding requirements are met.
+      if (workspaces.length === 0) {
+        const defaultNicheId = "wedding-planner";
+        const defaultPackRow = await getNichePack(defaultNicheId).catch(() => undefined);
+        if (defaultPackRow) {
+          const defaultPack = defaultPackRow.schemaSnapshot as unknown as NichePack;
+          const hasOnboardingQuestions =
+            Array.isArray(defaultPack.onboardingQuestions) &&
+            defaultPack.onboardingQuestions.length > 0;
+          const criteria = await getUserCriteria(userId, defaultNicheId).catch(() => undefined);
+          if (!hasOnboardingQuestions || criteria) {
+            await provisionAppWorkspace(userId, defaultPack).catch(() => null);
+            workspaces = await listAppWorkspacesByUser(userId);
+          }
+        }
+      }
 
       for (const workspace of workspaces) {
         const packRow = await getNichePack(workspace.nichePackId);
         if (!packRow) continue;
         const pack = packRow.schemaSnapshot as unknown as NichePack;
 
-        const appDbs = await listAppDatabasesByWorkspace(workspace.id);
+        let appDbs = await listAppDatabasesByWorkspace(workspace.id);
+
+        // Self-heal: if workspace exists but has no app DB rows, recreate databases from schema.
+        if (appDbs.length === 0) {
+          const rebuiltDatabaseIdMap: Record<string, string> = {};
+          for (const db of pack.databases) {
+            const appDbId = randomUUID();
+            await createAppDatabase({
+              id: appDbId,
+              workspaceId: workspace.id,
+              packDbId: db.id,
+              name: db.name,
+              propertiesSchema: db.properties as unknown as Record<string, unknown>[],
+              createdAt: new Date(),
+            });
+            rebuiltDatabaseIdMap[db.id] = appDbId;
+          }
+          await updateAppWorkspaceStatus(workspace.id, {
+            status: "success",
+            databaseIdMap: {
+              ...((workspace.databaseIdMap as Record<string, string> | null) ?? {}),
+              ...rebuiltDatabaseIdMap,
+            },
+          }).catch(() => null);
+          appDbs = await listAppDatabasesByWorkspace(workspace.id);
+        }
 
         for (const appDb of appDbs) {
           const appRows = await listAppRowsByDatabase(appDb.id);
