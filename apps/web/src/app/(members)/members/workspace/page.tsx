@@ -885,6 +885,28 @@ export default function WorkspacePage() {
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
   const [draftEditorOpen, setDraftEditorOpen] = useState(false);
 
+  function applyRequestedSelection(nextDatabases: WorkspaceDatabase[]) {
+    const requestedDb = nextDatabases.find((d) =>
+      (nicheIdParam ? d.nicheId === nicheIdParam : true) &&
+      (dbIdParam ? d.dbId === dbIdParam : true),
+    );
+
+    if (requestedDb) {
+      setActiveTab(requestedDb.notionId);
+      setDraftEditorOpen(
+        openEditorParam &&
+          requestedDb.nicheId === "wedding-planner" &&
+          requestedDb.dbId === "documents",
+      );
+      return;
+    }
+
+    if (nextDatabases.length > 0) {
+      setActiveTab((prev) => prev || nextDatabases[0]!.notionId);
+    }
+    setDraftEditorOpen(false);
+  }
+
   async function loadDatabases(isRefresh = false) {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
@@ -900,18 +922,7 @@ export default function WorkspacePage() {
       // Auto-expand all niches and select first tab
       const nicheIds = [...new Set(data.databases.map((d) => d.nicheId))];
       setExpandedNiches(new Set(nicheIds));
-      const requestedDb = data.databases.find((d) =>
-        (nicheIdParam ? d.nicheId === nicheIdParam : true) &&
-        (dbIdParam ? d.dbId === dbIdParam : true),
-      );
-      if (requestedDb) {
-        setActiveTab(requestedDb.notionId);
-        if (openEditorParam && requestedDb.nicheId === "wedding-planner" && requestedDb.dbId === "documents") {
-          setDraftEditorOpen(true);
-        }
-      } else if (data.databases.length > 0 && !activeTab) {
-        setActiveTab(data.databases[0]!.notionId);
-      }
+      applyRequestedSelection(data.databases);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
@@ -924,6 +935,12 @@ export default function WorkspacePage() {
     void loadDatabases();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (databases.length === 0) return;
+    applyRequestedSelection(databases);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nicheIdParam, dbIdParam, openEditorParam, databases]);
 
   function handleRowUpdated(dbNotionId: string, pageId: string, name: string, val: string | number | boolean | null) {
     setDatabases((prev) =>

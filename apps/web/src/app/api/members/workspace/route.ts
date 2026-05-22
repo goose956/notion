@@ -93,6 +93,21 @@ async function provisionAppWorkspace(userId: string, pack: NichePack): Promise<v
   }
 }
 
+async function maybeProvisionDefaultAppWorkspace(userId: string): Promise<void> {
+  const defaultNicheId = "wedding-planner";
+  const defaultPackRow = await getNichePack(defaultNicheId).catch(() => undefined);
+  if (!defaultPackRow) return;
+
+  const defaultPack = defaultPackRow.schemaSnapshot as unknown as NichePack;
+  const hasOnboardingQuestions =
+    Array.isArray(defaultPack.onboardingQuestions) &&
+    defaultPack.onboardingQuestions.length > 0;
+  const criteria = await getUserCriteria(userId, defaultNicheId).catch(() => undefined);
+  if (!hasOnboardingQuestions || criteria) {
+    await provisionAppWorkspace(userId, defaultPack).catch(() => null);
+  }
+}
+
 // ─── Helpers: extract a display value from any Notion property ───────────────
 
 function extractValue(prop: Record<string, unknown>): string | number | boolean | null {
@@ -183,79 +198,103 @@ export async function GET(_req: NextRequest) {
     const databases: WorkspaceDatabase[] = [];
 
     try {
-      let workspaces = await listAppWorkspacesByUser(userId);
+      let workspaces = await listAppWorkspacesByUser(userId).catch(() => []);
 
-      // Self-heal: if no successful in-app workspace exists, provision default wedding workspace
-      // when onboarding requirements are met.
+      // Self-heal: if no in-app workspace exists, provision default wedding workspace.
       if (workspaces.length === 0) {
-        const defaultNicheId = "wedding-planner";
-        const defaultPackRow = await getNichePack(defaultNicheId).catch(() => undefined);
-        if (defaultPackRow) {
-          const defaultPack = defaultPackRow.schemaSnapshot as unknown as NichePack;
-          const hasOnboardingQuestions =
-            Array.isArray(defaultPack.onboardingQuestions) &&
-            defaultPack.onboardingQuestions.length > 0;
-          const criteria = await getUserCriteria(userId, defaultNicheId).catch(() => undefined);
-          if (!hasOnboardingQuestions || criteria) {
-            await provisionAppWorkspace(userId, defaultPack).catch(() => null);
-            workspaces = await listAppWorkspacesByUser(userId);
-          }
-        }
+        await maybeProvisionDefaultAppWorkspace(userId);
+        workspaces = await listAppWorkspacesByUser(userId).catch(() => []);
       }
 
       for (const workspace of workspaces) {
-        const packRow = await getNichePack(workspace.nichePackId);
-        if (!packRow) continue;
-        const pack = packRow.schemaSnapshot as unknown as NichePack;
+        try {
+          const packRow = await getNichePack(workspace.nichePackId).catch(() => undefined);
+          if (!packRow) continue;
+          const pack = packRow.schemaSnapshot as unknown as NichePack;
 
-        let appDbs = await listAppDatabasesByWorkspace(workspace.id);
+          let appDbs = await listAppDatabasesByWorkspace(workspace.id).catch(() => []);
 
-        // Self-heal: if workspace exists but has no app DB rows, recreate databases from schema.
-        if (appDbs.length === 0) {
-          const rebuiltDatabaseIdMap: Record<string, string> = {};
-          for (const db of pack.databases) {
-            const appDbId = randomUUID();
-            await createAppDatabase({
-              id: appDbId,
-              workspaceId: workspace.id,
-              packDbId: db.id,
-              name: db.name,
-              propertiesSchema: db.properties as unknown as Record<string, unknown>[],
-              createdAt: new Date(),
-            });
-            rebuiltDatabaseIdMap[db.id] = appDbId;
+          // Self-heal: if workspace exists but has no app DB rows, recreate databases from schema.
+          if (appDbs.length === 0) {
+            const rebuiltDatabaseIdMap: Record<string, string> = {};
+            for (const db of pack.databases) {
+              const appDbId = randomUUID();
+              await createAppDatabase({
+                id: appDbId,
+                workspaceId: workspace.id,
+                packDbId: db.id,
+                name: db.name,
+                propertiesSchema: db.properties as unknown as Record<string, unknown>[],
+                createdAt: new Date(),
+              });
+              rebuiltDatabaseIdMap[db.id] = appDbId;
+            }
+            await updateAppWorkspaceStatus(workspace.id, {
+              status: "success",
+              databaseIdMap: {
+                ...((workspace.databaseIdMap as Record<string, string> | null) ?? {}),
+                ...rebuiltDatabaseIdMap,
+              },
+            }).catch(() => null);
+            appDbs = await listAppDatabasesByWorkspace(workspace.id).catch(() => []);
           }
-          await updateAppWorkspaceStatus(workspace.id, {
-            status: "success",
-            databaseIdMap: {
-              ...((workspace.databaseIdMap as Record<string, string> | null) ?? {}),
-              ...rebuiltDatabaseIdMap,
-            },
-          }).catch(() => null);
-          appDbs = await listAppDatabasesByWorkspace(workspace.id);
+
+          for (const appDb of appDbs) {
+            const appRows = await listAppRowsByDatabase(appDb.id).catch(() => []);
+            const hasMore = appRows.length >= 50;
+
+            const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
+            const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
+
+            databases.push({
+              notionId: appDb.id,
+              nicheId: pack.id,
+              nicheName: pack.name,
+              dbId: appDb.packDbId,
+              dbName: appDb.name,
+              icon: packDbDef?.icon ?? null,
+              properties: propertiesSchema.map((p) => ({ id: p.name, name: p.name, type: p.type })),
+              rows: appRows.map((r) => ({
+                pageId: r.id,
+                properties: r.properties as Record<string, string | number | boolean | null>,
+              })),
+              hasMore,
+            });
+          }
+        } catch {
+          // Keep other workspaces visible even if one workspace is broken.
+          continue;
         }
+      }
 
-        for (const appDb of appDbs) {
-          const appRows = await listAppRowsByDatabase(appDb.id);
-          const hasMore = appRows.length >= 50;
-
-          const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
-          const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
-
-          databases.push({
-            notionId: appDb.id,
-            nicheId: pack.id,
-            nicheName: pack.name,
-            dbId: appDb.packDbId,
-            dbName: appDb.name,
-            icon: packDbDef?.icon ?? null,
-            properties: propertiesSchema.map((p) => ({ id: p.name, name: p.name, type: p.type })),
-            rows: appRows.map((r) => ({
-              pageId: r.id,
-              properties: r.properties as Record<string, string | number | boolean | null>,
-            })),
-            hasMore,
-          });
+      // If everything was empty due drift, retry a default provision once.
+      if (databases.length === 0) {
+        await maybeProvisionDefaultAppWorkspace(userId);
+        const retriedWorkspaces = await listAppWorkspacesByUser(userId).catch(() => []);
+        for (const workspace of retriedWorkspaces) {
+          const packRow = await getNichePack(workspace.nichePackId).catch(() => undefined);
+          if (!packRow) continue;
+          const pack = packRow.schemaSnapshot as unknown as NichePack;
+          const appDbs = await listAppDatabasesByWorkspace(workspace.id).catch(() => []);
+          for (const appDb of appDbs) {
+            const appRows = await listAppRowsByDatabase(appDb.id).catch(() => []);
+            const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
+            const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
+            databases.push({
+              notionId: appDb.id,
+              nicheId: pack.id,
+              nicheName: pack.name,
+              dbId: appDb.packDbId,
+              dbName: appDb.name,
+              icon: packDbDef?.icon ?? null,
+              properties: propertiesSchema.map((p) => ({ id: p.name, name: p.name, type: p.type })),
+              rows: appRows.map((r) => ({
+                pageId: r.id,
+                properties: r.properties as Record<string, string | number | boolean | null>,
+              })),
+              hasMore: appRows.length >= 50,
+            });
+          }
         }
       }
     } catch {
