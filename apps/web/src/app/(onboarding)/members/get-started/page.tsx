@@ -1,7 +1,16 @@
 ﻿import { auth } from "@/auth";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
-import { listDeploysByUser, getNichePack } from "@niche-factory/db";
+import {
+  listDeploysByUser,
+  getNichePack,
+  getLatestAppWorkspaceByNiche,
+  createAppWorkspace,
+  createAppDatabase,
+  updateAppWorkspaceStatus,
+} from "@niche-factory/db";
+import { randomUUID } from "node:crypto";
 
 export const metadata = { title: "Get Started â€” Niche Factory" };
 
@@ -191,6 +200,69 @@ export default async function GetStartedPage({
 
   // â”€â”€ In-App path: much simpler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (isInApp) {
+    if (nicheIdFromNext && nichePackRow && session?.user?.email) {
+      try {
+        const existing = await getLatestAppWorkspaceByNiche(
+          session.user.email,
+          nicheIdFromNext,
+        );
+
+        if (!existing) {
+          const workspaceId = randomUUID();
+          await createAppWorkspace({
+            id: workspaceId,
+            userId: session.user.email,
+            nichePackId: nicheIdFromNext,
+            name: nichePackRow.name,
+            databaseIdMap: {},
+            status: "in_progress",
+            createdAt: new Date(),
+          });
+
+          const databaseIdMap: Record<string, string> = {};
+          const start = Date.now();
+
+          try {
+            const schema = nichePackRow.schemaSnapshot as {
+              databases: Array<{ id: string; name: string; properties: unknown[] }>;
+            };
+
+            for (const db of schema.databases) {
+              const dbId = randomUUID();
+              await createAppDatabase({
+                id: dbId,
+                workspaceId,
+                packDbId: db.id,
+                name: db.name,
+                propertiesSchema: db.properties as Record<string, unknown>[],
+                createdAt: new Date(),
+              });
+              databaseIdMap[db.id] = dbId;
+            }
+
+            await updateAppWorkspaceStatus(workspaceId, {
+              status: "success",
+              durationMs: Date.now() - start,
+              databaseIdMap,
+            });
+          } catch (err) {
+            const message =
+              err instanceof Error
+                ? err.message
+                : "Failed to create in-app databases";
+            await updateAppWorkspaceStatus(workspaceId, {
+              status: "failed",
+              errorMessage: message,
+            }).catch(() => null);
+          }
+        }
+
+        redirect(`/members/chat?nicheId=${encodeURIComponent(nicheIdFromNext)}`);
+      } catch {
+        // Fall back to manual setup card if auto-provisioning fails.
+      }
+    }
+
     return (
       <InAppGetStarted
         userName={userName}
