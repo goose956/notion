@@ -1,7 +1,6 @@
 ﻿import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
 import {
   listDeploysByUser,
@@ -28,6 +27,12 @@ const N_BLUE_BG = "rgba(35,131,226,0.08)";
 const N_GREEN = "rgb(15,123,108)";
 const N_FONT =
   'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
+
+function isNextRedirectError(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false;
+  const maybeDigest = (err as { digest?: unknown }).digest;
+  return typeof maybeDigest === "string" && maybeDigest.startsWith("NEXT_REDIRECT");
+}
 
 // â”€â”€â”€ Shared top bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -410,7 +415,7 @@ export default async function GetStartedPage({
 
         redirect(`/members/chat?nicheId=${encodeURIComponent(autoNicheId)}`);
       } catch (err) {
-        if (isRedirectError(err)) {
+        if (isNextRedirectError(err)) {
           throw err;
         }
         // Fall back to manual setup card if auto-provisioning fails.
