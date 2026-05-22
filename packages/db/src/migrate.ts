@@ -48,6 +48,19 @@ console.log("Running schema fixups...");
 await client.unsafe(`
   ALTER TABLE deploys ADD COLUMN IF NOT EXISTS notion_user_id text;
 `);
+
+// Recovery fix: if migration history drifted, make sure in-app workspace tables exist.
+const appWorkspaceRegclass = await client.unsafe(
+  "select to_regclass('public.app_workspaces') as regclass",
+);
+const hasAppWorkspaceTable = appWorkspaceRegclass?.[0]?.regclass !== null;
+if (!hasAppWorkspaceTable) {
+  const appWorkspaceSqlPath = join(__dirname, "../drizzle/0013_app_workspace.sql");
+  const appWorkspaceSql = fs.readFileSync(appWorkspaceSqlPath, "utf-8");
+  await client.unsafe(appWorkspaceSql);
+  console.log("Applied fallback migration: 0013_app_workspace.sql");
+}
+
 console.log("Schema fixups complete.");
 
 await client.end();

@@ -457,7 +457,7 @@ function ChatPageInner() {
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: N_FONT, color: N_FG }}>
 
       {/* ── Left panel ──────────────────────────────────────────────────── */}
-      <div style={{ width: "300px", flexShrink: 0, display: "flex", flexDirection: "column", background: "#F7F6F3", borderRight: `1px solid ${N_BORDER}` }}>
+      <div style={{ width: "300px", flexShrink: 0, display: "flex", flexDirection: "column", background: "#EAF4FF", borderRight: `1px solid ${N_BORDER}` }}>
 
         {/* Header */}
         <div style={{ padding: "16px 16px 10px", borderBottom: `1px solid ${N_BORDER}`, flexShrink: 0 }}>

@@ -982,7 +982,7 @@ export default function WorkspacePage() {
           borderRight: `1px solid ${N_BORDER}`,
           display: "flex",
           flexDirection: "column",
-          background: "#F7F6F3",
+          background: "#EAF4FF",
           overflowY: "auto",
         }}
       >
