@@ -173,10 +173,27 @@ function InAppGetStarted({
         )}
       </aside>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "#FCFBF7" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "#FFF8EE" }}>
         <TopBar showMembersLink={isAuthenticated} />
 
-        <div style={{ maxWidth: "600px", margin: "0 auto", padding: "56px 24px" }}>
+        <div
+          style={{
+            maxWidth: "760px",
+            margin: "0 auto",
+            padding: "40px 24px 56px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
+        <div
+          style={{
+            background: "white",
+            border: "1px solid rgba(55,53,47,0.08)",
+            borderRadius: "18px",
+            boxShadow: "0 18px 40px rgba(55,53,47,0.08)",
+            padding: "32px 36px",
+          }}
+        >
         {/* Header */}
         <div style={{ marginBottom: "40px" }}>
           <p style={{ margin: "0 0 6px", fontSize: "12px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: N_SUBTLE }}>
@@ -267,6 +284,7 @@ function InAppGetStarted({
             Connect Notion â†’
           </Link>
         </div>
+      </div>
       </div>
       </div>
     </div>
