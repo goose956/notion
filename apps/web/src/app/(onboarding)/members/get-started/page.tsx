@@ -178,7 +178,7 @@ function InAppGetStarted({
         )}
       </aside>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "#FFF8EE" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "linear-gradient(180deg, #E8F4FF 0%, #F7FBFF 100%)" }}>
         <TopBar showMembersLink={isAuthenticated} />
 
         <div
@@ -193,9 +193,9 @@ function InAppGetStarted({
         <div
           style={{
             background: "white",
-            border: "1px solid rgba(55,53,47,0.08)",
+            border: "1px solid rgba(35,131,226,0.22)",
             borderRadius: "18px",
-            boxShadow: "0 18px 40px rgba(55,53,47,0.08)",
+            boxShadow: "0 18px 40px rgba(35,131,226,0.16)",
             padding: "32px 36px",
           }}
         >
