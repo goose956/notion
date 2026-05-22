@@ -5,29 +5,71 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Suspense } from "react";
 
+const WEDDING_QUESTIONS = [
+  { id: "wedding-date", label: "Wedding date or timeframe", type: "text", required: true, placeholder: "e.g. 14 June 2026 or Summer 2026" },
+  { id: "wedding-location", label: "Wedding location", type: "text", required: true, placeholder: "e.g. Cotswolds, Edinburgh, Bristol" },
+  { id: "guest-count", label: "Guest count", type: "number", required: true, placeholder: "e.g. 80" },
+  { id: "total-budget", label: "Total budget", type: "number", required: true, placeholder: "e.g. 15000" },
+  { id: "wedding-style", label: "Wedding style", type: "select", required: false, options: ["Rustic / Barn", "Classic / Traditional", "Modern / Minimalist", "Boho / Wildflower", "Black Tie / Formal", "Outdoor / Festival", "Intimate / Micro-wedding", "Not sure yet"] },
+  { id: "priority-vendors", label: "Priority vendors", type: "multi_select", required: false, options: ["Venue", "Florist", "Photographer", "Caterer", "Music / DJ", "Cake", "Hair & Makeup", "Videographer", "Transport"] },
+] as const;
+
+type WeddingQuestionId = typeof WEDDING_QUESTIONS[number]["id"];
+
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const callbackUrl = searchParams.get("callbackUrl") ?? "/members/get-started";
   const templateTitle = searchParams.get("title");
+  const isWeddingSignup = /wedding/i.test(templateTitle ?? "") || /\/members\/setup\/wedding-planner/.test(callbackUrl);
+  const nicheId = /\/members\/setup\/([a-z0-9-]+)$/.exec(callbackUrl)?.[1] ?? undefined;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showWeddingPopup, setShowWeddingPopup] = useState(false);
+  const [weddingAnswers, setWeddingAnswers] = useState<Record<WeddingQuestionId, string | string[]>>({
+    "wedding-date": "",
+    "wedding-location": "",
+    "guest-count": "",
+    "total-budget": "",
+    "wedding-style": "",
+    "priority-vendors": [],
+  });
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     if (!email.trim()) { setError("Please enter your email address."); return; }
 
+    if (isWeddingSignup && !showWeddingPopup) {
+      setShowWeddingPopup(true);
+      return;
+    }
+
     setLoading(true);
     try {
+      const onboardingAnswers: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(weddingAnswers)) {
+        if (Array.isArray(value)) {
+          if (value.length === 0) continue;
+          onboardingAnswers[key] = value;
+          continue;
+        }
+        if (typeof value === "string" && value.trim() === "") continue;
+        onboardingAnswers[key] = key === "guest-count" || key === "total-budget" ? Number(value) || value : value;
+      }
+
       const res = await fetch("/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({
+          email: email.trim(),
+          nicheId: isWeddingSignup ? (nicheId ?? "wedding-planner") : undefined,
+          onboardingAnswers: isWeddingSignup ? onboardingAnswers : undefined,
+        }),
       });
       if (!res.ok) {
         const data = await res.json() as { error?: string };
@@ -209,6 +251,114 @@ function SignupForm() {
             {loading ? "Setting up your account…" : "Continue →"}
           </button>
         </form>
+
+        {showWeddingPopup && isWeddingSignup && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(55,53,47,0.45)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px",
+              zIndex: 50,
+            }}
+          >
+            <div style={{ width: "100%", maxWidth: "720px", background: "white", borderRadius: "12px", boxShadow: "0 24px 80px rgba(0,0,0,0.24)", border: "1px solid rgba(55,53,47,0.08)", overflow: "hidden" }}>
+              <div style={{ padding: "18px 20px", borderBottom: "1px solid rgba(55,53,47,0.09)" }}>
+                <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(55,53,47,0.45)" }}>
+                  Wedding setup
+                </p>
+                <h2 style={{ margin: "6px 0 0", fontSize: "22px", fontWeight: 800, color: "#37352F" }}>
+                  Tell us about your wedding
+                </h2>
+                <p style={{ margin: "8px 0 0", fontSize: "14px", color: "rgba(55,53,47,0.65)", lineHeight: 1.5 }}>
+                  These details help us pre-fill your workspace so the AI can draft better emails, vendor outreach, and planning suggestions.
+                </p>
+              </div>
+
+              <div style={{ padding: "20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                {WEDDING_QUESTIONS.map((q) => (
+                  <div key={q.id} style={{ gridColumn: q.id === "priority-vendors" ? "1 / -1" : undefined }}>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#37352F", marginBottom: "6px" }}>
+                      {q.label}{q.required ? <span style={{ color: "rgb(235,87,87)" }}> *</span> : null}
+                    </label>
+                    {q.type === "select" ? (
+                      <select
+                        value={(weddingAnswers[q.id] as string) ?? ""}
+                        onChange={(e) => setWeddingAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                        style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid rgba(55,53,47,0.2)", fontFamily: "inherit", fontSize: "14px", boxSizing: "border-box" }}
+                      >
+                        <option value="">Select one…</option>
+                        {q.options?.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    ) : q.type === "multi_select" ? (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                        {q.options?.map((option) => {
+                          const selected = (weddingAnswers[q.id] as string[]).includes(option);
+                          return (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => setWeddingAnswers((prev) => {
+                                const current = prev[q.id] as string[];
+                                return {
+                                  ...prev,
+                                  [q.id]: current.includes(option)
+                                    ? current.filter((item) => item !== option)
+                                    : [...current, option],
+                                };
+                              })}
+                              style={{
+                                padding: "8px 10px",
+                                borderRadius: "999px",
+                                border: `1px solid ${selected ? "#37352F" : "rgba(55,53,47,0.15)"}`,
+                                background: selected ? "#37352F" : "white",
+                                color: selected ? "white" : "#37352F",
+                                fontSize: "13px",
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                              }}
+                            >
+                              {option}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <input
+                        type={q.type === "number" ? "number" : "text"}
+                        value={(weddingAnswers[q.id] as string) ?? ""}
+                        onChange={(e) => setWeddingAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                        placeholder={q.placeholder}
+                        style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid rgba(55,53,47,0.2)", fontFamily: "inherit", fontSize: "14px", boxSizing: "border-box" }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ padding: "0 20px 20px", display: "flex", justifyContent: "space-between", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowWeddingPopup(false)}
+                  style={{ padding: "10px 14px", borderRadius: "6px", border: "1px solid rgba(55,53,47,0.15)", background: "white", color: "#37352F", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSubmit(new Event("submit") as unknown as FormEvent)}
+                  disabled={loading}
+                  style={{ padding: "10px 14px", borderRadius: "6px", border: "none", background: loading ? "rgba(55,53,47,0.3)" : "#37352F", color: "white", fontWeight: 700, cursor: loading ? "default" : "pointer", fontFamily: "inherit" }}
+                >
+                  {loading ? "Setting up your account…" : "Continue"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <p
           style={{

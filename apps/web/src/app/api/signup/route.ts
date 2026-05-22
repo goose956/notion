@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { findOrCreateCustomer } from "@niche-factory/db";
+import { findOrCreateCustomer, upsertUserCriteria } from "@niche-factory/db";
 
 const BodySchema = z.object({
   email: z.string().email(),
+  nicheId: z.string().min(1).optional(),
+  onboardingAnswers: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -21,6 +23,9 @@ export async function POST(req: NextRequest) {
 
   try {
     await findOrCreateCustomer(parsed.data.email);
+    if (parsed.data.nicheId && parsed.data.onboardingAnswers && Object.keys(parsed.data.onboardingAnswers).length > 0) {
+      await upsertUserCriteria(parsed.data.email, parsed.data.nicheId, parsed.data.onboardingAnswers).catch(() => null);
+    }
   } catch {
     // Non-fatal — customer row creation failure shouldn't block sign-up
   }

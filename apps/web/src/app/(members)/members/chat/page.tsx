@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, type FormEvent, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowUp,
@@ -463,6 +464,28 @@ function ChatPageInner() {
           <p style={{ fontSize: "14px", fontWeight: 600, color: N_FG, marginBottom: "2px" }}>Research Assistant</p>
           <p style={{ fontSize: "12px", color: N_MUTED }}>Search the web · save to {backend === "app" ? "workspace" : "Notion"}</p>
         </div>
+        {backend === "app" && (
+          <div style={{ padding: "10px 16px 12px" }}>
+            <Link
+              href="/members/workspace?nicheId=wedding-planner&dbId=documents&editor=1"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 12px",
+                borderRadius: "999px",
+                border: "1px solid rgba(55,53,47,0.14)",
+                background: "white",
+                color: "#37352F",
+                textDecoration: "none",
+                fontSize: "13px",
+                fontWeight: 600,
+              }}
+            >
+              Draft letters
+            </Link>
+          </div>
+        )}
         {credits !== null && (
           <div style={{
             margin: "0 10px 4px",
