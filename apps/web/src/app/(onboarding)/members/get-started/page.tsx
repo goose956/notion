@@ -1,6 +1,7 @@
 ﻿import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
 import {
   listDeploysByUser,
@@ -390,7 +391,10 @@ export default async function GetStartedPage({
         }
 
         redirect(`/members/chat?nicheId=${encodeURIComponent(autoNicheId)}`);
-      } catch {
+      } catch (err) {
+        if (isRedirectError(err)) {
+          throw err;
+        }
         // Fall back to manual setup card if auto-provisioning fails.
       }
     }
