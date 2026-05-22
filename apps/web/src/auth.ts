@@ -42,7 +42,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: trimmed,
           email: trimmed,
-          name: trimmed.split("@")[0],
+          name: trimmed.split("@")[0] ?? null,
         };
       },
     }),
