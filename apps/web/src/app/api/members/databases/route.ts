@@ -36,7 +36,7 @@ export async function GET() {
     for (const packRow of packs) {
       let dbMap: Record<string, string> | undefined;
 
-      if (notionUserId) {
+      if (notionToken && notionUserId) {
         const deployRow = await getLatestDeployByNiche(packRow.id, notionUserId);
         if (deployRow === undefined) continue;
         dbMap = deployRow.databaseIdMap as Record<string, string> | null | undefined ?? undefined;
