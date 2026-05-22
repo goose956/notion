@@ -2,8 +2,7 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "watchPatterns": ["**"],
-    "buildCommand": "corepack enable && corepack prepare pnpm@10.0.0 --activate && pnpm install --frozen-lockfile && NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter web build"
+    "watchPatterns": ["**"]
   },
   "deploy": {
     "startCommand": "pnpm --filter @niche-factory/db migrate ; pnpm --filter @niche-factory/db seed ; pnpm --filter web start",
