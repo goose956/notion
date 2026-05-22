@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { updateAppRow, deleteAppRow } from "@niche-factory/db";
 import { NotionApiClient } from "@niche-factory/notion-client";
 
 const BodySchema = z.object({
@@ -49,7 +50,7 @@ function buildNotionProperty(
   }
 }
 
-// PATCH /api/members/workspace/[pageId] — update properties on a Notion page
+// PATCH /api/members/workspace/[pageId] — update properties on a row
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ pageId: string }> },
@@ -62,9 +63,6 @@ export async function PATCH(
   const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
     | string
     | undefined;
-  if (!notionToken) {
-    return NextResponse.json({ error: "No Notion token" }, { status: 401 });
-  }
 
   const { pageId } = await params;
 
@@ -80,6 +78,18 @@ export async function PATCH(
     return NextResponse.json({ error: "Validation failed" }, { status: 422 });
   }
 
+  // ── In-app flow ────────────────────────────────────────────────────────
+  if (!notionToken) {
+    try {
+      await updateAppRow(pageId, parsed.data.properties);
+      return NextResponse.json({ ok: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Update failed";
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+  }
+
+  // ── Notion flow ────────────────────────────────────────────────────────
   const notionProperties: Record<string, unknown> = {};
   for (const [name, value] of Object.entries(parsed.data.properties)) {
     const type = parsed.data.propertyTypes[name];
@@ -110,7 +120,7 @@ export async function PATCH(
   return NextResponse.json({ ok: true });
 }
 
-// DELETE /api/members/workspace/[pageId] — archive (delete) a row
+// DELETE /api/members/workspace/[pageId] — delete a row
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ pageId: string }> },
@@ -123,11 +133,21 @@ export async function DELETE(
   const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
     | string
     | undefined;
-  if (!notionToken) {
-    return NextResponse.json({ error: "No Notion token" }, { status: 401 });
-  }
 
   const { pageId } = await params;
+
+  // ── In-app flow ────────────────────────────────────────────────────────
+  if (!notionToken) {
+    try {
+      await deleteAppRow(pageId);
+      return NextResponse.json({ ok: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Delete failed";
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+  }
+
+  // ── Notion flow ────────────────────────────────────────────────────────
   const notion = new NotionApiClient({ auth: notionToken });
 
   try {

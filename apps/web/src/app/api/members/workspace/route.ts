@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { listNichePacks, getLatestDeployByNiche } from "@niche-factory/db";
+import {
+  listNichePacks,
+  getNichePack,
+  getLatestDeployByNiche,
+  listAppWorkspacesByUser,
+  listAppDatabasesByWorkspace,
+  listAppRowsByDatabase,
+  createAppRow,
+} from "@niche-factory/db";
 import { NotionApiClient } from "@niche-factory/notion-client";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -110,13 +118,57 @@ export async function GET(_req: NextRequest) {
   const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
     | string
     | undefined;
+
+  // ── In-app (no Notion) flow ──────────────────────────────────────────────
   if (!notionToken) {
-    return NextResponse.json(
-      { error: "No Notion token — connect Notion first" },
-      { status: 401 },
-    );
+    const userId = session.user.email;
+    if (!userId) {
+      return NextResponse.json({ error: "No user identity" }, { status: 401 });
+    }
+
+    const databases: WorkspaceDatabase[] = [];
+
+    try {
+      const workspaces = await listAppWorkspacesByUser(userId);
+
+      for (const workspace of workspaces) {
+        const packRow = await getNichePack(workspace.nichePackId);
+        if (!packRow) continue;
+        const pack = packRow.schemaSnapshot as unknown as NichePack;
+
+        const appDbs = await listAppDatabasesByWorkspace(workspace.id);
+
+        for (const appDb of appDbs) {
+          const appRows = await listAppRowsByDatabase(appDb.id);
+          const hasMore = appRows.length >= 50;
+
+          const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
+          const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
+
+          databases.push({
+            notionId: appDb.id,
+            nicheId: pack.id,
+            nicheName: pack.name,
+            dbId: appDb.packDbId,
+            dbName: appDb.name,
+            icon: packDbDef?.icon ?? null,
+            properties: propertiesSchema.map((p) => ({ id: p.name, name: p.name, type: p.type })),
+            rows: appRows.map((r) => ({
+              pageId: r.id,
+              properties: r.properties as Record<string, string | number | boolean | null>,
+            })),
+            hasMore,
+          });
+        }
+      }
+    } catch {
+      return NextResponse.json({ databases: [] });
+    }
+
+    return NextResponse.json({ databases });
   }
 
+  // ── Notion flow ──────────────────────────────────────────────────────────
   const notionUserId = (session as unknown as Record<string, unknown>)["notionUserId"] as
     | string
     | undefined;
@@ -264,9 +316,6 @@ export async function POST(req: NextRequest) {
   const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
     | string
     | undefined;
-  if (!notionToken) {
-    return NextResponse.json({ error: "No Notion token" }, { status: 401 });
-  }
 
   let body: unknown;
   try {
@@ -280,6 +329,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Validation failed" }, { status: 422 });
   }
 
+  // ── In-app flow ──────────────────────────────────────────────────────────
+  if (!notionToken) {
+    try {
+      const row = await createAppRow({
+        id: crypto.randomUUID(),
+        databaseId: parsed.data.databaseId,
+        properties: parsed.data.properties,
+      });
+      return NextResponse.json({ pageId: row.id });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Create failed";
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+  }
+
+  // ── Notion flow ──────────────────────────────────────────────────────────
   const notionProperties: Record<string, unknown> = {};
   for (const [name, value] of Object.entries(parsed.data.properties)) {
     const type = parsed.data.propertyTypes[name];

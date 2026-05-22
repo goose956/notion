@@ -929,3 +929,109 @@ export async function getAppWorkspaceForDatabase(
   return rows[0]?.workspace;
 }
 
+export async function listAppWorkspacesByUser(
+  userId: string,
+): Promise<AppWorkspaceRow[]> {
+  return db
+    .select()
+    .from(appWorkspaces)
+    .where(
+      and(
+        eq(appWorkspaces.userId, userId),
+        eq(appWorkspaces.status, "success"),
+      ),
+    )
+    .orderBy(desc(appWorkspaces.createdAt));
+}
+
+export async function listAppDatabasesByWorkspace(
+  workspaceId: string,
+): Promise<AppDatabaseRow[]> {
+  return db
+    .select()
+    .from(appDatabases)
+    .where(eq(appDatabases.workspaceId, workspaceId))
+    .orderBy(appDatabases.createdAt);
+}
+
+export async function listAppRowsByDatabase(
+  databaseId: string,
+): Promise<AppRowRow[]> {
+  return db
+    .select()
+    .from(appRows)
+    .where(eq(appRows.databaseId, databaseId))
+    .orderBy(appRows.createdAt)
+    .limit(50);
+}
+
+export async function updateAppRow(
+  id: string,
+  partialProperties: Record<string, string | number | boolean | null>,
+): Promise<void> {
+  await db
+    .update(appRows)
+    .set({
+      properties: sql`${appRows.properties} || ${JSON.stringify(partialProperties)}::jsonb`,
+      updatedAt: new Date(),
+    })
+    .where(eq(appRows.id, id));
+}
+
+export async function deleteAppRow(id: string): Promise<void> {
+  await db.delete(appRows).where(eq(appRows.id, id));
+}
+
+export async function listAppWorkspacesByUser(
+  userId: string,
+): Promise<AppWorkspaceRow[]> {
+  return db
+    .select()
+    .from(appWorkspaces)
+    .where(
+      and(
+        eq(appWorkspaces.userId, userId),
+        eq(appWorkspaces.status, "success"),
+      ),
+    )
+    .orderBy(desc(appWorkspaces.createdAt));
+}
+
+export async function listAppDatabasesByWorkspace(
+  workspaceId: string,
+): Promise<AppDatabaseRow[]> {
+  return db
+    .select()
+    .from(appDatabases)
+    .where(eq(appDatabases.workspaceId, workspaceId))
+    .orderBy(appDatabases.createdAt);
+}
+
+export async function listAppRowsByDatabase(
+  databaseId: string,
+): Promise<AppRowRow[]> {
+  return db
+    .select()
+    .from(appRows)
+    .where(eq(appRows.databaseId, databaseId))
+    .orderBy(appRows.createdAt)
+    .limit(50);
+}
+
+export async function updateAppRow(
+  id: string,
+  updates: Record<string, string | number | boolean | null>,
+): Promise<void> {
+  await db
+    .update(appRows)
+    .set({
+      properties: sql`${appRows.properties} || ${JSON.stringify(updates)}::jsonb`,
+      updatedAt: new Date(),
+    })
+    .where(eq(appRows.id, id));
+}
+
+export async function deleteAppRow(id: string): Promise<void> {
+  await db.delete(appRows).where(eq(appRows.id, id));
+}
+
