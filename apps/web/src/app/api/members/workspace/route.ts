@@ -39,6 +39,11 @@ export interface WorkspaceDatabase {
   hasMore: boolean;
 }
 
+export interface WorkspaceResponse {
+  databases: WorkspaceDatabase[];
+  backend: "app" | "notion";
+}
+
 // ─── Helpers: extract a display value from any Notion property ───────────────
 
 function extractValue(prop: Record<string, unknown>): string | number | boolean | null {
@@ -165,7 +170,7 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ databases: [] });
     }
 
-    return NextResponse.json({ databases });
+    return NextResponse.json({ databases, backend: "app" } satisfies WorkspaceResponse);
   }
 
   // ── Notion flow ──────────────────────────────────────────────────────────
@@ -258,7 +263,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ databases: [] });
   }
 
-  return NextResponse.json({ databases });
+  return NextResponse.json({ databases, backend: "notion" } satisfies WorkspaceResponse);
 }
 
 // ─── POST: create a new row in a database ────────────────────────────────────

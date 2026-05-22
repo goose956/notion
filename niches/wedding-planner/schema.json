@@ -312,6 +312,8 @@
         },
         { "type": "date", "name": "Created" },
         { "type": "rich_text", "name": "Recipient" },
+        { "type": "rich_text", "name": "Subject" },
+        { "type": "rich_text", "name": "Body" },
         { "type": "rich_text", "name": "Summary" }
       ],
       "views": [

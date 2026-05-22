@@ -2,8 +2,13 @@
 
 import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
-import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
-import type { WorkspaceDatabase, WorkspaceProperty, WorkspaceRow } from "@/app/api/members/workspace/route";
+import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles } from "lucide-react";
+import type {
+  WorkspaceDatabase,
+  WorkspaceProperty,
+  WorkspaceRow,
+  WorkspaceResponse,
+} from "@/app/api/members/workspace/route";
 
 // ─── Notion design tokens ──────────────────────────────────────────────────────
 const N_FG = "#37352F";
@@ -518,9 +523,285 @@ function DatabaseTable({
   );
 }
 
+interface DraftPayload {
+  title: string;
+  subject: string;
+  body: string;
+  summary: string;
+  type: string;
+}
+
+function findPropertyName(props: WorkspaceProperty[], candidates: string[]): string | null {
+  const map = new Map(props.map((p) => [p.name.toLowerCase(), p.name]));
+  for (const c of candidates) {
+    const match = map.get(c.toLowerCase());
+    if (match) return match;
+  }
+  return null;
+}
+
+function WeddingDraftStudio({
+  db,
+  onRowAdded,
+}: {
+  db: WorkspaceDatabase;
+  onRowAdded: (row: WorkspaceRow) => void;
+}) {
+  const [recipient, setRecipient] = useState("");
+  const [purpose, setPurpose] = useState("photography quote enquiry");
+  const [tone, setTone] = useState("Warm and professional");
+  const [keyPoints, setKeyPoints] = useState("");
+  const [extraInstructions, setExtraInstructions] = useState("");
+  const [draft, setDraft] = useState<DraftPayload | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  async function handleGenerate() {
+    setGenerating(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const res = await fetch("/api/members/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipient,
+          purpose,
+          tone,
+          keyPoints,
+          extraInstructions,
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        draft?: DraftPayload;
+        error?: string;
+      };
+      if (!res.ok || !body.draft) {
+        throw new Error(body.error ?? "Failed to generate draft");
+      }
+      setDraft(body.draft);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate draft");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function handleSave() {
+    if (!draft) return;
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    const properties: Record<string, string | number | boolean | null> = {};
+    const propertyTypes: Record<string, string> = {};
+
+    const titleName = findPropertyName(db.properties, ["Title"]);
+    const typeName = findPropertyName(db.properties, ["Type"]);
+    const createdName = findPropertyName(db.properties, ["Created"]);
+    const recipientName = findPropertyName(db.properties, ["Recipient"]);
+    const summaryName = findPropertyName(db.properties, ["Summary"]);
+    const subjectName = findPropertyName(db.properties, ["Subject", "Email Subject"]);
+    const bodyName = findPropertyName(db.properties, ["Body", "Content", "Draft", "Email Body"]);
+
+    if (titleName) {
+      properties[titleName] = draft.title.trim() || "Email Draft";
+      propertyTypes[titleName] = "title";
+    }
+    if (typeName) {
+      properties[typeName] = draft.type || "Vendor Enquiry";
+      propertyTypes[typeName] = "select";
+    }
+    if (createdName) {
+      properties[createdName] = new Date().toISOString().slice(0, 10);
+      propertyTypes[createdName] = "date";
+    }
+    if (recipientName) {
+      properties[recipientName] = recipient || "Vendor";
+      propertyTypes[recipientName] = "rich_text";
+    }
+    if (summaryName) {
+      properties[summaryName] = draft.summary || draft.body.slice(0, 240);
+      propertyTypes[summaryName] = "rich_text";
+    }
+    if (subjectName) {
+      properties[subjectName] = draft.subject;
+      propertyTypes[subjectName] = "rich_text";
+    }
+    if (bodyName) {
+      properties[bodyName] = draft.body;
+      propertyTypes[bodyName] = "rich_text";
+    }
+
+    try {
+      const res = await fetch("/api/members/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          databaseId: db.notionId,
+          properties,
+          propertyTypes,
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { pageId?: string; error?: string };
+      if (!res.ok || !body.pageId) {
+        throw new Error(body.error ?? "Failed to save draft");
+      }
+
+      onRowAdded({ pageId: body.pageId, properties });
+      setSuccess("Draft saved to workspace.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save draft");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        border: `1px solid ${N_BORDER}`,
+        borderRadius: "6px",
+        background: "#FBFBFA",
+        padding: "14px",
+        marginBottom: "14px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+        <WandSparkles size={16} color={N_BLUE} />
+        <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>
+          AI Email Draft Studio
+        </h3>
+      </div>
+      <p style={{ margin: "0 0 12px", fontSize: "13px", color: N_MUTED, lineHeight: 1.5 }}>
+        Create reusable wedding outreach emails, edit them, then save to this Documents database for future reuse.
+      </p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+        <input
+          value={recipient}
+          onChange={(e) => setRecipient(e.target.value)}
+          placeholder="Recipient (e.g. Bloom Wedding Photography)"
+          style={{ padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT }}
+        />
+        <input
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value)}
+          placeholder="Purpose (e.g. request pricing + availability)"
+          style={{ padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT }}
+        />
+        <input
+          value={tone}
+          onChange={(e) => setTone(e.target.value)}
+          placeholder="Tone"
+          style={{ padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT }}
+        />
+        <input
+          value={keyPoints}
+          onChange={(e) => setKeyPoints(e.target.value)}
+          placeholder="Key points to include"
+          style={{ padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT }}
+        />
+      </div>
+
+      <textarea
+        value={extraInstructions}
+        onChange={(e) => setExtraInstructions(e.target.value)}
+        placeholder="Extra instructions (optional)"
+        rows={2}
+        style={{ width: "100%", padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT, marginBottom: "10px", boxSizing: "border-box" }}
+      />
+
+      <div style={{ display: "flex", gap: "8px", marginBottom: draft ? "12px" : 0 }}>
+        <button
+          onClick={() => void handleGenerate()}
+          disabled={generating || !purpose.trim()}
+          style={{
+            padding: "8px 12px",
+            borderRadius: "4px",
+            border: "none",
+            background: generating ? "rgba(55,53,47,0.2)" : N_FG,
+            color: "white",
+            fontSize: "13px",
+            fontWeight: 600,
+            fontFamily: N_FONT,
+            cursor: generating ? "default" : "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
+          {generating ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <WandSparkles size={13} />}
+          {generating ? "Generating..." : "Generate Draft"}
+        </button>
+      </div>
+
+      {draft && (
+        <div style={{ borderTop: `1px solid ${N_BORDER}`, paddingTop: "10px" }}>
+          <input
+            value={draft.title}
+            onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+            placeholder="Title"
+            style={{ width: "100%", padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT, marginBottom: "8px", boxSizing: "border-box" }}
+          />
+          <input
+            value={draft.subject}
+            onChange={(e) => setDraft({ ...draft, subject: e.target.value })}
+            placeholder="Email Subject"
+            style={{ width: "100%", padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT, marginBottom: "8px", boxSizing: "border-box" }}
+          />
+          <textarea
+            value={draft.body}
+            onChange={(e) => setDraft({ ...draft, body: e.target.value })}
+            placeholder="Draft body"
+            rows={10}
+            style={{ width: "100%", padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT, marginBottom: "8px", boxSizing: "border-box", lineHeight: 1.5 }}
+          />
+          <textarea
+            value={draft.summary}
+            onChange={(e) => setDraft({ ...draft, summary: e.target.value })}
+            placeholder="Short summary"
+            rows={2}
+            style={{ width: "100%", padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT, marginBottom: "8px", boxSizing: "border-box" }}
+          />
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={() => void handleSave()}
+              disabled={saving || !draft.body.trim()}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "4px",
+                border: `1px solid ${N_BORDER_MED}`,
+                background: "white",
+                color: N_FG,
+                fontSize: "13px",
+                fontWeight: 600,
+                fontFamily: N_FONT,
+                cursor: saving ? "default" : "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+              {saving ? "Saving..." : "Save to Workspace"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && <p style={{ margin: "10px 0 0", color: "rgb(220,38,38)", fontSize: "12px" }}>{error}</p>}
+      {success && <p style={{ margin: "10px 0 0", color: "rgb(15,123,108)", fontSize: "12px" }}>{success}</p>}
+    </div>
+  );
+}
+
 // ─── Main workspace page component ────────────────────────────────────────────
 export default function WorkspacePage() {
   const [databases, setDatabases] = useState<WorkspaceDatabase[]>([]);
+  const [backend, setBackend] = useState<"app" | "notion">("notion");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("");
@@ -535,8 +816,9 @@ export default function WorkspacePage() {
     try {
       const res = await fetch("/api/members/workspace");
       if (!res.ok) throw new Error("Failed to load workspace data");
-      const data = (await res.json()) as { databases: WorkspaceDatabase[] };
+      const data = (await res.json()) as WorkspaceResponse;
       setDatabases(data.databases);
+      setBackend(data.backend);
 
       // Auto-expand all niches and select first tab
       const nicheIds = [...new Set(data.databases.map((d) => d.nicheId))];
@@ -862,7 +1144,7 @@ export default function WorkspacePage() {
               No niches set up yet
             </p>
             <p style={{ fontSize: "14px", color: N_MUTED, maxWidth: "340px", lineHeight: 1.6, margin: 0 }}>
-              Browse the template library, pick a niche, and deploy it to your Notion workspace in one click.
+              Browse the template library, pick a niche, and deploy it to your workspace in one click.
             </p>
             <Link
               href="/templates"
@@ -908,31 +1190,41 @@ export default function WorkspacePage() {
                   {activeDb.hasMore ? "+" : ""}
                 </p>
               </div>
-              <a
-                href={`https://notion.so/${activeDb.notionId.replace(/-/g, "")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  padding: "5px 12px",
-                  borderRadius: "4px",
-                  fontSize: "13px",
-                  color: N_MUTED,
-                  textDecoration: "none",
-                  border: `1px solid ${N_BORDER_MED}`,
-                  background: "white",
-                  flexShrink: 0,
-                }}
-              >
-                Open in Notion
-                <ExternalLink size={12} />
-              </a>
+              {backend === "notion" && (
+                <a
+                  href={`https://notion.so/${activeDb.notionId.replace(/-/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 12px",
+                    borderRadius: "4px",
+                    fontSize: "13px",
+                    color: N_MUTED,
+                    textDecoration: "none",
+                    border: `1px solid ${N_BORDER_MED}`,
+                    background: "white",
+                    flexShrink: 0,
+                  }}
+                >
+                  Open in Notion
+                  <ExternalLink size={12} />
+                </a>
+              )}
             </div>
 
             {/* Table */}
             <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+              {backend === "app" &&
+                activeDb.nicheId === "wedding-planner" &&
+                activeDb.dbId === "documents" && (
+                  <WeddingDraftStudio
+                    db={activeDb}
+                    onRowAdded={(row) => handleRowAdded(activeDb.notionId, row)}
+                  />
+                )}
               <DatabaseTable
                 db={activeDb}
                 onRowUpdated={(pageId, name, val) =>
