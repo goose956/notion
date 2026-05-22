@@ -22,9 +22,12 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
+    | string
+    | undefined;
   const notionUserId = (session as unknown as Record<string, unknown>)["notionUserId"] as string | undefined;
   const userEmail = session.user.email;
-  const isInApp = !notionUserId;
+  const isInApp = !notionToken;
   const databases: DeployedDatabase[] = [];
   const criteria: NicheCriteria[] = [];
 
