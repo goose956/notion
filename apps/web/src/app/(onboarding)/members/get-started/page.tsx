@@ -197,14 +197,20 @@ export default async function GetStartedPage({
     ? await getNichePack(nicheIdFromNext).catch(() => undefined)
     : undefined;
   const nicheName = nichePackRow?.name ?? null;
+  const defaultInAppNicheId = "wedding-planner";
+  const autoNicheId = nicheIdFromNext ?? defaultInAppNicheId;
+  const autoNichePackRow =
+    nicheIdFromNext !== null
+      ? nichePackRow
+      : await getNichePack(autoNicheId).catch(() => undefined);
 
   // â”€â”€ In-App path: much simpler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (isInApp) {
-    if (nicheIdFromNext && nichePackRow && session?.user?.email) {
+    if (autoNicheId && autoNichePackRow && session?.user?.email) {
       try {
         const existing = await getLatestAppWorkspaceByNiche(
           session.user.email,
-          nicheIdFromNext,
+          autoNicheId,
         );
 
         if (!existing) {
@@ -212,8 +218,8 @@ export default async function GetStartedPage({
           await createAppWorkspace({
             id: workspaceId,
             userId: session.user.email,
-            nichePackId: nicheIdFromNext,
-            name: nichePackRow.name,
+            nichePackId: autoNicheId,
+            name: autoNichePackRow.name,
             databaseIdMap: {},
             status: "in_progress",
             createdAt: new Date(),
@@ -223,7 +229,7 @@ export default async function GetStartedPage({
           const start = Date.now();
 
           try {
-            const schema = nichePackRow.schemaSnapshot as {
+            const schema = autoNichePackRow.schemaSnapshot as {
               databases: Array<{ id: string; name: string; properties: unknown[] }>;
             };
 
@@ -257,7 +263,7 @@ export default async function GetStartedPage({
           }
         }
 
-        redirect(`/members/chat?nicheId=${encodeURIComponent(nicheIdFromNext)}`);
+        redirect(`/members/chat?nicheId=${encodeURIComponent(autoNicheId)}`);
       } catch {
         // Fall back to manual setup card if auto-provisioning fails.
       }
