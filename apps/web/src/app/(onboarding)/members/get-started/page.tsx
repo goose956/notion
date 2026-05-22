@@ -12,6 +12,7 @@ import {
   updateAppWorkspaceStatus,
 } from "@niche-factory/db";
 import { randomUUID } from "node:crypto";
+import { MembersNav } from "../../../(members)/members-nav";
 
 export const metadata = { title: "Get Started â€” Niche Factory" };
 
@@ -65,10 +66,116 @@ function InAppGetStarted({
     : nextUrl ?? "/members/chat";
 
   return (
-    <div style={{ minHeight: "100vh", background: "white", fontFamily: N_FONT, color: N_FG }}>
-      <TopBar showMembersLink={isAuthenticated} />
+    <div style={{ display: "flex", minHeight: "100vh", background: "white", fontFamily: N_FONT, color: N_FG }}>
+      <aside
+        style={{
+          width: "240px",
+          flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          background: "#F7F6F3",
+          borderRight: "1px solid rgba(55,53,47,0.09)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "12px 14px 8px",
+          }}
+        >
+          <div
+            style={{
+              width: "22px",
+              height: "22px",
+              borderRadius: "3px",
+              background: "#37352F",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>
+              N
+            </span>
+          </div>
+          <span
+            style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "#37352F",
+              flex: 1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Niche Factory
+          </span>
+        </div>
 
-      <div style={{ maxWidth: "600px", margin: "0 auto", padding: "56px 24px" }}>
+        <div style={{ padding: "0 8px 8px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "4px 8px",
+              borderRadius: "3px",
+            }}
+          >
+            <div
+              style={{
+                width: "20px",
+                height: "20px",
+                borderRadius: "50%",
+                background: "#37352F",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ color: "white", fontSize: "10px", fontWeight: 600 }}>
+                {(userName[0] ?? "?").toUpperCase()}
+              </span>
+            </div>
+            <span
+              style={{
+                fontSize: "14px",
+                color: "#37352F",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                flex: 1,
+              }}
+            >
+              {userName}
+            </span>
+          </div>
+        </div>
+
+        <div style={{ height: "1px", background: "rgba(55,53,47,0.09)" }} />
+
+        <MembersNav />
+
+        <div style={{ flex: 1 }} />
+
+        {isAuthenticated && (
+          <div style={{ padding: "0 8px 8px" }}>
+            <div style={{ fontSize: "11px", color: N_SUBTLE, padding: "6px 8px" }}>
+              Keep using the sidebar to jump between setup, chat, workspace, and profile.
+            </div>
+          </div>
+        )}
+      </aside>
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "#FCFBF7" }}>
+        <TopBar showMembersLink={isAuthenticated} />
+
+        <div style={{ maxWidth: "600px", margin: "0 auto", padding: "56px 24px" }}>
         {/* Header */}
         <div style={{ marginBottom: "40px" }}>
           <p style={{ margin: "0 0 6px", fontSize: "12px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: N_SUBTLE }}>
@@ -159,6 +266,7 @@ function InAppGetStarted({
             Connect Notion â†’
           </Link>
         </div>
+      </div>
       </div>
     </div>
   );
