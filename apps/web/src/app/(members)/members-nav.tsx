@@ -7,7 +7,7 @@ const ITEMS = [
   { emoji: "🚀", label: "Get Started", href: "/members/get-started" },
   { emoji: "🗂️", label: "My Workspace", href: "/members/workspace" },
   { emoji: "🔍", label: "Research Assistant", href: "/members/chat" },
-  { emoji: "✍️", label: "Draft letters", href: "/members/workspace?nicheId=wedding-planner&dbId=documents&editor=1" },
+  { emoji: "✍️", label: "Draft letters", href: "/members/workspace?nicheId=wedding-planner&dbId=documents" },
   { emoji: "👤", label: "Profile", href: "/members/profile" },
 ] as const;
 
@@ -29,8 +29,9 @@ export function MembersNav() {
         Workspace
       </p>
       {ITEMS.map((item) => {
+        const pathOnly = item.href.split("?")[0] ?? item.href;
         const active =
-          pathname === item.href || pathname.startsWith(item.href + "/");
+          pathname === pathOnly || pathname.startsWith(pathOnly + "/");
         return (
           <Link
             key={item.href}
