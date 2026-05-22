@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const ITEMS = [
   { emoji: "🚀", label: "Get Started", href: "/members/get-started" },
@@ -13,6 +13,25 @@ const ITEMS = [
 
 export function MembersNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const itemScores = ITEMS.map((item) => {
+    const [pathOnly, rawQuery = ""] = item.href.split("?");
+    if (!pathOnly) return -1;
+
+    const pathMatches =
+      pathname === pathOnly || pathname.startsWith(pathOnly + "/");
+    if (!pathMatches) return -1;
+
+    const itemParams = new URLSearchParams(rawQuery);
+    for (const [key, value] of itemParams.entries()) {
+      if (searchParams.get(key) !== value) return -1;
+    }
+
+    return Array.from(itemParams.keys()).length;
+  });
+
+  const maxScore = itemScores.reduce((best, score) => (score > best ? score : best), -1);
 
   return (
     <nav style={{ padding: "4px 8px" }}>
@@ -28,10 +47,8 @@ export function MembersNav() {
       >
         Workspace
       </p>
-      {ITEMS.map((item) => {
-        const pathOnly = item.href.split("?")[0] ?? item.href;
-        const active =
-          pathname === pathOnly || pathname.startsWith(pathOnly + "/");
+      {ITEMS.map((item, index) => {
+        const active = maxScore >= 0 && itemScores[index] === maxScore;
         return (
           <Link
             key={item.href}
