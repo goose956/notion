@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles } from "lucide-react";
+import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal } from "lucide-react";
 import type {
   WorkspaceDatabase,
   WorkspaceProperty,
@@ -162,11 +162,13 @@ function CellEditor({
 // ─── Single database table ─────────────────────────────────────────────────
 function DatabaseTable({
   db,
+  isAppBackend,
   onRowUpdated,
   onRowDeleted,
   onRowAdded,
 }: {
   db: WorkspaceDatabase;
+  isAppBackend: boolean;
   onRowUpdated: (pageId: string, name: string, val: string | number | boolean | null) => void;
   onRowDeleted: (pageId: string) => void;
   onRowAdded: (row: WorkspaceRow) => void;
@@ -176,15 +178,86 @@ function DatabaseTable({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [addingRow, setAddingRow] = useState(false);
   const [cellError, setCellError] = useState<string | null>(null);
+  const [columnsMenuOpen, setColumnsMenuOpen] = useState(false);
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+
+  const settingsKey = `workspace.sheet.${db.notionId}.columns`;
+
+  useEffect(() => {
+    if (!isAppBackend) {
+      setHiddenColumns(new Set());
+      setColumnWidths({});
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem(settingsKey);
+      if (!raw) {
+        setHiddenColumns(new Set());
+        setColumnWidths({});
+        return;
+      }
+      const parsed = JSON.parse(raw) as {
+        hidden?: string[];
+        widths?: Record<string, number>;
+      };
+      const nextHidden = new Set(
+        (parsed.hidden ?? []).filter((name) => db.properties.some((p) => p.name === name)),
+      );
+      const nextWidths: Record<string, number> = {};
+      for (const [name, width] of Object.entries(parsed.widths ?? {})) {
+        if (!db.properties.some((p) => p.name === name)) continue;
+        if (typeof width !== "number" || !Number.isFinite(width)) continue;
+        nextWidths[name] = Math.max(90, Math.min(520, Math.round(width)));
+      }
+      setHiddenColumns(nextHidden);
+      setColumnWidths(nextWidths);
+    } catch {
+      setHiddenColumns(new Set());
+      setColumnWidths({});
+    }
+  }, [db.notionId, db.properties, isAppBackend, settingsKey]);
+
+  useEffect(() => {
+    if (!isAppBackend) return;
+    try {
+      window.localStorage.setItem(
+        settingsKey,
+        JSON.stringify({
+          hidden: Array.from(hiddenColumns),
+          widths: columnWidths,
+        }),
+      );
+    } catch {
+      // Ignore storage failures.
+    }
+  }, [hiddenColumns, columnWidths, isAppBackend, settingsKey]);
 
   // Visible columns: skip formula/rollup/relation by default, always show title first
   const titleCol = db.properties.find((p) => p.type === "title");
   const otherCols = db.properties.filter(
     (p) => p.type !== "title" && p.type !== "created_time" && p.type !== "last_edited_time" && p.type !== "created_by" && p.type !== "last_edited_by",
   );
-  const visibleCols: WorkspaceProperty[] = titleCol
+  const allCols: WorkspaceProperty[] = titleCol
     ? [titleCol, ...otherCols]
     : otherCols;
+  const visibleCols: WorkspaceProperty[] = allCols.filter((col) => !hiddenColumns.has(col.name));
+
+  const hasOnlyOneVisibleColumn = visibleCols.length <= 1;
+
+  function getColumnWidth(col: WorkspaceProperty): number {
+    if (columnWidths[col.name] !== undefined) return columnWidths[col.name]!;
+    return col.type === "title" ? 240 : 160;
+  }
+
+  function toggleColumnVisibility(columnName: string, hide: boolean) {
+    setHiddenColumns((prev) => {
+      const next = new Set(prev);
+      if (hide) next.add(columnName);
+      else next.delete(columnName);
+      return next;
+    });
+  }
 
   // Type map for quick lookups
   const typeMap: Record<string, string> = {};
@@ -297,7 +370,100 @@ function DatabaseTable({
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
+    <div style={{ overflowX: "auto", position: "relative" }}>
+      {isAppBackend && allCols.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px", position: "relative" }}>
+          <button
+            type="button"
+            onClick={() => setColumnsMenuOpen((prev) => !prev)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "5px 10px",
+              borderRadius: "4px",
+              border: `1px solid ${N_BORDER_MED}`,
+              background: "white",
+              fontSize: "12px",
+              fontWeight: 500,
+              color: N_FG,
+              cursor: "pointer",
+              fontFamily: N_FONT,
+            }}
+            className="hover:bg-[rgba(55,53,47,0.04)]"
+          >
+            <SlidersHorizontal size={13} />
+            Columns
+          </button>
+
+          {columnsMenuOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "34px",
+                right: 0,
+                width: "320px",
+                maxHeight: "360px",
+                overflowY: "auto",
+                zIndex: 30,
+                background: "white",
+                border: `1px solid ${N_BORDER}`,
+                borderRadius: "6px",
+                boxShadow: "0 14px 30px rgba(0,0,0,0.12)",
+                padding: "10px",
+              }}
+            >
+              <p style={{ margin: "0 0 8px", fontSize: "12px", color: N_SUBTLE, fontWeight: 600 }}>
+                Show columns and set widths
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {allCols.map((col) => {
+                  const checked = !hiddenColumns.has(col.name);
+                  const isTitle = col.type === "title";
+                  const disableHide = isTitle || (checked && hasOnlyOneVisibleColumn);
+                  const width = getColumnWidth(col);
+
+                  return (
+                    <div key={col.id} style={{ border: `1px solid ${N_BORDER}`, borderRadius: "5px", padding: "8px" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", cursor: disableHide ? "default" : "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={disableHide}
+                          onChange={(e) => toggleColumnVisibility(col.name, !e.target.checked)}
+                        />
+                        <span style={{ fontSize: "12px", color: N_FG, fontWeight: 500, flex: 1 }}>
+                          {col.name}
+                        </span>
+                        <span style={{ fontSize: "11px", color: N_SUBTLE }}>{col.type}</span>
+                      </label>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <input
+                          type="range"
+                          min={90}
+                          max={520}
+                          step={10}
+                          value={width}
+                          onChange={(e) => {
+                            const next = Number(e.target.value);
+                            setColumnWidths((prev) => ({ ...prev, [col.name]: next }));
+                          }}
+                          style={{ flex: 1 }}
+                        />
+                        <span style={{ width: "44px", textAlign: "right", fontSize: "11px", color: N_SUBTLE }}>
+                          {width}px
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {cellError && (
         <div
           style={{
@@ -321,8 +487,16 @@ function DatabaseTable({
           fontSize: "13px",
           color: N_FG,
           fontFamily: N_FONT,
+          tableLayout: "fixed",
         }}
       >
+        <colgroup>
+          {visibleCols.map((col) => {
+            const colWidth = getColumnWidth(col);
+            return <col key={col.id} style={{ width: `${colWidth}px` }} />;
+          })}
+          <col style={{ width: "32px" }} />
+        </colgroup>
         <thead>
           <tr style={{ background: "#F7F6F3" }}>
             {visibleCols.map((col) => (
@@ -338,8 +512,9 @@ function DatabaseTable({
                   letterSpacing: "0.05em",
                   border: `1px solid ${N_BORDER}`,
                   whiteSpace: "nowrap",
-                  minWidth: col.type === "title" ? "180px" : "120px",
-                  maxWidth: "260px",
+                  width: `${getColumnWidth(col)}px`,
+                  minWidth: `${getColumnWidth(col)}px`,
+                  maxWidth: `${getColumnWidth(col)}px`,
                 }}
               >
                 {col.name}
@@ -398,7 +573,9 @@ function DatabaseTable({
                       border: `1px solid ${N_BORDER}`,
                       cursor: readonly ? "default" : "pointer",
                       background: isEditing ? "rgba(35,131,226,0.04)" : undefined,
-                      maxWidth: "260px",
+                      width: `${getColumnWidth(col)}px`,
+                      minWidth: `${getColumnWidth(col)}px`,
+                      maxWidth: `${getColumnWidth(col)}px`,
                       overflow: "hidden",
                       verticalAlign: "middle",
                     }}
@@ -1331,6 +1508,7 @@ export default function WorkspacePage() {
                 )}
               <DatabaseTable
                 db={activeDb}
+                isAppBackend={backend === "app"}
                 onRowUpdated={(pageId, name, val) =>
                   handleRowUpdated(activeDb.notionId, pageId, name, val)
                 }
