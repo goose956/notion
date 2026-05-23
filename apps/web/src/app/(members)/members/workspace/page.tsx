@@ -1382,51 +1382,74 @@ export default function WorkspacePage() {
               {expanded &&
                 group.dbs.map((db) => {
                   const active = activeTab === db.notionId;
+                  const isPlanningTimetable = /planning\s*timetable/i.test(db.dbName);
                   return (
-                    <button
-                      key={db.notionId}
-                      onClick={() => setActiveTab(db.notionId)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "7px",
-                        width: "100%",
-                        padding: "5px 10px 5px 20px",
-                        background: active ? N_ACTIVE : "none",
-                        border: "none",
-                        cursor: "pointer",
-                        fontSize: "13px",
-                        color: N_FG,
-                        fontFamily: N_FONT,
-                        textAlign: "left",
-                        borderRadius: "3px",
-                      }}
-                      className="hover:bg-[rgba(55,53,47,0.06)]"
-                    >
-                      <span style={{ fontSize: "14px", flexShrink: 0 }}>
-                        {db.icon ?? "📋"}
-                      </span>
-                      <span
+                    <div key={db.notionId}>
+                      <button
+                        onClick={() => setActiveTab(db.notionId)}
                         style={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          fontWeight: active ? 500 : 400,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "7px",
+                          width: "100%",
+                          padding: "5px 10px 5px 20px",
+                          background: active ? N_ACTIVE : "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: "13px",
+                          color: N_FG,
+                          fontFamily: N_FONT,
+                          textAlign: "left",
+                          borderRadius: "3px",
                         }}
+                        className="hover:bg-[rgba(55,53,47,0.06)]"
                       >
-                        {db.dbName}
-                      </span>
-                      <span
-                        style={{
-                          marginLeft: "auto",
-                          fontSize: "11px",
-                          color: N_SUBTLE,
-                          flexShrink: 0,
-                        }}
-                      >
-                        {db.rows.length}
-                      </span>
-                    </button>
+                        <span style={{ fontSize: "14px", flexShrink: 0 }}>
+                          {db.icon ?? "📋"}
+                        </span>
+                        <span
+                          style={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            fontWeight: active ? 500 : 400,
+                          }}
+                        >
+                          {db.dbName}
+                        </span>
+                        <span
+                          style={{
+                            marginLeft: "auto",
+                            fontSize: "11px",
+                            color: N_SUBTLE,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {db.rows.length}
+                        </span>
+                      </button>
+
+                      {backend === "app" && group.nicheId === "wedding-planner" && isPlanningTimetable && (
+                        <Link
+                          href="/members/seating"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "7px",
+                            width: "100%",
+                            padding: "5px 10px 5px 34px",
+                            borderRadius: "3px",
+                            fontSize: "13px",
+                            color: N_FG,
+                            textDecoration: "none",
+                          }}
+                          className="hover:bg-[rgba(55,53,47,0.06)]"
+                        >
+                          <span style={{ fontSize: "14px", flexShrink: 0 }}>🪑</span>
+                          Seating Planner
+                        </Link>
+                      )}
+                    </div>
                   );
                 })}
             </div>
