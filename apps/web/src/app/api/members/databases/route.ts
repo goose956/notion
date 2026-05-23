@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { listNichePacks, getLatestDeployByNiche, getUserCriteria, getLatestAppWorkspaceByNiche } from "@niche-factory/db";
+import { listNichePacks, getLatestDeployByNiche, getUserCriteria, getLatestAppWorkspaceByNiche, listAppWorkspacesByUser } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 
 export interface DeployedDatabase {
@@ -27,7 +27,11 @@ export async function GET() {
     | undefined;
   const notionUserId = (session as unknown as Record<string, unknown>)["notionUserId"] as string | undefined;
   const userEmail = session.user.email;
-  const isInApp = !notionToken;
+  const hasAnyAppWorkspaces =
+    typeof userEmail === "string" && userEmail.length > 0
+      ? (await listAppWorkspacesByUser(userEmail).catch(() => [])).length > 0
+      : false;
+  const isInApp = !notionToken || hasAnyAppWorkspaces;
   const databases: DeployedDatabase[] = [];
   const criteria: NicheCriteria[] = [];
 
@@ -36,7 +40,7 @@ export async function GET() {
     for (const packRow of packs) {
       let dbMap: Record<string, string> | undefined;
 
-      if (notionToken && notionUserId) {
+      if (!isInApp && notionToken && notionUserId) {
         const deployRow = await getLatestDeployByNiche(packRow.id, notionUserId);
         if (deployRow === undefined) continue;
         dbMap = deployRow.databaseIdMap as Record<string, string> | null | undefined ?? undefined;

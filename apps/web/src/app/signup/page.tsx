@@ -39,16 +39,15 @@ function SignupForm() {
     "priority-vendors": [],
   });
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (!email.trim()) { setError("Please enter your email address."); return; }
+  function getMissingRequiredWeddingFields() {
+    return WEDDING_QUESTIONS.filter((q) => q.required).filter((q) => {
+      const value = weddingAnswers[q.id];
+      if (Array.isArray(value)) return value.length === 0;
+      return !String(value ?? "").trim();
+    });
+  }
 
-    if (isWeddingSignup && !showWeddingPopup) {
-      setShowWeddingPopup(true);
-      return;
-    }
-
+  async function submitSignup() {
     setLoading(true);
     try {
       const onboardingAnswers: Record<string, unknown> = {};
@@ -99,6 +98,19 @@ function SignupForm() {
       setError("Something went wrong. Please try again.");
       setLoading(false);
     }
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!email.trim()) { setError("Please enter your email address."); return; }
+
+    if (isWeddingSignup && !showWeddingPopup) {
+      setShowWeddingPopup(true);
+      return;
+    }
+
+    await submitSignup();
   }
 
   return (
@@ -349,13 +361,26 @@ function SignupForm() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => void handleSubmit(new Event("submit") as unknown as FormEvent)}
+                  onClick={() => {
+                    setError(null);
+                    const missing = getMissingRequiredWeddingFields();
+                    if (missing.length > 0) {
+                      setError(`Please complete: ${missing.map((q) => q.label).join(", ")}.`);
+                      return;
+                    }
+                    void submitSignup();
+                  }}
                   disabled={loading}
                   style={{ padding: "10px 14px", borderRadius: "6px", border: "none", background: loading ? "rgba(55,53,47,0.3)" : "#37352F", color: "white", fontWeight: 700, cursor: loading ? "default" : "pointer", fontFamily: "inherit" }}
                 >
                   {loading ? "Setting up your account…" : "Continue"}
                 </button>
               </div>
+              {error && (
+                <p style={{ margin: "0 20px 20px", fontSize: "13px", color: "rgb(235,87,87)" }}>
+                  {error}
+                </p>
+              )}
             </div>
           </div>
         )}

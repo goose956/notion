@@ -184,13 +184,20 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const userEmail = session.user.email;
   const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
     | string
     | undefined;
+  const hasAnyAppWorkspaces =
+    typeof userEmail === "string" && userEmail.length > 0
+      ? (await listAppWorkspacesByUser(userEmail).catch(() => [])).length > 0
+      : false;
+
+  const useAppBackend = !notionToken || hasAnyAppWorkspaces;
 
   // ── In-app (no Notion) flow ──────────────────────────────────────────────
-  if (!notionToken) {
-    const userId = session.user.email;
+  if (useAppBackend) {
+    const userId = userEmail;
     if (!userId) {
       return NextResponse.json({ error: "No user identity" }, { status: 401 });
     }

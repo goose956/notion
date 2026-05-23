@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/auth";
 import { listTools } from "@niche-factory/agent-tools";
 import type { ToolContext, JsonValue } from "@niche-factory/agent-tools";
-import { getSettingValue, listNichePacks, getLatestDeployByNiche, getLatestAppWorkspaceByNiche, getUserCriteria, findOrCreateCustomer, getCustomerCredits, deductCredits } from "@niche-factory/db";
+import { getSettingValue, listNichePacks, getLatestDeployByNiche, getLatestAppWorkspaceByNiche, getUserCriteria, findOrCreateCustomer, getCustomerCredits, deductCredits, listAppWorkspacesByUser } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 
 /**
@@ -137,7 +137,9 @@ export async function POST(req: NextRequest) {
   const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
     | string
     | undefined;
-  const isInApp = !notionToken;
+  const hasAnyAppWorkspaces =
+    (await listAppWorkspacesByUser(userEmail).catch(() => [])).length > 0;
+  const isInApp = !notionToken || hasAnyAppWorkspaces;
   const allowedToolIds = isInApp
     ? MEMBER_TOOL_IDS.filter((id) => !id.startsWith("notion_"))
     : MEMBER_TOOL_IDS;
