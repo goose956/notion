@@ -764,6 +764,22 @@ interface DraftPayload {
   type: string;
 }
 
+interface SeatingGuest {
+  id: string;
+  name: string;
+}
+
+interface SeatingTable {
+  id: string;
+  name: string;
+  number: number;
+  seats: number;
+  shape: "round" | "rectangle";
+  x: number;
+  y: number;
+  guestIds: string[];
+}
+
 function findPropertyName(props: WorkspaceProperty[], candidates: string[]): string | null {
   const map = new Map(props.map((p) => [p.name.toLowerCase(), p.name]));
   for (const c of candidates) {
@@ -771,6 +787,771 @@ function findPropertyName(props: WorkspaceProperty[], candidates: string[]): str
     if (match) return match;
   }
   return null;
+}
+
+function getGuestDisplayName(row: WorkspaceRow): string {
+  const candidates = ["Full Name", "Guest Name", "Name", "Title"];
+  for (const key of candidates) {
+    const val = row.properties[key];
+    if (typeof val === "string" && val.trim().length > 0) return val.trim();
+  }
+  for (const val of Object.values(row.properties)) {
+    if (typeof val === "string" && val.trim().length > 0) return val.trim();
+  }
+  return "Guest";
+}
+
+function WeddingSeatingPlanner({
+  db,
+  onRowUpdated,
+}: {
+  db: WorkspaceDatabase;
+  onRowUpdated: (pageId: string, name: string, val: string | number | boolean | null) => void;
+}) {
+  const ROOM_WIDTH = 1200;
+  const ROOM_HEIGHT = 780;
+  const GRID_SIZE = 24;
+
+  const [tables, setTables] = useState<SeatingTable[]>([]);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(100);
+  const [snapToGrid, setSnapToGrid] = useState(true);
+  const dragStateRef = useRef<{ tableId: string; offsetX: number; offsetY: number } | null>(null);
+  const roomRef = useRef<HTMLDivElement | null>(null);
+
+  const storageKey = `wedding.seating.${db.notionId}`;
+  const tableFieldName = findPropertyName(db.properties, ["Table", "Table Number", "Table Assignment"]);
+
+  const guests: SeatingGuest[] = db.rows.map((row) => ({
+    id: row.pageId,
+    name: getGuestDisplayName(row),
+  }));
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) {
+        setTables([]);
+        setSelectedTableId(null);
+        return;
+      }
+      const parsed = JSON.parse(raw) as { tables?: SeatingTable[]; zoom?: number; snapToGrid?: boolean };
+      const next = Array.isArray(parsed.tables) ? parsed.tables : [];
+      const cleaned = next.map((t) => ({
+        id: t.id,
+        name: t.name || `Table ${t.number}`,
+        number: Number.isFinite(t.number) ? Math.max(1, Math.round(t.number)) : 1,
+        seats: Number.isFinite(t.seats) ? Math.max(1, Math.round(t.seats)) : 8,
+        shape: t.shape === "rectangle" ? "rectangle" : "round",
+        x: Number.isFinite(t.x) ? t.x : 20,
+        y: Number.isFinite(t.y) ? t.y : 20,
+        guestIds: Array.isArray(t.guestIds) ? t.guestIds.filter((id) => guests.some((g) => g.id === id)) : [],
+      }));
+      setTables(cleaned);
+      setZoom(
+        typeof parsed.zoom === "number" && Number.isFinite(parsed.zoom)
+          ? Math.min(180, Math.max(60, Math.round(parsed.zoom)))
+          : 100,
+      );
+      setSnapToGrid(typeof parsed.snapToGrid === "boolean" ? parsed.snapToGrid : true);
+      setSelectedTableId(cleaned[0]?.id ?? null);
+    } catch {
+      setTables([]);
+      setSelectedTableId(null);
+      setZoom(100);
+      setSnapToGrid(true);
+    }
+  }, [storageKey, db.rows]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify({ tables, zoom, snapToGrid }));
+    } catch {
+      // Ignore storage failures.
+    }
+  }, [storageKey, tables, zoom, snapToGrid]);
+
+  useEffect(() => {
+    if (tables.length === 0) {
+      if (selectedTableId !== null) setSelectedTableId(null);
+      return;
+    }
+    if (selectedTableId !== null && tables.some((t) => t.id === selectedTableId)) return;
+    setSelectedTableId(tables[0]!.id);
+  }, [tables, selectedTableId]);
+
+  useEffect(() => {
+    const handleMove = (event: MouseEvent) => {
+      const drag = dragStateRef.current;
+      if (!drag) return;
+      const room = roomRef.current;
+      if (!room) return;
+      const rect = room.getBoundingClientRect();
+      const zoomScale = zoom / 100;
+      const roomX = (event.clientX - rect.left) / zoomScale;
+      const roomY = (event.clientY - rect.top) / zoomScale;
+
+      setTables((prev) =>
+        prev.map((table) => {
+          if (table.id !== drag.tableId) return table;
+          const rawX = Math.max(0, Math.min(ROOM_WIDTH - 170, roomX - drag.offsetX));
+          const rawY = Math.max(0, Math.min(ROOM_HEIGHT - 130, roomY - drag.offsetY));
+
+          const x = snapToGrid ? Math.round(rawX / GRID_SIZE) * GRID_SIZE : rawX;
+          const y = snapToGrid ? Math.round(rawY / GRID_SIZE) * GRID_SIZE : rawY;
+
+          return {
+            ...table,
+            x,
+            y,
+          };
+        }),
+      );
+    };
+
+    const handleUp = () => {
+      dragStateRef.current = null;
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+    };
+  }, [zoom, snapToGrid]);
+
+  const selectedTable = tables.find((t) => t.id === selectedTableId) ?? null;
+  const zoomScale = zoom / 100;
+
+  const guestById = new Map(guests.map((g) => [g.id, g]));
+  const assignedGuestIds = new Set<string>();
+  for (const table of tables) {
+    for (const guestId of table.guestIds) assignedGuestIds.add(guestId);
+  }
+  const unseatedGuests = guests.filter((guest) => !assignedGuestIds.has(guest.id));
+  const overCapacityTables = tables.filter((table) => table.guestIds.length > table.seats);
+
+  function normalizeTableLabel(table: SeatingTable): string {
+    return table.name.trim().length > 0 ? table.name.trim() : `Table ${table.number}`;
+  }
+
+  function buildSvgMarkup(): string {
+    const esc = (input: string) =>
+      input
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+
+    const tableNodes = tables
+      .map((table) => {
+        const label = normalizeTableLabel(table);
+        const assignedNames = table.guestIds
+          .map((id) => guestById.get(id)?.name)
+          .filter((n): n is string => typeof n === "string");
+        const guestLines = assignedNames.slice(0, 4).map((name) => esc(name));
+        const moreCount = Math.max(0, assignedNames.length - guestLines.length);
+
+        if (table.shape === "rectangle") {
+          return `
+            <g transform="translate(${table.x},${table.y})">
+              <rect x="0" y="0" width="170" height="110" rx="10" fill="#ffffff" stroke="#d6d3ce" />
+              <text x="12" y="18" font-size="12" font-family="Arial, sans-serif" fill="#37352f" font-weight="700">#${table.number}</text>
+              <text x="12" y="35" font-size="12" font-family="Arial, sans-serif" fill="#37352f">${esc(label)}</text>
+              <text x="12" y="51" font-size="11" font-family="Arial, sans-serif" fill="#6b6862">${table.guestIds.length}/${table.seats} seated</text>
+              ${guestLines
+                .map((line, idx) => `<text x="12" y="${68 + idx * 12}" font-size="10" font-family="Arial, sans-serif" fill="#6b6862">${line}</text>`)
+                .join("")}
+              ${moreCount > 0 ? `<text x="12" y="106" font-size="10" font-family="Arial, sans-serif" fill="#6b6862">+${moreCount} more</text>` : ""}
+            </g>
+          `;
+        }
+
+        return `
+          <g transform="translate(${table.x},${table.y})">
+            <circle cx="85" cy="55" r="54" fill="#ffffff" stroke="#d6d3ce" />
+            <text x="85" y="28" text-anchor="middle" font-size="12" font-family="Arial, sans-serif" fill="#37352f" font-weight="700">#${table.number}</text>
+            <text x="85" y="44" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" fill="#37352f">${esc(label)}</text>
+            <text x="85" y="58" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="#6b6862">${table.guestIds.length}/${table.seats}</text>
+            ${guestLines
+              .map((line, idx) => `<text x="85" y="${72 + idx * 11}" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="#6b6862">${line}</text>`)
+              .join("")}
+            ${moreCount > 0 ? `<text x="85" y="106" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="#6b6862">+${moreCount} more</text>` : ""}
+          </g>
+        `;
+      })
+      .join("\n");
+
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${ROOM_WIDTH}" height="${ROOM_HEIGHT}" viewBox="0 0 ${ROOM_WIDTH} ${ROOM_HEIGHT}">
+        <defs>
+          <pattern id="grid" width="${GRID_SIZE}" height="${GRID_SIZE}" patternUnits="userSpaceOnUse">
+            <path d="M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}" fill="none" stroke="#ece9e3" stroke-width="1" />
+          </pattern>
+        </defs>
+        <rect x="0" y="0" width="${ROOM_WIDTH}" height="${ROOM_HEIGHT}" fill="#faf9f7" />
+        <rect x="0" y="0" width="${ROOM_WIDTH}" height="${ROOM_HEIGHT}" fill="url(#grid)" />
+        <text x="16" y="24" font-size="14" font-family="Arial, sans-serif" fill="#37352f" font-weight="700">Wedding Seating Plan</text>
+        <text x="16" y="42" font-size="11" font-family="Arial, sans-serif" fill="#6b6862">Tables: ${tables.length} · Guests seated: ${assignedGuestIds.size}/${guests.length}</text>
+        ${tableNodes}
+      </svg>
+    `.trim();
+  }
+
+  async function exportAsPng() {
+    if (tables.length === 0) {
+      setError("Add at least one table before exporting.");
+      return;
+    }
+    setError(null);
+    try {
+      const svgMarkup = buildSvgMarkup();
+      const blob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const image = new Image();
+
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error("Could not render export image."));
+        image.src = url;
+      });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = ROOM_WIDTH * 2;
+      canvas.height = ROOM_HEIGHT * 2;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas is not available in this browser.");
+      ctx.setTransform(2, 0, 0, 2, 0, 0);
+      ctx.drawImage(image, 0, 0, ROOM_WIDTH, ROOM_HEIGHT);
+
+      const pngUrl = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = pngUrl;
+      link.download = `wedding-seating-plan-${new Date().toISOString().slice(0, 10)}.png`;
+      link.click();
+
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export PNG.");
+    }
+  }
+
+  function printAsPdf() {
+    if (tables.length === 0) {
+      setError("Add at least one table before printing.");
+      return;
+    }
+    setError(null);
+    const svgMarkup = buildSvgMarkup();
+    const printWindow = window.open("", "_blank", "width=1200,height=900");
+    if (!printWindow) {
+      setError("Popup blocked. Allow popups to print/export PDF.");
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Wedding Seating Plan</title>
+          <style>
+            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #fff; }
+            .wrap { max-width: 1200px; margin: 0 auto; }
+            svg { width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="wrap">${svgMarkup}</div>
+          <script>
+            window.onload = function () { window.print(); };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }
+
+  function createTable() {
+    setError(null);
+    const usedNumbers = new Set(tables.map((t) => t.number));
+    let nextNumber = 1;
+    while (usedNumbers.has(nextNumber)) nextNumber++;
+
+    const id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    const table: SeatingTable = {
+      id,
+      number: nextNumber,
+      name: `Table ${nextNumber}`,
+      seats: 8,
+      shape: "round",
+      x: 32 + (tables.length % 5) * 140,
+      y: 28 + Math.floor(tables.length / 5) * 120,
+      guestIds: [],
+    };
+    setTables((prev) => [...prev, table]);
+    setSelectedTableId(id);
+  }
+
+  function updateTable(tableId: string, updater: (table: SeatingTable) => SeatingTable) {
+    setTables((prev) => prev.map((table) => (table.id === tableId ? updater(table) : table)));
+  }
+
+  function deleteTable(tableId: string) {
+    if (!confirm("Delete this table and unassign its guests?")) return;
+    setTables((prev) => prev.filter((table) => table.id !== tableId));
+  }
+
+  function tableForGuest(guestId: string): SeatingTable | null {
+    for (const table of tables) {
+      if (table.guestIds.includes(guestId)) return table;
+    }
+    return null;
+  }
+
+  function toggleGuestOnSelectedTable(guestId: string, checked: boolean) {
+    const tableId = selectedTable?.id;
+    if (!tableId) return;
+
+    setTables((prev) =>
+      prev.map((table) => {
+        const hadGuest = table.guestIds.includes(guestId);
+        if (table.id === tableId) {
+          if (checked && !hadGuest) return { ...table, guestIds: [...table.guestIds, guestId] };
+          if (!checked && hadGuest) return { ...table, guestIds: table.guestIds.filter((id) => id !== guestId) };
+          return table;
+        }
+        if (checked && hadGuest) {
+          return { ...table, guestIds: table.guestIds.filter((id) => id !== guestId) };
+        }
+        return table;
+      }),
+    );
+  }
+
+  async function saveAssignmentsToGuestList() {
+    setError(null);
+    setSuccess(null);
+    if (!tableFieldName) {
+      setError("Could not find a Table field in this Guest List database.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const assignmentByGuest = new Map<string, string>();
+      for (const table of tables) {
+        const label = table.name.trim().length > 0 ? table.name.trim() : `Table ${table.number}`;
+        for (const guestId of table.guestIds) {
+          assignmentByGuest.set(guestId, label);
+        }
+      }
+
+      for (const row of db.rows) {
+        const nextVal = assignmentByGuest.get(row.pageId) ?? null;
+        const currentVal = row.properties[tableFieldName];
+        const currentText = typeof currentVal === "string" ? currentVal : null;
+        if (currentText === nextVal) continue;
+
+        const res = await fetch(`/api/members/workspace/${row.pageId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            properties: { [tableFieldName]: nextVal },
+            propertyTypes: { [tableFieldName]: "rich_text" },
+          }),
+        });
+
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(body.error ?? "Failed to save one or more guest assignments");
+        }
+
+        onRowUpdated(row.pageId, tableFieldName, nextVal);
+      }
+
+      setSuccess("Seating assignments saved to your Guest List.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save seating assignments");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        border: `1px solid ${N_BORDER}`,
+        borderRadius: "8px",
+        background: "#FBFBFA",
+        padding: "14px",
+        marginBottom: "14px",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>Seating Planner</h3>
+          <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>
+            Add and move tables around the room, then assign guests and save back to your Guest List.
+          </p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            type="button"
+            onClick={createTable}
+            style={{
+              padding: "6px 10px",
+              borderRadius: "4px",
+              border: `1px solid ${N_BORDER_MED}`,
+              background: "white",
+              color: N_FG,
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: N_FONT,
+            }}
+          >
+            + Add table
+          </button>
+          <button
+            type="button"
+            onClick={() => void exportAsPng()}
+            style={{
+              padding: "6px 10px",
+              borderRadius: "4px",
+              border: `1px solid ${N_BORDER_MED}`,
+              background: "white",
+              color: N_FG,
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: N_FONT,
+            }}
+          >
+            Export PNG
+          </button>
+          <button
+            type="button"
+            onClick={printAsPdf}
+            style={{
+              padding: "6px 10px",
+              borderRadius: "4px",
+              border: `1px solid ${N_BORDER_MED}`,
+              background: "white",
+              color: N_FG,
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: N_FONT,
+            }}
+          >
+            Print / PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => void saveAssignmentsToGuestList()}
+            disabled={saving}
+            style={{
+              padding: "6px 10px",
+              borderRadius: "4px",
+              border: "none",
+              background: saving ? "rgba(55,53,47,0.2)" : N_FG,
+              color: "white",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: saving ? "default" : "pointer",
+              fontFamily: N_FONT,
+            }}
+          >
+            {saving ? "Saving..." : "Save to Guest List"}
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px", flexWrap: "wrap" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: N_FG }}>
+          Zoom
+          <input
+            type="range"
+            min={60}
+            max={180}
+            step={5}
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+          />
+          <span style={{ width: "42px", textAlign: "right", color: N_MUTED }}>{zoom}%</span>
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: N_FG }}>
+          <input
+            type="checkbox"
+            checked={snapToGrid}
+            onChange={(e) => setSnapToGrid(e.target.checked)}
+          />
+          Snap to grid
+        </label>
+      </div>
+
+      {(unseatedGuests.length > 0 || overCapacityTables.length > 0) && (
+        <div
+          style={{
+            marginBottom: "10px",
+            padding: "8px 10px",
+            borderRadius: "6px",
+            border: "1px solid rgba(245,158,11,0.35)",
+            background: "rgba(245,158,11,0.08)",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "12px", fontWeight: 600, color: "#b45309" }}>
+            Seating conflicts detected
+          </p>
+          {unseatedGuests.length > 0 && (
+            <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#92400e" }}>
+              {unseatedGuests.length} unseated guest{unseatedGuests.length !== 1 ? "s" : ""}: {unseatedGuests.slice(0, 6).map((g) => g.name).join(", ")}
+              {unseatedGuests.length > 6 ? "..." : ""}
+            </p>
+          )}
+          {overCapacityTables.length > 0 && (
+            <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#92400e" }}>
+              Over capacity: {overCapacityTables.map((t) => `${normalizeTableLabel(t)} (${t.guestIds.length}/${t.seats})`).join(", ")}
+            </p>
+          )}
+        </div>
+      )}
+
+      {error && (
+        <p style={{ margin: "0 0 10px", fontSize: "12px", color: "rgb(220,38,38)" }}>{error}</p>
+      )}
+      {success && (
+        <p style={{ margin: "0 0 10px", fontSize: "12px", color: "rgb(15,123,108)" }}>{success}</p>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px" }}>
+        <div
+          style={{
+            position: "relative",
+            minHeight: "520px",
+            border: `1px dashed ${N_BORDER_MED}`,
+            borderRadius: "6px",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(247,246,243,0.75))",
+            overflow: "auto",
+          }}
+        >
+          <div
+            ref={roomRef}
+            style={{
+              position: "relative",
+              width: `${ROOM_WIDTH}px`,
+              height: `${ROOM_HEIGHT}px`,
+              transform: `scale(${zoomScale})`,
+              transformOrigin: "top left",
+              backgroundImage: snapToGrid
+                ? `linear-gradient(to right, rgba(55,53,47,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(55,53,47,0.06) 1px, transparent 1px)`
+                : "none",
+              backgroundSize: snapToGrid ? `${GRID_SIZE}px ${GRID_SIZE}px` : "auto",
+            }}
+          >
+          {tables.length === 0 && (
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: N_MUTED, fontSize: "13px" }}>
+              No tables yet. Click "Add table" to start your room layout.
+            </div>
+          )}
+
+          {tables.map((table) => {
+            const assignedCount = table.guestIds.length;
+            const selected = selectedTableId === table.id;
+            return (
+              <div
+                key={table.id}
+                onMouseDown={(e) => {
+                  const target = e.target as HTMLElement;
+                  const tag = target.tagName.toLowerCase();
+                  if (["input", "button", "select", "textarea", "label"].includes(tag)) return;
+                  const room = roomRef.current;
+                  if (!room) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const roomRect = room.getBoundingClientRect();
+                  const currentZoom = zoom / 100;
+                  dragStateRef.current = {
+                    tableId: table.id,
+                    offsetX: (e.clientX - rect.left) / currentZoom,
+                    offsetY: (e.clientY - rect.top) / currentZoom,
+                  };
+                  if (e.clientX < roomRect.left || e.clientY < roomRect.top) {
+                    dragStateRef.current = null;
+                  }
+                }}
+                onClick={() => setSelectedTableId(table.id)}
+                style={{
+                  position: "absolute",
+                  left: `${table.x}px`,
+                  top: `${table.y}px`,
+                  width: "170px",
+                  padding: "8px",
+                  borderRadius: table.shape === "round" ? "999px" : "8px",
+                  border: `1px solid ${selected ? N_BLUE : N_BORDER_MED}`,
+                  background: "white",
+                  boxShadow: selected ? "0 8px 24px rgba(35,131,226,0.18)" : "0 4px 14px rgba(0,0,0,0.07)",
+                  cursor: "grab",
+                  userSelect: "none",
+                  height: table.shape === "round" ? "110px" : "auto",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <strong style={{ fontSize: "12px", color: N_FG }}>#{table.number}</strong>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteTable(table.id);
+                    }}
+                    style={{
+                      border: "none",
+                      background: "none",
+                      color: N_SUBTLE,
+                      fontSize: "11px",
+                      cursor: "pointer",
+                    }}
+                    title="Delete table"
+                  >
+                    Delete
+                  </button>
+                </div>
+
+                <input
+                  value={table.name}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => updateTable(table.id, (t) => ({ ...t, name: e.target.value }))}
+                  style={{
+                    width: "100%",
+                    padding: "4px 6px",
+                    borderRadius: "4px",
+                    border: `1px solid ${N_BORDER}`,
+                    fontSize: "12px",
+                    marginBottom: "6px",
+                    boxSizing: "border-box",
+                    fontFamily: N_FONT,
+                  }}
+                />
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
+                  <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
+                    Number
+                    <input
+                      type="number"
+                      min={1}
+                      value={table.number}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const next = Number(e.target.value);
+                        updateTable(table.id, (t) => ({ ...t, number: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.number }));
+                      }}
+                      style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}
+                    />
+                  </label>
+                  <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
+                    Seats
+                    <input
+                      type="number"
+                      min={1}
+                      value={table.seats}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const next = Number(e.target.value);
+                        updateTable(table.id, (t) => ({ ...t, seats: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.seats }));
+                      }}
+                      style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}
+                    />
+                  </label>
+                </div>
+
+                <label style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "10px", color: N_SUBTLE, marginBottom: "6px" }}>
+                  Shape
+                  <select
+                    value={table.shape}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) =>
+                      updateTable(table.id, (t) => ({
+                        ...t,
+                        shape: e.target.value === "rectangle" ? "rectangle" : "round",
+                      }))
+                    }
+                    style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "2px 4px", fontSize: "10px", fontFamily: N_FONT }}
+                  >
+                    <option value="round">Round</option>
+                    <option value="rectangle">Rectangle</option>
+                  </select>
+                </label>
+
+                <div style={{ fontSize: "11px", color: N_MUTED }}>
+                  {assignedCount}/{table.seats} seated
+                </div>
+              </div>
+            );
+          })}
+          </div>
+        </div>
+
+        <div
+          style={{
+            border: `1px solid ${N_BORDER}`,
+            borderRadius: "6px",
+            background: "white",
+            padding: "10px",
+            maxHeight: "520px",
+            overflowY: "auto",
+          }}
+        >
+          <p style={{ margin: "0 0 8px", fontSize: "12px", fontWeight: 600, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            Guest Assignments
+          </p>
+
+          {!selectedTable && (
+            <p style={{ margin: 0, fontSize: "13px", color: N_MUTED }}>
+              Select a table on the canvas to assign guests.
+            </p>
+          )}
+
+          {selectedTable && (
+            <>
+              <p style={{ margin: "0 0 8px", fontSize: "13px", color: N_FG, fontWeight: 600 }}>
+                {selectedTable.name || `Table ${selectedTable.number}`}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {guests.map((guest) => {
+                  const assigned = selectedTable.guestIds.includes(guest.id);
+                  const ownerTable = tableForGuest(guest.id);
+                  const assignedElsewhere = ownerTable !== null && ownerTable.id !== selectedTable.id;
+                  return (
+                    <label key={guest.id} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: N_FG }}>
+                      <input
+                        type="checkbox"
+                        checked={assigned}
+                        onChange={(e) => toggleGuestOnSelectedTable(guest.id, e.target.checked)}
+                      />
+                      <span style={{ flex: 1 }}>{guest.name}</span>
+                      {assignedElsewhere && (
+                        <span style={{ fontSize: "10px", color: N_SUBTLE }}>
+                          @ {ownerTable?.name || `Table ${ownerTable?.number}`}
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function WeddingDraftStudio({
@@ -1580,6 +2361,16 @@ export default function WorkspacePage() {
                     db={activeDbDisplay}
                     onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
                     onOpenFull={() => setDraftEditorOpen(true)}
+                  />
+                )}
+              {backend === "app" &&
+                activeDbDisplay.nicheId === "wedding-planner" &&
+                activeDbDisplay.dbId === "guests" && (
+                  <WeddingSeatingPlanner
+                    db={activeDbDisplay}
+                    onRowUpdated={(pageId, name, val) =>
+                      handleRowUpdated(activeDbDisplay.notionId, pageId, name, val)
+                    }
                   />
                 )}
               <DatabaseTable
