@@ -11,6 +11,8 @@ import {
   DatabaseZap,
   Check,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 // ─── Notion design tokens ─────────────────────────────────────────────────────
@@ -302,6 +304,7 @@ function ChatPageInner() {
   const [hasResult, setHasResult] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
   const [backend, setBackend] = useState<"notion" | "app">("notion");
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -457,124 +460,165 @@ function ChatPageInner() {
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: N_FONT, color: N_FG }}>
 
       {/* ── Left panel ──────────────────────────────────────────────────── */}
-      <div style={{ width: "300px", flexShrink: 0, display: "flex", flexDirection: "column", background: "#EAF4FF", borderRight: `1px solid ${N_BORDER}` }}>
-
-        {/* Header */}
-        <div style={{ padding: "16px 16px 10px", borderBottom: `1px solid ${N_BORDER}`, flexShrink: 0 }}>
-          <p style={{ fontSize: "14px", fontWeight: 600, color: N_FG, marginBottom: "2px" }}>Research Assistant</p>
-          <p style={{ fontSize: "12px", color: N_MUTED }}>Search the web · save to {backend === "app" ? "workspace" : "Notion"}</p>
+      <div
+        style={{
+          width: leftPanelCollapsed ? "44px" : "300px",
+          flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          background: "#EAF4FF",
+          borderRight: `1px solid ${N_BORDER}`,
+          transition: "width 0.18s ease",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ padding: "10px 8px 6px", borderBottom: `1px solid ${N_BORDER}`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: leftPanelCollapsed ? "center" : "space-between", gap: "8px" }}>
+          {!leftPanelCollapsed && (
+            <div>
+              <p style={{ fontSize: "14px", fontWeight: 600, color: N_FG, marginBottom: "2px" }}>Research Assistant</p>
+              <p style={{ fontSize: "12px", color: N_MUTED }}>Search the web · save to {backend === "app" ? "workspace" : "Notion"}</p>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => setLeftPanelCollapsed((prev) => !prev)}
+            aria-label={leftPanelCollapsed ? "Expand research panel" : "Collapse research panel"}
+            title={leftPanelCollapsed ? "Expand panel" : "Collapse panel"}
+            style={{
+              width: "24px",
+              height: "24px",
+              borderRadius: "4px",
+              border: `1px solid ${N_BORDER_MED}`,
+              background: "white",
+              color: N_FG,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+            className="hover:bg-[rgba(55,53,47,0.06)]"
+          >
+            {leftPanelCollapsed ? (
+              <ChevronRight style={{ width: "14px", height: "14px" }} />
+            ) : (
+              <ChevronLeft style={{ width: "14px", height: "14px" }} />
+            )}
+          </button>
         </div>
-        {credits !== null && (
-          <div style={{
-            margin: "0 10px 4px",
-            padding: "4px 8px",
-            borderRadius: "4px",
-            background: credits === 0 ? "rgba(239,68,68,0.08)" : credits <= 5 ? "rgba(245,158,11,0.08)" : "rgba(55,53,47,0.04)",
-            border: `1px solid ${credits === 0 ? "rgba(239,68,68,0.18)" : credits <= 5 ? "rgba(245,158,11,0.18)" : "rgba(55,53,47,0.08)"}`,
-            fontSize: "11px",
-            color: credits === 0 ? "#ef4444" : credits <= 5 ? "#d97706" : N_MUTED,
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-          }}>
-            <span style={{ fontWeight: 600 }}>{credits}</span>
-            <span>credit{credits !== 1 ? "s" : ""} remaining</span>
-          </div>
-        )}
 
-        {/* Activity feed */}
-        <ActivityFeed items={toolActivity} isLoading={isLoading} />
-
-        {/* Suggested prompts (idle only) */}
-        {!isLoading && !hasResult && (
-          <div style={{ flex: 1, overflowY: "auto", padding: "10px 8px" }}>
-            <p style={{ fontSize: "11px", fontWeight: 500, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.05em", padding: "0 8px 6px" }}>
-              Try asking
-            </p>
-            {buildSuggestedPrompts(deployedDbs, nicheCriteria).map((p) => (
-              <button
-                key={p}
-                onClick={() => void sendMessage(p)}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  fontSize: "13px",
-                  color: N_FG,
-                  background: "transparent",
-                  border: "none",
-                  padding: "4px 8px",
-                  borderRadius: "3px",
-                  cursor: "pointer",
-                  lineHeight: 1.5,
-                  fontFamily: N_FONT,
-                }}
-                className="hover:bg-[rgba(55,53,47,0.06)]"
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        )}
-        {(isLoading || hasResult) && <div style={{ flex: 1 }} />}
-
-        {/* Input area */}
-        <div style={{ padding: "10px 12px 14px", borderTop: `1px solid ${N_BORDER}`, flexShrink: 0 }}>
-          <form onSubmit={(e: FormEvent) => { e.preventDefault(); void sendMessage(input); }}>
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(input); }
-              }}
-              placeholder="Ask anything… (⏎ to send)"
-              disabled={isLoading}
-              rows={3}
-              style={{
-                width: "100%",
-                resize: "none",
-                border: `1px solid ${N_BORDER_MED}`,
-                borderRadius: "3px",
-                padding: "8px 10px",
-                fontSize: "14px",
-                color: N_FG,
-                background: "white",
-                outline: "none",
-                fontFamily: N_FONT,
-                boxSizing: "border-box",
-                marginBottom: "6px",
-                lineHeight: 1.5,
-              }}
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              style={{
-                width: "100%",
-                padding: "6px",
-                borderRadius: "3px",
-                border: "none",
-                cursor: isLoading || !input.trim() ? "default" : "pointer",
-                background: isLoading || !input.trim() ? N_ACTIVE : N_BLUE,
-                color: isLoading || !input.trim() ? N_MUTED : "white",
-                fontSize: "14px",
-                fontWeight: 500,
+        {!leftPanelCollapsed && (
+          <>
+            {credits !== null && (
+              <div style={{
+                margin: "0 10px 4px",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                background: credits === 0 ? "rgba(239,68,68,0.08)" : credits <= 5 ? "rgba(245,158,11,0.08)" : "rgba(55,53,47,0.04)",
+                border: `1px solid ${credits === 0 ? "rgba(239,68,68,0.18)" : credits <= 5 ? "rgba(245,158,11,0.18)" : "rgba(55,53,47,0.08)"}`,
+                fontSize: "11px",
+                color: credits === 0 ? "#ef4444" : credits <= 5 ? "#d97706" : N_MUTED,
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                fontFamily: N_FONT,
-                transition: "background 0.1s ease",
-              }}
-            >
-              {isLoading
-                ? <><Loader2 style={{ width: "14px", height: "14px" }} className="animate-spin" /> Researching…</>
-                : <><ArrowUp style={{ width: "14px", height: "14px" }} /> Send</>
-              }
-            </button>
-          </form>
-        </div>
+                gap: "4px",
+              }}>
+                <span style={{ fontWeight: 600 }}>{credits}</span>
+                <span>credit{credits !== 1 ? "s" : ""} remaining</span>
+              </div>
+            )}
+
+            <ActivityFeed items={toolActivity} isLoading={isLoading} />
+
+            {!isLoading && !hasResult && (
+              <div style={{ flex: 1, overflowY: "auto", padding: "10px 8px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 500, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.05em", padding: "0 8px 6px" }}>
+                  Try asking
+                </p>
+                {buildSuggestedPrompts(deployedDbs, nicheCriteria).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => void sendMessage(p)}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      textAlign: "left",
+                      fontSize: "13px",
+                      color: N_FG,
+                      background: "transparent",
+                      border: "none",
+                      padding: "4px 8px",
+                      borderRadius: "3px",
+                      cursor: "pointer",
+                      lineHeight: 1.5,
+                      fontFamily: N_FONT,
+                    }}
+                    className="hover:bg-[rgba(55,53,47,0.06)]"
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            )}
+            {(isLoading || hasResult) && <div style={{ flex: 1 }} />}
+
+            <div style={{ padding: "10px 12px 14px", borderTop: `1px solid ${N_BORDER}`, flexShrink: 0 }}>
+              <form onSubmit={(e: FormEvent) => { e.preventDefault(); void sendMessage(input); }}>
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(input); }
+                  }}
+                  placeholder="Ask anything… (⏎ to send)"
+                  disabled={isLoading}
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    resize: "none",
+                    border: `1px solid ${N_BORDER_MED}`,
+                    borderRadius: "3px",
+                    padding: "8px 10px",
+                    fontSize: "14px",
+                    color: N_FG,
+                    background: "white",
+                    outline: "none",
+                    fontFamily: N_FONT,
+                    boxSizing: "border-box",
+                    marginBottom: "6px",
+                    lineHeight: 1.5,
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !input.trim()}
+                  style={{
+                    width: "100%",
+                    padding: "6px",
+                    borderRadius: "3px",
+                    border: "none",
+                    cursor: isLoading || !input.trim() ? "default" : "pointer",
+                    background: isLoading || !input.trim() ? N_ACTIVE : N_BLUE,
+                    color: isLoading || !input.trim() ? N_MUTED : "white",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    fontFamily: N_FONT,
+                    transition: "background 0.1s ease",
+                  }}
+                >
+                  {isLoading
+                    ? <><Loader2 style={{ width: "14px", height: "14px" }} className="animate-spin" /> Researching…</>
+                    : <><ArrowUp style={{ width: "14px", height: "14px" }} /> Send</>
+                  }
+                </button>
+              </form>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Right panel ─────────────────────────────────────────────────── */}

@@ -11,7 +11,7 @@ const ITEMS = [
   { emoji: "👤", label: "Profile", href: "/members/profile" },
 ] as const;
 
-export function MembersNav() {
+export function MembersNav({ collapsed = false }: { collapsed?: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -35,18 +35,20 @@ export function MembersNav() {
 
   return (
     <nav style={{ padding: "4px 8px" }}>
-      <p
-        style={{
-          fontSize: "11px",
-          fontWeight: 500,
-          color: "rgba(55,53,47,0.45)",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          padding: "8px 8px 3px",
-        }}
-      >
-        Workspace
-      </p>
+      {!collapsed && (
+        <p
+          style={{
+            fontSize: "11px",
+            fontWeight: 500,
+            color: "rgba(55,53,47,0.45)",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            padding: "8px 8px 3px",
+          }}
+        >
+          Workspace
+        </p>
+      )}
       {ITEMS.map((item, index) => {
         const active = maxScore >= 0 && itemScores[index] === maxScore;
         return (
@@ -57,37 +59,41 @@ export function MembersNav() {
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              padding: "4px 8px",
+              padding: collapsed ? "6px" : "4px 8px",
               borderRadius: "3px",
               fontSize: "14px",
               color: "#37352F",
               background: active ? "rgba(55,53,47,0.08)" : "transparent",
               textDecoration: "none",
               userSelect: "none",
+              justifyContent: collapsed ? "center" : "flex-start",
             }}
             className="hover:bg-[rgba(55,53,47,0.06)]"
+            title={collapsed ? item.label : undefined}
           >
             <span
               style={{
                 fontSize: "16px",
                 lineHeight: 1,
-                width: "20px",
+                width: collapsed ? "16px" : "20px",
                 textAlign: "center",
                 flexShrink: 0,
               }}
             >
               {item.emoji}
             </span>
-            <span
-              style={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                flex: 1,
-              }}
-            >
-              {item.label}
-            </span>
+            {!collapsed && (
+              <span
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  flex: 1,
+                }}
+              >
+                {item.label}
+              </span>
+            )}
           </Link>
         );
       })}
