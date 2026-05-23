@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal } from "lucide-react";
+import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal, Mail } from "lucide-react";
 import type {
   WorkspaceDatabase,
   WorkspaceProperty,
@@ -257,6 +257,39 @@ function DatabaseTable({
       else next.delete(columnName);
       return next;
     });
+  }
+
+  const supportsEmailCompose = isAppBackend && db.nicheId === "wedding-planner" && db.dbId === "documents";
+
+  function buildComposeMailto(row: WorkspaceRow): string | null {
+    const email = row.properties["Email"];
+    if (typeof email !== "string" || !email.trim()) return null;
+
+    const recipient = row.properties["Recipient"];
+    const subject = row.properties["Subject"];
+    const body = row.properties["Body"];
+    const summary = row.properties["Summary"];
+
+    const lines: string[] = [];
+    if (typeof recipient === "string" && recipient.trim()) {
+      lines.push(`Hi ${recipient.trim()},`);
+      lines.push("");
+    }
+    if (typeof body === "string" && body.trim()) {
+      lines.push(body.trim());
+    } else if (typeof summary === "string" && summary.trim()) {
+      lines.push(summary.trim());
+    }
+
+    const params = new URLSearchParams();
+    if (typeof subject === "string" && subject.trim()) {
+      params.set("subject", subject.trim());
+    }
+    if (lines.length > 0) {
+      params.set("body", lines.join("\n"));
+    }
+
+    return `mailto:${email.trim()}${params.toString().length > 0 ? `?${params.toString()}` : ""}`;
   }
 
   // Type map for quick lookups
@@ -626,38 +659,60 @@ function DatabaseTable({
                   </td>
                 );
               })}
-              {/* Delete button */}
+              {/* Row actions */}
               <td
                 style={{
                   padding: "4px",
                   border: `1px solid ${N_BORDER}`,
                   textAlign: "center",
                   verticalAlign: "middle",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {deletingId === row.pageId ? (
-                  <Loader2
-                    size={12}
-                    style={{ color: N_SUBTLE, animation: "spin 1s linear infinite" }}
-                  />
-                ) : (
-                  <button
-                    onClick={() => void handleDelete(row.pageId)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: "2px",
-                      color: N_SUBTLE,
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                    title="Archive row"
-                    className="hover:text-red-500"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                )}
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  {supportsEmailCompose && buildComposeMailto(row) && (
+                    <a
+                      href={buildComposeMailto(row)!}
+                      title="Compose email"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "2px",
+                        color: N_SUBTLE,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        textDecoration: "none",
+                      }}
+                      className="hover:text-[#37352F]"
+                    >
+                      <Mail size={13} />
+                    </a>
+                  )}
+                  {deletingId === row.pageId ? (
+                    <Loader2
+                      size={12}
+                      style={{ color: N_SUBTLE, animation: "spin 1s linear infinite" }}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => void handleDelete(row.pageId)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "2px",
+                        color: N_SUBTLE,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      title="Archive row"
+                      className="hover:text-red-500"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
@@ -732,6 +787,7 @@ function WeddingDraftStudio({
   onOpenFull?: () => void;
 }) {
   const [recipient, setRecipient] = useState("");
+  const [email, setEmail] = useState("");
   const [purpose, setPurpose] = useState("photography quote enquiry");
   const [tone, setTone] = useState("Warm and professional");
   const [keyPoints, setKeyPoints] = useState("");
@@ -786,6 +842,7 @@ function WeddingDraftStudio({
     const typeName = findPropertyName(db.properties, ["Type"]);
     const createdName = findPropertyName(db.properties, ["Created"]);
     const recipientName = findPropertyName(db.properties, ["Recipient"]);
+    const emailName = findPropertyName(db.properties, ["Email"]);
     const summaryName = findPropertyName(db.properties, ["Summary"]);
     const subjectName = findPropertyName(db.properties, ["Subject", "Email Subject"]);
     const bodyName = findPropertyName(db.properties, ["Body", "Content", "Draft", "Email Body"]);
@@ -805,6 +862,10 @@ function WeddingDraftStudio({
     if (recipientName) {
       properties[recipientName] = recipient || "Vendor";
       propertyTypes[recipientName] = "rich_text";
+    }
+    if (emailName) {
+      properties[emailName] = email.trim();
+      propertyTypes[emailName] = "email";
     }
     if (summaryName) {
       properties[summaryName] = draft.summary || draft.body.slice(0, 240);
@@ -932,6 +993,13 @@ function WeddingDraftStudio({
           value={recipient}
           onChange={(e) => setRecipient(e.target.value)}
           placeholder="Recipient (e.g. Bloom Wedding Photography)"
+          style={{ padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT }}
+        />
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email address (e.g. hello@vendor.com)"
+          type="email"
           style={{ padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT }}
         />
         <input
@@ -1164,6 +1232,14 @@ export default function WorkspacePage() {
   }
 
   const activeDb = databases.find((d) => d.notionId === activeTab);
+  const activeDbDisplay = activeDb && backend === "app" && activeDb.nicheId === "wedding-planner" && activeDb.dbId === "documents"
+    ? {
+        ...activeDb,
+        properties: activeDb.properties.some((p) => p.name === "Email")
+          ? activeDb.properties
+          : [...activeDb.properties, { id: "Email", name: "Email", type: "email" }],
+      }
+    : activeDb;
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: N_FONT }}>
@@ -1447,7 +1523,7 @@ export default function WorkspacePage() {
               Browse niches
             </Link>
           </div>
-        ) : !activeDb ? null : (
+        ) : !activeDbDisplay ? null : (
           <>
             {/* Header */}
             <div
@@ -1460,19 +1536,19 @@ export default function WorkspacePage() {
                 flexShrink: 0,
               }}
             >
-              <span style={{ fontSize: "20px" }}>{activeDb.icon ?? "📋"}</span>
+              <span style={{ fontSize: "20px" }}>{activeDbDisplay.icon ?? "📋"}</span>
               <div style={{ flex: 1 }}>
                 <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: N_FG }}>
-                  {activeDb.dbName}
+                  {activeDbDisplay.dbName}
                 </h1>
                 <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
-                  {activeDb.nicheName} · {activeDb.rows.length} row{activeDb.rows.length !== 1 ? "s" : ""}
-                  {activeDb.hasMore ? "+" : ""}
+                  {activeDbDisplay.nicheName} · {activeDbDisplay.rows.length} row{activeDbDisplay.rows.length !== 1 ? "s" : ""}
+                  {activeDbDisplay.hasMore ? "+" : ""}
                 </p>
               </div>
               {backend === "notion" && (
                 <a
-                  href={`https://notion.so/${activeDb.notionId.replace(/-/g, "")}`}
+                  href={`https://notion.so/${activeDbDisplay.notionId.replace(/-/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -1498,30 +1574,30 @@ export default function WorkspacePage() {
             {/* Table */}
             <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
               {backend === "app" &&
-                activeDb.nicheId === "wedding-planner" &&
-                activeDb.dbId === "documents" && (
+                activeDbDisplay.nicheId === "wedding-planner" &&
+                activeDbDisplay.dbId === "documents" && (
                   <WeddingDraftStudio
-                    db={activeDb}
-                    onRowAdded={(row) => handleRowAdded(activeDb.notionId, row)}
+                    db={activeDbDisplay}
+                    onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
                     onOpenFull={() => setDraftEditorOpen(true)}
                   />
                 )}
               <DatabaseTable
-                db={activeDb}
+                db={activeDbDisplay}
                 isAppBackend={backend === "app"}
                 onRowUpdated={(pageId, name, val) =>
-                  handleRowUpdated(activeDb.notionId, pageId, name, val)
+                  handleRowUpdated(activeDbDisplay.notionId, pageId, name, val)
                 }
-                onRowDeleted={(pageId) => handleRowDeleted(activeDb.notionId, pageId)}
-                onRowAdded={(row) => handleRowAdded(activeDb.notionId, row)}
+                onRowDeleted={(pageId) => handleRowDeleted(activeDbDisplay.notionId, pageId)}
+                onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
               />
             </div>
           </>
         )}
-        {draftEditorOpen && activeDb && backend === "app" && activeDb.nicheId === "wedding-planner" && activeDb.dbId === "documents" && (
+        {draftEditorOpen && activeDbDisplay && backend === "app" && activeDbDisplay.nicheId === "wedding-planner" && activeDbDisplay.dbId === "documents" && (
           <WeddingDraftStudio
-            db={activeDb}
-            onRowAdded={(row) => handleRowAdded(activeDb.notionId, row)}
+            db={activeDbDisplay}
+            onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
             mode="modal"
             onClose={() => setDraftEditorOpen(false)}
           />
