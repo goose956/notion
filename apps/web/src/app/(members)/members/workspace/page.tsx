@@ -840,7 +840,7 @@ function WeddingSeatingPlanner({
       }
       const parsed = JSON.parse(raw) as { tables?: SeatingTable[]; zoom?: number; snapToGrid?: boolean };
       const next = Array.isArray(parsed.tables) ? parsed.tables : [];
-      const cleaned = next.map((t) => ({
+      const cleaned: SeatingTable[] = next.map((t): SeatingTable => ({
         id: t.id,
         name: t.name || `Table ${t.number}`,
         number: Number.isFinite(t.number) ? Math.max(1, Math.round(t.number)) : 1,
