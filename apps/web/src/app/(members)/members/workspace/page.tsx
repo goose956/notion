@@ -819,8 +819,10 @@ function WeddingWorkspaceDashboard({
   const [venueInput, setVenueInput] = useState(asText(weddingCriteria?.["wedding-location"]) ?? "");
   const [guestCountInput, setGuestCountInput] = useState(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
   const [budgetInput, setBudgetInput] = useState(String(asNumber(weddingCriteria?.["total-budget"]) ?? ""));
+  const [costPerGuestInput, setCostPerGuestInput] = useState(String(asNumber(weddingCriteria?.["cost-per-guest"]) ?? 100));
   const [daysToGoInput, setDaysToGoInput] = useState(String(asNumber(weddingCriteria?.["countdown-days"]) ?? ""));
-  const [editingField, setEditingField] = useState<null | "couple" | "venue" | "guest" | "budget" | "days">(null);
+  const [editingField, setEditingField] = useState<null | "couple" | "venue" | "guest" | "budget" | "costPerGuest" | "days">(null);
+  const [guestScenarioCount, setGuestScenarioCount] = useState(100);
   const [savingDetails, setSavingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
@@ -829,6 +831,7 @@ function WeddingWorkspaceDashboard({
     setVenueInput(asText(weddingCriteria?.["wedding-location"]) ?? "");
     setGuestCountInput(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
     setBudgetInput(String(asNumber(weddingCriteria?.["total-budget"]) ?? ""));
+    setCostPerGuestInput(String(asNumber(weddingCriteria?.["cost-per-guest"]) ?? 100));
     setDaysToGoInput(String(asNumber(weddingCriteria?.["countdown-days"]) ?? ""));
   }, [weddingCriteria]);
 
@@ -844,14 +847,30 @@ function WeddingWorkspaceDashboard({
   const venue = asText(weddingCriteria?.["wedding-location"]);
   const plannedGuests = asNumber(weddingCriteria?.["guest-count"]);
   const totalBudget = asNumber(weddingCriteria?.["total-budget"]);
+  const savedCostPerGuest = asNumber(weddingCriteria?.["cost-per-guest"]);
+  const costPerGuest = savedCostPerGuest ?? 100;
   const countdownMode = asText(weddingCriteria?.["countdown-mode"]);
   const manualCountdownDays = asNumber(weddingCriteria?.["countdown-days"]);
 
   const trackedGuests = guestsDb?.rows.length ?? 0;
   const targetGuests = plannedGuests ?? trackedGuests;
+  const guestSpend = targetGuests > 0 ? targetGuests * costPerGuest : 0;
+  const totalSpent = guestSpend;
+  const remainingBudget = totalBudget !== null ? totalBudget - totalSpent : null;
+  const budgetUsedPercent =
+    totalBudget && totalBudget > 0
+      ? Math.max(0, Math.min(100, Math.round((totalSpent / totalBudget) * 100)))
+      : 0;
   const tableFieldName = guestsDb
     ? findPropertyName(guestsDb.properties, ["Table", "Table Number", "Table Assignment"])
     : null;
+
+  useEffect(() => {
+    setGuestScenarioCount(targetGuests > 0 ? targetGuests : 100);
+  }, [targetGuests]);
+
+  const scenarioSpend = guestScenarioCount * costPerGuest;
+  const scenarioDelta = scenarioSpend - guestSpend;
 
   const seatedGuests =
     guestsDb && tableFieldName
@@ -902,6 +921,7 @@ function WeddingWorkspaceDashboard({
     try {
       const parsedGuestCount = Number(guestCountInput);
       const parsedBudget = Number(budgetInput);
+      const parsedCostPerGuest = Number(costPerGuestInput);
       const parsedCountdownDays = Number(daysToGoInput);
 
       const nextCriteria = {
@@ -916,6 +936,10 @@ function WeddingWorkspaceDashboard({
           budgetInput.trim() === "" || !Number.isFinite(parsedBudget)
             ? null
             : Math.max(0, Math.round(parsedBudget)),
+        "cost-per-guest":
+          costPerGuestInput.trim() === "" || !Number.isFinite(parsedCostPerGuest)
+            ? 100
+            : Math.max(0, Math.round(parsedCostPerGuest)),
         "countdown-days":
           daysToGoInput.trim() === "" || !Number.isFinite(parsedCountdownDays)
             ? null
@@ -946,16 +970,17 @@ function WeddingWorkspaceDashboard({
     }
   }
 
-  async function commitInlineEdit(field: "couple" | "venue" | "guest" | "budget" | "days") {
+  async function commitInlineEdit(field: "couple" | "venue" | "guest" | "budget" | "costPerGuest" | "days") {
     const ok = await saveTopDetails();
     if (ok) setEditingField((prev) => (prev === field ? null : prev));
   }
 
-  function cancelInlineEdit(field: "couple" | "venue" | "guest" | "budget" | "days") {
+  function cancelInlineEdit(field: "couple" | "venue" | "guest" | "budget" | "costPerGuest" | "days") {
     setCoupleNamesInput(asText(weddingCriteria?.["couple-names"]) ?? "");
     setVenueInput(asText(weddingCriteria?.["wedding-location"]) ?? "");
     setGuestCountInput(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
     setBudgetInput(String(asNumber(weddingCriteria?.["total-budget"]) ?? ""));
+    setCostPerGuestInput(String(asNumber(weddingCriteria?.["cost-per-guest"]) ?? 100));
     setDaysToGoInput(String(asNumber(weddingCriteria?.["countdown-days"]) ?? ""));
     setEditingField((prev) => (prev === field ? null : prev));
   }
@@ -1188,6 +1213,82 @@ function WeddingWorkspaceDashboard({
           <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
             {formatCurrency(totalBudget)}
           </p>
+          <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>
+            Spent: {formatCurrency(totalSpent)}
+          </p>
+          <p style={{ margin: "2px 0 0", fontSize: "12px", color: remainingBudget !== null && remainingBudget < 0 ? "rgb(220,38,38)" : N_MUTED }}>
+            Remaining: {remainingBudget === null ? "Not set" : formatCurrency(remainingBudget)}
+          </p>
+          {totalBudget !== null && totalBudget > 0 && (
+            <div style={{ marginTop: "8px" }}>
+              <div style={{ height: "7px", borderRadius: "999px", background: "rgba(55,53,47,0.1)", overflow: "hidden" }}>
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${budgetUsedPercent}%`,
+                    background: budgetUsedPercent >= 100 ? "rgb(220,38,38)" : "linear-gradient(90deg, rgb(35,131,226), rgb(15,123,108))",
+                  }}
+                />
+              </div>
+              <p style={{ margin: "4px 0 0", fontSize: "11px", color: N_SUBTLE }}>
+                {budgetUsedPercent}% used
+              </p>
+            </div>
+          )}
+
+          <div style={{ marginTop: "10px", paddingTop: "8px", borderTop: `1px dashed ${N_BORDER}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "5px", color: N_SUBTLE }}>
+              <span style={{ fontSize: "12px", fontWeight: 600 }}>Cost / Guest</span>
+              {editingField === "costPerGuest" ? (
+                <>
+                  <input
+                    type="number"
+                    min={0}
+                    value={costPerGuestInput}
+                    onChange={(e) => setCostPerGuestInput(e.target.value)}
+                    style={{ height: "24px", width: "86px", marginLeft: "auto", padding: "0 6px", borderRadius: "5px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }}
+                  />
+                  <button type="button" onClick={() => void commitInlineEdit("costPerGuest")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_FG }}><Check size={13} /></button>
+                  <button type="button" onClick={() => cancelInlineEdit("costPerGuest")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><X size={13} /></button>
+                </>
+              ) : (
+                <>
+                  <span style={{ marginLeft: "auto", fontSize: "12px", color: N_FG, fontWeight: 600 }}>{formatCurrency(costPerGuest)}</span>
+                  <button type="button" onClick={() => setEditingField("costPerGuest")} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><Pencil size={12} /></button>
+                </>
+              )}
+            </div>
+
+            <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
+              Guest spend: {targetGuests} x {formatCurrency(costPerGuest)} = {formatCurrency(guestSpend)}
+            </p>
+
+            <div style={{ marginTop: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                <span style={{ fontSize: "11px", color: N_SUBTLE, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Guest Scenario
+                </span>
+                <span style={{ fontSize: "11px", color: N_FG, fontWeight: 600 }}>{guestScenarioCount} guests</span>
+              </div>
+              <input
+                type="range"
+                min={50}
+                max={200}
+                step={1}
+                value={guestScenarioCount}
+                onChange={(e) => setGuestScenarioCount(Number(e.target.value))}
+                style={{ width: "100%" }}
+              />
+              <p style={{ margin: "5px 0 0", fontSize: "12px", color: N_MUTED }}>
+                Projected spend: {formatCurrency(scenarioSpend)}
+                {scenarioDelta !== 0 && (
+                  <span style={{ color: scenarioDelta > 0 ? "rgb(220,38,38)" : "rgb(15,123,108)", fontWeight: 600 }}>
+                    {" "}({scenarioDelta > 0 ? "+" : ""}{formatCurrency(scenarioDelta)} vs current)
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
