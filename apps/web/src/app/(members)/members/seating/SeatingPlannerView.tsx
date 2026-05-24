@@ -100,6 +100,11 @@ type SeatingTable = {
   guestIds: string[];
 };
 
+function getTableDimensions(table: SeatingTable): { width: number; height: number } {
+  if (table.shape === "rectangle") return { width: 420, height: 112 };
+  return { width: 170, height: 170 };
+}
+
 function findPropertyName(
   props: WorkspaceDatabase["properties"],
   candidates: string[],
@@ -157,6 +162,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
 
   const [tables, setTables] = useState<SeatingTable[]>([]);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [editingTableId, setEditingTableId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -205,6 +211,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       }));
       setTables(cleaned);
       setSelectedTableId(cleaned[0]?.id ?? null);
+      setEditingTableId(null);
       setZoom(
         typeof parsed.zoom === "number" && Number.isFinite(parsed.zoom)
           ? Math.min(180, Math.max(60, Math.round(parsed.zoom)))
@@ -214,6 +221,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
     } catch {
       setTables([]);
       setSelectedTableId(null);
+      setEditingTableId(null);
       setZoom(100);
       setSnapToGrid(true);
     }
@@ -250,8 +258,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       setTables((prev) =>
         prev.map((table) => {
           if (table.id !== drag.tableId) return table;
-          const width = table.shape === "rectangle" ? 320 : 170;
-          const height = table.shape === "rectangle" ? 132 : 170;
+          const { width, height } = getTableDimensions(table);
           const rawX = Math.max(0, Math.min(ROOM_WIDTH - width, roomX - drag.offsetX));
           const rawY = Math.max(0, Math.min(ROOM_HEIGHT - height, roomY - drag.offsetY));
           const x = snapToGrid ? Math.round(rawX / GRID_SIZE) * GRID_SIZE : rawX;
@@ -294,12 +301,13 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       seats: shape === "rectangle" ? 10 : 8,
       shape,
       colorScheme: shape === "rectangle" ? "ocean" : "classic",
-      x: shape === "rectangle" ? 420 : 32 + (tables.length % 5) * 140,
+      x: shape === "rectangle" ? 360 : 32 + (tables.length % 5) * 140,
       y: shape === "rectangle" ? 24 : 80 + Math.floor(tables.length / 5) * 120,
       guestIds: [],
     };
     setTables((prev) => [...prev, table]);
-    setSelectedTableId(id);
+    setSelectedTableId((prev) => (shape === "rectangle" ? id : prev));
+    setEditingTableId(shape === "rectangle" ? id : null);
   }
 
   function updateTable(tableId: string, updater: (t: SeatingTable) => SeatingTable) {
@@ -381,11 +389,14 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         const theme = getTableTheme(table.colorScheme);
         const assignedNames = table.guestIds.map((id) => guestById.get(id)?.name).filter((n): n is string => typeof n === "string");
         if (table.shape === "rectangle") {
-          const chips = assignedNames.slice(0, 6).map((name, idx) => {
-            const x = 10 + idx * 50;
-            return `<rect x="${x}" y="8" width="46" height="16" rx="8" fill="${theme.chipBg}" stroke="${theme.chipBorder}" /><text x="${x + 23}" y="19" text-anchor="middle" font-size="8" font-family="Arial, sans-serif" fill="${theme.chipText}">${esc(name).slice(0, 8)}</text>`;
+          const { width, height } = getTableDimensions(table);
+          const slotCount = Math.max(1, table.seats);
+          const slots = Array.from({ length: slotCount }).map((_, idx) => {
+            const cx = 14 + ((width - 28) * (idx + 0.5)) / slotCount;
+            const assigned = assignedNames[idx];
+            return `<circle cx="${cx}" cy="12" r="6" fill="${assigned ? theme.chipBg : "#ffffff"}" stroke="${theme.chipBorder}" />`;
           }).join("");
-          return `<g transform="translate(${table.x},${table.y})"><rect x="0" y="0" width="320" height="132" rx="12" fill="${theme.bg}" stroke="${theme.border}" />${chips}<text x="12" y="42" font-size="12" font-family="Arial, sans-serif" fill="${theme.text}" font-weight="700">#${table.number} ${esc(label)}</text><text x="12" y="60" font-size="11" font-family="Arial, sans-serif" fill="${theme.mutedText}">${table.guestIds.length}/${table.seats} seated</text></g>`;
+          return `<g transform="translate(${table.x},${table.y})"><rect x="0" y="0" width="${width}" height="${height}" rx="10" fill="${theme.bg}" stroke="${theme.border}" />${slots}<text x="${width / 2}" y="56" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="${theme.text}" font-weight="700">Top Table #${table.number}</text><text x="${width / 2}" y="74" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" fill="${theme.mutedText}">${table.guestIds.length}/${table.seats} seated on head side</text><text x="${width / 2}" y="92" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="${theme.mutedText}">${esc(label)}</text></g>`;
         }
         const guestLines = assignedNames.slice(0, 4).map((name) => esc(name));
         return `<g transform="translate(${table.x},${table.y})"><circle cx="85" cy="85" r="80" fill="${theme.bg}" stroke="${theme.border}" /><text x="85" y="54" text-anchor="middle" font-size="12" font-family="Arial, sans-serif" fill="${theme.text}" font-weight="700">#${table.number}</text><text x="85" y="70" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" fill="${theme.text}">${esc(label)}</text><text x="85" y="85" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="${theme.mutedText}">${table.guestIds.length}/${table.seats}</text>${guestLines.map((line, idx) => `<text x="85" y="${102 + idx * 11}" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="${theme.mutedText}">${line}</text>`).join("")}</g>`;
@@ -576,8 +587,8 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
               const assignedCount = table.guestIds.length;
               const selected = selectedTableId === table.id;
               const theme = getTableTheme(table.colorScheme);
-              const width = table.shape === "rectangle" ? 320 : 170;
-              const height = table.shape === "rectangle" ? 132 : 170;
+              const editing = editingTableId === table.id;
+              const { width, height } = getTableDimensions(table);
               return (
                 <div
                   key={table.id}
@@ -610,69 +621,106 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                     justifyContent: "space-between",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                    <strong style={{ fontSize: "12px", color: theme.text }}>#{table.number}</strong>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); deleteTable(table.id); }}
-                      style={{ border: "none", background: "none", color: theme.mutedText, fontSize: "11px", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "3px" }}
-                      title="Delete table">
-                      <Trash2 size={12} /> Delete
-                    </button>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: table.shape === "round" && !editing ? "0" : "6px" }}>
+                    <strong style={{ fontSize: table.shape === "round" && !editing ? "22px" : "12px", color: theme.text, margin: table.shape === "round" && !editing ? "0 auto" : undefined }}>#{table.number}</strong>
+                    {(table.shape === "rectangle" || editing) && (
+                      <button type="button" onClick={(e) => { e.stopPropagation(); deleteTable(table.id); }}
+                        style={{ border: "none", background: "none", color: theme.mutedText, fontSize: "11px", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "3px" }}
+                        title="Delete table">
+                        <Trash2 size={12} /> Delete
+                      </button>
+                    )}
                   </div>
 
                   {table.shape === "rectangle" && (
-                    <div style={{ borderBottom: `1px dashed ${N_BORDER}`, paddingBottom: "6px", marginBottom: "6px", display: "flex", flexWrap: "wrap", gap: "4px", minHeight: "26px" }}>
-                      {table.guestIds.slice(0, 8).map((guestId) => {
-                        const guest = guestById.get(guestId);
-                        if (!guest) return null;
+                    <div style={{ borderBottom: `1px dashed ${N_BORDER}`, paddingBottom: "6px", marginBottom: "6px", display: "flex", flexWrap: "nowrap", alignItems: "center", overflow: "hidden", gap: "4px", minHeight: "24px" }}>
+                      {Array.from({ length: Math.max(1, table.seats) }).slice(0, 14).map((_, idx) => {
+                        const guestId = table.guestIds[idx];
+                        const guest = guestId ? guestById.get(guestId) : undefined;
+                        if (!guest || !guestId) {
+                          return <span key={`empty-${idx}`} style={{ width: "10px", height: "10px", borderRadius: "999px", border: `1px solid ${theme.chipBorder}`, background: "white", flexShrink: 0 }} />;
+                        }
                         return (
-                          <span key={guestId} style={{ display: "inline-flex", alignItems: "center", fontSize: "10px", background: theme.chipBg, color: theme.chipText, border: `1px solid ${theme.chipBorder}`, borderRadius: "999px", padding: "2px 6px" }}>
-                            {guest.name}
+                          <span key={guestId} style={{ display: "inline-flex", alignItems: "center", fontSize: "10px", background: theme.chipBg, color: theme.chipText, border: `1px solid ${theme.chipBorder}`, borderRadius: "999px", padding: "2px 6px", whiteSpace: "nowrap" }}>
+                            {guest.name.slice(0, 10)}
                           </span>
                         );
                       })}
-                      {table.guestIds.length > 8 && <span style={{ fontSize: "10px", color: N_SUBTLE }}>+{table.guestIds.length - 8} more</span>}
+                      {table.guestIds.length > 14 && <span style={{ fontSize: "10px", color: N_SUBTLE }}>+{table.guestIds.length - 14} more</span>}
                     </div>
                   )}
 
-                  <input value={table.name} onClick={(e) => e.stopPropagation()} onChange={(e) => updateTable(table.id, (t) => ({ ...t, name: e.target.value }))}
-                    style={{ width: "100%", padding: "4px 6px", borderRadius: "4px", border: `1px solid ${N_BORDER}`, fontSize: "12px", marginBottom: "6px", boxSizing: "border-box", fontFamily: N_FONT }} />
+                  {table.shape === "round" && !editing ? (
+                    <div style={{ textAlign: "center", fontSize: "11px", color: theme.mutedText }}>
+                      Click then Edit to change details
+                    </div>
+                  ) : (
+                    <>
+                      <input value={table.name} onClick={(e) => e.stopPropagation()} onChange={(e) => updateTable(table.id, (t) => ({ ...t, name: e.target.value }))}
+                        style={{ width: "100%", padding: "4px 6px", borderRadius: "4px", border: `1px solid ${N_BORDER}`, fontSize: "12px", marginBottom: "6px", boxSizing: "border-box", fontFamily: N_FONT }} />
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "6px" }}>
-                    <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
-                      Number
-                      <input type="number" min={1} value={table.number} onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => { const next = Number(e.target.value); updateTable(table.id, (t) => ({ ...t, number: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.number })); }}
-                        style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }} />
-                    </label>
-                    <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
-                      Seats
-                      <input type="number" min={1} value={table.seats} onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => { const next = Number(e.target.value); updateTable(table.id, (t) => ({ ...t, seats: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.seats })); }}
-                        style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }} />
-                    </label>
-                    <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
-                      Shape
-                      <select value={table.shape} onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => updateTable(table.id, (t) => ({ ...t, shape: e.target.value === "rectangle" ? "rectangle" : "round" }))}
-                        style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}>
-                        <option value="round">Round</option>
-                        <option value="rectangle">Rectangle</option>
-                      </select>
-                    </label>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "6px" }}>
+                        <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
+                          Number
+                          <input type="number" min={1} value={table.number} onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => { const next = Number(e.target.value); updateTable(table.id, (t) => ({ ...t, number: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.number })); }}
+                            style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }} />
+                        </label>
+                        <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
+                          Seats
+                          <input type="number" min={1} value={table.seats} onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => { const next = Number(e.target.value); updateTable(table.id, (t) => ({ ...t, seats: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.seats })); }}
+                            style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }} />
+                        </label>
+                        <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
+                          Shape
+                          <select value={table.shape} onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => updateTable(table.id, (t) => ({ ...t, shape: e.target.value === "rectangle" ? "rectangle" : "round" }))}
+                            style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}>
+                            <option value="round">Round</option>
+                            <option value="rectangle">Rectangle</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE, marginBottom: "6px" }}>
+                        Color
+                        <select value={table.colorScheme} onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => updateTable(table.id, (t) => ({ ...t, colorScheme: e.target.value in TABLE_THEMES ? (e.target.value as TableColorScheme) : "classic" }))}
+                          style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}>
+                          {Object.entries(TABLE_THEMES).map(([key, cfg]) => (
+                            <option key={key} value={key}>{cfg.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </>
+                  )}
+
+                  <div style={{ fontSize: "11px", color: theme.mutedText, display: "flex", justifyContent: table.shape === "round" && !editing ? "center" : "space-between", alignItems: "center", gap: "8px" }}>
+                    <span>{assignedCount}/{table.seats} seated</span>
+                    {table.shape === "round" && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTableId(table.id);
+                          setEditingTableId((prev) => (prev === table.id ? null : table.id));
+                        }}
+                        style={{
+                          border: `1px solid ${N_BORDER}`,
+                          background: "white",
+                          color: N_FG,
+                          borderRadius: "4px",
+                          padding: "2px 6px",
+                          fontSize: "10px",
+                          cursor: "pointer",
+                          fontFamily: N_FONT,
+                        }}
+                      >
+                        {editing ? "Done" : "Edit"}
+                      </button>
+                    )}
                   </div>
-
-                  <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE, marginBottom: "6px" }}>
-                    Color
-                    <select value={table.colorScheme} onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => updateTable(table.id, (t) => ({ ...t, colorScheme: e.target.value in TABLE_THEMES ? (e.target.value as TableColorScheme) : "classic" }))}
-                      style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}>
-                      {Object.entries(TABLE_THEMES).map(([key, cfg]) => (
-                        <option key={key} value={key}>{cfg.label}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div style={{ fontSize: "11px", color: theme.mutedText }}>{assignedCount}/{table.seats} seated</div>
                 </div>
               );
             })}
