@@ -1430,24 +1430,46 @@ export default function WorkspacePage() {
                       </button>
 
                       {backend === "app" && group.nicheId === "wedding-planner" && isPlanningTimetable && (
-                        <Link
-                          href="/members/seating"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "7px",
-                            width: "100%",
-                            padding: "5px 10px 5px 34px",
-                            borderRadius: "3px",
-                            fontSize: "13px",
-                            color: N_FG,
-                            textDecoration: "none",
-                          }}
-                          className="hover:bg-[rgba(55,53,47,0.06)]"
-                        >
-                          <span style={{ fontSize: "14px", flexShrink: 0 }}>🪑</span>
-                          Seating Planner
-                        </Link>
+                        <>
+                          <Link
+                            href="/members/seating"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "7px",
+                              width: "100%",
+                              padding: "5px 10px 5px 20px",
+                              borderRadius: "3px",
+                              fontSize: "13px",
+                              color: N_FG,
+                              textDecoration: "none",
+                              fontFamily: N_FONT,
+                            }}
+                            className="hover:bg-[rgba(55,53,47,0.06)]"
+                          >
+                            <span style={{ fontSize: "14px", flexShrink: 0 }}>🪑</span>
+                            Seating Planner
+                          </Link>
+                          <Link
+                            href="/members/workspace?nicheId=wedding-planner&dbId=documents&editor=1"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "7px",
+                              width: "100%",
+                              padding: "5px 10px 5px 20px",
+                              borderRadius: "3px",
+                              fontSize: "13px",
+                              color: N_FG,
+                              textDecoration: "none",
+                              fontFamily: N_FONT,
+                            }}
+                            className="hover:bg-[rgba(55,53,47,0.06)]"
+                          >
+                            <span style={{ fontSize: "14px", flexShrink: 0 }}>✍️</span>
+                            Draft letters
+                          </Link>
+                        </>
                       )}
                     </div>
                   );
