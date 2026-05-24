@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
 const ITEMS = [
-  { emoji: "🚀", label: "Get Started", href: "/members/get-started" },
+  { emoji: "🚀", label: "Get Started", href: "/members/get-started?view=1" },
   { emoji: "🗂️", label: "My Workspace", href: "/members/workspace" },
   { emoji: "🔍", label: "Research Assistant", href: "/members/chat" },
   { emoji: "👤", label: "Profile", href: "/members/profile" },

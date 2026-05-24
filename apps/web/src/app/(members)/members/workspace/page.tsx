@@ -1187,7 +1187,12 @@ function WeddingWorkspaceDashboard({
               <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#be185d22" }}>
                 <span style={{ fontSize: "15px", fontWeight: 800, color: "#be185d" }}>£</span>
               </div>
-              <span style={{ fontSize: "13px", fontWeight: 700, color: "#9d174d" }}>Budget Overview</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#9d174d" }}>Budget Overview</span>
+                <span style={{ fontSize: "10px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Currency: {currencyCode}
+                </span>
+              </div>
             </div>
             {editingField === "budget" ? (
               <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>

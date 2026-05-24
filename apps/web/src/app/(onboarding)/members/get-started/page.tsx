@@ -301,7 +301,7 @@ function InAppGetStarted({
 export default async function GetStartedPage({
   searchParams,
 }: {
-  searchParams: { next?: string };
+  searchParams: { next?: string; view?: string };
 }) {
   const session = await auth();
   const isLoggedIn = !!session;
@@ -322,6 +322,7 @@ export default async function GetStartedPage({
   const rawNext = searchParams.next ?? "";
   const nextUrl =
     rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
+  const forceView = searchParams.view === "1";
 
   // If next points to a setup page, extract the nicheId and load the niche name
   const setupMatch = /^\/members\/setup\/([a-z0-9-]+)$/.exec(nextUrl ?? "");
@@ -367,7 +368,7 @@ export default async function GetStartedPage({
           }
         }
 
-        if (!existing) {
+        if (!existing && !forceView) {
           const workspaceId = randomUUID();
           await createAppWorkspace({
             id: workspaceId,
@@ -413,7 +414,9 @@ export default async function GetStartedPage({
           }
         }
 
-        redirect(`/members/chat?nicheId=${encodeURIComponent(autoNicheId)}`);
+        if (!forceView) {
+          redirect(`/members/chat?nicheId=${encodeURIComponent(autoNicheId)}`);
+        }
       } catch (err) {
         if (isNextRedirectError(err)) {
           throw err;
