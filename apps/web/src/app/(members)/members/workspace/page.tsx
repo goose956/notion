@@ -1451,6 +1451,7 @@ function WeddingDraftStudio({
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
         </div>
+        </div>
         <p style={{ margin: "0 0 12px", fontSize: "13px", color: N_MUTED, lineHeight: 1.5 }}>
           Create reusable wedding outreach emails, edit them, then save to this Documents database for future reuse.
         </p>
