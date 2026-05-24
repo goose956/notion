@@ -902,6 +902,7 @@ function WeddingWorkspaceDashboard({
         return sum + next;
       }, 0)
     : 0;
+  const hasAddedExpenses = budgetTotalsSpend > 0;
   const totalSpent = guestSpend + budgetTotalsSpend;
   const remainingBudget = totalBudget !== null ? totalBudget - totalSpent : null;
   const budgetUsedPercent =
@@ -1248,11 +1249,25 @@ function WeddingWorkspaceDashboard({
             <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(190,24,93,0.1)" }}>
               <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Spent</p>
               <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "#be185d" }}>{formatCurrency(totalSpent, currencyCode)}</p>
-              {budgetTotalsSpend > 0 && (
-                <p style={{ margin: "2px 0 0", fontSize: "10px", color: N_SUBTLE }}>
-                  Includes {formatCurrency(budgetTotalsSpend, currencyCode)} from budget items
+              <div style={{ marginTop: "4px", display: "flex", flexDirection: "column", gap: "3px" }}>
+                <p style={{ margin: 0, fontSize: "10px", color: N_SUBTLE }}>
+                  Guest plan: {formatCurrency(guestSpend, currencyCode)}
                 </p>
-              )}
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    color: hasAddedExpenses ? "#6d28d9" : N_SUBTLE,
+                    background: hasAddedExpenses ? "rgba(109,40,217,0.12)" : "transparent",
+                    borderRadius: "999px",
+                    padding: hasAddedExpenses ? "2px 8px" : "0",
+                    width: "fit-content",
+                  }}
+                >
+                  Added expenses: {formatCurrency(budgetTotalsSpend, currencyCode)}
+                </p>
+              </div>
             </div>
             <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(21,128,61,0.12)" }}>
               <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Remaining</p>
@@ -1725,6 +1740,12 @@ export default function WorkspacePage() {
     applyRequestedSelection(databases, backend);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nicheIdParam, dbIdParam, backend]);
+
+  useEffect(() => {
+    if (activeTab !== DASHBOARD_TAB_ID) return;
+    void loadDatabases(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   function handleRowUpdated(dbNotionId: string, pageId: string, name: string, val: string | number | boolean | null) {
     setDatabases((prev) =>
