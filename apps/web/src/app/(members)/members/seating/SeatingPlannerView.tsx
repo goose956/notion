@@ -761,6 +761,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                     width: `${width}px`,
                     minHeight: `${height}px`,
                     padding: "8px",
+                    overflow: "visible",
                     borderRadius: table.shape === "round" ? "999px" : table.shape === "square" ? "12px" : "10px",
                     border: `1px solid ${selected ? "#be185d" : theme.border}`,
                     background: theme.bg,
@@ -950,7 +951,18 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                         </strong>
                       </div>
 
-                      <div style={{ position: "absolute", right: "10px", top: "10px", display: "flex", flexDirection: "column", gap: "6px", alignItems: "stretch" }}>
+                      <div
+                        style={{
+                          position: "absolute",
+                          right: "-84px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                          alignItems: "stretch",
+                        }}
+                      >
                         <button
                           type="button"
                           onClick={(e) => {
@@ -977,6 +989,29 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                 </div>
               );
             })}
+
+            <button
+              type="button"
+              onClick={() => setRightPanelCollapsed((prev) => !prev)}
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                zIndex: 5,
+                border: "1px solid rgba(55,53,47,0.2)",
+                background: "rgba(255,255,255,0.96)",
+                color: N_FG,
+                borderRadius: "6px",
+                padding: "6px 10px",
+                fontSize: "11px",
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: N_FONT,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+              }}
+            >
+              {rightPanelCollapsed ? "Show Guest List" : "Hide Guest List"}
+            </button>
           </div>
         </div>
 
@@ -984,9 +1019,18 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         {!rightPanelCollapsed && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", minHeight: "600px" }}>
           <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "6px", background: "white", padding: "10px", maxHeight: "600px", overflowY: "auto" }}>
-            <p style={{ margin: "0 0 8px", fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              Guest List (Drag to Table)
-            </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+              <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                Guest List (Drag to Table)
+              </p>
+              <button
+                type="button"
+                onClick={() => setRightPanelCollapsed(true)}
+                style={{ border: "1px solid rgba(55,53,47,0.2)", background: "#fff", color: N_FG, borderRadius: "4px", padding: "2px 7px", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: N_FONT }}
+              >
+                Collapse
+              </button>
+            </div>
 
             {/* Drop-to-unassign zone */}
             <div
