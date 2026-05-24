@@ -808,12 +808,16 @@ function WeddingWorkspaceDashboard({
 }) {
   const [coupleNamesInput, setCoupleNamesInput] = useState(asText(weddingCriteria?.["couple-names"]) ?? "");
   const [venueInput, setVenueInput] = useState(asText(weddingCriteria?.["wedding-location"]) ?? "");
+  const [guestCountInput, setGuestCountInput] = useState(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
+  const [daysToGoInput, setDaysToGoInput] = useState(String(asNumber(weddingCriteria?.["countdown-days"]) ?? ""));
   const [savingDetails, setSavingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
   useEffect(() => {
     setCoupleNamesInput(asText(weddingCriteria?.["couple-names"]) ?? "");
     setVenueInput(asText(weddingCriteria?.["wedding-location"]) ?? "");
+    setGuestCountInput(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
+    setDaysToGoInput(String(asNumber(weddingCriteria?.["countdown-days"]) ?? ""));
   }, [weddingCriteria]);
 
   const guestsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "guests") ?? null;
@@ -827,6 +831,7 @@ function WeddingWorkspaceDashboard({
   const weddingDate = parseWeddingDate(weddingCriteria?.["wedding-date"]);
   const venue = asText(weddingCriteria?.["wedding-location"]);
   const plannedGuests = asNumber(weddingCriteria?.["guest-count"]);
+  const manualCountdownDays = asNumber(weddingCriteria?.["countdown-days"]);
 
   const trackedGuests = guestsDb?.rows.length ?? 0;
   const targetGuests = plannedGuests ?? trackedGuests;
@@ -849,9 +854,10 @@ function WeddingWorkspaceDashboard({
 
   const now = new Date();
   now.setHours(0, 0, 0, 0);
-  const countdownDays = weddingDate
+  const computedFromDate = weddingDate
     ? Math.ceil((weddingDate.getTime() - now.getTime()) / 86_400_000)
     : null;
+  const countdownDays = manualCountdownDays ?? computedFromDate;
 
   const countdownLabel =
     countdownDays === null
@@ -878,10 +884,21 @@ function WeddingWorkspaceDashboard({
     setSavingDetails(true);
     setDetailsError(null);
     try {
+      const parsedGuestCount = Number(guestCountInput);
+      const parsedCountdownDays = Number(daysToGoInput);
+
       const nextCriteria = {
         ...(weddingCriteria ?? {}),
         "couple-names": coupleNamesInput.trim(),
         "wedding-location": venueInput.trim(),
+        "guest-count":
+          guestCountInput.trim() === "" || !Number.isFinite(parsedGuestCount)
+            ? null
+            : Math.max(0, Math.round(parsedGuestCount)),
+        "countdown-days":
+          daysToGoInput.trim() === "" || !Number.isFinite(parsedCountdownDays)
+            ? null
+            : Math.max(0, Math.round(parsedCountdownDays)),
       };
 
       const res = await fetch("/api/members/criteria/wedding-planner", {
@@ -954,6 +971,52 @@ function WeddingWorkspaceDashboard({
                 value={venueInput}
                 onChange={(e) => setVenueInput(e.target.value)}
                 placeholder="e.g. The Barn, Cotswolds"
+                style={{
+                  height: "34px",
+                  padding: "0 10px",
+                  borderRadius: "7px",
+                  border: `1px solid ${N_BORDER_MED}`,
+                  background: "white",
+                  color: N_FG,
+                  fontSize: "13px",
+                  fontFamily: N_FONT,
+                }}
+              />
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: N_SUBTLE }}>
+                Guest Count
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={guestCountInput}
+                onChange={(e) => setGuestCountInput(e.target.value)}
+                placeholder="e.g. 120"
+                style={{
+                  height: "34px",
+                  padding: "0 10px",
+                  borderRadius: "7px",
+                  border: `1px solid ${N_BORDER_MED}`,
+                  background: "white",
+                  color: N_FG,
+                  fontSize: "13px",
+                  fontFamily: N_FONT,
+                }}
+              />
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: N_SUBTLE }}>
+                Days To Go (override)
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={daysToGoInput}
+                onChange={(e) => setDaysToGoInput(e.target.value)}
+                placeholder="Leave blank to use wedding date"
                 style={{
                   height: "34px",
                   padding: "0 10px",
@@ -1044,7 +1107,9 @@ function WeddingWorkspaceDashboard({
               {countdownLabel}
             </p>
             <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
-              {weddingDate
+              {manualCountdownDays !== null
+                ? "Using manual countdown override"
+                : weddingDate
                 ? `Big day: ${weddingDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`
                 : "Add a date in setup to activate countdown tracking."}
             </p>
