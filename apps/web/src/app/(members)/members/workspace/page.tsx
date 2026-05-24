@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal, Mail } from "lucide-react";
+import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal, Mail, LayoutDashboard, CalendarDays, MapPin, Users, CheckCircle2, ListChecks, FileText } from "lucide-react";
 import type {
   WorkspaceDatabase,
   WorkspaceProperty,
@@ -21,6 +21,7 @@ const N_ACTIVE = "rgba(55,53,47,0.06)";
 const N_BLUE = "rgb(35,131,226)";
 const N_FONT =
   'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
+const DASHBOARD_TAB_ID = "__workspace_dashboard__";
 
 // ─── Readonly property types (can't inline-edit these) ─────────────────────
 const READONLY_TYPES = new Set(["formula", "rollup", "relation", "created_time", "last_edited_time", "created_by", "last_edited_by"]);
@@ -773,6 +774,185 @@ function findPropertyName(props: WorkspaceProperty[], candidates: string[]): str
   return null;
 }
 
+function asText(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function asNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function parseWeddingDate(value: unknown): Date | null {
+  const text = asText(value);
+  if (!text) return null;
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+}
+
+function WeddingWorkspaceDashboard({
+  databases,
+  weddingCriteria,
+}: {
+  databases: WorkspaceDatabase[];
+  weddingCriteria: Record<string, unknown> | null;
+}) {
+  const guestsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "guests") ?? null;
+  const timelineDb =
+    databases.find(
+      (d) => d.nicheId === "wedding-planner" && /planning\s*(timeline|timetable)/i.test(d.dbName),
+    ) ?? null;
+  const documentsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "documents") ?? null;
+
+  const weddingDate = parseWeddingDate(weddingCriteria?.["wedding-date"]);
+  const venue = asText(weddingCriteria?.["wedding-location"]);
+  const plannedGuests = asNumber(weddingCriteria?.["guest-count"]);
+
+  const trackedGuests = guestsDb?.rows.length ?? 0;
+  const targetGuests = plannedGuests ?? trackedGuests;
+  const tableFieldName = guestsDb
+    ? findPropertyName(guestsDb.properties, ["Table", "Table Number", "Table Assignment"])
+    : null;
+
+  const seatedGuests =
+    guestsDb && tableFieldName
+      ? guestsDb.rows.filter((row) => {
+          const value = row.properties[tableFieldName];
+          if (typeof value === "number") return value > 0;
+          if (typeof value === "string") return value.trim().length > 0;
+          return false;
+        }).length
+      : 0;
+
+  const seatingStarted = seatedGuests > 0;
+  const seatingProgress = trackedGuests > 0 ? Math.round((seatedGuests / trackedGuests) * 100) : 0;
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const countdownDays = weddingDate
+    ? Math.ceil((weddingDate.getTime() - now.getTime()) / 86_400_000)
+    : null;
+
+  const countdownLabel =
+    countdownDays === null
+      ? "Set your wedding date"
+      : countdownDays >= 0
+        ? `${countdownDays} day${countdownDays === 1 ? "" : "s"} to go`
+        : `${Math.abs(countdownDays)} day${Math.abs(countdownDays) === 1 ? "" : "s"} since your wedding date`;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+      <section
+        style={{
+          border: `1px solid ${N_BORDER}`,
+          borderRadius: "12px",
+          background: "linear-gradient(135deg, #fff7ea 0%, #f1f8ff 52%, #f6fbf4 100%)",
+          padding: "18px 20px",
+        }}
+      >
+        <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: N_SUBTLE }}>
+          Wedding Dashboard
+        </p>
+        <h2 style={{ margin: "8px 0 6px", fontSize: "24px", color: N_FG }}>
+          {countdownLabel}
+        </h2>
+        <p style={{ margin: 0, fontSize: "13px", color: N_MUTED }}>
+          {weddingDate
+            ? `Big day: ${weddingDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`
+            : "Add your wedding date in setup to enable a live countdown."}
+        </p>
+      </section>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px" }}>
+        <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
+            <MapPin size={14} />
+            <span style={{ fontSize: "12px", fontWeight: 600 }}>Location</span>
+          </div>
+          <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
+            {venue ?? "Not set yet"}
+          </p>
+        </div>
+
+        <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
+            <Users size={14} />
+            <span style={{ fontSize: "12px", fontWeight: 600 }}>Guest Plan</span>
+          </div>
+          <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
+            {targetGuests > 0 ? `${targetGuests} planned` : "No target set"}
+          </p>
+          <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>
+            {trackedGuests} currently in your guest list
+          </p>
+        </div>
+
+        <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
+            <CalendarDays size={14} />
+            <span style={{ fontSize: "12px", fontWeight: 600 }}>Planning Timeline</span>
+          </div>
+          <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
+            {timelineDb?.rows.length ?? 0} milestones
+          </p>
+        </div>
+
+        <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
+            <FileText size={14} />
+            <span style={{ fontSize: "12px", fontWeight: 600 }}>Draft Letters</span>
+          </div>
+          <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
+            {documentsDb?.rows.length ?? 0} saved drafts
+          </p>
+        </div>
+      </div>
+
+      <section style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "14px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: N_FG }}>
+            <ListChecks size={14} />
+            <span style={{ fontSize: "13px", fontWeight: 700 }}>Table Plan Status</span>
+          </div>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "12px",
+              color: seatingStarted ? "rgb(15,123,108)" : N_MUTED,
+              fontWeight: 600,
+            }}
+          >
+            <CheckCircle2 size={13} />
+            {seatingStarted ? "Started" : "Not started"}
+          </span>
+        </div>
+
+        <div style={{ height: "8px", borderRadius: "999px", background: "rgba(55,53,47,0.08)", overflow: "hidden", marginBottom: "6px" }}>
+          <div
+            style={{
+              height: "100%",
+              width: `${Math.min(100, Math.max(0, seatingProgress))}%`,
+              background: "linear-gradient(90deg, rgb(35,131,226), rgb(15,123,108))",
+            }}
+          />
+        </div>
+        <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
+          {seatedGuests} of {trackedGuests} guests assigned to tables
+        </p>
+      </section>
+    </div>
+  );
+}
+
 function WeddingDraftStudio({
   db,
   onRowAdded,
@@ -1129,8 +1309,12 @@ export default function WorkspacePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
   const [draftEditorOpen, setDraftEditorOpen] = useState(false);
+  const [weddingCriteria, setWeddingCriteria] = useState<Record<string, unknown> | null>(null);
 
-  function applyRequestedSelection(nextDatabases: WorkspaceDatabase[]) {
+  function applyRequestedSelection(
+    nextDatabases: WorkspaceDatabase[],
+    nextBackend: "app" | "notion" = backend,
+  ) {
     const requestedDb = nextDatabases.find((d) =>
       (nicheIdParam ? d.nicheId === nicheIdParam : true) &&
       (dbIdParam ? d.dbId === dbIdParam : true),
@@ -1146,8 +1330,19 @@ export default function WorkspacePage() {
       return;
     }
 
+    const hasWeddingWorkspace = nextDatabases.some((d) => d.nicheId === "wedding-planner");
+    if (!nicheIdParam && !dbIdParam && nextBackend === "app" && hasWeddingWorkspace) {
+      setActiveTab((prev) => (prev ? prev : DASHBOARD_TAB_ID));
+      setDraftEditorOpen(false);
+      return;
+    }
+
     if (nextDatabases.length > 0) {
-      setActiveTab((prev) => prev || nextDatabases[0]!.notionId);
+      setActiveTab((prev) => {
+        if (prev === DASHBOARD_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
+        if (prev && nextDatabases.some((d) => d.notionId === prev)) return prev;
+        return nextDatabases[0]!.notionId;
+      });
     }
     setDraftEditorOpen(false);
   }
@@ -1163,13 +1358,15 @@ export default function WorkspacePage() {
       const data = (await res.json()) as WorkspaceResponse;
       setDatabases(data.databases);
       setBackend(data.backend);
+      setWeddingCriteria(data.weddingCriteria ?? null);
 
       // Auto-expand all niches and select first tab
       const nicheIds = [...new Set(data.databases.map((d) => d.nicheId))];
       setExpandedNiches(new Set(nicheIds));
-      applyRequestedSelection(data.databases);
+      applyRequestedSelection(data.databases, data.backend);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
+      setWeddingCriteria(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -1232,6 +1429,7 @@ export default function WorkspacePage() {
   }
 
   const activeDb = databases.find((d) => d.notionId === activeTab);
+  const hasWeddingWorkspace = databases.some((d) => d.nicheId === "wedding-planner");
   const activeDbDisplay = activeDb && backend === "app" && activeDb.nicheId === "wedding-planner" && activeDb.dbId === "documents"
     ? {
         ...activeDb,
@@ -1308,6 +1506,31 @@ export default function WorkspacePage() {
             </button>
           </div>
         </div>
+
+        {backend === "app" && hasWeddingWorkspace && (
+          <button
+            onClick={() => setActiveTab(DASHBOARD_TAB_ID)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "7px",
+              width: "100%",
+              padding: "8px 10px",
+              background: activeTab === DASHBOARD_TAB_ID ? N_ACTIVE : "none",
+              border: "none",
+              borderBottom: `1px solid ${N_BORDER}`,
+              cursor: "pointer",
+              fontSize: "13px",
+              color: N_FG,
+              fontFamily: N_FONT,
+              textAlign: "left",
+            }}
+            className="hover:bg-[rgba(55,53,47,0.06)]"
+          >
+            <LayoutDashboard size={14} />
+            Dashboard
+          </button>
+        )}
 
         {loading && (
           <div style={{ padding: "16px", display: "flex", alignItems: "center", gap: "8px", color: N_MUTED, fontSize: "13px" }}>
@@ -1567,6 +1790,10 @@ export default function WorkspacePage() {
               <Plus size={15} />
               Browse niches
             </Link>
+          </div>
+        ) : activeTab === DASHBOARD_TAB_ID ? (
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+            <WeddingWorkspaceDashboard databases={databases} weddingCriteria={weddingCriteria} />
           </div>
         ) : !activeDbDisplay ? null : (
           <>

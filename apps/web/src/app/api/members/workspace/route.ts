@@ -47,6 +47,7 @@ export interface WorkspaceDatabase {
 export interface WorkspaceResponse {
   databases: WorkspaceDatabase[];
   backend: "app" | "notion";
+  weddingCriteria?: Record<string, unknown> | null;
 }
 
 async function provisionAppWorkspace(userId: string, pack: NichePack): Promise<void> {
@@ -194,6 +195,12 @@ export async function GET(_req: NextRequest) {
       : false;
 
   const useAppBackend = !notionToken || hasAnyAppWorkspaces;
+  const weddingCriteriaRow =
+    typeof userEmail === "string" && userEmail.length > 0
+      ? await getUserCriteria(userEmail, "wedding-planner").catch(() => undefined)
+      : undefined;
+  const weddingCriteria =
+    (weddingCriteriaRow?.criteria as Record<string, unknown> | null | undefined) ?? null;
 
   // ── In-app (no Notion) flow ──────────────────────────────────────────────
   if (useAppBackend) {
@@ -308,7 +315,11 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ databases: [] });
     }
 
-    return NextResponse.json({ databases, backend: "app" } satisfies WorkspaceResponse);
+    return NextResponse.json({
+      databases,
+      backend: "app",
+      weddingCriteria,
+    } satisfies WorkspaceResponse);
   }
 
   // ── Notion flow ──────────────────────────────────────────────────────────
@@ -401,7 +412,11 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ databases: [] });
   }
 
-  return NextResponse.json({ databases, backend: "notion" } satisfies WorkspaceResponse);
+  return NextResponse.json({
+    databases,
+    backend: "notion",
+    weddingCriteria,
+  } satisfies WorkspaceResponse);
 }
 
 // ─── POST: create a new row in a database ────────────────────────────────────
