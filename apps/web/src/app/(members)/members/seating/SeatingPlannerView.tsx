@@ -98,11 +98,26 @@ type SeatingTable = {
   x: number;
   y: number;
   guestIds: string[];
+  saved: boolean;
 };
 
 function getTableDimensions(table: SeatingTable): { width: number; height: number } {
   if (table.shape === "rectangle") return { width: 420, height: 112 };
   return { width: 170, height: 170 };
+}
+
+function getSeatPosition(table: SeatingTable, seatIndex: number): { x: number; y: number } {
+  const { width, height } = getTableDimensions(table);
+  const seatCount = Math.max(1, table.seats);
+  if (table.shape === "rectangle") {
+    const x = 8 + ((width - 16) * (seatIndex + 0.5)) / seatCount;
+    return { x, y: 8 };
+  }
+  const cx = width / 2;
+  const cy = height / 2;
+  const radius = Math.min(width, height) / 2 - 14;
+  const angle = (-Math.PI / 2) + (2 * Math.PI * seatIndex) / seatCount;
+  return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
 }
 
 function findPropertyName(
@@ -208,6 +223,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         guestIds: Array.isArray(t.guestIds)
           ? t.guestIds.filter((id) => guests.some((g) => g.id === id))
           : [],
+        saved: typeof (t as { saved?: unknown }).saved === "boolean" ? Boolean((t as { saved?: unknown }).saved) : true,
       }));
       setTables(cleaned);
       setSelectedTableId(cleaned[0]?.id ?? null);
@@ -304,10 +320,11 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       x: shape === "rectangle" ? 360 : 32 + (tables.length % 5) * 140,
       y: shape === "rectangle" ? 24 : 80 + Math.floor(tables.length / 5) * 120,
       guestIds: [],
+      saved: false,
     };
     setTables((prev) => [...prev, table]);
-    setSelectedTableId((prev) => (shape === "rectangle" ? id : prev));
-    setEditingTableId(shape === "rectangle" ? id : null);
+    setSelectedTableId(id);
+    setEditingTableId(id);
   }
 
   function updateTable(tableId: string, updater: (t: SeatingTable) => SeatingTable) {
@@ -331,6 +348,24 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         return table;
       }),
     );
+  }
+
+  function assignGuestToSeat(guestId: string, targetTableId: string, seatIndex: number) {
+    setTables((prev) => {
+      // Remove guest from any current table first.
+      const stripped = prev.map((table) => ({
+        ...table,
+        guestIds: table.guestIds.filter((id) => id !== guestId),
+      }));
+      return stripped.map((table) => {
+        if (table.id !== targetTableId) return table;
+        const clampedIndex = Math.max(0, Math.min(table.seats - 1, seatIndex));
+        const next = [...table.guestIds];
+        const insertAt = Math.min(clampedIndex, next.length);
+        next.splice(insertAt, 0, guestId);
+        return { ...table, guestIds: next.slice(0, table.seats) };
+      });
+    });
   }
 
   async function saveAssignmentsToGuestList() {
@@ -587,13 +622,19 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
               const assignedCount = table.guestIds.length;
               const selected = selectedTableId === table.id;
               const theme = getTableTheme(table.colorScheme);
-              const editing = editingTableId === table.id;
+              const editing = !table.saved || editingTableId === table.id;
               const { width, height } = getTableDimensions(table);
               return (
                 <div
                   key={table.id}
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); const guestId = e.dataTransfer.getData("text/guestId"); if (guestId) assignGuestToTable(guestId, table.id); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const guestId = e.dataTransfer.getData("text/guestId");
+                    if (!guestId) return;
+                    const firstEmpty = Math.max(0, Math.min(table.seats - 1, table.guestIds.length));
+                    assignGuestToSeat(guestId, table.id, firstEmpty);
+                  }}
                   onMouseDown={(e) => {
                     const target = e.target as HTMLElement;
                     if (["input", "button", "select", "textarea", "label"].includes(target.tagName.toLowerCase())) return;
@@ -621,106 +662,175 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                     justifyContent: "space-between",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: table.shape === "round" && !editing ? "0" : "6px" }}>
-                    <strong style={{ fontSize: table.shape === "round" && !editing ? "22px" : "12px", color: theme.text, margin: table.shape === "round" && !editing ? "0 auto" : undefined }}>#{table.number}</strong>
-                    {(table.shape === "rectangle" || editing) && (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); deleteTable(table.id); }}
-                        style={{ border: "none", background: "none", color: theme.mutedText, fontSize: "11px", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "3px" }}
-                        title="Delete table">
-                        <Trash2 size={12} /> Delete
-                      </button>
-                    )}
-                  </div>
-
-                  {table.shape === "rectangle" && (
-                    <div style={{ borderBottom: `1px dashed ${N_BORDER}`, paddingBottom: "6px", marginBottom: "6px", display: "flex", flexWrap: "nowrap", alignItems: "center", overflow: "hidden", gap: "4px", minHeight: "24px" }}>
-                      {Array.from({ length: Math.max(1, table.seats) }).slice(0, 14).map((_, idx) => {
-                        const guestId = table.guestIds[idx];
-                        const guest = guestId ? guestById.get(guestId) : undefined;
-                        if (!guest || !guestId) {
-                          return <span key={`empty-${idx}`} style={{ width: "10px", height: "10px", borderRadius: "999px", border: `1px solid ${theme.chipBorder}`, background: "white", flexShrink: 0 }} />;
-                        }
-                        return (
-                          <span key={guestId} style={{ display: "inline-flex", alignItems: "center", fontSize: "10px", background: theme.chipBg, color: theme.chipText, border: `1px solid ${theme.chipBorder}`, borderRadius: "999px", padding: "2px 6px", whiteSpace: "nowrap" }}>
-                            {guest.name.slice(0, 10)}
-                          </span>
-                        );
-                      })}
-                      {table.guestIds.length > 14 && <span style={{ fontSize: "10px", color: N_SUBTLE }}>+{table.guestIds.length - 14} more</span>}
-                    </div>
-                  )}
-
-                  {table.shape === "round" && !editing ? (
-                    <div style={{ textAlign: "center", fontSize: "11px", color: theme.mutedText }}>
-                      Click then Edit to change details
-                    </div>
-                  ) : (
+                  {editing ? (
                     <>
-                      <input value={table.name} onClick={(e) => e.stopPropagation()} onChange={(e) => updateTable(table.id, (t) => ({ ...t, name: e.target.value }))}
-                        style={{ width: "100%", padding: "4px 6px", borderRadius: "4px", border: `1px solid ${N_BORDER}`, fontSize: "12px", marginBottom: "6px", boxSizing: "border-box", fontFamily: N_FONT }} />
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                        <strong style={{ fontSize: "12px", color: theme.text }}>Table setup</strong>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteTable(table.id);
+                          }}
+                          style={{ border: "none", background: "none", color: theme.mutedText, fontSize: "11px", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "3px" }}
+                          title="Delete table"
+                        >
+                          <Trash2 size={12} /> Delete
+                        </button>
+                      </div>
+
+                      <input
+                        value={table.name}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => updateTable(table.id, (t) => ({ ...t, name: e.target.value }))}
+                        style={{ width: "100%", padding: "4px 6px", borderRadius: "4px", border: `1px solid ${N_BORDER}`, fontSize: "12px", marginBottom: "6px", boxSizing: "border-box", fontFamily: N_FONT }}
+                      />
 
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "6px" }}>
                         <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
                           Number
-                          <input type="number" min={1} value={table.number} onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => { const next = Number(e.target.value); updateTable(table.id, (t) => ({ ...t, number: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.number })); }}
-                            style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }} />
+                          <input
+                            type="number"
+                            min={1}
+                            value={table.number}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              const next = Number(e.target.value);
+                              updateTable(table.id, (t) => ({ ...t, number: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.number }));
+                            }}
+                            style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}
+                          />
                         </label>
                         <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
                           Seats
-                          <input type="number" min={1} value={table.seats} onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => { const next = Number(e.target.value); updateTable(table.id, (t) => ({ ...t, seats: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.seats })); }}
-                            style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }} />
+                          <input
+                            type="number"
+                            min={1}
+                            value={table.seats}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              const next = Number(e.target.value);
+                              updateTable(table.id, (t) => ({
+                                ...t,
+                                seats: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.seats,
+                                guestIds: t.guestIds.slice(0, Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.seats),
+                              }));
+                            }}
+                            style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}
+                          />
                         </label>
                         <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
                           Shape
-                          <select value={table.shape} onClick={(e) => e.stopPropagation()}
+                          <select
+                            value={table.shape}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => updateTable(table.id, (t) => ({ ...t, shape: e.target.value === "rectangle" ? "rectangle" : "round" }))}
-                            style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}>
+                            style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}
+                          >
                             <option value="round">Round</option>
                             <option value="rectangle">Rectangle</option>
                           </select>
                         </label>
                       </div>
 
-                      <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE, marginBottom: "6px" }}>
-                        Color
-                        <select value={table.colorScheme} onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => updateTable(table.id, (t) => ({ ...t, colorScheme: e.target.value in TABLE_THEMES ? (e.target.value as TableColorScheme) : "classic" }))}
-                          style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}>
-                          {Object.entries(TABLE_THEMES).map(([key, cfg]) => (
-                            <option key={key} value={key}>{cfg.label}</option>
-                          ))}
-                        </select>
-                      </label>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "6px", alignItems: "end" }}>
+                        <label style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "10px", color: N_SUBTLE }}>
+                          Color
+                          <select
+                            value={table.colorScheme}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => updateTable(table.id, (t) => ({ ...t, colorScheme: e.target.value in TABLE_THEMES ? (e.target.value as TableColorScheme) : "classic" }))}
+                            style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}
+                          >
+                            {Object.entries(TABLE_THEMES).map(([key, cfg]) => (
+                              <option key={key} value={key}>{cfg.label}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateTable(table.id, (t) => ({ ...t, saved: true }));
+                            setEditingTableId(null);
+                          }}
+                          style={{ border: "none", background: "linear-gradient(135deg, #6b2040, #be185d)", color: "white", borderRadius: "4px", padding: "6px 10px", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: N_FONT }}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                        {Array.from({ length: Math.max(1, table.seats) }).map((_, seatIdx) => {
+                          const pos = getSeatPosition(table, seatIdx);
+                          const guestId = table.guestIds[seatIdx] ?? null;
+                          const guest = guestId ? guestById.get(guestId) : null;
+                          return (
+                            <div
+                              key={`${table.id}-seat-${seatIdx}`}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const droppedGuestId = e.dataTransfer.getData("text/guestId");
+                                if (!droppedGuestId) return;
+                                assignGuestToSeat(droppedGuestId, table.id, seatIdx);
+                              }}
+                              title={guest ? guest.name : `Seat ${seatIdx + 1}`}
+                              style={{
+                                pointerEvents: "auto",
+                                position: "absolute",
+                                left: `${pos.x - 11}px`,
+                                top: `${pos.y - 11}px`,
+                                width: "22px",
+                                height: "22px",
+                                borderRadius: "999px",
+                                border: `1px solid ${theme.chipBorder}`,
+                                background: guest ? theme.chipBg : "white",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "9px",
+                                fontWeight: 700,
+                                color: theme.chipText,
+                              }}
+                            >
+                              {guest ? guest.name.slice(0, 1).toUpperCase() : ""}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                        <strong style={{ fontSize: table.shape === "rectangle" ? "36px" : "30px", lineHeight: 1, color: theme.text }}>#{table.number}</strong>
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "center", gap: "6px" }}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingTableId(table.id);
+                          }}
+                          style={{ border: `1px solid ${N_BORDER}`, background: "white", color: N_FG, borderRadius: "4px", padding: "2px 8px", fontSize: "10px", cursor: "pointer", fontFamily: N_FONT }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteTable(table.id);
+                          }}
+                          style={{ border: `1px solid ${N_BORDER}`, background: "white", color: N_FG, borderRadius: "4px", padding: "2px 8px", fontSize: "10px", cursor: "pointer", fontFamily: N_FONT }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </>
                   )}
-
-                  <div style={{ fontSize: "11px", color: theme.mutedText, display: "flex", justifyContent: table.shape === "round" && !editing ? "center" : "space-between", alignItems: "center", gap: "8px" }}>
-                    <span>{assignedCount}/{table.seats} seated</span>
-                    {table.shape === "round" && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedTableId(table.id);
-                          setEditingTableId((prev) => (prev === table.id ? null : table.id));
-                        }}
-                        style={{
-                          border: `1px solid ${N_BORDER}`,
-                          background: "white",
-                          color: N_FG,
-                          borderRadius: "4px",
-                          padding: "2px 6px",
-                          fontSize: "10px",
-                          cursor: "pointer",
-                          fontFamily: N_FONT,
-                        }}
-                      >
-                        {editing ? "Done" : "Edit"}
-                      </button>
-                    )}
-                  </div>
                 </div>
               );
             })}
