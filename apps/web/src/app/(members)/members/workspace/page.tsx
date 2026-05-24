@@ -844,6 +844,7 @@ function WeddingWorkspaceDashboard({
   const venue = asText(weddingCriteria?.["wedding-location"]);
   const plannedGuests = asNumber(weddingCriteria?.["guest-count"]);
   const totalBudget = asNumber(weddingCriteria?.["total-budget"]);
+  const countdownMode = asText(weddingCriteria?.["countdown-mode"]);
   const manualCountdownDays = asNumber(weddingCriteria?.["countdown-days"]);
 
   const trackedGuests = guestsDb?.rows.length ?? 0;
@@ -870,7 +871,9 @@ function WeddingWorkspaceDashboard({
   const computedFromDate = weddingDate
     ? Math.ceil((weddingDate.getTime() - now.getTime()) / 86_400_000)
     : null;
-  const countdownDays = manualCountdownDays ?? computedFromDate;
+  const useManualCountdown =
+    countdownMode === "manual" ? manualCountdownDays !== null : manualCountdownDays !== null;
+  const countdownDays = useManualCountdown ? manualCountdownDays : computedFromDate;
 
   const countdownLabel =
     countdownDays === null
@@ -917,6 +920,10 @@ function WeddingWorkspaceDashboard({
           daysToGoInput.trim() === "" || !Number.isFinite(parsedCountdownDays)
             ? null
             : Math.max(0, Math.round(parsedCountdownDays)),
+        "countdown-mode":
+          daysToGoInput.trim() === "" || !Number.isFinite(parsedCountdownDays)
+            ? "date"
+            : "manual",
       };
 
       const res = await fetch("/api/members/criteria/wedding-planner", {
@@ -1087,9 +1094,7 @@ function WeddingWorkspaceDashboard({
               ) : (
                 <>
                   <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
-                    {manualCountdownDays !== null
-                      ? "Using manual countdown override"
-                      : weddingDate
+                    {weddingDate
                       ? `Big day: ${weddingDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`
                       : "Add a date in setup to activate countdown tracking."}
                   </p>
