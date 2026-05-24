@@ -792,6 +792,17 @@ function asNumber(value: unknown): number | null {
   return null;
 }
 
+function asCurrencyNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const normalized = value.replace(/[^0-9.-]/g, "").trim();
+    if (normalized.length === 0) return null;
+    const parsed = Number(normalized);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
 function getCurrencyCode(criteria: Record<string, unknown> | null): string {
   const fromCriteria = asText(criteria?.["currency-code"])?.toUpperCase();
   if (!fromCriteria) return "GBP";
@@ -850,6 +861,7 @@ function WeddingWorkspaceDashboard({
     databases.find(
       (d) => d.nicheId === "wedding-planner" && /planning\s*(timeline|timetable)/i.test(d.dbName),
     ) ?? null;
+  const budgetDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "budget") ?? null;
   const documentsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "documents") ?? null;
 
   const coupleNames = asText(weddingCriteria?.["couple-names"]);
@@ -866,7 +878,16 @@ function WeddingWorkspaceDashboard({
   const trackedGuests = guestsDb?.rows.length ?? 0;
   const targetGuests = plannedGuests ?? trackedGuests;
   const guestSpend = targetGuests > 0 ? targetGuests * costPerGuest : 0;
-  const totalSpent = guestSpend;
+  const budgetActualFieldName = budgetDb
+    ? findPropertyName(budgetDb.properties, ["Actual Cost", "Actual", "Spent", "Total"])
+    : null;
+  const budgetActualSpend = budgetDb && budgetActualFieldName
+    ? budgetDb.rows.reduce((sum, row) => {
+        const next = asCurrencyNumber(row.properties[budgetActualFieldName]);
+        return sum + (next ?? 0);
+      }, 0)
+    : 0;
+  const totalSpent = guestSpend + budgetActualSpend;
   const remainingBudget = totalBudget !== null ? totalBudget - totalSpent : null;
   const budgetUsedPercent =
     totalBudget && totalBudget > 0
@@ -1212,6 +1233,11 @@ function WeddingWorkspaceDashboard({
             <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(190,24,93,0.1)" }}>
               <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Spent</p>
               <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "#be185d" }}>{formatCurrency(totalSpent, currencyCode)}</p>
+              {budgetActualSpend > 0 && (
+                <p style={{ margin: "2px 0 0", fontSize: "10px", color: N_SUBTLE }}>
+                  Includes {formatCurrency(budgetActualSpend, currencyCode)} from budget items
+                </p>
+              )}
             </div>
             <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(21,128,61,0.12)" }}>
               <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Remaining</p>
