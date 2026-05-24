@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal, Mail, LayoutDashboard, CalendarDays, MapPin, Users, CheckCircle2, ListChecks, FileText } from "lucide-react";
+import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal, Mail, LayoutDashboard, CalendarDays, MapPin, Users, CheckCircle2, ListChecks, FileText, Pencil, Check, X } from "lucide-react";
 import type {
   WorkspaceDatabase,
   WorkspaceProperty,
@@ -820,6 +820,7 @@ function WeddingWorkspaceDashboard({
   const [guestCountInput, setGuestCountInput] = useState(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
   const [budgetInput, setBudgetInput] = useState(String(asNumber(weddingCriteria?.["total-budget"]) ?? ""));
   const [daysToGoInput, setDaysToGoInput] = useState(String(asNumber(weddingCriteria?.["countdown-days"]) ?? ""));
+  const [editingField, setEditingField] = useState<null | "couple" | "venue" | "guest" | "budget" | "days">(null);
   const [savingDetails, setSavingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
 
@@ -892,7 +893,7 @@ function WeddingWorkspaceDashboard({
             ? "rgb(234,179,8)"
             : "rgb(22,163,74)";
 
-  async function saveTopDetails() {
+  async function saveTopDetails(): Promise<boolean> {
     setSavingDetails(true);
     setDetailsError(null);
     try {
@@ -929,11 +930,27 @@ function WeddingWorkspaceDashboard({
       }
       const body = (await res.json().catch(() => ({}))) as { criteria?: Record<string, unknown> };
       onWeddingCriteriaUpdated(body.criteria ?? nextCriteria);
+      return true;
     } catch (err) {
       setDetailsError(err instanceof Error ? err.message : "Failed to save wedding details");
+      return false;
     } finally {
       setSavingDetails(false);
     }
+  }
+
+  async function commitInlineEdit(field: "couple" | "venue" | "guest" | "budget" | "days") {
+    const ok = await saveTopDetails();
+    if (ok) setEditingField((prev) => (prev === field ? null : prev));
+  }
+
+  function cancelInlineEdit(field: "couple" | "venue" | "guest" | "budget" | "days") {
+    setCoupleNamesInput(asText(weddingCriteria?.["couple-names"]) ?? "");
+    setVenueInput(asText(weddingCriteria?.["wedding-location"]) ?? "");
+    setGuestCountInput(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
+    setBudgetInput(String(asNumber(weddingCriteria?.["total-budget"]) ?? ""));
+    setDaysToGoInput(String(asNumber(weddingCriteria?.["countdown-days"]) ?? ""));
+    setEditingField((prev) => (prev === field ? null : prev));
   }
 
   return (
@@ -954,144 +971,51 @@ function WeddingWorkspaceDashboard({
           <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: N_SUBTLE }}>
             Wedding Dashboard
           </p>
-          <h2 style={{ margin: "8px 0 10px", fontSize: "24px", color: N_FG }}>
-            {coupleNames ?? "Your Wedding Plan"}
-          </h2>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: N_SUBTLE }}>
-                Couple Names
-              </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "8px 0 6px" }}>
+            {editingField === "couple" ? (
               <input
                 value={coupleNamesInput}
                 onChange={(e) => setCoupleNamesInput(e.target.value)}
                 placeholder="e.g. Olivia & James"
-                style={{
-                  height: "34px",
-                  padding: "0 10px",
-                  borderRadius: "7px",
-                  border: `1px solid ${N_BORDER_MED}`,
-                  background: "white",
-                  color: N_FG,
-                  fontSize: "13px",
-                  fontFamily: N_FONT,
-                }}
+                style={{ height: "36px", padding: "0 10px", borderRadius: "7px", border: `1px solid ${N_BORDER_MED}`, fontSize: "20px", fontWeight: 700, fontFamily: N_FONT, color: N_FG, minWidth: "260px" }}
               />
-            </label>
-
-            <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: N_SUBTLE }}>
-                Venue
-              </span>
-              <input
-                value={venueInput}
-                onChange={(e) => setVenueInput(e.target.value)}
-                placeholder="e.g. The Barn, Cotswolds"
-                style={{
-                  height: "34px",
-                  padding: "0 10px",
-                  borderRadius: "7px",
-                  border: `1px solid ${N_BORDER_MED}`,
-                  background: "white",
-                  color: N_FG,
-                  fontSize: "13px",
-                  fontFamily: N_FONT,
-                }}
-              />
-            </label>
-
-            <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: N_SUBTLE }}>
-                Guest Count
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={guestCountInput}
-                onChange={(e) => setGuestCountInput(e.target.value)}
-                placeholder="e.g. 120"
-                style={{
-                  height: "34px",
-                  padding: "0 10px",
-                  borderRadius: "7px",
-                  border: `1px solid ${N_BORDER_MED}`,
-                  background: "white",
-                  color: N_FG,
-                  fontSize: "13px",
-                  fontFamily: N_FONT,
-                }}
-              />
-            </label>
-
-            <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: N_SUBTLE }}>
-                Budget
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={budgetInput}
-                onChange={(e) => setBudgetInput(e.target.value)}
-                placeholder="e.g. 15000"
-                style={{
-                  height: "34px",
-                  padding: "0 10px",
-                  borderRadius: "7px",
-                  border: `1px solid ${N_BORDER_MED}`,
-                  background: "white",
-                  color: N_FG,
-                  fontSize: "13px",
-                  fontFamily: N_FONT,
-                }}
-              />
-            </label>
-
-            <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: N_SUBTLE }}>
-                Days To Go (override)
-              </span>
-              <input
-                type="number"
-                min={0}
-                value={daysToGoInput}
-                onChange={(e) => setDaysToGoInput(e.target.value)}
-                placeholder="Leave blank to use wedding date"
-                style={{
-                  height: "34px",
-                  padding: "0 10px",
-                  borderRadius: "7px",
-                  border: `1px solid ${N_BORDER_MED}`,
-                  background: "white",
-                  color: N_FG,
-                  fontSize: "13px",
-                  fontFamily: N_FONT,
-                }}
-              />
-            </label>
+            ) : (
+              <h2 style={{ margin: 0, fontSize: "24px", color: N_FG }}>
+                {coupleNames ?? "Your Wedding Plan"}
+              </h2>
+            )}
+            {editingField === "couple" ? (
+              <>
+                <button type="button" onClick={() => void commitInlineEdit("couple")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_FG }}><Check size={14} /></button>
+                <button type="button" onClick={() => cancelInlineEdit("couple")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><X size={14} /></button>
+              </>
+            ) : (
+              <button type="button" onClick={() => setEditingField("couple")} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><Pencil size={13} /></button>
+            )}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <button
-              type="button"
-              onClick={() => void saveTopDetails()}
-              disabled={savingDetails}
-              style={{
-                padding: "7px 12px",
-                borderRadius: "8px",
-                border: "none",
-                background: savingDetails ? "rgba(55,53,47,0.3)" : N_FG,
-                color: "white",
-                fontSize: "12px",
-                fontWeight: 600,
-                cursor: savingDetails ? "default" : "pointer",
-                fontFamily: N_FONT,
-              }}
-            >
-              {savingDetails ? "Saving..." : "Save details"}
-            </button>
-            {detailsError && <span style={{ fontSize: "12px", color: "rgb(220,38,38)" }}>{detailsError}</span>}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+            <span style={{ fontSize: "12px", color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>Venue</span>
+            {editingField === "venue" ? (
+              <>
+                <input
+                  value={venueInput}
+                  onChange={(e) => setVenueInput(e.target.value)}
+                  placeholder="e.g. The Barn, Cotswolds"
+                  style={{ height: "30px", padding: "0 8px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, color: N_FG, minWidth: "240px" }}
+                />
+                <button type="button" onClick={() => void commitInlineEdit("venue")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_FG }}><Check size={14} /></button>
+                <button type="button" onClick={() => cancelInlineEdit("venue")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><X size={14} /></button>
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: "14px", color: N_FG, fontWeight: 600 }}>{venue ?? "Not set yet"}</span>
+                <button type="button" onClick={() => setEditingField("venue")} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><Pencil size={13} /></button>
+              </>
+            )}
           </div>
+
+          {detailsError && <span style={{ fontSize: "12px", color: "rgb(220,38,38)" }}>{detailsError}</span>}
         </div>
 
         <div
@@ -1146,13 +1070,33 @@ function WeddingWorkspaceDashboard({
             <p style={{ margin: "6px 0 4px", fontSize: "18px", fontWeight: 700, color: N_FG }}>
               {countdownLabel}
             </p>
-            <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
-              {manualCountdownDays !== null
-                ? "Using manual countdown override"
-                : weddingDate
-                ? `Big day: ${weddingDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`
-                : "Add a date in setup to activate countdown tracking."}
-            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              {editingField === "days" ? (
+                <>
+                  <input
+                    type="number"
+                    min={0}
+                    value={daysToGoInput}
+                    onChange={(e) => setDaysToGoInput(e.target.value)}
+                    placeholder="Days"
+                    style={{ height: "28px", width: "90px", padding: "0 8px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }}
+                  />
+                  <button type="button" onClick={() => void commitInlineEdit("days")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_FG }}><Check size={14} /></button>
+                  <button type="button" onClick={() => cancelInlineEdit("days")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><X size={14} /></button>
+                </>
+              ) : (
+                <>
+                  <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
+                    {manualCountdownDays !== null
+                      ? "Using manual countdown override"
+                      : weddingDate
+                      ? `Big day: ${weddingDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`
+                      : "Add a date in setup to activate countdown tracking."}
+                  </p>
+                  <button type="button" onClick={() => setEditingField("days")} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><Pencil size={13} /></button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -1172,6 +1116,21 @@ function WeddingWorkspaceDashboard({
           <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
             <Users size={14} />
             <span style={{ fontSize: "12px", fontWeight: 600 }}>Guest Plan</span>
+            {editingField === "guest" ? (
+              <>
+                <input
+                  type="number"
+                  min={0}
+                  value={guestCountInput}
+                  onChange={(e) => setGuestCountInput(e.target.value)}
+                  style={{ height: "24px", width: "80px", marginLeft: "auto", padding: "0 6px", borderRadius: "5px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }}
+                />
+                <button type="button" onClick={() => void commitInlineEdit("guest")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_FG }}><Check size={13} /></button>
+                <button type="button" onClick={() => cancelInlineEdit("guest")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><X size={13} /></button>
+              </>
+            ) : (
+              <button type="button" onClick={() => setEditingField("guest")} style={{ marginLeft: "auto", border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><Pencil size={12} /></button>
+            )}
           </div>
           <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
             {targetGuests > 0 ? `${targetGuests} planned` : "No target set"}
@@ -1205,6 +1164,21 @@ function WeddingWorkspaceDashboard({
           <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
             <span style={{ fontSize: "13px", fontWeight: 700 }}>£</span>
             <span style={{ fontSize: "12px", fontWeight: 600 }}>Budget</span>
+            {editingField === "budget" ? (
+              <>
+                <input
+                  type="number"
+                  min={0}
+                  value={budgetInput}
+                  onChange={(e) => setBudgetInput(e.target.value)}
+                  style={{ height: "24px", width: "96px", marginLeft: "auto", padding: "0 6px", borderRadius: "5px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }}
+                />
+                <button type="button" onClick={() => void commitInlineEdit("budget")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_FG }}><Check size={13} /></button>
+                <button type="button" onClick={() => cancelInlineEdit("budget")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><X size={13} /></button>
+              </>
+            ) : (
+              <button type="button" onClick={() => setEditingField("budget")} style={{ marginLeft: "auto", border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><Pencil size={12} /></button>
+            )}
           </div>
           <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
             {formatCurrency(totalBudget)}
