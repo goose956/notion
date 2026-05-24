@@ -16,7 +16,11 @@ const BodySchema = z.object({
   coupleNames: z.string().optional(),
   weddingDate: z.string().optional(),
   venue: z.string().optional(),
+  mode: z.enum(["both", "invitation", "thank-you"]).optional(),
+  canvasSize: z.enum(["a5-portrait", "five-by-seven", "square-social"]).optional(),
 });
+
+const CREDITS_PER_GENERATION = 5;
 
 interface GeneratedPayload {
   invitationText: string;
@@ -92,9 +96,9 @@ export async function POST(req: NextRequest) {
 
   await findOrCreateCustomer(userEmail).catch(() => null);
   const currentCredits = await getCustomerCredits(userEmail).catch(() => 0);
-  if (currentCredits <= 0) {
+  if (currentCredits < CREDITS_PER_GENERATION) {
     return NextResponse.json(
-      { error: "You have no credits left. Top up to continue." },
+      { error: `You need ${CREDITS_PER_GENERATION} credits to generate a canvas design.` },
       { status: 402 },
     );
   }
@@ -111,6 +115,8 @@ export async function POST(req: NextRequest) {
 
   const prompt = [
     "Create wedding stationery content and a matching visual.",
+    `Generation mode: ${parsed.data.mode ?? "both"}`,
+    `Canvas size preset: ${parsed.data.canvasSize ?? "a5-portrait"}`,
     `Couple names: ${parsed.data.coupleNames ?? "Not provided"}`,
     `Wedding date: ${parsed.data.weddingDate ?? "Not provided"}`,
     `Venue: ${parsed.data.venue ?? "Not provided"}`,
@@ -124,6 +130,10 @@ export async function POST(req: NextRequest) {
     "- No external images or fonts.",
     "- Keep typography elegant and readable.",
     "- Include invitation-focused headline and subtle decorative shapes.",
+    "Content rules:",
+    "- mode=both: provide both invitationText and thankYouText.",
+    "- mode=invitation: provide invitationText and set thankYouText to an empty string.",
+    "- mode=thank-you: provide thankYouText and set invitationText to an empty string.",
   ].join("\n");
 
   try {
@@ -146,13 +156,14 @@ export async function POST(req: NextRequest) {
     const generated = parsePayload(text);
     const safeSvg = sanitizeSvg(generated.svg);
 
-    await deductCredits(userEmail, 1).catch(() => null);
+    const newCredits = await deductCredits(userEmail, CREDITS_PER_GENERATION).catch(() => null);
 
     return NextResponse.json({
       invitationText: generated.invitationText,
       thankYouText: generated.thankYouText,
       colorPalette: generated.colorPalette,
       svg: safeSvg,
+      credits: newCredits,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Generation failed";

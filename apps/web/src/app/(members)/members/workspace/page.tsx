@@ -1657,24 +1657,39 @@ function WeddingDraftStudio({
 
 function WeddingInvitationCanvas({
   weddingCriteria,
+  documentsDb,
+  onDocumentSaved,
 }: {
   weddingCriteria: Record<string, unknown> | null;
+  documentsDb: WorkspaceDatabase | null;
+  onDocumentSaved: (row: WorkspaceRow) => void;
 }) {
   const [userPrompt, setUserPrompt] = useState("Create a romantic floral invitation with soft watercolor accents.");
-  const [style, setStyle] = useState(asText(weddingCriteria?.["invitation-style"]) ?? "Romantic")
+  const [style, setStyle] = useState(asText(weddingCriteria?.["invitation-style"]) ?? "Romantic");
   const [colours, setColours] = useState(asText(weddingCriteria?.["invitation-colours"]) ?? "Blush pink, sage green, ivory");
+  const [mode, setMode] = useState<"both" | "invitation" | "thank-you">("both");
+  const [canvasSize, setCanvasSize] = useState<"a5-portrait" | "five-by-seven" | "square-social">("a5-portrait");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [invitationText, setInvitationText] = useState("");
   const [thankYouText, setThankYouText] = useState("");
   const [palette, setPalette] = useState<string[]>([]);
   const [svgMarkup, setSvgMarkup] = useState<string>("");
+  const [creditsLeft, setCreditsLeft] = useState<number | null>(null);
   const [chatLog, setChatLog] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const coupleNames = asText(weddingCriteria?.["couple-names"]) ?? "Couple Names";
   const weddingDate = asText(weddingCriteria?.["wedding-date"]) ?? "Wedding Date";
   const venue = asText(weddingCriteria?.["wedding-location"]) ?? "Wedding Venue";
+
+  const canvasDimensions: Record<"a5-portrait" | "five-by-seven" | "square-social", { width: number; height: number; label: string }> = {
+    "a5-portrait": { width: 1200, height: 1800, label: "A5 Portrait" },
+    "five-by-seven": { width: 1400, height: 1960, label: "5x7 Card" },
+    "square-social": { width: 1400, height: 1400, label: "Square Social" },
+  };
+  const activeSize = canvasDimensions[canvasSize];
 
   useEffect(() => {
     if (!svgMarkup) return;
@@ -1686,8 +1701,8 @@ function WeddingInvitationCanvas({
     const img = new Image();
     const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`;
     img.onload = () => {
-      canvas.width = 1200;
-      canvas.height = 1800;
+      canvas.width = activeSize.width;
+      canvas.height = activeSize.height;
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -1696,7 +1711,81 @@ function WeddingInvitationCanvas({
       setError("Generated artwork could not be rendered. Please try again.");
     };
     img.src = svgUrl;
-  }, [svgMarkup]);
+  }, [activeSize.height, activeSize.width, svgMarkup]);
+
+  async function saveGeneratedDesignToDocuments(
+    invitation: string,
+    thankYou: string,
+    svg: string,
+    generationPrompt: string,
+  ): Promise<void> {
+    if (!documentsDb) return;
+
+    const properties: Record<string, string | number | boolean | null> = {};
+    const propertyTypes: Record<string, string> = {};
+
+    const titleName = findPropertyName(documentsDb.properties, ["Title"]);
+    const typeName = findPropertyName(documentsDb.properties, ["Type"]);
+    const createdName = findPropertyName(documentsDb.properties, ["Created"]);
+    const recipientName = findPropertyName(documentsDb.properties, ["Recipient"]);
+    const summaryName = findPropertyName(documentsDb.properties, ["Summary"]);
+    const subjectName = findPropertyName(documentsDb.properties, ["Subject", "Email Subject"]);
+    const bodyName = findPropertyName(documentsDb.properties, ["Body", "Content", "Draft", "Email Body"]);
+
+    if (titleName) {
+      properties[titleName] = `${mode === "thank-you" ? "Thank You" : "Invitation"} Design - ${new Date().toLocaleDateString()}`;
+      propertyTypes[titleName] = "title";
+    }
+    if (typeName) {
+      properties[typeName] = "Invitation Design";
+      propertyTypes[typeName] = "select";
+    }
+    if (createdName) {
+      properties[createdName] = new Date().toISOString().slice(0, 10);
+      propertyTypes[createdName] = "date";
+    }
+    if (recipientName) {
+      properties[recipientName] = coupleNames;
+      propertyTypes[recipientName] = "rich_text";
+    }
+    if (subjectName) {
+      properties[subjectName] = `${mode === "thank-you" ? "Thank You Card" : "Invitation"} | ${coupleNames}`;
+      propertyTypes[subjectName] = "rich_text";
+    }
+    if (summaryName) {
+      properties[summaryName] = `Style: ${style}. Colours: ${colours}. Size: ${activeSize.label}. Prompt: ${generationPrompt}`;
+      propertyTypes[summaryName] = "rich_text";
+    }
+    if (bodyName) {
+      const lines = [
+        "Invitation copy:",
+        invitation || "",
+        "",
+        "Thank-you copy:",
+        thankYou || "",
+        "",
+        "SVG asset:",
+        svg,
+      ];
+      properties[bodyName] = lines.join("\n").trim();
+      propertyTypes[bodyName] = "rich_text";
+    }
+
+    const res = await fetch("/api/members/workspace", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        databaseId: documentsDb.notionId,
+        properties,
+        propertyTypes,
+      }),
+    });
+    const body = (await res.json().catch(() => ({}))) as { pageId?: string; error?: string };
+    if (!res.ok || !body.pageId) {
+      throw new Error(body.error ?? "Failed to auto-save generated design");
+    }
+    onDocumentSaved({ pageId: body.pageId, properties });
+  }
 
   async function generateDesign() {
     const prompt = userPrompt.trim();
@@ -1704,6 +1793,7 @@ function WeddingInvitationCanvas({
 
     setGenerating(true);
     setError(null);
+    setSuccess(null);
     setChatLog((prev) => [...prev, { role: "user", content: prompt }]);
 
     try {
@@ -1714,6 +1804,8 @@ function WeddingInvitationCanvas({
           prompt,
           style,
           colours,
+          mode,
+          canvasSize,
           coupleNames,
           weddingDate,
           venue,
@@ -1726,21 +1818,31 @@ function WeddingInvitationCanvas({
         thankYouText?: string;
         colorPalette?: string[];
         svg?: string;
+        credits?: number | null;
       };
 
       if (!res.ok) {
         throw new Error(data.error ?? "Failed to generate invitation design");
       }
 
-      setInvitationText(data.invitationText ?? "");
-      setThankYouText(data.thankYouText ?? "");
+      const nextInvitation = data.invitationText ?? "";
+      const nextThankYou = data.thankYouText ?? "";
+      const nextSvg = data.svg ?? "";
+
+      setInvitationText(nextInvitation);
+      setThankYouText(nextThankYou);
       setPalette(Array.isArray(data.colorPalette) ? data.colorPalette : []);
-      setSvgMarkup(data.svg ?? "");
+      setSvgMarkup(nextSvg);
+      setCreditsLeft(typeof data.credits === "number" ? data.credits : null);
+
+      await saveGeneratedDesignToDocuments(nextInvitation, nextThankYou, nextSvg, prompt);
+      setSuccess("Design generated and saved to Documents.");
+
       setChatLog((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "Design generated. You can now export the canvas as an image.",
+          content: "Design generated and saved. You can now export the canvas as an image.",
         },
       ]);
     } catch (err) {
@@ -1775,10 +1877,30 @@ function WeddingInvitationCanvas({
       >
         <div style={{ padding: "12px 14px", borderBottom: `1px solid ${N_BORDER}`, background: "#fff7fb" }}>
           <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#9d174d" }}>Invitation Assistant</h3>
-          <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>Describe the look and Claude will generate copy and design.</p>
+          <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>Describe the look and Claude will generate copy and design. Cost: 5 credits.</p>
         </div>
 
         <div style={{ padding: "12px 14px", display: "grid", gap: "8px", borderBottom: `1px solid ${N_BORDER}` }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <select
+              value={mode}
+              onChange={(e) => setMode(e.target.value as "both" | "invitation" | "thank-you")}
+              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}
+            >
+              <option value="both">Invitation + Thank You</option>
+              <option value="invitation">Invitation only</option>
+              <option value="thank-you">Thank You only</option>
+            </select>
+            <select
+              value={canvasSize}
+              onChange={(e) => setCanvasSize(e.target.value as "a5-portrait" | "five-by-seven" | "square-social")}
+              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}
+            >
+              <option value="a5-portrait">A5 Portrait</option>
+              <option value="five-by-seven">5x7 Card</option>
+              <option value="square-social">Square Social</option>
+            </select>
+          </div>
           <input
             value={style}
             onChange={(e) => setStyle(e.target.value)}
@@ -1824,6 +1946,11 @@ function WeddingInvitationCanvas({
         </div>
 
         <div style={{ padding: "12px 14px", overflowY: "auto", display: "grid", gap: "6px", flex: 1 }}>
+          {creditsLeft !== null && (
+            <p style={{ margin: 0, fontSize: "12px", color: "#166534", fontWeight: 600 }}>
+              Credits remaining: {creditsLeft}
+            </p>
+          )}
           {chatLog.length === 0 ? (
             <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>No prompts yet.</p>
           ) : (
@@ -1844,6 +1971,8 @@ function WeddingInvitationCanvas({
             ))
           )}
           {error && <p style={{ margin: 0, color: "rgb(220,38,38)", fontSize: "12px" }}>{error}</p>}
+          {success && <p style={{ margin: 0, color: "rgb(21,128,61)", fontSize: "12px" }}>{success}</p>}
+          {!documentsDb && <p style={{ margin: 0, color: N_MUTED, fontSize: "12px" }}>Documents database not available, so auto-save is disabled.</p>}
         </div>
       </section>
 
@@ -1889,8 +2018,8 @@ function WeddingInvitationCanvas({
           <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "8px", background: "#f8fafc", display: "flex", justifyContent: "center", padding: "10px" }}>
             <canvas
               ref={canvasRef}
-              width={1200}
-              height={1800}
+              width={activeSize.width}
+              height={activeSize.height}
               style={{ width: "100%", maxWidth: "460px", height: "auto", borderRadius: "4px", background: "white" }}
             />
           </div>
@@ -2510,7 +2639,14 @@ export default function WorkspacePage() {
           </div>
         ) : activeTab === INVITATION_TAB_ID ? (
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-            <WeddingInvitationCanvas weddingCriteria={weddingCriteria} />
+            <WeddingInvitationCanvas
+              weddingCriteria={weddingCriteria}
+              documentsDb={documentsDb}
+              onDocumentSaved={(row) => {
+                if (!documentsDb) return;
+                handleRowAdded(documentsDb.notionId, row);
+              }}
+            />
           </div>
         ) : !activeDbDisplay ? null : (
           <>
