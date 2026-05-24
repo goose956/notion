@@ -194,6 +194,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
 
   const roomRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<{ tableId: string; offsetX: number; offsetY: number } | null>(null);
+  const loadedStorageKeyRef = useRef<string | null>(null);
 
   const guests = useMemo<SeatingGuest[]>(() => {
     if (!guestsDb) return [];
@@ -205,9 +206,13 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
     ? findPropertyName(guestsDb.properties, ["Table", "Table Number", "Table Assignment"])
     : null;
 
-  // Load tables from localStorage
+  // Load tables from localStorage — only when the storageKey changes (different database),
+  // NOT when guests changes. Including guests as a dep would reload from localStorage on every
+  // parent re-render, clobbering in-progress edits before the persistence effect can save them.
   useEffect(() => {
     if (!storageKey) return;
+    if (loadedStorageKeyRef.current === storageKey) return; // already loaded for this key
+    loadedStorageKeyRef.current = storageKey;
     try {
       const raw = window.localStorage.getItem(storageKey);
       if (!raw) {
@@ -232,7 +237,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
           const seatCount = Number.isFinite(t.seats) ? Math.max(1, Math.round(t.seats)) : 8;
           const initial = Array.isArray(t.guestIds)
             ? t.guestIds
-                .map((id) => (typeof id === "string" && guests.some((g) => g.id === id) ? id : null))
+                .map((id) => (typeof id === "string" ? id : null))
                 .slice(0, seatCount)
             : [];
           while (initial.length < seatCount) initial.push(null);
@@ -256,7 +261,8 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       setZoom(100);
       setSnapToGrid(true);
     }
-  }, [storageKey, guests]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
 
   // Persist tables to localStorage
   useEffect(() => {
