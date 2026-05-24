@@ -6,6 +6,7 @@ import { signIn } from "next-auth/react";
 import { Suspense } from "react";
 
 const WEDDING_QUESTIONS = [
+  { id: "wedding-country", label: "Country", type: "select", required: true, options: ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)"] },
   { id: "wedding-date", label: "Wedding date or timeframe", type: "text", required: true, placeholder: "e.g. 14 June 2026 or Summer 2026" },
   { id: "wedding-location", label: "Wedding location", type: "text", required: true, placeholder: "e.g. Cotswolds, Edinburgh, Bristol" },
   { id: "guest-count", label: "Guest count", type: "number", required: true, placeholder: "e.g. 80" },
@@ -15,6 +16,24 @@ const WEDDING_QUESTIONS = [
 ] as const;
 
 type WeddingQuestionId = typeof WEDDING_QUESTIONS[number]["id"];
+
+function getCurrencyCodeForCountry(country: string | undefined): string {
+  switch (country) {
+    case "United States":
+      return "USD";
+    case "Canada":
+      return "CAD";
+    case "Australia":
+      return "AUD";
+    case "New Zealand":
+      return "NZD";
+    case "Europe (EUR)":
+      return "EUR";
+    case "United Kingdom":
+    default:
+      return "GBP";
+  }
+}
 
 function SignupForm() {
   const router = useRouter();
@@ -31,6 +50,7 @@ function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [showWeddingPopup, setShowWeddingPopup] = useState(false);
   const [weddingAnswers, setWeddingAnswers] = useState<Record<WeddingQuestionId, string | string[]>>({
+    "wedding-country": "United Kingdom",
     "wedding-date": "",
     "wedding-location": "",
     "guest-count": "",
@@ -59,6 +79,11 @@ function SignupForm() {
         }
         if (typeof value === "string" && value.trim() === "") continue;
         onboardingAnswers[key] = key === "guest-count" || key === "total-budget" ? Number(value) || value : value;
+      }
+
+      const selectedCountry = onboardingAnswers["wedding-country"];
+      if (typeof selectedCountry === "string" && selectedCountry.trim().length > 0) {
+        onboardingAnswers["currency-code"] = getCurrencyCodeForCountry(selectedCountry);
       }
 
       const res = await fetch("/api/signup", {

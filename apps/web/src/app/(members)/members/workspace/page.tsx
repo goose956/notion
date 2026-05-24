@@ -792,11 +792,18 @@ function asNumber(value: unknown): number | null {
   return null;
 }
 
-function formatCurrency(value: number | null): string {
+function getCurrencyCode(criteria: Record<string, unknown> | null): string {
+  const fromCriteria = asText(criteria?.["currency-code"])?.toUpperCase();
+  if (!fromCriteria) return "GBP";
+  if (/^[A-Z]{3}$/.test(fromCriteria)) return fromCriteria;
+  return "GBP";
+}
+
+function formatCurrency(value: number | null, currencyCode: string): string {
   if (value === null || !Number.isFinite(value)) return "Not set";
   return new Intl.NumberFormat(undefined, {
     style: "currency",
-    currency: "GBP",
+    currency: currencyCode,
     maximumFractionDigits: 0,
   }).format(value);
 }
@@ -852,6 +859,7 @@ function WeddingWorkspaceDashboard({
   const totalBudget = asNumber(weddingCriteria?.["total-budget"]);
   const savedCostPerGuest = asNumber(weddingCriteria?.["cost-per-guest"]);
   const costPerGuest = savedCostPerGuest ?? 100;
+  const currencyCode = getCurrencyCode(weddingCriteria);
   const countdownMode = asText(weddingCriteria?.["countdown-mode"]);
   const manualCountdownDays = asNumber(weddingCriteria?.["countdown-days"]);
 
@@ -1192,18 +1200,18 @@ function WeddingWorkspaceDashboard({
             )}
           </div>
 
-          <p style={{ margin: "0 0 1px", fontSize: "30px", fontWeight: 800, color: N_FG, letterSpacing: "-0.02em" }}>{formatCurrency(totalBudget)}</p>
+          <p style={{ margin: "0 0 1px", fontSize: "30px", fontWeight: 800, color: N_FG, letterSpacing: "-0.02em" }}>{formatCurrency(totalBudget, currencyCode)}</p>
           <p style={{ margin: "0 0 12px", fontSize: "10px", color: "#9d174d88", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Total budget</p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "12px" }}>
             <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(190,24,93,0.1)" }}>
               <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Spent</p>
-              <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "#be185d" }}>{formatCurrency(totalSpent)}</p>
+              <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "#be185d" }}>{formatCurrency(totalSpent, currencyCode)}</p>
             </div>
             <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(21,128,61,0.12)" }}>
               <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Remaining</p>
               <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: remainingBudget !== null && remainingBudget < 0 ? "rgb(220,38,38)" : "#15803d" }}>
-                {remainingBudget === null ? "—" : formatCurrency(remainingBudget)}
+                {remainingBudget === null ? "—" : formatCurrency(remainingBudget, currencyCode)}
               </p>
             </div>
           </div>
@@ -1236,10 +1244,10 @@ function WeddingWorkspaceDashboard({
           <div style={{ background: "rgba(55,53,47,0.04)", borderRadius: "10px", padding: "10px 13px", marginBottom: "12px", border: `1px solid ${N_BORDER}` }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: "5px" }}>
               <span style={{ fontSize: "12px", color: N_SUBTLE, fontWeight: 600 }}>Per guest</span>
-              <span style={{ fontSize: "22px", fontWeight: 800, color: N_FG, letterSpacing: "-0.02em" }}>{formatCurrency(costPerGuest)}</span>
+              <span style={{ fontSize: "22px", fontWeight: 800, color: N_FG, letterSpacing: "-0.02em" }}>{formatCurrency(costPerGuest, currencyCode)}</span>
             </div>
             <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
-              {targetGuests} guests × {formatCurrency(costPerGuest)} = <strong style={{ color: N_FG }}>{formatCurrency(guestSpend)}</strong>
+              {targetGuests} guests × {formatCurrency(costPerGuest, currencyCode)} = <strong style={{ color: N_FG }}>{formatCurrency(guestSpend, currencyCode)}</strong>
             </p>
           </div>
 
@@ -1260,11 +1268,11 @@ function WeddingWorkspaceDashboard({
             <div style={{ marginTop: "7px", padding: "9px 11px", borderRadius: "9px", background: scenarioDelta > 0 ? "#fff0f5" : scenarioDelta < 0 ? "#f0fdf4" : "rgba(55,53,47,0.04)", border: `1px solid ${scenarioDelta > 0 ? "#fecdd3" : scenarioDelta < 0 ? "#bbf7d0" : N_BORDER}` }}>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
                 <span style={{ fontSize: "12px", color: N_SUBTLE }}>Projected spend</span>
-                <span style={{ fontSize: "16px", fontWeight: 800, color: N_FG }}>{formatCurrency(scenarioSpend)}</span>
+                <span style={{ fontSize: "16px", fontWeight: 800, color: N_FG }}>{formatCurrency(scenarioSpend, currencyCode)}</span>
               </div>
               {scenarioDelta !== 0 && (
                 <p style={{ margin: "3px 0 0", fontSize: "11px", fontWeight: 700, color: scenarioDelta > 0 ? "#be185d" : "#15803d" }}>
-                  {scenarioDelta > 0 ? "▲" : "▼"} {formatCurrency(Math.abs(scenarioDelta))} {scenarioDelta > 0 ? "more" : "less"} than current plan
+                  {scenarioDelta > 0 ? "▲" : "▼"} {formatCurrency(Math.abs(scenarioDelta), currencyCode)} {scenarioDelta > 0 ? "more" : "less"} than current plan
                 </p>
               )}
             </div>
