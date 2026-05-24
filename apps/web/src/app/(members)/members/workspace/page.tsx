@@ -881,13 +881,28 @@ function WeddingWorkspaceDashboard({
   const budgetActualFieldName = budgetDb
     ? findPropertyName(budgetDb.properties, ["Actual Cost", "Actual", "Spent", "Total"])
     : null;
-  const budgetActualSpend = budgetDb && budgetActualFieldName
+  const budgetEstimatedFieldName = budgetDb
+    ? findPropertyName(budgetDb.properties, ["Estimated Cost", "Estimated"])
+    : null;
+  const budgetDepositFieldName = budgetDb
+    ? findPropertyName(budgetDb.properties, ["Deposit"])
+    : null;
+  const budgetTotalsSpend = budgetDb
     ? budgetDb.rows.reduce((sum, row) => {
-        const next = asCurrencyNumber(row.properties[budgetActualFieldName]);
-        return sum + (next ?? 0);
+        const actual = budgetActualFieldName
+          ? asCurrencyNumber(row.properties[budgetActualFieldName])
+          : null;
+        const estimated = budgetEstimatedFieldName
+          ? asCurrencyNumber(row.properties[budgetEstimatedFieldName])
+          : null;
+        const deposit = budgetDepositFieldName
+          ? asCurrencyNumber(row.properties[budgetDepositFieldName])
+          : null;
+        const next = actual ?? estimated ?? deposit ?? 0;
+        return sum + next;
       }, 0)
     : 0;
-  const totalSpent = guestSpend + budgetActualSpend;
+  const totalSpent = guestSpend + budgetTotalsSpend;
   const remainingBudget = totalBudget !== null ? totalBudget - totalSpent : null;
   const budgetUsedPercent =
     totalBudget && totalBudget > 0
@@ -1233,9 +1248,9 @@ function WeddingWorkspaceDashboard({
             <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(190,24,93,0.1)" }}>
               <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Spent</p>
               <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "#be185d" }}>{formatCurrency(totalSpent, currencyCode)}</p>
-              {budgetActualSpend > 0 && (
+              {budgetTotalsSpend > 0 && (
                 <p style={{ margin: "2px 0 0", fontSize: "10px", color: N_SUBTLE }}>
-                  Includes {formatCurrency(budgetActualSpend, currencyCode)} from budget items
+                  Includes {formatCurrency(budgetTotalsSpend, currencyCode)} from budget items
                 </p>
               )}
             </div>
@@ -1704,9 +1719,12 @@ export default function WorkspacePage() {
 
   useEffect(() => {
     if (databases.length === 0) return;
-    applyRequestedSelection(databases);
+    // Only re-apply URL-based selection when URL params exist.
+    // This prevents row edits/adds from snapping back to the originally requested db.
+    if (!nicheIdParam && !dbIdParam) return;
+    applyRequestedSelection(databases, backend);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nicheIdParam, dbIdParam, databases]);
+  }, [nicheIdParam, dbIdParam, backend]);
 
   function handleRowUpdated(dbNotionId: string, pageId: string, name: string, val: string | number | boolean | null) {
     setDatabases((prev) =>
