@@ -13,7 +13,7 @@ const N_BORDER_MED = "rgba(55,53,47,0.16)";
 const N_FONT =
   'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
 
-type SeatingShape = "round" | "rectangle";
+type SeatingShape = "round" | "rectangle" | "square" | "rect-around";
 type TableColorScheme = "classic" | "sage" | "rose" | "ocean" | "sunset";
 
 type TableTheme = {
@@ -103,16 +103,40 @@ type SeatingTable = {
 
 function getTableDimensions(table: SeatingTable): { width: number; height: number } {
   if (table.shape === "rectangle") return { width: 420, height: 112 };
+  if (table.shape === "square") return { width: 180, height: 180 };
+  if (table.shape === "rect-around") return { width: 360, height: 170 };
   return { width: 170, height: 170 };
 }
 
 function getSeatPosition(table: SeatingTable, seatIndex: number): { x: number; y: number } {
   const { width, height } = getTableDimensions(table);
   const seatCount = Math.max(1, table.seats);
+
   if (table.shape === "rectangle") {
+    // Top Table: seats only along the top edge
     const x = 8 + ((width - 16) * (seatIndex + 0.5)) / seatCount;
     return { x, y: 8 };
   }
+
+  if (table.shape === "rect-around") {
+    // Rectangle with seats distributed around all 4 sides proportionally
+    const margin = 14;
+    const innerW = width - 2 * margin;
+    const innerH = height - 2 * margin;
+    const perimeter = 2 * (innerW + innerH);
+    const offset = (seatIndex / seatCount) * perimeter;
+    if (offset < innerW) {
+      return { x: margin + offset, y: margin }; // top: left → right
+    } else if (offset < innerW + innerH) {
+      return { x: width - margin, y: margin + (offset - innerW) }; // right: top → bottom
+    } else if (offset < 2 * innerW + innerH) {
+      return { x: width - margin - (offset - innerW - innerH), y: height - margin }; // bottom: right → left
+    } else {
+      return { x: margin, y: height - margin - (offset - 2 * innerW - innerH) }; // left: bottom → top
+    }
+  }
+
+  // round and square: radial positioning
   const cx = width / 2;
   const cy = height / 2;
   const radius = Math.min(width, height) / 2 - 14;
@@ -335,15 +359,20 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const tableIndex = tables.length;
+    const defaultSeats: Record<SeatingShape, number> = { rectangle: 10, round: 8, square: 4, "rect-around": 12 };
+    const defaultColor: Record<SeatingShape, TableColorScheme> = { rectangle: "ocean", round: "classic", square: "sage", "rect-around": "rose" };
+    const defaultX: Record<SeatingShape, number> = { rectangle: 360, round: 32 + (tableIndex % 5) * 145, square: 32 + (tableIndex % 5) * 200, "rect-around": 200 };
+    const defaultY: Record<SeatingShape, number> = { rectangle: 24, round: 80 + Math.floor(tableIndex / 5) * 145, square: 80 + Math.floor(tableIndex / 5) * 200, "rect-around": 240 };
     const table: SeatingTable = {
       id,
       number: nextNumber,
       name: shape === "rectangle" ? "Top Table" : `Table ${nextNumber}`,
-      seats: shape === "rectangle" ? 10 : 8,
+      seats: defaultSeats[shape],
       shape,
-      colorScheme: shape === "rectangle" ? "ocean" : "classic",
-      x: shape === "rectangle" ? 360 : 32 + (tables.length % 5) * 140,
-      y: shape === "rectangle" ? 24 : 80 + Math.floor(tables.length / 5) * 120,
+      colorScheme: defaultColor[shape],
+      x: defaultX[shape],
+      y: defaultY[shape],
       guestIds: [],
       saved: false,
     };
@@ -476,21 +505,24 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       .map((table) => {
         const label = normalizeTableLabel(table);
         const theme = getTableTheme(table.colorScheme);
-        const assignedNames = table.guestIds
-          .map((id) => (id ? guestById.get(id)?.name : undefined))
-          .filter((n): n is string => typeof n === "string");
-        if (table.shape === "rectangle") {
-          const { width, height } = getTableDimensions(table);
-          const slotCount = Math.max(1, table.seats);
-          const slots = Array.from({ length: slotCount }).map((_, idx) => {
-            const cx = 14 + ((width - 28) * (idx + 0.5)) / slotCount;
-            const assigned = assignedNames[idx];
-            return `<circle cx="${cx}" cy="12" r="6" fill="${assigned ? theme.chipBg : "#ffffff"}" stroke="${theme.chipBorder}" />`;
-          }).join("");
-          return `<g transform="translate(${table.x},${table.y})"><rect x="0" y="0" width="${width}" height="${height}" rx="10" fill="${theme.bg}" stroke="${theme.border}" />${slots}<text x="${width / 2}" y="56" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="${theme.text}" font-weight="700">Top Table #${table.number}</text><text x="${width / 2}" y="74" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" fill="${theme.mutedText}">${table.guestIds.length}/${table.seats} seated on head side</text><text x="${width / 2}" y="92" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="${theme.mutedText}">${esc(label)}</text></g>`;
+        const { width, height } = getTableDimensions(table);
+        const assignedCount = table.guestIds.filter(Boolean).length;
+        // Seat circles using the same positioning as the canvas
+        const seatCircles = Array.from({ length: Math.max(1, table.seats) }).map((_, idx) => {
+          const pos = getSeatPosition(table, idx);
+          const filled = Boolean(table.guestIds[idx]);
+          return `<circle cx="${pos.x.toFixed(1)}" cy="${pos.y.toFixed(1)}" r="6" fill="${filled ? theme.chipBg : "#ffffff"}" stroke="${theme.chipBorder}" />`;
+        }).join("");
+        const cx = width / 2;
+        const cy = height / 2;
+        if (table.shape === "round") {
+          const r = Math.min(width, height) / 2 - 2;
+          const guestLines = table.guestIds.filter(Boolean).slice(0, 4).map((id) => esc(guestById.get(id ?? "")?.name ?? "")).filter(Boolean);
+          return `<g transform="translate(${table.x},${table.y})"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${theme.bg}" stroke="${theme.border}" />${seatCircles}<text x="${cx}" y="${cy - 14}" text-anchor="middle" font-size="12" font-family="Arial, sans-serif" fill="${theme.text}" font-weight="700">#${table.number}</text><text x="${cx}" y="${cy}" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="${theme.text}">${esc(label)}</text><text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="${theme.mutedText}">${assignedCount}/${table.seats}</text>${guestLines.map((line, i) => `<text x="${cx}" y="${cy + 28 + i * 11}" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="${theme.mutedText}">${line}</text>`).join("")}</g>`;
         }
-        const guestLines = assignedNames.slice(0, 4).map((name) => esc(name));
-        return `<g transform="translate(${table.x},${table.y})"><circle cx="85" cy="85" r="80" fill="${theme.bg}" stroke="${theme.border}" /><text x="85" y="54" text-anchor="middle" font-size="12" font-family="Arial, sans-serif" fill="${theme.text}" font-weight="700">#${table.number}</text><text x="85" y="70" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" fill="${theme.text}">${esc(label)}</text><text x="85" y="85" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="${theme.mutedText}">${table.guestIds.length}/${table.seats}</text>${guestLines.map((line, idx) => `<text x="85" y="${102 + idx * 11}" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="${theme.mutedText}">${line}</text>`).join("")}</g>`;
+        // square, rect-around, rectangle (top table) — all use a rect background
+        const shapeLabel = table.shape === "rectangle" ? "Top Table" : table.shape === "rect-around" ? "Rectangle" : "Square";
+        return `<g transform="translate(${table.x},${table.y})"><rect x="0" y="0" width="${width}" height="${height}" rx="10" fill="${theme.bg}" stroke="${theme.border}" />${seatCircles}<text x="${cx}" y="${cy - 8}" text-anchor="middle" font-size="13" font-family="Arial, sans-serif" fill="${theme.text}" font-weight="700">#${table.number}</text><text x="${cx}" y="${cy + 8}" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="${theme.text}">${esc(label)}</text><text x="${cx}" y="${cy + 22}" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="${theme.mutedText}">${shapeLabel} · ${assignedCount}/${table.seats}</text></g>`;
       })
       .join("\n");
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${ROOM_WIDTH}" height="${ROOM_HEIGHT}" viewBox="0 0 ${ROOM_WIDTH} ${ROOM_HEIGHT}"><defs><pattern id="grid" width="${GRID_SIZE}" height="${GRID_SIZE}" patternUnits="userSpaceOnUse"><path d="M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}" fill="none" stroke="#ece9e3" stroke-width="1" /></pattern></defs><rect x="0" y="0" width="${ROOM_WIDTH}" height="${ROOM_HEIGHT}" fill="#faf9f7" /><rect x="0" y="0" width="${ROOM_WIDTH}" height="${ROOM_HEIGHT}" fill="url(#grid)" /><text x="16" y="24" font-size="14" font-family="Arial, sans-serif" fill="#37352f" font-weight="700">Wedding Seating Plan</text><text x="16" y="42" font-size="11" font-family="Arial, sans-serif" fill="#6b6862">Tables: ${tables.length} · Guests seated: ${assignedGuestIds.size}/${guests.length}</text>${nodes}</svg>`.trim();
@@ -600,6 +632,14 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
             style={{ padding: "7px 10px", borderRadius: "4px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: N_FG, fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}>
             <Plus size={12} /> Round Table
           </button>
+          <button type="button" onClick={() => createTable("square")}
+            style={{ padding: "7px 10px", borderRadius: "4px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: N_FG, fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <Plus size={12} /> Square Table
+          </button>
+          <button type="button" onClick={() => createTable("rect-around")}
+            style={{ padding: "7px 10px", borderRadius: "4px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: N_FG, fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <Plus size={12} /> Rectangle Table
+          </button>
           <button type="button" onClick={() => void exportAsPng()}
             style={{ padding: "7px 10px", borderRadius: "4px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: N_FG, fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px" }}>
             <Download size={12} /> Export PNG
@@ -670,7 +710,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
           >
             {tables.length === 0 && (
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: N_MUTED, fontSize: "13px" }}>
-                No tables yet. Add a Top Table or Round Table to begin.
+                No tables yet. Add a Top Table, Round Table, Square Table, or Rectangle Table to begin.
               </div>
             )}
 
@@ -713,7 +753,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                     width: `${width}px`,
                     minHeight: `${height}px`,
                     padding: "8px",
-                    borderRadius: table.shape === "round" ? "999px" : "12px",
+                    borderRadius: table.shape === "round" ? "999px" : table.shape === "square" ? "12px" : "10px",
                     border: `1px solid ${selected ? "#be185d" : theme.border}`,
                     background: theme.bg,
                     boxShadow: selected ? theme.selectedGlow : "0 4px 14px rgba(0,0,0,0.07)",
@@ -792,11 +832,16 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                           <select
                             value={table.shape}
                             onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => updateTable(table.id, (t) => ({ ...t, shape: e.target.value === "rectangle" ? "rectangle" : "round" }))}
+                            onChange={(e) => {
+                              const s = e.target.value as SeatingShape;
+                              updateTable(table.id, (t) => ({ ...t, shape: s }));
+                            }}
                             style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}
                           >
                             <option value="round">Round</option>
-                            <option value="rectangle">Rectangle</option>
+                            <option value="square">Square</option>
+                            <option value="rect-around">Rectangle (all around)</option>
+                            <option value="rectangle">Top Table (one side)</option>
                           </select>
                         </label>
                       </div>
