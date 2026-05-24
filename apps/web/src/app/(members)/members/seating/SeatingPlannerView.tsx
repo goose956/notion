@@ -144,6 +144,13 @@ function getGuestDisplayName(row: WorkspaceDatabase["rows"][number]): string {
   return "Guest";
 }
 
+function getGuestInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
+}
+
 function normalizeTableLabel(table: SeatingTable): string {
   return table.name.trim().length > 0 ? table.name.trim() : `Table ${table.number}`;
 }
@@ -360,12 +367,27 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       return stripped.map((table) => {
         if (table.id !== targetTableId) return table;
         const clampedIndex = Math.max(0, Math.min(table.seats - 1, seatIndex));
-        const next = [...table.guestIds];
-        const insertAt = Math.min(clampedIndex, next.length);
-        next.splice(insertAt, 0, guestId);
+        const next = [...table.guestIds].slice(0, table.seats);
+        if (clampedIndex < next.length) {
+          next[clampedIndex] = guestId;
+        } else {
+          next.push(guestId);
+        }
         return { ...table, guestIds: next.slice(0, table.seats) };
       });
     });
+  }
+
+  function removeGuestFromSeat(tableId: string, seatIndex: number) {
+    setTables((prev) =>
+      prev.map((table) => {
+        if (table.id !== tableId) return table;
+        if (seatIndex < 0 || seatIndex >= table.guestIds.length) return table;
+        const next = [...table.guestIds];
+        next.splice(seatIndex, 1);
+        return { ...table, guestIds: next };
+      }),
+    );
   }
 
   async function saveAssignmentsToGuestList() {
@@ -778,7 +800,12 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                                 if (!droppedGuestId) return;
                                 assignGuestToSeat(droppedGuestId, table.id, seatIdx);
                               }}
-                              title={guest ? guest.name : `Seat ${seatIdx + 1}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!guest) return;
+                                removeGuestFromSeat(table.id, seatIdx);
+                              }}
+                              title={guest ? `${guest.name} (click to remove)` : `Seat ${seatIdx + 1} (drop guest here)`}
                               style={{
                                 pointerEvents: "auto",
                                 position: "absolute",
@@ -792,12 +819,13 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                fontSize: "9px",
+                                fontSize: "8px",
                                 fontWeight: 700,
                                 color: theme.chipText,
+                                cursor: guest ? "pointer" : "copy",
                               }}
                             >
-                              {guest ? guest.name.slice(0, 1).toUpperCase() : ""}
+                              {guest ? getGuestInitials(guest.name) : ""}
                             </div>
                           );
                         })}
@@ -876,7 +904,24 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                     }}
                     title="Drag to a table, or double-click to assign to selected table"
                   >
-                    <span style={{ fontSize: "12px", color: N_FG, flex: 1 }}>{guest.name}</span>
+                    <span style={{ fontSize: "12px", color: N_FG, flex: 1, display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                      <span>{guest.name}</span>
+                      {owner && (
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#9d174d",
+                            background: "rgba(190,24,93,0.12)",
+                            border: "1px solid rgba(190,24,93,0.25)",
+                            borderRadius: "999px",
+                            padding: "1px 6px",
+                          }}
+                        >
+                          T{owner.number}
+                        </span>
+                      )}
+                    </span>
                     {owner ? (
                       <span style={{ fontSize: "10px", color: N_SUBTLE }}>@ {normalizeTableLabel(owner)}</span>
                     ) : (
