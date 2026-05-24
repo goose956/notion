@@ -215,6 +215,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
   const [success, setSuccess] = useState<string | null>(null);
   const [zoom, setZoom] = useState(100);
   const [snapToGrid, setSnapToGrid] = useState(true);
+  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
 
   const roomRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<{ tableId: string; offsetX: number; offsetY: number } | null>(null);
@@ -624,6 +625,13 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            onClick={() => setRightPanelCollapsed((prev) => !prev)}
+            style={{ padding: "7px 10px", borderRadius: "4px", border: "1px solid rgba(55,53,47,0.18)", background: "#fff", color: N_FG, fontSize: "12px", fontWeight: 600, cursor: "pointer" }}
+          >
+            {rightPanelCollapsed ? "Show Guest List" : "Hide Guest List"}
+          </button>
           <button type="button" onClick={() => createTable("rectangle")}
             style={{ padding: "7px 10px", borderRadius: "4px", border: "none", background: "linear-gradient(135deg, #6b2040, #be185d)", color: "white", fontSize: "12px", fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 16px rgba(190,24,93,0.18)" }}>
             + Top Table
@@ -693,7 +701,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       )}
 
       {/* ── Canvas + panel ───────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: rightPanelCollapsed ? "1fr" : "2fr 1fr", gap: "12px" }}>
         {/* Canvas */}
         <div style={{ position: "relative", minHeight: "600px", border: `1px dashed ${N_BORDER_MED}`, borderRadius: "6px", background: "linear-gradient(180deg, #fffdf7 0%, #f7f3ea 100%)", overflow: "auto" }}>
           <div
@@ -942,14 +950,14 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                         </strong>
                       </div>
 
-                      <div style={{ position: "absolute", left: 0, right: 0, bottom: "10px", display: "flex", justifyContent: "center", gap: "6px" }}>
+                      <div style={{ position: "absolute", right: "10px", top: "10px", display: "flex", flexDirection: "column", gap: "6px", alignItems: "stretch" }}>
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingTableId(table.id);
                           }}
-                          style={{ border: `1px solid ${N_BORDER}`, background: "white", color: N_FG, borderRadius: "4px", padding: "2px 8px", fontSize: "10px", cursor: "pointer", fontFamily: N_FONT }}
+                          style={{ border: "none", background: "rgba(37, 99, 235, 0.92)", color: "white", borderRadius: "4px", padding: "4px 8px", fontSize: "10px", fontWeight: 700, cursor: "pointer", fontFamily: N_FONT, boxShadow: "0 4px 10px rgba(37,99,235,0.22)" }}
                         >
                           Edit
                         </button>
@@ -959,7 +967,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                             e.stopPropagation();
                             deleteTable(table.id);
                           }}
-                          style={{ border: `1px solid ${N_BORDER}`, background: "white", color: N_FG, borderRadius: "4px", padding: "2px 8px", fontSize: "10px", cursor: "pointer", fontFamily: N_FONT }}
+                          style={{ border: "none", background: "rgba(55,53,47,0.88)", color: "white", borderRadius: "4px", padding: "4px 8px", fontSize: "10px", fontWeight: 700, cursor: "pointer", fontFamily: N_FONT, boxShadow: "0 4px 10px rgba(55,53,47,0.2)" }}
                         >
                           Delete
                         </button>
@@ -973,6 +981,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         </div>
 
         {/* Right panel */}
+        {!rightPanelCollapsed && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", minHeight: "600px" }}>
           <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "6px", background: "white", padding: "10px", maxHeight: "600px", overflowY: "auto" }}>
             <p style={{ margin: "0 0 8px", fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.04em" }}>
@@ -1043,6 +1052,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
