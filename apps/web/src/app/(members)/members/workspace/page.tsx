@@ -1669,6 +1669,7 @@ export default function WorkspacePage() {
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
 
   const [weddingCriteria, setWeddingCriteria] = useState<Record<string, unknown> | null>(null);
+  const lastUrlSelectionKeyRef = useRef<string>("");
 
   function applyRequestedSelection(
     nextDatabases: WorkspaceDatabase[],
@@ -1701,7 +1702,24 @@ export default function WorkspacePage() {
     }
   }
 
-  async function loadDatabases(isRefresh = false) {
+  function preserveCurrentSelection(
+    nextDatabases: WorkspaceDatabase[],
+    nextBackend: "app" | "notion",
+  ) {
+    const hasWeddingWorkspace = nextDatabases.some((d) => d.nicheId === "wedding-planner");
+    setActiveTab((prev) => {
+      if (prev === DASHBOARD_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
+      if (prev === SEATING_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
+      if (prev === DRAFT_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
+      if (prev && nextDatabases.some((d) => d.notionId === prev)) return prev;
+      if (nextBackend === "app" && hasWeddingWorkspace) return DASHBOARD_TAB_ID;
+      return nextDatabases[0]?.notionId ?? "";
+    });
+  }
+
+  async function loadDatabases(options?: { isRefresh?: boolean; selectionMode?: "initial" | "preserve" }) {
+    const isRefresh = options?.isRefresh ?? false;
+    const selectionMode = options?.selectionMode ?? "preserve";
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
@@ -1717,7 +1735,11 @@ export default function WorkspacePage() {
       // Auto-expand all niches and select first tab
       const nicheIds = [...new Set(data.databases.map((d) => d.nicheId))];
       setExpandedNiches(new Set(nicheIds));
-      applyRequestedSelection(data.databases, data.backend);
+      if (selectionMode === "initial") {
+        applyRequestedSelection(data.databases, data.backend);
+      } else {
+        preserveCurrentSelection(data.databases, data.backend);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
       setWeddingCriteria(null);
@@ -1728,22 +1750,23 @@ export default function WorkspacePage() {
   }
 
   useEffect(() => {
-    void loadDatabases();
+    void loadDatabases({ selectionMode: "initial" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (databases.length === 0) return;
-    // Only re-apply URL-based selection when URL params exist.
-    // This prevents row edits/adds from snapping back to the originally requested db.
+    const key = `${nicheIdParam ?? ""}::${dbIdParam ?? ""}`;
+    if (key === lastUrlSelectionKeyRef.current) return;
+    lastUrlSelectionKeyRef.current = key;
     if (!nicheIdParam && !dbIdParam) return;
     applyRequestedSelection(databases, backend);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nicheIdParam, dbIdParam, backend]);
+  }, [nicheIdParam, dbIdParam, databases, backend]);
 
   useEffect(() => {
     if (activeTab !== DASHBOARD_TAB_ID) return;
-    void loadDatabases(true);
+    void loadDatabases({ isRefresh: true, selectionMode: "preserve" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
@@ -1851,7 +1874,7 @@ export default function WorkspacePage() {
               Add niche
             </Link>
             <button
-              onClick={() => void loadDatabases(true)}
+              onClick={() => void loadDatabases({ isRefresh: true, selectionMode: "preserve" })}
               disabled={refreshing}
               title="Refresh"
               style={{
@@ -2115,7 +2138,7 @@ export default function WorkspacePage() {
               {error}
             </p>
             <button
-              onClick={() => void loadDatabases()}
+              onClick={() => void loadDatabases({ selectionMode: "preserve" })}
               style={{
                 padding: "6px 16px",
                 borderRadius: "4px",
