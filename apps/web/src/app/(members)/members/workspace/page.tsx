@@ -987,122 +987,105 @@ function WeddingWorkspaceDashboard({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+
+      {/* ── HERO BANNER ──────────────────────────────────────────────────── */}
       <section
         style={{
-          border: `1px solid ${N_BORDER_MED}`,
-          borderRadius: "14px",
-          background: "linear-gradient(140deg, #fff9f0 0%, #eef8ff 44%, #f4fbf3 100%)",
-          padding: "18px",
-          boxShadow: "0 10px 26px rgba(28,35,50,0.08)",
+          borderRadius: "16px",
+          background: "linear-gradient(135deg, #2a0f1e 0%, #6b2040 42%, #a85470 72%, #d4957a 100%)",
+          overflow: "hidden",
+          boxShadow: "0 12px 40px rgba(107,32,64,0.28), 0 2px 8px rgba(0,0,0,0.10)",
           display: "grid",
-          gridTemplateColumns: "1.2fr 1fr",
-          gap: "12px",
+          gridTemplateColumns: "1fr auto",
         }}
       >
-        <div>
-          <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: N_SUBTLE }}>
-            Wedding Dashboard
+        {/* Names + Venue */}
+        <div style={{ padding: "22px 26px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <p style={{ margin: "0 0 10px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
+            ✦ Wedding Dashboard
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: "8px 0 6px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
             {editingField === "couple" ? (
               <input
                 value={coupleNamesInput}
                 onChange={(e) => setCoupleNamesInput(e.target.value)}
                 placeholder="e.g. Olivia & James"
-                style={{ height: "36px", padding: "0 10px", borderRadius: "7px", border: `1px solid ${N_BORDER_MED}`, fontSize: "20px", fontWeight: 700, fontFamily: N_FONT, color: N_FG, minWidth: "260px" }}
+                style={{ height: "40px", padding: "0 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.15)", fontSize: "22px", fontWeight: 700, fontFamily: N_FONT, color: "white", minWidth: "260px" }}
               />
             ) : (
-              <h2 style={{ margin: 0, fontSize: "24px", color: N_FG }}>
+              <h2 style={{ margin: 0, fontSize: "26px", fontWeight: 800, color: "white", textShadow: "0 1px 6px rgba(0,0,0,0.25)" }}>
                 {coupleNames ?? "Your Wedding Plan"}
               </h2>
             )}
             {editingField === "couple" ? (
               <>
-                <button type="button" onClick={() => void commitInlineEdit("couple")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_FG }}><Check size={14} /></button>
-                <button type="button" onClick={() => cancelInlineEdit("couple")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><X size={14} /></button>
+                <button type="button" onClick={() => void commitInlineEdit("couple")} disabled={savingDetails} style={{ border: "1px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.18)", borderRadius: "6px", cursor: "pointer", padding: "4px 7px", color: "white" }}><Check size={13} /></button>
+                <button type="button" onClick={() => cancelInlineEdit("couple")} disabled={savingDetails} style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.08)", borderRadius: "6px", cursor: "pointer", padding: "4px 7px", color: "rgba(255,255,255,0.6)" }}><X size={13} /></button>
               </>
             ) : (
-              <button type="button" onClick={() => setEditingField("couple")} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><Pencil size={13} /></button>
+              <button type="button" onClick={() => setEditingField("couple")} style={{ border: "1px solid rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.1)", borderRadius: "6px", cursor: "pointer", padding: "4px 7px", color: "rgba(255,255,255,0.65)" }}><Pencil size={12} /></button>
             )}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-            <span style={{ fontSize: "12px", color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>Venue</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+            <MapPin size={13} style={{ color: "rgba(255,255,255,0.55)", flexShrink: 0 }} />
             {editingField === "venue" ? (
               <>
                 <input
                   value={venueInput}
                   onChange={(e) => setVenueInput(e.target.value)}
                   placeholder="e.g. The Barn, Cotswolds"
-                  style={{ height: "30px", padding: "0 8px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, color: N_FG, minWidth: "240px" }}
+                  style={{ height: "28px", padding: "0 8px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.15)", fontSize: "13px", fontFamily: N_FONT, color: "white", minWidth: "220px" }}
                 />
-                <button type="button" onClick={() => void commitInlineEdit("venue")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_FG }}><Check size={14} /></button>
-                <button type="button" onClick={() => cancelInlineEdit("venue")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><X size={14} /></button>
+                <button type="button" onClick={() => void commitInlineEdit("venue")} disabled={savingDetails} style={{ border: "1px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.18)", borderRadius: "6px", cursor: "pointer", padding: "3px 6px", color: "white" }}><Check size={12} /></button>
+                <button type="button" onClick={() => cancelInlineEdit("venue")} disabled={savingDetails} style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.08)", borderRadius: "6px", cursor: "pointer", padding: "3px 6px", color: "rgba(255,255,255,0.6)" }}><X size={12} /></button>
               </>
             ) : (
               <>
-                <span style={{ fontSize: "14px", color: N_FG, fontWeight: 600 }}>{venue ?? "Not set yet"}</span>
-                <button type="button" onClick={() => setEditingField("venue")} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><Pencil size={13} /></button>
+                <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.82)", fontWeight: 500 }}>{venue ?? "Add venue →"}</span>
+                <button type="button" onClick={() => setEditingField("venue")} style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", borderRadius: "6px", cursor: "pointer", padding: "3px 6px", color: "rgba(255,255,255,0.6)" }}><Pencil size={11} /></button>
               </>
             )}
           </div>
 
-          {detailsError && <span style={{ fontSize: "12px", color: "rgb(220,38,38)" }}>{detailsError}</span>}
+          {detailsError && <span style={{ fontSize: "12px", color: "#ffb3b3", marginTop: "8px" }}>{detailsError}</span>}
         </div>
 
-        <div
-          style={{
-            borderRadius: "12px",
-            background: "rgba(255,255,255,0.75)",
-            border: `1px solid ${N_BORDER}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "14px",
-            padding: "10px",
-          }}
-        >
+        {/* Countdown ring */}
+        <div style={{ padding: "18px 24px", display: "flex", alignItems: "center", gap: "16px", borderLeft: "1px solid rgba(255,255,255,0.10)" }}>
           <div
             style={{
-              width: "122px",
-              height: "122px",
+              width: "108px",
+              height: "108px",
               borderRadius: "999px",
-              background: `conic-gradient(${urgencyColor} ${countdownPercent * 3.6}deg, rgba(55,53,47,0.12) 0deg)`,
+              background: `conic-gradient(${urgencyColor} ${countdownPercent * 3.6}deg, rgba(255,255,255,0.14) 0deg)`,
               display: "grid",
               placeItems: "center",
-              position: "relative",
+              boxShadow: `0 0 22px ${urgencyColor}66`,
+              flexShrink: 0,
             }}
           >
             <div
               style={{
-                width: "92px",
-                height: "92px",
+                width: "80px",
+                height: "80px",
                 borderRadius: "999px",
-                background: "white",
-                border: `1px solid ${N_BORDER}`,
+                background: "rgba(30,8,20,0.85)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <span style={{ fontSize: "24px", fontWeight: 800, color: urgencyColor, lineHeight: 1 }}>
-                {countdownDays ?? "-"}
-              </span>
-              <span style={{ fontSize: "10px", color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                days
-              </span>
+              <span style={{ fontSize: "26px", fontWeight: 800, color: urgencyColor, lineHeight: 1 }}>{countdownDays ?? "—"}</span>
+              <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>days</span>
             </div>
           </div>
 
-          <div>
-            <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: N_SUBTLE }}>
-              Countdown
-            </p>
-            <p style={{ margin: "6px 0 4px", fontSize: "18px", fontWeight: 700, color: N_FG }}>
-              {countdownLabel}
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <div style={{ minWidth: "130px" }}>
+            <p style={{ margin: "0 0 4px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>Countdown</p>
+            <p style={{ margin: "0 0 8px", fontSize: "15px", fontWeight: 700, color: "white", lineHeight: 1.3 }}>{countdownLabel}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
               {editingField === "days" ? (
                 <>
                   <input
@@ -1111,19 +1094,19 @@ function WeddingWorkspaceDashboard({
                     value={daysToGoInput}
                     onChange={(e) => setDaysToGoInput(e.target.value)}
                     placeholder="Days"
-                    style={{ height: "28px", width: "90px", padding: "0 8px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }}
+                    style={{ height: "26px", width: "80px", padding: "0 7px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.15)", fontSize: "12px", fontFamily: N_FONT, color: "white" }}
                   />
-                  <button type="button" onClick={() => void commitInlineEdit("days")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_FG }}><Check size={14} /></button>
-                  <button type="button" onClick={() => cancelInlineEdit("days")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><X size={14} /></button>
+                  <button type="button" onClick={() => void commitInlineEdit("days")} disabled={savingDetails} style={{ border: "1px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.18)", borderRadius: "6px", cursor: "pointer", padding: "3px 5px", color: "white" }}><Check size={12} /></button>
+                  <button type="button" onClick={() => cancelInlineEdit("days")} disabled={savingDetails} style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.08)", borderRadius: "6px", cursor: "pointer", padding: "3px 5px", color: "rgba(255,255,255,0.6)" }}><X size={12} /></button>
                 </>
               ) : (
                 <>
-                  <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
+                  <p style={{ margin: 0, fontSize: "11px", color: "rgba(255,255,255,0.52)", lineHeight: 1.3 }}>
                     {weddingDate
-                      ? `Big day: ${weddingDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`
-                      : "Add a date in setup to activate countdown tracking."}
+                      ? weddingDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
+                      : "Set a wedding date"}
                   </p>
-                  <button type="button" onClick={() => setEditingField("days")} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "4px", color: N_SUBTLE }}><Pencil size={13} /></button>
+                  <button type="button" onClick={() => setEditingField("days")} style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", borderRadius: "6px", cursor: "pointer", padding: "3px 5px", color: "rgba(255,255,255,0.6)" }}><Pencil size={11} /></button>
                 </>
               )}
             </div>
@@ -1131,200 +1114,194 @@ function WeddingWorkspaceDashboard({
         </div>
       </section>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px" }}>
-        <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
-            <MapPin size={14} />
-            <span style={{ fontSize: "12px", fontWeight: 600 }}>Location</span>
+      {/* ── STAT CARDS ───────────────────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: "10px" }}>
+
+        {/* Location */}
+        <div style={{ borderRadius: "12px", background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", border: "1px solid #bbf7d0", padding: "14px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#16a34a22", marginBottom: "9px" }}>
+            <MapPin size={15} style={{ color: "#16a34a" }} />
           </div>
-          <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
-            {venue ?? "Not set yet"}
-          </p>
+          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#166534" }}>Location</p>
+          <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>{venue ?? "Not set yet"}</p>
         </div>
 
-        <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
-            <Users size={14} />
-            <span style={{ fontSize: "12px", fontWeight: 600 }}>Guest Plan</span>
+        {/* Guest Plan */}
+        <div style={{ borderRadius: "12px", background: "linear-gradient(135deg, #fff0f5 0%, #ffe4ed 100%)", border: "1px solid #fecdd3", padding: "14px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#be185d22", marginBottom: "9px" }}>
+              <Users size={15} style={{ color: "#be185d" }} />
+            </div>
             {editingField === "guest" ? (
-              <>
-                <input
-                  type="number"
-                  min={0}
-                  value={guestCountInput}
-                  onChange={(e) => setGuestCountInput(e.target.value)}
-                  style={{ height: "24px", width: "80px", marginLeft: "auto", padding: "0 6px", borderRadius: "5px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }}
-                />
-                <button type="button" onClick={() => void commitInlineEdit("guest")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_FG }}><Check size={13} /></button>
-                <button type="button" onClick={() => cancelInlineEdit("guest")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><X size={13} /></button>
-              </>
+              <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+                <input type="number" min={0} value={guestCountInput} onChange={(e) => setGuestCountInput(e.target.value)} style={{ height: "24px", width: "68px", padding: "0 6px", borderRadius: "5px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }} />
+                <button type="button" onClick={() => void commitInlineEdit("guest")} disabled={savingDetails} style={{ border: "none", background: "#be185d22", borderRadius: "5px", cursor: "pointer", padding: "3px 5px", color: "#be185d" }}><Check size={11} /></button>
+                <button type="button" onClick={() => cancelInlineEdit("guest")} disabled={savingDetails} style={{ border: "none", background: "transparent", borderRadius: "5px", cursor: "pointer", padding: "3px", color: N_SUBTLE }}><X size={11} /></button>
+              </div>
             ) : (
-              <button type="button" onClick={() => setEditingField("guest")} style={{ marginLeft: "auto", border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><Pencil size={12} /></button>
+              <button type="button" onClick={() => setEditingField("guest")} style={{ border: "none", background: "#be185d18", borderRadius: "6px", cursor: "pointer", padding: "3px 7px", color: "#be185d", fontSize: "11px", display: "flex", alignItems: "center", gap: "3px" }}><Pencil size={10} /></button>
             )}
           </div>
-          <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
-            {targetGuests > 0 ? `${targetGuests} planned` : "No target set"}
-          </p>
-          <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>
-            {trackedGuests} currently in your guest list
-          </p>
+          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#9d174d" }}>Guest Plan</p>
+          <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>{targetGuests > 0 ? `${targetGuests} planned` : "No target set"}</p>
+          <p style={{ margin: "3px 0 0", fontSize: "12px", color: "#be185d99" }}>{trackedGuests} in guest list</p>
         </div>
 
-        <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
-            <CalendarDays size={14} />
-            <span style={{ fontSize: "12px", fontWeight: 600 }}>Planning Timeline</span>
+        {/* Planning Timeline */}
+        <div style={{ borderRadius: "12px", background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", border: "1px solid #c4b5fd", padding: "14px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#7c3aed22", marginBottom: "9px" }}>
+            <CalendarDays size={15} style={{ color: "#7c3aed" }} />
           </div>
-          <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
-            {timelineDb?.rows.length ?? 0} milestones
-          </p>
+          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#5b21b6" }}>Planning Timeline</p>
+          <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>{timelineDb?.rows.length ?? 0} milestones</p>
         </div>
 
-        <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
-            <FileText size={14} />
-            <span style={{ fontSize: "12px", fontWeight: 600 }}>Draft Letters</span>
+        {/* Draft Letters */}
+        <div style={{ borderRadius: "12px", background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)", border: "1px solid #fde68a", padding: "14px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#d9770622", marginBottom: "9px" }}>
+            <FileText size={15} style={{ color: "#d97706" }} />
           </div>
-          <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
-            {documentsDb?.rows.length ?? 0} saved drafts
-          </p>
+          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#92400e" }}>Draft Letters</p>
+          <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>{documentsDb?.rows.length ?? 0} saved drafts</p>
         </div>
+      </div>
 
-        <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
-            <span style={{ fontSize: "13px", fontWeight: 700 }}>£</span>
-            <span style={{ fontSize: "12px", fontWeight: 600 }}>Budget</span>
+      {/* ── BUDGET PANEL ─────────────────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+
+        {/* Budget overview */}
+        <div style={{ borderRadius: "12px", background: "linear-gradient(135deg, #fff7f9 0%, #ffe4ed 100%)", border: "1px solid #fecdd3", padding: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#be185d22" }}>
+                <span style={{ fontSize: "15px", fontWeight: 800, color: "#be185d" }}>£</span>
+              </div>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "#9d174d" }}>Budget Overview</span>
+            </div>
             {editingField === "budget" ? (
-              <>
-                <input
-                  type="number"
-                  min={0}
-                  value={budgetInput}
-                  onChange={(e) => setBudgetInput(e.target.value)}
-                  style={{ height: "24px", width: "96px", marginLeft: "auto", padding: "0 6px", borderRadius: "5px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }}
-                />
-                <button type="button" onClick={() => void commitInlineEdit("budget")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_FG }}><Check size={13} /></button>
-                <button type="button" onClick={() => cancelInlineEdit("budget")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><X size={13} /></button>
-              </>
+              <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+                <input type="number" min={0} value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} style={{ height: "26px", width: "96px", padding: "0 7px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }} />
+                <button type="button" onClick={() => void commitInlineEdit("budget")} disabled={savingDetails} style={{ border: "none", background: "#be185d22", borderRadius: "6px", cursor: "pointer", padding: "3px 5px", color: "#be185d" }}><Check size={12} /></button>
+                <button type="button" onClick={() => cancelInlineEdit("budget")} disabled={savingDetails} style={{ border: "none", background: "transparent", borderRadius: "6px", cursor: "pointer", padding: "3px", color: N_SUBTLE }}><X size={12} /></button>
+              </div>
             ) : (
-              <button type="button" onClick={() => setEditingField("budget")} style={{ marginLeft: "auto", border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><Pencil size={12} /></button>
+              <button type="button" onClick={() => setEditingField("budget")} style={{ border: "none", background: "#be185d18", borderRadius: "6px", cursor: "pointer", padding: "3px 9px", color: "#be185d", fontSize: "11px", display: "flex", alignItems: "center", gap: "3px" }}><Pencil size={10} /> Edit</button>
             )}
           </div>
-          <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
-            {formatCurrency(totalBudget)}
-          </p>
-          <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>
-            Spent: {formatCurrency(totalSpent)}
-          </p>
-          <p style={{ margin: "2px 0 0", fontSize: "12px", color: remainingBudget !== null && remainingBudget < 0 ? "rgb(220,38,38)" : N_MUTED }}>
-            Remaining: {remainingBudget === null ? "Not set" : formatCurrency(remainingBudget)}
-          </p>
+
+          <p style={{ margin: "0 0 1px", fontSize: "30px", fontWeight: 800, color: N_FG, letterSpacing: "-0.02em" }}>{formatCurrency(totalBudget)}</p>
+          <p style={{ margin: "0 0 12px", fontSize: "10px", color: "#9d174d88", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Total budget</p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "12px" }}>
+            <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(190,24,93,0.1)" }}>
+              <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Spent</p>
+              <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "#be185d" }}>{formatCurrency(totalSpent)}</p>
+            </div>
+            <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(21,128,61,0.12)" }}>
+              <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Remaining</p>
+              <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: remainingBudget !== null && remainingBudget < 0 ? "rgb(220,38,38)" : "#15803d" }}>
+                {remainingBudget === null ? "—" : formatCurrency(remainingBudget)}
+              </p>
+            </div>
+          </div>
+
           {totalBudget !== null && totalBudget > 0 && (
-            <div style={{ marginTop: "8px" }}>
-              <div style={{ height: "7px", borderRadius: "999px", background: "rgba(55,53,47,0.1)", overflow: "hidden" }}>
-                <div
-                  style={{
-                    height: "100%",
-                    width: `${budgetUsedPercent}%`,
-                    background: budgetUsedPercent >= 100 ? "rgb(220,38,38)" : "linear-gradient(90deg, rgb(35,131,226), rgb(15,123,108))",
-                  }}
-                />
+            <>
+              <div style={{ height: "9px", borderRadius: "999px", background: "rgba(190,24,93,0.1)", overflow: "hidden", marginBottom: "5px" }}>
+                <div style={{ height: "100%", width: `${budgetUsedPercent}%`, background: budgetUsedPercent >= 100 ? "rgb(220,38,38)" : "linear-gradient(90deg, #be185d, #e11d74)", borderRadius: "999px", transition: "width 0.4s ease" }} />
               </div>
-              <p style={{ margin: "4px 0 0", fontSize: "11px", color: N_SUBTLE }}>
-                {budgetUsedPercent}% used
-              </p>
-            </div>
+              <p style={{ margin: 0, fontSize: "11px", color: "#9d174d", fontWeight: 600 }}>{budgetUsedPercent}% of budget used</p>
+            </>
           )}
+        </div>
 
-          <div style={{ marginTop: "10px", paddingTop: "8px", borderTop: `1px dashed ${N_BORDER}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "5px", color: N_SUBTLE }}>
-              <span style={{ fontSize: "12px", fontWeight: 600 }}>Cost / Guest</span>
-              {editingField === "costPerGuest" ? (
-                <>
-                  <input
-                    type="number"
-                    min={0}
-                    value={costPerGuestInput}
-                    onChange={(e) => setCostPerGuestInput(e.target.value)}
-                    style={{ height: "24px", width: "86px", marginLeft: "auto", padding: "0 6px", borderRadius: "5px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }}
-                  />
-                  <button type="button" onClick={() => void commitInlineEdit("costPerGuest")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_FG }}><Check size={13} /></button>
-                  <button type="button" onClick={() => cancelInlineEdit("costPerGuest")} disabled={savingDetails} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><X size={13} /></button>
-                </>
-              ) : (
-                <>
-                  <span style={{ marginLeft: "auto", fontSize: "12px", color: N_FG, fontWeight: 600 }}>{formatCurrency(costPerGuest)}</span>
-                  <button type="button" onClick={() => setEditingField("costPerGuest")} style={{ border: "none", background: "white", borderRadius: "6px", cursor: "pointer", padding: "2px", color: N_SUBTLE }}><Pencil size={12} /></button>
-                </>
-              )}
-            </div>
-
-            <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
-              Guest spend: {targetGuests} x {formatCurrency(costPerGuest)} = {formatCurrency(guestSpend)}
-            </p>
-
-            <div style={{ marginTop: "8px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                <span style={{ fontSize: "11px", color: N_SUBTLE, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                  Guest Scenario
-                </span>
-                <span style={{ fontSize: "11px", color: N_FG, fontWeight: 600 }}>{guestScenarioCount} guests</span>
+        {/* Guest cost planner */}
+        <div style={{ borderRadius: "12px", background: "white", border: `1px solid ${N_BORDER_MED}`, padding: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: N_FG }}>Guest Cost Planner</span>
+            {editingField === "costPerGuest" ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+                <input type="number" min={0} value={costPerGuestInput} onChange={(e) => setCostPerGuestInput(e.target.value)} style={{ height: "26px", width: "76px", padding: "0 7px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }} />
+                <button type="button" onClick={() => void commitInlineEdit("costPerGuest")} disabled={savingDetails} style={{ border: "none", background: N_ACTIVE, borderRadius: "6px", cursor: "pointer", padding: "3px 5px", color: N_FG }}><Check size={12} /></button>
+                <button type="button" onClick={() => cancelInlineEdit("costPerGuest")} disabled={savingDetails} style={{ border: "none", background: "transparent", borderRadius: "6px", cursor: "pointer", padding: "3px", color: N_SUBTLE }}><X size={12} /></button>
               </div>
-              <input
-                type="range"
-                min={50}
-                max={200}
-                step={1}
-                value={guestScenarioCount}
-                onChange={(e) => setGuestScenarioCount(Number(e.target.value))}
-                style={{ width: "100%" }}
-              />
-              <p style={{ margin: "5px 0 0", fontSize: "12px", color: N_MUTED }}>
-                Projected spend: {formatCurrency(scenarioSpend)}
-                {scenarioDelta !== 0 && (
-                  <span style={{ color: scenarioDelta > 0 ? "rgb(220,38,38)" : "rgb(15,123,108)", fontWeight: 600 }}>
-                    {" "}({scenarioDelta > 0 ? "+" : ""}{formatCurrency(scenarioDelta)} vs current)
-                  </span>
-                )}
-              </p>
+            ) : (
+              <button type="button" onClick={() => setEditingField("costPerGuest")} style={{ border: "none", background: N_ACTIVE, borderRadius: "6px", cursor: "pointer", padding: "3px 9px", color: N_SUBTLE, fontSize: "11px", display: "flex", alignItems: "center", gap: "3px" }}><Pencil size={10} /> Edit</button>
+            )}
+          </div>
+
+          <div style={{ background: "rgba(55,53,47,0.04)", borderRadius: "10px", padding: "10px 13px", marginBottom: "12px", border: `1px solid ${N_BORDER}` }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: "5px" }}>
+              <span style={{ fontSize: "12px", color: N_SUBTLE, fontWeight: 600 }}>Per guest</span>
+              <span style={{ fontSize: "22px", fontWeight: 800, color: N_FG, letterSpacing: "-0.02em" }}>{formatCurrency(costPerGuest)}</span>
+            </div>
+            <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
+              {targetGuests} guests × {formatCurrency(costPerGuest)} = <strong style={{ color: N_FG }}>{formatCurrency(guestSpend)}</strong>
+            </p>
+          </div>
+
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+              <span style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: N_SUBTLE }}>Guest Scenario</span>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: N_FG }}>{guestScenarioCount} guests</span>
+            </div>
+            <input
+              type="range"
+              min={50}
+              max={200}
+              step={1}
+              value={guestScenarioCount}
+              onChange={(e) => setGuestScenarioCount(Number(e.target.value))}
+              style={{ width: "100%", accentColor: "#be185d" }}
+            />
+            <div style={{ marginTop: "7px", padding: "9px 11px", borderRadius: "9px", background: scenarioDelta > 0 ? "#fff0f5" : scenarioDelta < 0 ? "#f0fdf4" : "rgba(55,53,47,0.04)", border: `1px solid ${scenarioDelta > 0 ? "#fecdd3" : scenarioDelta < 0 ? "#bbf7d0" : N_BORDER}` }}>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "12px", color: N_SUBTLE }}>Projected spend</span>
+                <span style={{ fontSize: "16px", fontWeight: 800, color: N_FG }}>{formatCurrency(scenarioSpend)}</span>
+              </div>
+              {scenarioDelta !== 0 && (
+                <p style={{ margin: "3px 0 0", fontSize: "11px", fontWeight: 700, color: scenarioDelta > 0 ? "#be185d" : "#15803d" }}>
+                  {scenarioDelta > 0 ? "▲" : "▼"} {formatCurrency(Math.abs(scenarioDelta))} {scenarioDelta > 0 ? "more" : "less"} than current plan
+                </p>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <section style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "14px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: N_FG }}>
-            <ListChecks size={14} />
-            <span style={{ fontSize: "13px", fontWeight: 700 }}>Table Plan Status</span>
+      {/* ── TABLE PLAN ───────────────────────────────────────────────────── */}
+      <section
+        style={{
+          borderRadius: "12px",
+          background: seatingStarted ? "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)" : "linear-gradient(135deg, #fafafa 0%, #f3f4f6 100%)",
+          border: seatingStarted ? "1px solid #86efac" : `1px solid ${N_BORDER_MED}`,
+          padding: "16px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: seatingStarted ? "#16a34a22" : "rgba(55,53,47,0.06)" }}>
+              <ListChecks size={16} style={{ color: seatingStarted ? "#16a34a" : N_SUBTLE }} />
+            </div>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: N_FG }}>Table Plan</span>
           </div>
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-              fontSize: "12px",
-              color: seatingStarted ? "rgb(15,123,108)" : N_MUTED,
-              fontWeight: 600,
-            }}
-          >
-            <CheckCircle2 size={13} />
-            {seatingStarted ? "Started" : "Not started"}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "12px", fontWeight: 700, color: seatingStarted ? "#15803d" : N_SUBTLE, background: seatingStarted ? "#dcfce7" : "rgba(55,53,47,0.06)", borderRadius: "999px", padding: "4px 12px" }}>
+            <CheckCircle2 size={12} />
+            {seatingStarted ? "In progress" : "Not started"}
           </span>
         </div>
 
-        <div style={{ height: "8px", borderRadius: "999px", background: "rgba(55,53,47,0.08)", overflow: "hidden", marginBottom: "6px" }}>
-          <div
-            style={{
-              height: "100%",
-              width: `${Math.min(100, Math.max(0, seatingProgress))}%`,
-              background: "linear-gradient(90deg, rgb(35,131,226), rgb(15,123,108))",
-            }}
-          />
+        <div style={{ height: "10px", borderRadius: "999px", background: seatingStarted ? "#86efac44" : "rgba(55,53,47,0.08)", overflow: "hidden", marginBottom: "7px" }}>
+          <div style={{ height: "100%", width: `${Math.min(100, Math.max(0, seatingProgress))}%`, background: "linear-gradient(90deg, #16a34a, #22c55e)", borderRadius: "999px", transition: "width 0.4s ease" }} />
         </div>
-        <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
-          {seatedGuests} of {trackedGuests} guests assigned to tables
-        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <p style={{ margin: 0, fontSize: "12px", color: seatingStarted ? "#166534" : N_MUTED }}>
+            {seatedGuests} of {trackedGuests} guests assigned to tables
+          </p>
+          {trackedGuests > 0 && (
+            <span style={{ fontSize: "13px", fontWeight: 800, color: seatingStarted ? "#16a34a" : N_SUBTLE }}>{seatingProgress}%</span>
+          )}
+        </div>
       </section>
     </div>
   );
