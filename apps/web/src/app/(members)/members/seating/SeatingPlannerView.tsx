@@ -927,11 +927,22 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                         })}
                       </div>
 
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%" }}>
-                        <strong style={{ fontSize: table.shape === "rectangle" ? "32px" : "28px", lineHeight: 1, color: theme.text }}>Table {table.number}</strong>
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        <strong style={{ fontSize: table.shape === "rectangle" ? "32px" : "28px", lineHeight: 1, color: theme.text, textAlign: "center" }}>
+                          Table {table.number}
+                        </strong>
                       </div>
 
-                      <div style={{ display: "flex", justifyContent: "center", gap: "6px" }}>
+                      <div style={{ position: "absolute", left: 0, right: 0, bottom: "10px", display: "flex", justifyContent: "center", gap: "6px" }}>
                         <button
                           type="button"
                           onClick={(e) => {
