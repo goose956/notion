@@ -97,7 +97,7 @@ type SeatingTable = {
   colorScheme: TableColorScheme;
   x: number;
   y: number;
-  guestIds: string[];
+  guestIds: Array<string | null>;
   saved: boolean;
 };
 
@@ -228,9 +228,16 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         colorScheme: t.colorScheme && t.colorScheme in TABLE_THEMES ? t.colorScheme : "classic",
         x: Number.isFinite(t.x) ? t.x : 20,
         y: Number.isFinite(t.y) ? t.y : 20,
-        guestIds: Array.isArray(t.guestIds)
-          ? t.guestIds.filter((id) => guests.some((g) => g.id === id))
-          : [],
+        guestIds: (() => {
+          const seatCount = Number.isFinite(t.seats) ? Math.max(1, Math.round(t.seats)) : 8;
+          const initial = Array.isArray(t.guestIds)
+            ? t.guestIds
+                .map((id) => (typeof id === "string" && guests.some((g) => g.id === id) ? id : null))
+                .slice(0, seatCount)
+            : [];
+          while (initial.length < seatCount) initial.push(null);
+          return initial;
+        })(),
         saved: typeof (t as { saved?: unknown }).saved === "boolean" ? Boolean((t as { saved?: unknown }).saved) : true,
       }));
       setTables(cleaned);
@@ -302,12 +309,16 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
   const guestById = useMemo(() => new Map(guests.map((g) => [g.id, g])), [guests]);
   const guestToTableId = useMemo(() => {
     const map = new Map<string, string>();
-    for (const table of tables) for (const guestId of table.guestIds) map.set(guestId, table.id);
+    for (const table of tables) {
+      for (const guestId of table.guestIds) {
+        if (guestId) map.set(guestId, table.id);
+      }
+    }
     return map;
   }, [tables]);
   const assignedGuestIds = new Set<string>(guestToTableId.keys());
   const unseatedGuests = guests.filter((g) => !assignedGuestIds.has(g.id));
-  const overCapacityTables = tables.filter((t) => t.guestIds.length > t.seats);
+  const overCapacityTables = tables.filter((t) => t.guestIds.filter(Boolean).length > t.seats);
 
   function createTable(shape: SeatingShape = "round") {
     setError(null);
@@ -351,9 +362,21 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         const hasGuest = table.guestIds.includes(guestId);
         if (targetTableId === table.id) {
           if (hasGuest) return table;
-          return { ...table, guestIds: [...table.guestIds, guestId] };
+          const next = [...table.guestIds];
+          const emptyIndex = next.findIndex((id) => id === null);
+          if (emptyIndex >= 0) {
+            next[emptyIndex] = guestId;
+            return { ...table, guestIds: next };
+          }
+          if (next.length > 0) next[next.length - 1] = guestId;
+          return { ...table, guestIds: next };
         }
-        if (hasGuest) return { ...table, guestIds: table.guestIds.filter((id) => id !== guestId) };
+        if (hasGuest) {
+          return {
+            ...table,
+            guestIds: table.guestIds.map((id) => (id === guestId ? null : id)),
+          };
+        }
         return table;
       }),
     );
@@ -361,21 +384,18 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
 
   function assignGuestToSeat(guestId: string, targetTableId: string, seatIndex: number) {
     setTables((prev) => {
-      // Remove guest from any current table first.
+      // Remove guest from any current seat first while preserving seat indexes.
       const stripped = prev.map((table) => ({
         ...table,
-        guestIds: table.guestIds.filter((id) => id !== guestId),
+        guestIds: table.guestIds.map((id) => (id === guestId ? null : id)),
       }));
       return stripped.map((table) => {
         if (table.id !== targetTableId) return table;
         const clampedIndex = Math.max(0, Math.min(table.seats - 1, seatIndex));
         const next = [...table.guestIds].slice(0, table.seats);
-        if (clampedIndex < next.length) {
-          next[clampedIndex] = guestId;
-        } else {
-          next.push(guestId);
-        }
-        return { ...table, guestIds: next.slice(0, table.seats) };
+        while (next.length < table.seats) next.push(null);
+        next[clampedIndex] = guestId;
+        return { ...table, guestIds: next };
       });
     });
     setSelectedSeat({ tableId: targetTableId, seatIndex: Math.max(0, seatIndex) });
@@ -385,9 +405,10 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
     setTables((prev) =>
       prev.map((table) => {
         if (table.id !== tableId) return table;
-        if (seatIndex < 0 || seatIndex >= table.guestIds.length) return table;
+        if (seatIndex < 0 || seatIndex >= table.seats) return table;
         const next = [...table.guestIds];
-        next.splice(seatIndex, 1);
+        while (next.length < table.seats) next.push(null);
+        next[seatIndex] = null;
         return { ...table, guestIds: next };
       }),
     );
@@ -403,7 +424,9 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       const assignmentByGuest = new Map<string, string>();
       for (const table of tables) {
         const label = normalizeTableLabel(table);
-        for (const guestId of table.guestIds) assignmentByGuest.set(guestId, label);
+        for (const guestId of table.guestIds) {
+          if (guestId) assignmentByGuest.set(guestId, label);
+        }
       }
       for (const row of guestsDb.rows) {
         const nextVal = assignmentByGuest.get(row.pageId) ?? null;
@@ -447,7 +470,9 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
       .map((table) => {
         const label = normalizeTableLabel(table);
         const theme = getTableTheme(table.colorScheme);
-        const assignedNames = table.guestIds.map((id) => guestById.get(id)?.name).filter((n): n is string => typeof n === "string");
+        const assignedNames = table.guestIds
+          .map((id) => (id ? guestById.get(id)?.name : undefined))
+          .filter((n): n is string => typeof n === "string");
         if (table.shape === "rectangle") {
           const { width, height } = getTableDimensions(table);
           const slotCount = Math.max(1, table.seats);
@@ -644,7 +669,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
             )}
 
             {tables.map((table) => {
-              const assignedCount = table.guestIds.length;
+              const assignedCount = table.guestIds.filter(Boolean).length;
               const selected = selectedTableId === table.id;
               const theme = getTableTheme(table.colorScheme);
               const editing = !table.saved || editingTableId === table.id;
@@ -661,7 +686,10 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                       selectedSeat && selectedSeat.tableId === table.id
                         ? Math.max(0, Math.min(table.seats - 1, selectedSeat.seatIndex))
                         : null;
-                    const firstEmpty = Math.max(0, Math.min(table.seats - 1, table.guestIds.length));
+                    const firstEmptyIndex = table.guestIds.findIndex((id) => id === null);
+                    const firstEmpty = firstEmptyIndex >= 0
+                      ? firstEmptyIndex
+                      : Math.max(0, table.seats - 1);
                     assignGuestToSeat(guestId, table.id, selectedSeatIndex ?? firstEmpty);
                   }}
                   onMouseDown={(e) => {
@@ -742,7 +770,12 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                               updateTable(table.id, (t) => ({
                                 ...t,
                                 seats: Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.seats,
-                                guestIds: t.guestIds.slice(0, Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.seats),
+                                  guestIds: (() => {
+                                    const nextSeats = Number.isFinite(next) ? Math.max(1, Math.round(next)) : t.seats;
+                                    const nextGuestIds = t.guestIds.slice(0, nextSeats);
+                                    while (nextGuestIds.length < nextSeats) nextGuestIds.push(null);
+                                    return nextGuestIds;
+                                  })(),
                               }));
                             }}
                             style={{ border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "3px 4px", fontSize: "12px", fontFamily: N_FONT }}
