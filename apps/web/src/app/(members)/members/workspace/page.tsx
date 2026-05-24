@@ -789,6 +789,15 @@ function asNumber(value: unknown): number | null {
   return null;
 }
 
+function formatCurrency(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "Not set";
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 function parseWeddingDate(value: unknown): Date | null {
   const text = asText(value);
   if (!text) return null;
@@ -809,6 +818,7 @@ function WeddingWorkspaceDashboard({
   const [coupleNamesInput, setCoupleNamesInput] = useState(asText(weddingCriteria?.["couple-names"]) ?? "");
   const [venueInput, setVenueInput] = useState(asText(weddingCriteria?.["wedding-location"]) ?? "");
   const [guestCountInput, setGuestCountInput] = useState(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
+  const [budgetInput, setBudgetInput] = useState(String(asNumber(weddingCriteria?.["total-budget"]) ?? ""));
   const [daysToGoInput, setDaysToGoInput] = useState(String(asNumber(weddingCriteria?.["countdown-days"]) ?? ""));
   const [savingDetails, setSavingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
@@ -817,6 +827,7 @@ function WeddingWorkspaceDashboard({
     setCoupleNamesInput(asText(weddingCriteria?.["couple-names"]) ?? "");
     setVenueInput(asText(weddingCriteria?.["wedding-location"]) ?? "");
     setGuestCountInput(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
+    setBudgetInput(String(asNumber(weddingCriteria?.["total-budget"]) ?? ""));
     setDaysToGoInput(String(asNumber(weddingCriteria?.["countdown-days"]) ?? ""));
   }, [weddingCriteria]);
 
@@ -831,6 +842,7 @@ function WeddingWorkspaceDashboard({
   const weddingDate = parseWeddingDate(weddingCriteria?.["wedding-date"]);
   const venue = asText(weddingCriteria?.["wedding-location"]);
   const plannedGuests = asNumber(weddingCriteria?.["guest-count"]);
+  const totalBudget = asNumber(weddingCriteria?.["total-budget"]);
   const manualCountdownDays = asNumber(weddingCriteria?.["countdown-days"]);
 
   const trackedGuests = guestsDb?.rows.length ?? 0;
@@ -885,6 +897,7 @@ function WeddingWorkspaceDashboard({
     setDetailsError(null);
     try {
       const parsedGuestCount = Number(guestCountInput);
+      const parsedBudget = Number(budgetInput);
       const parsedCountdownDays = Number(daysToGoInput);
 
       const nextCriteria = {
@@ -895,6 +908,10 @@ function WeddingWorkspaceDashboard({
           guestCountInput.trim() === "" || !Number.isFinite(parsedGuestCount)
             ? null
             : Math.max(0, Math.round(parsedGuestCount)),
+        "total-budget":
+          budgetInput.trim() === "" || !Number.isFinite(parsedBudget)
+            ? null
+            : Math.max(0, Math.round(parsedBudget)),
         "countdown-days":
           daysToGoInput.trim() === "" || !Number.isFinite(parsedCountdownDays)
             ? null
@@ -994,6 +1011,29 @@ function WeddingWorkspaceDashboard({
                 value={guestCountInput}
                 onChange={(e) => setGuestCountInput(e.target.value)}
                 placeholder="e.g. 120"
+                style={{
+                  height: "34px",
+                  padding: "0 10px",
+                  borderRadius: "7px",
+                  border: `1px solid ${N_BORDER_MED}`,
+                  background: "white",
+                  color: N_FG,
+                  fontSize: "13px",
+                  fontFamily: N_FONT,
+                }}
+              />
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: N_SUBTLE }}>
+                Budget
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={budgetInput}
+                onChange={(e) => setBudgetInput(e.target.value)}
+                placeholder="e.g. 15000"
                 style={{
                   height: "34px",
                   padding: "0 10px",
@@ -1158,6 +1198,16 @@ function WeddingWorkspaceDashboard({
           </div>
           <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
             {documentsDb?.rows.length ?? 0} saved drafts
+          </p>
+        </div>
+
+        <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "white", padding: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", color: N_SUBTLE }}>
+            <span style={{ fontSize: "13px", fontWeight: 700 }}>£</span>
+            <span style={{ fontSize: "12px", fontWeight: 600 }}>Budget</span>
+          </div>
+          <p style={{ margin: 0, fontSize: "15px", color: N_FG, fontWeight: 600 }}>
+            {formatCurrency(totalBudget)}
           </p>
         </div>
       </div>
