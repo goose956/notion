@@ -837,6 +837,7 @@ function WeddingWorkspaceDashboard({
   weddingCriteria: Record<string, unknown> | null;
   onWeddingCriteriaUpdated: (criteria: Record<string, unknown>) => void;
 }) {
+  const HEADER_IMAGE_STORAGE_KEY = "wedding.dashboard.header.image";
   const [coupleNamesInput, setCoupleNamesInput] = useState(asText(weddingCriteria?.["couple-names"]) ?? "");
   const [venueInput, setVenueInput] = useState(asText(weddingCriteria?.["wedding-location"]) ?? "");
   const [guestCountInput, setGuestCountInput] = useState(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
@@ -847,6 +848,29 @@ function WeddingWorkspaceDashboard({
   const [guestScenarioCount, setGuestScenarioCount] = useState(100);
   const [savingDetails, setSavingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
+  const [headerImageDataUrl, setHeaderImageDataUrl] = useState<string | null>(null);
+  const headerImageInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(HEADER_IMAGE_STORAGE_KEY);
+      setHeaderImageDataUrl(saved && saved.trim() !== "" ? saved : null);
+    } catch {
+      // Ignore localStorage read errors.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (headerImageDataUrl && headerImageDataUrl.trim() !== "") {
+        window.localStorage.setItem(HEADER_IMAGE_STORAGE_KEY, headerImageDataUrl);
+      } else {
+        window.localStorage.removeItem(HEADER_IMAGE_STORAGE_KEY);
+      }
+    } catch {
+      // Ignore localStorage write errors.
+    }
+  }, [headerImageDataUrl]);
 
   useEffect(() => {
     setCoupleNamesInput(asText(weddingCriteria?.["couple-names"]) ?? "");
@@ -1034,6 +1058,20 @@ function WeddingWorkspaceDashboard({
     setEditingField((prev) => (prev === field ? null : prev));
   }
 
+  function onHeaderImageSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) {
+      event.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") setHeaderImageDataUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
 
@@ -1045,7 +1083,7 @@ function WeddingWorkspaceDashboard({
           overflow: "hidden",
           boxShadow: "0 12px 40px rgba(107,32,64,0.28), 0 2px 8px rgba(0,0,0,0.10)",
           display: "grid",
-          gridTemplateColumns: "1fr auto",
+          gridTemplateColumns: "1fr auto auto",
         }}
       >
         {/* Names + Venue */}
@@ -1098,6 +1136,61 @@ function WeddingWorkspaceDashboard({
           </div>
 
           {detailsError && <span style={{ fontSize: "12px", color: "#ffb3b3", marginTop: "8px" }}>{detailsError}</span>}
+        </div>
+
+        {/* Header image slot */}
+        <div style={{ padding: "18px 20px", borderLeft: "1px solid rgba(255,255,255,0.10)", display: "flex", flexDirection: "column", justifyContent: "center", gap: "8px", minWidth: "180px" }}>
+          <p style={{ margin: 0, fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
+            Header Image
+          </p>
+          <input
+            ref={headerImageInputRef}
+            type="file"
+            accept="image/*"
+            onChange={onHeaderImageSelected}
+            style={{ display: "none" }}
+          />
+          <div
+            style={{
+              width: "140px",
+              height: "92px",
+              borderRadius: "10px",
+              border: "1px dashed rgba(255,255,255,0.35)",
+              background: "rgba(255,255,255,0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+            }}
+          >
+            {headerImageDataUrl ? (
+              <img
+                src={headerImageDataUrl}
+                alt="Wedding header"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", textAlign: "center", padding: "0 8px" }}>No image selected</span>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => headerImageInputRef.current?.click()}
+              style={{ border: "1px solid rgba(255,255,255,0.26)", background: "rgba(255,255,255,0.12)", borderRadius: "6px", cursor: "pointer", padding: "4px 8px", color: "white", fontSize: "11px", fontWeight: 600, fontFamily: N_FONT }}
+            >
+              {headerImageDataUrl ? "Change" : "Add"}
+            </button>
+            {headerImageDataUrl && (
+              <button
+                type="button"
+                onClick={() => setHeaderImageDataUrl(null)}
+                style={{ border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", borderRadius: "6px", cursor: "pointer", padding: "4px 8px", color: "rgba(255,255,255,0.78)", fontSize: "11px", fontWeight: 600, fontFamily: N_FONT }}
+              >
+                Remove
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Countdown ring */}
