@@ -633,7 +633,7 @@ export default function SeatingPlannerPage() {
   }
 
   return (
-    <div style={{ padding: "18px 20px", fontFamily: N_FONT }}>
+    <div style={{ padding: "18px 20px", fontFamily: N_FONT, background: "#fff9f8", minHeight: "100vh" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "10px" }}>
         <div>
           <div style={{ marginBottom: "6px" }}>
@@ -644,7 +644,7 @@ export default function SeatingPlannerPage() {
                 alignItems: "center",
                 gap: "5px",
                 fontSize: "12px",
-                color: N_MUTED,
+                color: "#be185d",
                 textDecoration: "none",
               }}
             >
@@ -652,8 +652,8 @@ export default function SeatingPlannerPage() {
               Back to Guest List
             </Link>
           </div>
-          <h1 style={{ margin: 0, fontSize: "22px", color: N_FG }}>Wedding Seating Planner</h1>
-          <p style={{ margin: "4px 0 0", fontSize: "13px", color: N_MUTED }}>
+          <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#6b2040", letterSpacing: "-0.5px" }}>🌸 Wedding Seating Planner</h1>
+          <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#9d174d" }}>
             Drag tables on the canvas and drag guests from the list into a table.
           </p>
         </div>
@@ -735,10 +735,10 @@ export default function SeatingPlannerPage() {
             onClick={() => void saveAssignmentsToGuestList()}
             disabled={saving}
             style={{
-              padding: "7px 10px",
+              padding: "7px 12px",
               borderRadius: "4px",
               border: "none",
-              background: saving ? "rgba(55,53,47,0.2)" : N_FG,
+              background: saving ? "rgba(190,24,93,0.2)" : "linear-gradient(135deg, #6b2040, #be185d)",
               color: "white",
               fontSize: "12px",
               fontWeight: 600,

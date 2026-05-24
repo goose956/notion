@@ -1464,19 +1464,19 @@ function WeddingDraftStudio({
       <div style={{
         width: "100%",
         maxWidth: mode === "modal" ? "1100px" : "100%",
-        background: "#FBFBFA",
+        background: "#fff9f8",
         borderRadius: mode === "modal" ? "14px" : "6px",
         border: mode === "modal" ? `1px solid ${N_BORDER}` : "none",
-        boxShadow: mode === "modal" ? "0 24px 80px rgba(0,0,0,0.24)" : "none",
+        boxShadow: mode === "modal" ? "0 24px 80px rgba(107,32,64,0.22)" : "none",
         padding: "16px",
         maxHeight: mode === "modal" ? "90vh" : "none",
         overflowY: "auto",
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "10px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <WandSparkles size={16} color={N_BLUE} />
-            <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>
-              AI Email Draft Studio
+            <WandSparkles size={16} color="#be185d" />
+            <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#6b2040" }}>
+              ✍️ AI Draft Studio
             </h3>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -1572,7 +1572,7 @@ function WeddingDraftStudio({
             padding: "8px 12px",
             borderRadius: "4px",
             border: "none",
-            background: generating ? "rgba(55,53,47,0.2)" : N_FG,
+            background: generating ? "rgba(190,24,93,0.2)" : "linear-gradient(135deg, #6b2040, #be185d)",
             color: "white",
             fontSize: "13px",
             fontWeight: 600,
@@ -1625,7 +1625,7 @@ function WeddingDraftStudio({
                 borderRadius: "4px",
                 border: `1px solid ${N_BORDER_MED}`,
                 background: "white",
-                color: N_FG,
+                color: "#6b2040",
                 fontSize: "13px",
                 fontWeight: 600,
                 fontFamily: N_FONT,
@@ -1804,7 +1804,7 @@ export default function WorkspacePage() {
           borderRight: `1px solid ${N_BORDER}`,
           display: "flex",
           flexDirection: "column",
-          background: "#EAF4FF",
+          background: "linear-gradient(180deg, #fff9f8 0%, #fef0f1 100%)",
           overflowY: "auto",
         }}
       >
@@ -1817,7 +1817,7 @@ export default function WorkspacePage() {
             justifyContent: "space-between",
           }}
         >
-          <span style={{ fontSize: "13px", fontWeight: 600, color: N_FG }}>My Databases</span>
+          <span style={{ fontSize: "13px", fontWeight: 700, color: "#6b2040", letterSpacing: "0.01em" }}>💍 My Workspace</span>
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
             <Link
               href="/templates"
@@ -1861,30 +1861,7 @@ export default function WorkspacePage() {
           </div>
         </div>
 
-        {backend === "app" && hasWeddingWorkspace && (
-          <button
-            onClick={() => setActiveTab(DASHBOARD_TAB_ID)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "7px",
-              width: "100%",
-              padding: "8px 10px",
-              background: activeTab === DASHBOARD_TAB_ID ? N_ACTIVE : "none",
-              border: "none",
-              borderBottom: `1px solid ${N_BORDER}`,
-              cursor: "pointer",
-              fontSize: "13px",
-              color: N_FG,
-              fontFamily: N_FONT,
-              textAlign: "left",
-            }}
-            className="hover:bg-[rgba(55,53,47,0.06)]"
-          >
-            <LayoutDashboard size={14} />
-            Dashboard
-          </button>
-        )}
+
 
         {loading && (
           <div style={{ padding: "16px", display: "flex", alignItems: "center", gap: "8px", color: N_MUTED, fontSize: "13px" }}>
@@ -1939,23 +1916,50 @@ export default function WorkspacePage() {
                   alignItems: "center",
                   gap: "4px",
                   width: "100%",
-                  padding: "6px 10px",
-                  background: "none",
+                  padding: "7px 10px 5px",
+                  background: group.nicheId === "wedding-planner" ? "rgba(190,24,93,0.06)" : "none",
                   border: "none",
+                  borderTop: group.nicheId === "wedding-planner" ? "1px solid rgba(190,24,93,0.12)" : "none",
                   cursor: "pointer",
                   fontSize: "11px",
-                  fontWeight: 600,
-                  color: N_SUBTLE,
+                  fontWeight: 700,
+                  color: group.nicheId === "wedding-planner" ? "#9d174d" : N_SUBTLE,
                   textTransform: "uppercase",
-                  letterSpacing: "0.05em",
+                  letterSpacing: "0.06em",
                   fontFamily: N_FONT,
                   textAlign: "left",
                 }}
               >
                 {expanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                {group.nicheName}
+                {group.nicheId === "wedding-planner" ? "🌸 " : ""}{group.nicheName}
               </button>
 
+              {expanded && backend === "app" && group.nicheId === "wedding-planner" && (
+                <button
+                  onClick={() => setActiveTab(DASHBOARD_TAB_ID)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "7px",
+                    width: "100%",
+                    padding: "6px 10px 6px 20px",
+                    background: activeTab === DASHBOARD_TAB_ID ? "rgba(190,24,93,0.12)" : "none",
+                    border: "none",
+                    borderLeft: activeTab === DASHBOARD_TAB_ID ? "2px solid #be185d" : "2px solid transparent",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    color: activeTab === DASHBOARD_TAB_ID ? "#9d174d" : N_FG,
+                    fontFamily: N_FONT,
+                    textAlign: "left",
+                    borderRadius: "0 4px 4px 0",
+                    fontWeight: activeTab === DASHBOARD_TAB_ID ? 600 : 400,
+                  }}
+                  className="hover:bg-[rgba(190,24,93,0.06)]"
+                >
+                  <LayoutDashboard size={13} style={{ color: activeTab === DASHBOARD_TAB_ID ? "#be185d" : N_SUBTLE, flexShrink: 0 }} />
+                  Dashboard
+                </button>
+              )}
               {expanded &&
                 group.dbs.map((db) => {
                   const active = activeTab === db.notionId;
@@ -1970,16 +1974,17 @@ export default function WorkspacePage() {
                           gap: "7px",
                           width: "100%",
                           padding: "5px 10px 5px 20px",
-                          background: active ? N_ACTIVE : "none",
+                          background: active ? (group.nicheId === "wedding-planner" ? "rgba(190,24,93,0.10)" : N_ACTIVE) : "none",
                           border: "none",
+                          borderLeft: group.nicheId === "wedding-planner" ? (active ? "2px solid #be185d" : "2px solid transparent") : "none",
                           cursor: "pointer",
                           fontSize: "13px",
-                          color: N_FG,
+                          color: active && group.nicheId === "wedding-planner" ? "#9d174d" : N_FG,
                           fontFamily: N_FONT,
                           textAlign: "left",
-                          borderRadius: "3px",
+                          borderRadius: "0 4px 4px 0",
                         }}
-                        className="hover:bg-[rgba(55,53,47,0.06)]"
+                        className={group.nicheId === "wedding-planner" ? "hover:bg-[rgba(190,24,93,0.06)]" : "hover:bg-[rgba(55,53,47,0.06)]"}
                       >
                         <span style={{ fontSize: "14px", flexShrink: 0 }}>
                           {db.icon ?? "📋"}
@@ -2016,13 +2021,14 @@ export default function WorkspacePage() {
                               gap: "7px",
                               width: "100%",
                               padding: "5px 10px 5px 20px",
-                              borderRadius: "3px",
+                              borderRadius: "0 4px 4px 0",
+                              borderLeft: "2px solid transparent",
                               fontSize: "13px",
                               color: N_FG,
                               textDecoration: "none",
                               fontFamily: N_FONT,
                             }}
-                            className="hover:bg-[rgba(55,53,47,0.06)]"
+                            className="hover:bg-[rgba(190,24,93,0.06)]"
                           >
                             <span style={{ fontSize: "14px", flexShrink: 0 }}>🪑</span>
                             Seating Planner
@@ -2035,16 +2041,17 @@ export default function WorkspacePage() {
                               gap: "7px",
                               width: "100%",
                               padding: "5px 10px 5px 20px",
-                              borderRadius: "3px",
+                              borderRadius: "0 4px 4px 0",
+                              borderLeft: "2px solid transparent",
                               fontSize: "13px",
                               color: N_FG,
                               textDecoration: "none",
                               fontFamily: N_FONT,
                             }}
-                            className="hover:bg-[rgba(55,53,47,0.06)]"
+                            className="hover:bg-[rgba(190,24,93,0.06)]"
                           >
                             <span style={{ fontSize: "14px", flexShrink: 0 }}>✍️</span>
-                            Draft letters
+                            Draft Letters
                           </Link>
                         </>
                       )}
@@ -2164,6 +2171,9 @@ export default function WorkspacePage() {
                 alignItems: "center",
                 gap: "10px",
                 flexShrink: 0,
+                background: activeDbDisplay.nicheId === "wedding-planner"
+                  ? "linear-gradient(135deg, #fff9f8 0%, #fef0f3 100%)"
+                  : "white",
               }}
             >
               <span style={{ fontSize: "20px" }}>{activeDbDisplay.icon ?? "📋"}</span>
