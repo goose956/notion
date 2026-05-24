@@ -6,7 +6,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 const ITEMS = [
   { emoji: "🚀", label: "Get Started", href: "/members/get-started" },
   { emoji: "🗂️", label: "My Workspace", href: "/members/workspace" },
-  { emoji: "🪑", label: "Seating Planner", href: "/members/seating" },
   { emoji: "🔍", label: "Research Assistant", href: "/members/chat" },
   { emoji: "✍️", label: "Draft letters", href: "/members/workspace?nicheId=wedding-planner&dbId=documents" },
   { emoji: "👤", label: "Profile", href: "/members/profile" },

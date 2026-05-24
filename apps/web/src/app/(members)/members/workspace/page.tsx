@@ -1382,7 +1382,7 @@ export default function WorkspacePage() {
               {expanded &&
                 group.dbs.map((db) => {
                   const active = activeTab === db.notionId;
-                  const isPlanningTimetable = /planning\s*timetable/i.test(db.dbName);
+                  const isPlanningTimetable = /planning\s*(timetable|timeline)/i.test(db.dbName);
                   return (
                     <div key={db.notionId}>
                       <button
