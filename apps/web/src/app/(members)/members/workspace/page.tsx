@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } fro
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal, Mail, LayoutDashboard, CalendarDays, MapPin, Users, CheckCircle2, ListChecks, FileText, Pencil, Check, X } from "lucide-react";
+import { SeatingPlannerView } from "../seating/SeatingPlannerView";
 import type {
   WorkspaceDatabase,
   WorkspaceProperty,
@@ -22,6 +23,7 @@ const N_BLUE = "rgb(35,131,226)";
 const N_FONT =
   'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
 const DASHBOARD_TAB_ID = "__workspace_dashboard__";
+const SEATING_TAB_ID = "__workspace_seating__";
 
 // ─── Readonly property types (can't inline-edit these) ─────────────────────
 const READONLY_TYPES = new Set(["formula", "rollup", "relation", "created_time", "last_edited_time", "created_by", "last_edited_by"]);
@@ -1621,6 +1623,7 @@ export default function WorkspacePage() {
     if (nextDatabases.length > 0) {
       setActiveTab((prev) => {
         if (prev === DASHBOARD_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
+        if (prev === SEATING_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
         if (prev && nextDatabases.some((d) => d.notionId === prev)) return prev;
         return nextDatabases[0]!.notionId;
       });
@@ -1709,6 +1712,8 @@ export default function WorkspacePage() {
   }
 
   const activeDb = databases.find((d) => d.notionId === activeTab);
+  const guestsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "guests") ?? null;
+  const documentsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "documents") ?? null;
   const hasWeddingWorkspace = databases.some((d) => d.nicheId === "wedding-planner");
   const activeDbDisplay = activeDb && backend === "app" && activeDb.nicheId === "wedding-planner" && activeDb.dbId === "documents"
     ? {
@@ -1939,8 +1944,8 @@ export default function WorkspacePage() {
 
                       {backend === "app" && group.nicheId === "wedding-planner" && isPlanningTimetable && (
                         <>
-                          <Link
-                            href="/members/seating"
+                          <button
+                            onClick={() => setActiveTab(SEATING_TAB_ID)}
                             style={{
                               display: "flex",
                               alignItems: "center",
@@ -1948,19 +1953,25 @@ export default function WorkspacePage() {
                               width: "100%",
                               padding: "5px 10px 5px 20px",
                               borderRadius: "0 4px 4px 0",
-                              borderLeft: "2px solid transparent",
+                              border: "none",
+                              borderLeft: activeTab === SEATING_TAB_ID ? "2px solid #be185d" : "2px solid transparent",
                               fontSize: "13px",
-                              color: N_FG,
-                              textDecoration: "none",
+                              color: activeTab === SEATING_TAB_ID ? "#9d174d" : N_FG,
+                              background: activeTab === SEATING_TAB_ID ? "rgba(190,24,93,0.10)" : "none",
                               fontFamily: N_FONT,
+                              cursor: "pointer",
+                              textAlign: "left",
                             }}
                             className="hover:bg-[rgba(190,24,93,0.06)]"
                           >
                             <span style={{ fontSize: "14px", flexShrink: 0 }}>🪑</span>
                             Seating Planner
-                          </Link>
-                          <Link
-                            href="/members/workspace?nicheId=wedding-planner&dbId=documents"
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (documentsDb) setActiveTab(documentsDb.notionId);
+                            }}
+                            disabled={!documentsDb}
                             style={{
                               display: "flex",
                               alignItems: "center",
@@ -1968,17 +1979,21 @@ export default function WorkspacePage() {
                               width: "100%",
                               padding: "5px 10px 5px 20px",
                               borderRadius: "0 4px 4px 0",
-                              borderLeft: "2px solid transparent",
+                              border: "none",
+                              borderLeft: documentsDb && activeTab === documentsDb.notionId ? "2px solid #be185d" : "2px solid transparent",
                               fontSize: "13px",
-                              color: N_FG,
-                              textDecoration: "none",
+                              color: documentsDb && activeTab === documentsDb.notionId ? "#9d174d" : N_FG,
+                              background: documentsDb && activeTab === documentsDb.notionId ? "rgba(190,24,93,0.10)" : "none",
                               fontFamily: N_FONT,
+                              cursor: documentsDb ? "pointer" : "default",
+                              textAlign: "left",
+                              opacity: documentsDb ? 1 : 0.5,
                             }}
                             className="hover:bg-[rgba(190,24,93,0.06)]"
                           >
                             <span style={{ fontSize: "14px", flexShrink: 0 }}>✍️</span>
                             Draft Letters
-                          </Link>
+                          </button>
                         </>
                       )}
                     </div>
@@ -2086,6 +2101,8 @@ export default function WorkspacePage() {
               onWeddingCriteriaUpdated={(criteria) => setWeddingCriteria(criteria)}
             />
           </div>
+        ) : activeTab === SEATING_TAB_ID ? (
+          <SeatingPlannerView guestsDb={guestsDb} embedded />
         ) : !activeDbDisplay ? null : (
           <>
             {/* Header */}
