@@ -24,6 +24,7 @@ const N_FONT =
   'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
 const DASHBOARD_TAB_ID = "__workspace_dashboard__";
 const SEATING_TAB_ID = "__workspace_seating__";
+const DRAFT_TAB_ID = "__workspace_draft_letters__";
 
 // ─── Readonly property types (can't inline-edit these) ─────────────────────
 const READONLY_TYPES = new Set(["formula", "rollup", "relation", "created_time", "last_edited_time", "created_by", "last_edited_by"]);
@@ -1624,6 +1625,7 @@ export default function WorkspacePage() {
       setActiveTab((prev) => {
         if (prev === DASHBOARD_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
         if (prev === SEATING_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
+        if (prev === DRAFT_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
         if (prev && nextDatabases.some((d) => d.notionId === prev)) return prev;
         return nextDatabases[0]!.notionId;
       });
@@ -1968,9 +1970,7 @@ export default function WorkspacePage() {
                             Seating Planner
                           </button>
                           <button
-                            onClick={() => {
-                              if (documentsDb) setActiveTab(documentsDb.notionId);
-                            }}
+                            onClick={() => setActiveTab(DRAFT_TAB_ID)}
                             disabled={!documentsDb}
                             style={{
                               display: "flex",
@@ -1980,10 +1980,10 @@ export default function WorkspacePage() {
                               padding: "5px 10px 5px 20px",
                               borderRadius: "0 4px 4px 0",
                               border: "none",
-                              borderLeft: documentsDb && activeTab === documentsDb.notionId ? "2px solid #be185d" : "2px solid transparent",
+                              borderLeft: activeTab === DRAFT_TAB_ID ? "2px solid #be185d" : "2px solid transparent",
                               fontSize: "13px",
-                              color: documentsDb && activeTab === documentsDb.notionId ? "#9d174d" : N_FG,
-                              background: documentsDb && activeTab === documentsDb.notionId ? "rgba(190,24,93,0.10)" : "none",
+                              color: activeTab === DRAFT_TAB_ID ? "#9d174d" : N_FG,
+                              background: activeTab === DRAFT_TAB_ID ? "rgba(190,24,93,0.10)" : "none",
                               fontFamily: N_FONT,
                               cursor: documentsDb ? "pointer" : "default",
                               textAlign: "left",
@@ -2103,6 +2103,28 @@ export default function WorkspacePage() {
           </div>
         ) : activeTab === SEATING_TAB_ID ? (
           <SeatingPlannerView guestsDb={guestsDb} embedded />
+        ) : activeTab === DRAFT_TAB_ID ? (
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+            {documentsDb ? (
+              <WeddingDraftStudio
+                db={documentsDb}
+                onRowAdded={(row) => handleRowAdded(documentsDb.notionId, row)}
+              />
+            ) : (
+              <div
+                style={{
+                  border: `1px solid ${N_BORDER}`,
+                  borderRadius: "8px",
+                  background: "#fff9f8",
+                  padding: "16px",
+                  color: N_MUTED,
+                  fontSize: "13px",
+                }}
+              >
+                Draft Letters needs the Documents database to be available.
+              </div>
+            )}
+          </div>
         ) : !activeDbDisplay ? null : (
           <>
             {/* Header */}
@@ -2156,14 +2178,6 @@ export default function WorkspacePage() {
 
             {/* Table */}
             <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-              {backend === "app" &&
-                activeDbDisplay.nicheId === "wedding-planner" &&
-                activeDbDisplay.dbId === "documents" && (
-                  <WeddingDraftStudio
-                    db={activeDbDisplay}
-                    onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
-                  />
-                )}
               <DatabaseTable
                 db={activeDbDisplay}
                 isAppBackend={backend === "app"}
