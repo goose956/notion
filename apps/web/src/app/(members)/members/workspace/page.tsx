@@ -1764,11 +1764,9 @@ export default function WorkspacePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nicheIdParam, dbIdParam, databases, backend]);
 
-  useEffect(() => {
-    if (activeTab !== DASHBOARD_TAB_ID) return;
-    void loadDatabases({ isRefresh: true, selectionMode: "preserve" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  // No auto-reload on dashboard open – dashboard reads directly from `databases`
+  // state which is kept up-to-date by handleRowUpdated / handleRowAdded.
+  // A full reload would replace optimistic local state and make edits disappear.
 
   function handleRowUpdated(dbNotionId: string, pageId: string, name: string, val: string | number | boolean | null) {
     setDatabases((prev) =>
