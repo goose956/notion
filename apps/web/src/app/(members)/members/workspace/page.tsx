@@ -1310,15 +1310,9 @@ function WeddingWorkspaceDashboard({
 function WeddingDraftStudio({
   db,
   onRowAdded,
-  mode = "inline",
-  onClose,
-  onOpenFull,
 }: {
   db: WorkspaceDatabase;
   onRowAdded: (row: WorkspaceRow) => void;
-  mode?: "inline" | "modal";
-  onClose?: () => void;
-  onOpenFull?: () => void;
 }) {
   const [recipient, setRecipient] = useState("");
   const [email, setEmail] = useState("");
@@ -1441,37 +1435,13 @@ function WeddingDraftStudio({
   return (
     <div
       style={{
-        ...(mode === "modal"
-          ? {
-              position: "fixed",
-              inset: 0,
-              zIndex: 60,
-              background: "rgba(55,53,47,0.45)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "20px",
-            }
-          : {
-              border: `1px solid ${N_BORDER}`,
-              borderRadius: "6px",
-              background: "#FBFBFA",
-              padding: "14px",
-              marginBottom: "14px",
-            }),
+        border: `1px solid ${N_BORDER}`,
+        borderRadius: "8px",
+        background: "#fff9f8",
+        padding: "16px",
+        marginBottom: "14px",
       }}
     >
-      <div style={{
-        width: "100%",
-        maxWidth: mode === "modal" ? "1100px" : "100%",
-        background: "#fff9f8",
-        borderRadius: mode === "modal" ? "14px" : "6px",
-        border: mode === "modal" ? `1px solid ${N_BORDER}` : "none",
-        boxShadow: mode === "modal" ? "0 24px 80px rgba(107,32,64,0.22)" : "none",
-        padding: "16px",
-        maxHeight: mode === "modal" ? "90vh" : "none",
-        overflowY: "auto",
-      }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "10px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <WandSparkles size={16} color="#be185d" />
@@ -1480,49 +1450,12 @@ function WeddingDraftStudio({
             </h3>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
-            {mode === "inline" && onOpenFull && (
-              <button
-                onClick={onOpenFull}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: "4px",
-                  border: `1px solid ${N_BORDER_MED}`,
-                  background: "white",
-                  color: N_FG,
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: N_FONT,
-                }}
-              >
-                Open full editor
-              </button>
-            )}
-            {mode === "modal" && onClose && (
-              <button
-                onClick={onClose}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: "4px",
-                  border: `1px solid ${N_BORDER_MED}`,
-                  background: "white",
-                  color: N_FG,
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: N_FONT,
-                }}
-              >
-                Close
-              </button>
-            )}
-          </div>
         </div>
         <p style={{ margin: "0 0 12px", fontSize: "13px", color: N_MUTED, lineHeight: 1.5 }}>
           Create reusable wedding outreach emails, edit them, then save to this Documents database for future reuse.
         </p>
 
-        <div style={{ display: "grid", gridTemplateColumns: mode === "modal" ? "1fr 1fr" : "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
         <input
           value={recipient}
           onChange={(e) => setRecipient(e.target.value)}
@@ -1606,7 +1539,7 @@ function WeddingDraftStudio({
             value={draft.body}
             onChange={(e) => setDraft({ ...draft, body: e.target.value })}
             placeholder="Draft body"
-            rows={mode === "modal" ? 18 : 10}
+            rows={10}
             style={{ width: "100%", padding: "8px", fontSize: "13px", border: `1px solid ${N_BORDER_MED}`, borderRadius: "4px", fontFamily: N_FONT, marginBottom: "8px", boxSizing: "border-box", lineHeight: 1.5 }}
           />
           <textarea
@@ -1644,7 +1577,6 @@ function WeddingDraftStudio({
 
       {error && <p style={{ margin: "10px 0 0", color: "rgb(220,38,38)", fontSize: "12px" }}>{error}</p>}
       {success && <p style={{ margin: "10px 0 0", color: "rgb(15,123,108)", fontSize: "12px" }}>{success}</p>}
-      </div>
     </div>
   );
 }
@@ -1654,7 +1586,7 @@ export default function WorkspacePage() {
   const searchParams = useSearchParams();
   const nicheIdParam = searchParams.get("nicheId");
   const dbIdParam = searchParams.get("dbId");
-  const openEditorParam = searchParams.get("editor") === "1";
+
   const [databases, setDatabases] = useState<WorkspaceDatabase[]>([]);
   const [backend, setBackend] = useState<"app" | "notion">("notion");
   const [loading, setLoading] = useState(true);
@@ -1662,7 +1594,7 @@ export default function WorkspacePage() {
   const [activeTab, setActiveTab] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
-  const [draftEditorOpen, setDraftEditorOpen] = useState(false);
+
   const [weddingCriteria, setWeddingCriteria] = useState<Record<string, unknown> | null>(null);
 
   function applyRequestedSelection(
@@ -1676,18 +1608,12 @@ export default function WorkspacePage() {
 
     if (requestedDb) {
       setActiveTab(requestedDb.notionId);
-      setDraftEditorOpen(
-        openEditorParam &&
-          requestedDb.nicheId === "wedding-planner" &&
-          requestedDb.dbId === "documents",
-      );
       return;
     }
 
     const hasWeddingWorkspace = nextDatabases.some((d) => d.nicheId === "wedding-planner");
     if (!nicheIdParam && !dbIdParam && nextBackend === "app" && hasWeddingWorkspace) {
       setActiveTab((prev) => (prev ? prev : DASHBOARD_TAB_ID));
-      setDraftEditorOpen(false);
       return;
     }
 
@@ -1698,7 +1624,6 @@ export default function WorkspacePage() {
         return nextDatabases[0]!.notionId;
       });
     }
-    setDraftEditorOpen(false);
   }
 
   async function loadDatabases(isRefresh = false) {
@@ -1736,7 +1661,7 @@ export default function WorkspacePage() {
     if (databases.length === 0) return;
     applyRequestedSelection(databases);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nicheIdParam, dbIdParam, openEditorParam, databases]);
+  }, [nicheIdParam, dbIdParam, databases]);
 
   function handleRowUpdated(dbNotionId: string, pageId: string, name: string, val: string | number | boolean | null) {
     setDatabases((prev) =>
@@ -2034,7 +1959,7 @@ export default function WorkspacePage() {
                             Seating Planner
                           </Link>
                           <Link
-                            href="/members/workspace?nicheId=wedding-planner&dbId=documents&editor=1"
+                            href="/members/workspace?nicheId=wedding-planner&dbId=documents"
                             style={{
                               display: "flex",
                               alignItems: "center",
@@ -2219,7 +2144,6 @@ export default function WorkspacePage() {
                   <WeddingDraftStudio
                     db={activeDbDisplay}
                     onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
-                    onOpenFull={() => setDraftEditorOpen(true)}
                   />
                 )}
               <DatabaseTable
@@ -2234,14 +2158,7 @@ export default function WorkspacePage() {
             </div>
           </>
         )}
-        {draftEditorOpen && activeDbDisplay && backend === "app" && activeDbDisplay.nicheId === "wedding-planner" && activeDbDisplay.dbId === "documents" && (
-          <WeddingDraftStudio
-            db={activeDbDisplay}
-            onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
-            mode="modal"
-            onClose={() => setDraftEditorOpen(false)}
-          />
-        )}
+
       </div>
     </div>
   );
