@@ -201,6 +201,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
   const ROOM_WIDTH = 1200;
   const ROOM_HEIGHT = 780;
   const GRID_SIZE = 24;
+  const ACTION_RAIL_WIDTH = 96;
 
   // Keep a local copy so we can update row data after saving assignments
   const [guestsDb, setGuestsDb] = useState<WorkspaceDatabase | null>(guestsDbProp);
@@ -321,7 +322,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         prev.map((table) => {
           if (table.id !== drag.tableId) return table;
           const { width, height } = getTableDimensions(table);
-          const rawX = Math.max(0, Math.min(ROOM_WIDTH - width, roomX - drag.offsetX));
+          const rawX = Math.max(0, Math.min(ROOM_WIDTH - width - ACTION_RAIL_WIDTH, roomX - drag.offsetX));
           const rawY = Math.max(0, Math.min(ROOM_HEIGHT - height, roomY - drag.offsetY));
           const x = snapToGrid ? Math.round(rawX / GRID_SIZE) * GRID_SIZE : rawX;
           const y = snapToGrid ? Math.round(rawY / GRID_SIZE) * GRID_SIZE : rawY;
@@ -674,6 +675,13 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
           <input type="checkbox" checked={snapToGrid} onChange={(e) => setSnapToGrid(e.target.checked)} />
           Snap to grid
         </label>
+        <button
+          type="button"
+          onClick={() => setRightPanelCollapsed((prev) => !prev)}
+          style={{ border: "1px solid rgba(55,53,47,0.2)", background: "#fff", color: N_FG, borderRadius: "4px", padding: "5px 9px", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: N_FONT }}
+        >
+          {rightPanelCollapsed ? "Show Guest List Panel" : "Hide Guest List Panel"}
+        </button>
       </div>
 
       {(error || success) && (
@@ -954,7 +962,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                       <div
                         style={{
                           position: "absolute",
-                          right: "-84px",
+                          right: "-94px",
                           top: "50%",
                           transform: "translateY(-50%)",
                           display: "flex",
@@ -969,9 +977,9 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                             e.stopPropagation();
                             setEditingTableId(table.id);
                           }}
-                          style={{ border: "none", background: "rgba(37, 99, 235, 0.92)", color: "white", borderRadius: "4px", padding: "4px 8px", fontSize: "10px", fontWeight: 700, cursor: "pointer", fontFamily: N_FONT, boxShadow: "0 4px 10px rgba(37,99,235,0.22)" }}
+                          style={{ border: "none", background: "rgba(37,99,235,0.95)", color: "white", borderRadius: "4px", padding: "5px 9px", fontSize: "10px", fontWeight: 700, cursor: "pointer", fontFamily: N_FONT, boxShadow: "0 4px 10px rgba(37,99,235,0.22)", textAlign: "left", minWidth: "88px" }}
                         >
-                          Edit
+                          Edit Table
                         </button>
                         <button
                           type="button"
@@ -979,9 +987,9 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                             e.stopPropagation();
                             deleteTable(table.id);
                           }}
-                          style={{ border: "none", background: "rgba(55,53,47,0.88)", color: "white", borderRadius: "4px", padding: "4px 8px", fontSize: "10px", fontWeight: 700, cursor: "pointer", fontFamily: N_FONT, boxShadow: "0 4px 10px rgba(55,53,47,0.2)" }}
+                          style={{ border: "none", background: "rgba(55,53,47,0.9)", color: "white", borderRadius: "4px", padding: "5px 9px", fontSize: "10px", fontWeight: 700, cursor: "pointer", fontFamily: N_FONT, boxShadow: "0 4px 10px rgba(55,53,47,0.2)", textAlign: "left", minWidth: "88px" }}
                         >
-                          Delete
+                          Delete Table
                         </button>
                       </div>
                     </>
@@ -1018,7 +1026,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         {/* Right panel */}
         {!rightPanelCollapsed && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", minHeight: "600px" }}>
-          <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "6px", background: "white", padding: "10px", maxHeight: "600px", overflowY: "auto" }}>
+          <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "6px", background: "white", padding: "10px", height: "600px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
               <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.04em" }}>
                 Guest List (Drag to Table)
@@ -1041,7 +1049,8 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
               Drop here to unassign from any table.
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", paddingRight: "4px", scrollbarGutter: "stable" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               {guests.map((guest) => {
                 const ownerId = guestToTableId.get(guest.id);
                 const owner = ownerId ? tables.find((t) => t.id === ownerId) : null;
@@ -1093,6 +1102,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
               {guests.length === 0 && (
                 <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>No guests found in the Guest List database.</p>
               )}
+              </div>
             </div>
           </div>
         </div>
