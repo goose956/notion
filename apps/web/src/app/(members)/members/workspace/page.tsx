@@ -800,10 +800,22 @@ function parseWeddingDate(value: unknown): Date | null {
 function WeddingWorkspaceDashboard({
   databases,
   weddingCriteria,
+  onWeddingCriteriaUpdated,
 }: {
   databases: WorkspaceDatabase[];
   weddingCriteria: Record<string, unknown> | null;
+  onWeddingCriteriaUpdated: (criteria: Record<string, unknown>) => void;
 }) {
+  const [coupleNamesInput, setCoupleNamesInput] = useState(asText(weddingCriteria?.["couple-names"]) ?? "");
+  const [venueInput, setVenueInput] = useState(asText(weddingCriteria?.["wedding-location"]) ?? "");
+  const [savingDetails, setSavingDetails] = useState(false);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCoupleNamesInput(asText(weddingCriteria?.["couple-names"]) ?? "");
+    setVenueInput(asText(weddingCriteria?.["wedding-location"]) ?? "");
+  }, [weddingCriteria]);
+
   const guestsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "guests") ?? null;
   const timelineDb =
     databases.find(
@@ -811,6 +823,7 @@ function WeddingWorkspaceDashboard({
     ) ?? null;
   const documentsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "documents") ?? null;
 
+  const coupleNames = asText(weddingCriteria?.["couple-names"]);
   const weddingDate = parseWeddingDate(weddingCriteria?.["wedding-date"]);
   const venue = asText(weddingCriteria?.["wedding-location"]);
   const plannedGuests = asNumber(weddingCriteria?.["guest-count"]);
@@ -847,27 +860,196 @@ function WeddingWorkspaceDashboard({
         ? `${countdownDays} day${countdownDays === 1 ? "" : "s"} to go`
         : `${Math.abs(countdownDays)} day${Math.abs(countdownDays) === 1 ? "" : "s"} since your wedding date`;
 
+  const normalizedDays = countdownDays === null ? null : Math.max(0, countdownDays);
+  const countdownPercent =
+    normalizedDays === null ? 0 : Math.min(100, Math.max(0, Math.round(((365 - Math.min(365, normalizedDays)) / 365) * 100)));
+  const urgencyColor =
+    normalizedDays === null
+      ? "rgb(107,114,128)"
+      : normalizedDays <= 30
+        ? "rgb(220,38,38)"
+        : normalizedDays <= 90
+          ? "rgb(249,115,22)"
+          : normalizedDays <= 180
+            ? "rgb(234,179,8)"
+            : "rgb(22,163,74)";
+
+  async function saveTopDetails() {
+    setSavingDetails(true);
+    setDetailsError(null);
+    try {
+      const nextCriteria = {
+        ...(weddingCriteria ?? {}),
+        "couple-names": coupleNamesInput.trim(),
+        "wedding-location": venueInput.trim(),
+      };
+
+      const res = await fetch("/api/members/criteria/wedding-planner", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ criteria: nextCriteria }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "Failed to save wedding details");
+      }
+      const body = (await res.json().catch(() => ({}))) as { criteria?: Record<string, unknown> };
+      onWeddingCriteriaUpdated(body.criteria ?? nextCriteria);
+    } catch (err) {
+      setDetailsError(err instanceof Error ? err.message : "Failed to save wedding details");
+    } finally {
+      setSavingDetails(false);
+    }
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
       <section
         style={{
-          border: `1px solid ${N_BORDER}`,
-          borderRadius: "12px",
-          background: "linear-gradient(135deg, #fff7ea 0%, #f1f8ff 52%, #f6fbf4 100%)",
-          padding: "18px 20px",
+          border: `1px solid ${N_BORDER_MED}`,
+          borderRadius: "14px",
+          background: "linear-gradient(140deg, #fff9f0 0%, #eef8ff 44%, #f4fbf3 100%)",
+          padding: "18px",
+          boxShadow: "0 10px 26px rgba(28,35,50,0.08)",
+          display: "grid",
+          gridTemplateColumns: "1.2fr 1fr",
+          gap: "12px",
         }}
       >
-        <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: N_SUBTLE }}>
-          Wedding Dashboard
-        </p>
-        <h2 style={{ margin: "8px 0 6px", fontSize: "24px", color: N_FG }}>
-          {countdownLabel}
-        </h2>
-        <p style={{ margin: 0, fontSize: "13px", color: N_MUTED }}>
-          {weddingDate
-            ? `Big day: ${weddingDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`
-            : "Add your wedding date in setup to enable a live countdown."}
-        </p>
+        <div>
+          <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: N_SUBTLE }}>
+            Wedding Dashboard
+          </p>
+          <h2 style={{ margin: "8px 0 10px", fontSize: "24px", color: N_FG }}>
+            {coupleNames ?? "Your Wedding Plan"}
+          </h2>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: N_SUBTLE }}>
+                Couple Names
+              </span>
+              <input
+                value={coupleNamesInput}
+                onChange={(e) => setCoupleNamesInput(e.target.value)}
+                placeholder="e.g. Olivia & James"
+                style={{
+                  height: "34px",
+                  padding: "0 10px",
+                  borderRadius: "7px",
+                  border: `1px solid ${N_BORDER_MED}`,
+                  background: "white",
+                  color: N_FG,
+                  fontSize: "13px",
+                  fontFamily: N_FONT,
+                }}
+              />
+            </label>
+
+            <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: N_SUBTLE }}>
+                Venue
+              </span>
+              <input
+                value={venueInput}
+                onChange={(e) => setVenueInput(e.target.value)}
+                placeholder="e.g. The Barn, Cotswolds"
+                style={{
+                  height: "34px",
+                  padding: "0 10px",
+                  borderRadius: "7px",
+                  border: `1px solid ${N_BORDER_MED}`,
+                  background: "white",
+                  color: N_FG,
+                  fontSize: "13px",
+                  fontFamily: N_FONT,
+                }}
+              />
+            </label>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={() => void saveTopDetails()}
+              disabled={savingDetails}
+              style={{
+                padding: "7px 12px",
+                borderRadius: "8px",
+                border: "none",
+                background: savingDetails ? "rgba(55,53,47,0.3)" : N_FG,
+                color: "white",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: savingDetails ? "default" : "pointer",
+                fontFamily: N_FONT,
+              }}
+            >
+              {savingDetails ? "Saving..." : "Save details"}
+            </button>
+            {detailsError && <span style={{ fontSize: "12px", color: "rgb(220,38,38)" }}>{detailsError}</span>}
+          </div>
+        </div>
+
+        <div
+          style={{
+            borderRadius: "12px",
+            background: "rgba(255,255,255,0.75)",
+            border: `1px solid ${N_BORDER}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "14px",
+            padding: "10px",
+          }}
+        >
+          <div
+            style={{
+              width: "122px",
+              height: "122px",
+              borderRadius: "999px",
+              background: `conic-gradient(${urgencyColor} ${countdownPercent * 3.6}deg, rgba(55,53,47,0.12) 0deg)`,
+              display: "grid",
+              placeItems: "center",
+              position: "relative",
+            }}
+          >
+            <div
+              style={{
+                width: "92px",
+                height: "92px",
+                borderRadius: "999px",
+                background: "white",
+                border: `1px solid ${N_BORDER}`,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <span style={{ fontSize: "24px", fontWeight: 800, color: urgencyColor, lineHeight: 1 }}>
+                {countdownDays ?? "-"}
+              </span>
+              <span style={{ fontSize: "10px", color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                days
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: N_SUBTLE }}>
+              Countdown
+            </p>
+            <p style={{ margin: "6px 0 4px", fontSize: "18px", fontWeight: 700, color: N_FG }}>
+              {countdownLabel}
+            </p>
+            <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
+              {weddingDate
+                ? `Big day: ${weddingDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`
+                : "Add a date in setup to activate countdown tracking."}
+            </p>
+          </div>
+        </div>
       </section>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px" }}>
@@ -1793,7 +1975,11 @@ export default function WorkspacePage() {
           </div>
         ) : activeTab === DASHBOARD_TAB_ID ? (
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-            <WeddingWorkspaceDashboard databases={databases} weddingCriteria={weddingCriteria} />
+            <WeddingWorkspaceDashboard
+              databases={databases}
+              weddingCriteria={weddingCriteria}
+              onWeddingCriteriaUpdated={(criteria) => setWeddingCriteria(criteria)}
+            />
           </div>
         ) : !activeDbDisplay ? null : (
           <>
