@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal, Mail, LayoutDashboard, CalendarDays, MapPin, Users, CheckCircle2, ListChecks, FileText, Pencil, Check, X } from "lucide-react";
+import { Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal, Mail, LayoutDashboard, CalendarDays, MapPin, Users, CheckCircle2, ListChecks, FileText, Pencil, Check, X, Download, Palette } from "lucide-react";
 import { SeatingPlannerView } from "../seating/SeatingPlannerView";
 import type {
   WorkspaceDatabase,
@@ -25,6 +25,7 @@ const N_FONT =
 const DASHBOARD_TAB_ID = "__workspace_dashboard__";
 const SEATING_TAB_ID = "__workspace_seating__";
 const DRAFT_TAB_ID = "__workspace_draft_letters__";
+const INVITATION_TAB_ID = "__workspace_invitation_canvas__";
 
 // ─── Readonly property types (can't inline-edit these) ─────────────────────
 const READONLY_TYPES = new Set(["formula", "rollup", "relation", "created_time", "last_edited_time", "created_by", "last_edited_by"]);
@@ -1654,6 +1655,264 @@ function WeddingDraftStudio({
   );
 }
 
+function WeddingInvitationCanvas({
+  weddingCriteria,
+}: {
+  weddingCriteria: Record<string, unknown> | null;
+}) {
+  const [userPrompt, setUserPrompt] = useState("Create a romantic floral invitation with soft watercolor accents.");
+  const [style, setStyle] = useState(asText(weddingCriteria?.["invitation-style"]) ?? "Romantic")
+  const [colours, setColours] = useState(asText(weddingCriteria?.["invitation-colours"]) ?? "Blush pink, sage green, ivory");
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [invitationText, setInvitationText] = useState("");
+  const [thankYouText, setThankYouText] = useState("");
+  const [palette, setPalette] = useState<string[]>([]);
+  const [svgMarkup, setSvgMarkup] = useState<string>("");
+  const [chatLog, setChatLog] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const coupleNames = asText(weddingCriteria?.["couple-names"]) ?? "Couple Names";
+  const weddingDate = asText(weddingCriteria?.["wedding-date"]) ?? "Wedding Date";
+  const venue = asText(weddingCriteria?.["wedding-location"]) ?? "Wedding Venue";
+
+  useEffect(() => {
+    if (!svgMarkup) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const img = new Image();
+    const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`;
+    img.onload = () => {
+      canvas.width = 1200;
+      canvas.height = 1800;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.onerror = () => {
+      setError("Generated artwork could not be rendered. Please try again.");
+    };
+    img.src = svgUrl;
+  }, [svgMarkup]);
+
+  async function generateDesign() {
+    const prompt = userPrompt.trim();
+    if (!prompt) return;
+
+    setGenerating(true);
+    setError(null);
+    setChatLog((prev) => [...prev, { role: "user", content: prompt }]);
+
+    try {
+      const res = await fetch("/api/members/invitation-canvas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          style,
+          colours,
+          coupleNames,
+          weddingDate,
+          venue,
+        }),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        invitationText?: string;
+        thankYouText?: string;
+        colorPalette?: string[];
+        svg?: string;
+      };
+
+      if (!res.ok) {
+        throw new Error(data.error ?? "Failed to generate invitation design");
+      }
+
+      setInvitationText(data.invitationText ?? "");
+      setThankYouText(data.thankYouText ?? "");
+      setPalette(Array.isArray(data.colorPalette) ? data.colorPalette : []);
+      setSvgMarkup(data.svg ?? "");
+      setChatLog((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Design generated. You can now export the canvas as an image.",
+        },
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  function exportCanvasPng() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = "wedding-invitation-design.png";
+    a.click();
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 380px) 1fr", gap: "14px" }}>
+      <section
+        style={{
+          border: `1px solid ${N_BORDER}`,
+          borderRadius: "12px",
+          background: "#fff",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          minHeight: "520px",
+        }}
+      >
+        <div style={{ padding: "12px 14px", borderBottom: `1px solid ${N_BORDER}`, background: "#fff7fb" }}>
+          <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#9d174d" }}>Invitation Assistant</h3>
+          <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>Describe the look and Claude will generate copy and design.</p>
+        </div>
+
+        <div style={{ padding: "12px 14px", display: "grid", gap: "8px", borderBottom: `1px solid ${N_BORDER}` }}>
+          <input
+            value={style}
+            onChange={(e) => setStyle(e.target.value)}
+            placeholder="Style (e.g. romantic, modern, minimalist)"
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+          />
+          <input
+            value={colours}
+            onChange={(e) => setColours(e.target.value)}
+            placeholder="Colours (e.g. blush, ivory, sage)"
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+          />
+          <textarea
+            value={userPrompt}
+            onChange={(e) => setUserPrompt(e.target.value)}
+            rows={4}
+            placeholder="What should this invitation feel like?"
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
+          />
+          <button
+            type="button"
+            onClick={() => void generateDesign()}
+            disabled={generating || !userPrompt.trim()}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              height: "36px",
+              borderRadius: "8px",
+              border: "none",
+              background: generating ? "rgba(190,24,93,0.25)" : "linear-gradient(135deg, #6b2040, #be185d)",
+              color: "white",
+              fontSize: "13px",
+              fontWeight: 700,
+              fontFamily: N_FONT,
+              cursor: generating ? "default" : "pointer",
+            }}
+          >
+            {generating ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <WandSparkles size={14} />}
+            {generating ? "Generating" : "Generate design"}
+          </button>
+        </div>
+
+        <div style={{ padding: "12px 14px", overflowY: "auto", display: "grid", gap: "6px", flex: 1 }}>
+          {chatLog.length === 0 ? (
+            <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>No prompts yet.</p>
+          ) : (
+            chatLog.map((m, idx) => (
+              <div
+                key={`${m.role}-${idx}`}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  background: m.role === "user" ? "#fef2f8" : "#f8fafc",
+                  border: `1px solid ${N_BORDER}`,
+                  fontSize: "12px",
+                  color: N_FG,
+                }}
+              >
+                <strong style={{ textTransform: "capitalize" }}>{m.role}:</strong> {m.content}
+              </div>
+            ))
+          )}
+          {error && <p style={{ margin: 0, color: "rgb(220,38,38)", fontSize: "12px" }}>{error}</p>}
+        </div>
+      </section>
+
+      <section style={{ border: `1px solid ${N_BORDER}`, borderRadius: "12px", overflow: "hidden", background: "white", display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: "10px 12px", borderBottom: `1px solid ${N_BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", background: "#fffdfc" }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: N_FG }}>Invitation Canvas</h3>
+            <p style={{ margin: "3px 0 0", fontSize: "12px", color: N_MUTED }}>{coupleNames} · {weddingDate} · {venue}</p>
+          </div>
+          <button
+            type="button"
+            onClick={exportCanvasPng}
+            disabled={!svgMarkup}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "7px 10px",
+              borderRadius: "7px",
+              border: `1px solid ${N_BORDER_MED}`,
+              background: svgMarkup ? "white" : "#f8fafc",
+              color: svgMarkup ? N_FG : N_SUBTLE,
+              fontSize: "12px",
+              fontWeight: 600,
+              fontFamily: N_FONT,
+              cursor: svgMarkup ? "pointer" : "default",
+            }}
+          >
+            <Download size={13} /> Export PNG
+          </button>
+        </div>
+
+        <div style={{ padding: "12px", display: "grid", gap: "10px", overflowY: "auto" }}>
+          {palette.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "12px", color: N_MUTED }}><Palette size={12} /> Palette</span>
+              {palette.map((color) => (
+                <span key={color} style={{ width: "16px", height: "16px", borderRadius: "999px", border: `1px solid ${N_BORDER_MED}`, background: color }} title={color} />
+              ))}
+            </div>
+          )}
+
+          <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "8px", background: "#f8fafc", display: "flex", justifyContent: "center", padding: "10px" }}>
+            <canvas
+              ref={canvasRef}
+              width={1200}
+              height={1800}
+              style={{ width: "100%", maxWidth: "460px", height: "auto", borderRadius: "4px", background: "white" }}
+            />
+          </div>
+
+          {(invitationText || thankYouText) && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "10px" }}>
+              <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "8px", background: "#fff", padding: "10px" }}>
+                <p style={{ margin: "0 0 6px", fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", color: N_SUBTLE, fontWeight: 700 }}>Invitation Copy</p>
+                <p style={{ margin: 0, fontSize: "13px", color: N_FG, whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{invitationText || "No invitation text generated yet."}</p>
+              </div>
+              <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "8px", background: "#fff", padding: "10px" }}>
+                <p style={{ margin: "0 0 6px", fontSize: "11px", letterSpacing: "0.08em", textTransform: "uppercase", color: N_SUBTLE, fontWeight: 700 }}>Thank You Copy</p>
+                <p style={{ margin: 0, fontSize: "13px", color: N_FG, whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{thankYouText || "No thank-you text generated yet."}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // ─── Main workspace page component ────────────────────────────────────────────
 export default function WorkspacePage() {
   const searchParams = useSearchParams();
@@ -1696,6 +1955,7 @@ export default function WorkspacePage() {
         if (prev === DASHBOARD_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
         if (prev === SEATING_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
         if (prev === DRAFT_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
+        if (prev === INVITATION_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
         if (prev && nextDatabases.some((d) => d.notionId === prev)) return prev;
         return nextDatabases[0]!.notionId;
       });
@@ -1711,6 +1971,7 @@ export default function WorkspacePage() {
       if (prev === DASHBOARD_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
       if (prev === SEATING_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
       if (prev === DRAFT_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
+      if (prev === INVITATION_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
       if (prev && nextDatabases.some((d) => d.notionId === prev)) return prev;
       if (nextBackend === "app" && hasWeddingWorkspace) return DASHBOARD_TAB_ID;
       return nextDatabases[0]?.notionId ?? "";
@@ -2093,6 +2354,29 @@ export default function WorkspacePage() {
                             <span style={{ fontSize: "14px", flexShrink: 0 }}>✍️</span>
                             Draft Letters
                           </button>
+                          <button
+                            onClick={() => setActiveTab(INVITATION_TAB_ID)}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "7px",
+                              width: "100%",
+                              padding: "5px 10px 5px 20px",
+                              borderRadius: "0 4px 4px 0",
+                              border: "none",
+                              borderLeft: activeTab === INVITATION_TAB_ID ? "2px solid #be185d" : "2px solid transparent",
+                              fontSize: "13px",
+                              color: activeTab === INVITATION_TAB_ID ? "#9d174d" : N_FG,
+                              background: activeTab === INVITATION_TAB_ID ? "rgba(190,24,93,0.10)" : "none",
+                              fontFamily: N_FONT,
+                              cursor: "pointer",
+                              textAlign: "left",
+                            }}
+                            className="hover:bg-[rgba(190,24,93,0.06)]"
+                          >
+                            <span style={{ fontSize: "14px", flexShrink: 0 }}>🎨</span>
+                            Invitation Canvas
+                          </button>
                         </>
                       )}
                     </div>
@@ -2223,6 +2507,10 @@ export default function WorkspacePage() {
                 Draft Letters needs the Documents database to be available.
               </div>
             )}
+          </div>
+        ) : activeTab === INVITATION_TAB_ID ? (
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+            <WeddingInvitationCanvas weddingCriteria={weddingCriteria} />
           </div>
         ) : !activeDbDisplay ? null : (
           <>
