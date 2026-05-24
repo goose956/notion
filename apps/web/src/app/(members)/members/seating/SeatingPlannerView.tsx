@@ -185,6 +185,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
   const [tables, setTables] = useState<SeatingTable[]>([]);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [editingTableId, setEditingTableId] = useState<string | null>(null);
+  const [selectedSeat, setSelectedSeat] = useState<{ tableId: string; seatIndex: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -341,6 +342,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
   function deleteTable(tableId: string) {
     if (!confirm("Delete this table and unassign its guests?")) return;
     setTables((prev) => prev.filter((t) => t.id !== tableId));
+    setSelectedSeat((prev) => (prev?.tableId === tableId ? null : prev));
   }
 
   function assignGuestToTable(guestId: string, targetTableId: string | null) {
@@ -376,6 +378,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         return { ...table, guestIds: next.slice(0, table.seats) };
       });
     });
+    setSelectedSeat({ tableId: targetTableId, seatIndex: Math.max(0, seatIndex) });
   }
 
   function removeGuestFromSeat(tableId: string, seatIndex: number) {
@@ -654,8 +657,12 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                     e.preventDefault();
                     const guestId = e.dataTransfer.getData("text/guestId");
                     if (!guestId) return;
+                    const selectedSeatIndex =
+                      selectedSeat && selectedSeat.tableId === table.id
+                        ? Math.max(0, Math.min(table.seats - 1, selectedSeat.seatIndex))
+                        : null;
                     const firstEmpty = Math.max(0, Math.min(table.seats - 1, table.guestIds.length));
-                    assignGuestToSeat(guestId, table.id, firstEmpty);
+                    assignGuestToSeat(guestId, table.id, selectedSeatIndex ?? firstEmpty);
                   }}
                   onMouseDown={(e) => {
                     const target = e.target as HTMLElement;
@@ -789,6 +796,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                           const pos = getSeatPosition(table, seatIdx);
                           const guestId = table.guestIds[seatIdx] ?? null;
                           const guest = guestId ? guestById.get(guestId) : null;
+                          const isSelectedSeat = selectedSeat?.tableId === table.id && selectedSeat?.seatIndex === seatIdx;
                           return (
                             <div
                               key={`${table.id}-seat-${seatIdx}`}
@@ -802,8 +810,12 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                               }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (!guest) return;
-                                removeGuestFromSeat(table.id, seatIdx);
+                                if (guest) {
+                                  removeGuestFromSeat(table.id, seatIdx);
+                                  setSelectedSeat({ tableId: table.id, seatIndex: seatIdx });
+                                  return;
+                                }
+                                setSelectedSeat({ tableId: table.id, seatIndex: seatIdx });
                               }}
                               title={guest ? `${guest.name} (click to remove)` : `Seat ${seatIdx + 1} (drop guest here)`}
                               style={{
@@ -814,8 +826,8 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
                                 width: "22px",
                                 height: "22px",
                                 borderRadius: "999px",
-                                border: `1px solid ${theme.chipBorder}`,
-                                background: guest ? theme.chipBg : "white",
+                                border: isSelectedSeat ? "2px solid #be185d" : `1px solid ${theme.chipBorder}`,
+                                background: isSelectedSeat ? "rgba(190,24,93,0.18)" : guest ? theme.chipBg : "white",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
