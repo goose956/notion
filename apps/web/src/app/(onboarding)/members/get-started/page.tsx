@@ -72,9 +72,9 @@ function InAppGetStarted({
     : nextUrl ?? "/members/chat";
 
   return (
-    <div className="inapp-shell" style={{ display: "flex", minHeight: "100vh", background: "white", fontFamily: N_FONT, color: N_FG }}>
+    <div className="inapp-shell flex min-h-screen max-[960px]:block" style={{ background: "white", fontFamily: N_FONT, color: N_FG }}>
       <aside
-        className="inapp-shell-sidebar"
+        className="inapp-shell-sidebar max-[960px]:hidden"
         style={{
           width: "240px",
           flexShrink: 0,
@@ -179,7 +179,7 @@ function InAppGetStarted({
         )}
       </aside>
 
-      <div className="inapp-shell-content" style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "linear-gradient(180deg, #E8F4FF 0%, #F7FBFF 100%)" }}>
+      <div className="inapp-shell-content max-[960px]:min-h-screen" style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "linear-gradient(180deg, #E8F4FF 0%, #F7FBFF 100%)" }}>
         <TopBar showMembersLink={isAuthenticated} />
 
         <div
@@ -293,19 +293,6 @@ function InAppGetStarted({
       </div>
       </div>
       </div>
-      <style jsx>{`
-        @media (max-width: 960px) {
-          .inapp-shell {
-            display: block !important;
-          }
-          .inapp-shell-sidebar {
-            display: none !important;
-          }
-          .inapp-shell-content {
-            min-height: 100vh;
-          }
-        }
-      `}</style>
     </div>
   );
 }
