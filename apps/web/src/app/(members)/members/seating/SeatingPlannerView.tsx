@@ -101,6 +101,14 @@ type SeatingTable = {
   saved: boolean;
 };
 
+type PersistedSeatingLayout = {
+  dbNotionId: string;
+  updatedAt: number;
+  tables: SeatingTable[];
+  zoom: number;
+  snapToGrid: boolean;
+};
+
 function getTableDimensions(table: SeatingTable): { width: number; height: number } {
   if (table.shape === "rectangle") return { width: 420, height: 112 };
   if (table.shape === "square") return { width: 180, height: 180 };
@@ -221,6 +229,9 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
   const roomRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<{ tableId: string; offsetX: number; offsetY: number } | null>(null);
   const loadedStorageKeyRef = useRef<string | null>(null);
+  const isHydratingRef = useRef(false);
+  const hasUserMutatedRef = useRef(false);
+  const hydrationTokenRef = useRef(0);
 
   const guests = useMemo<SeatingGuest[]>(() => {
     if (!guestsDb) return [];
@@ -232,73 +243,171 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
     ? findPropertyName(guestsDb.properties, ["Table", "Table Number", "Table Assignment"])
     : null;
 
-  // Load tables from localStorage — only when the storageKey changes (different database),
+  function normalizePersistedLayout(raw: unknown, expectedNotionId: string): PersistedSeatingLayout | null {
+    if (!raw || typeof raw !== "object") return null;
+    const data = raw as Record<string, unknown>;
+    if (data["dbNotionId"] !== expectedNotionId) return null;
+    const parsed = data as {
+      dbNotionId?: unknown;
+      updatedAt?: unknown;
+      tables?: unknown;
+      zoom?: unknown;
+      snapToGrid?: unknown;
+    };
+    const loaded = Array.isArray(parsed.tables) ? (parsed.tables as SeatingTable[]) : [];
+    const cleaned: SeatingTable[] = loaded.map((t): SeatingTable => ({
+      id: t.id,
+      name: t.name || `Table ${t.number}`,
+      number: Number.isFinite(t.number) ? Math.max(1, Math.round(t.number)) : 1,
+      seats: Number.isFinite(t.seats) ? Math.max(1, Math.round(t.seats)) : 8,
+      shape: t.shape === "rectangle" || t.shape === "square" || t.shape === "rect-around" ? t.shape : "round",
+      colorScheme: t.colorScheme && t.colorScheme in TABLE_THEMES ? t.colorScheme : "classic",
+      x: Number.isFinite(t.x) ? t.x : 20,
+      y: Number.isFinite(t.y) ? t.y : 20,
+      guestIds: (() => {
+        const seatCount = Number.isFinite(t.seats) ? Math.max(1, Math.round(t.seats)) : 8;
+        const initial = Array.isArray(t.guestIds)
+          ? t.guestIds
+              .map((id) => (typeof id === "string" ? id : null))
+              .slice(0, seatCount)
+          : [];
+        while (initial.length < seatCount) initial.push(null);
+        return initial;
+      })(),
+      saved: typeof (t as { saved?: unknown }).saved === "boolean" ? Boolean((t as { saved?: unknown }).saved) : true,
+    }));
+    const zoom =
+      typeof parsed.zoom === "number" && Number.isFinite(parsed.zoom)
+        ? Math.min(180, Math.max(60, Math.round(parsed.zoom)))
+        : 100;
+    const snapToGrid = typeof parsed.snapToGrid === "boolean" ? parsed.snapToGrid : true;
+    const updatedAt =
+      typeof parsed.updatedAt === "number" && Number.isFinite(parsed.updatedAt)
+        ? parsed.updatedAt
+        : 0;
+    return {
+      dbNotionId: expectedNotionId,
+      updatedAt,
+      tables: cleaned,
+      zoom,
+      snapToGrid,
+    };
+  }
+
+  function applyLayout(layout: PersistedSeatingLayout | null) {
+    if (!layout) {
+      setTables([]);
+      setSelectedTableId(null);
+      setEditingTableId(null);
+      setZoom(100);
+      setSnapToGrid(true);
+      return;
+    }
+    setTables(layout.tables);
+    setSelectedTableId(layout.tables[0]?.id ?? null);
+    setEditingTableId(null);
+    setZoom(layout.zoom);
+    setSnapToGrid(layout.snapToGrid);
+  }
+
+  // Load tables from localStorage + DB criteria — only when the storageKey changes.
   // NOT when guests changes. Including guests as a dep would reload from localStorage on every
   // parent re-render, clobbering in-progress edits before the persistence effect can save them.
   useEffect(() => {
     if (!storageKey) return;
     if (loadedStorageKeyRef.current === storageKey) return; // already loaded for this key
     loadedStorageKeyRef.current = storageKey;
+    const token = ++hydrationTokenRef.current;
+    isHydratingRef.current = true;
+    hasUserMutatedRef.current = false;
+
+    let localLayout: PersistedSeatingLayout | null = null;
     try {
       const raw = window.localStorage.getItem(storageKey);
-      if (!raw) {
-        setTables([]);
-        setSelectedTableId(null);
-        setZoom(100);
-        setSnapToGrid(true);
-        return;
+      if (raw) {
+        localLayout = normalizePersistedLayout(JSON.parse(raw), guestsDb?.notionId ?? "");
       }
-      const parsed = JSON.parse(raw) as { tables?: SeatingTable[]; zoom?: number; snapToGrid?: boolean };
-      const loaded = Array.isArray(parsed.tables) ? parsed.tables : [];
-      const cleaned: SeatingTable[] = loaded.map((t): SeatingTable => ({
-        id: t.id,
-        name: t.name || `Table ${t.number}`,
-        number: Number.isFinite(t.number) ? Math.max(1, Math.round(t.number)) : 1,
-        seats: Number.isFinite(t.seats) ? Math.max(1, Math.round(t.seats)) : 8,
-        shape: t.shape === "rectangle" ? "rectangle" : "round",
-        colorScheme: t.colorScheme && t.colorScheme in TABLE_THEMES ? t.colorScheme : "classic",
-        x: Number.isFinite(t.x) ? t.x : 20,
-        y: Number.isFinite(t.y) ? t.y : 20,
-        guestIds: (() => {
-          const seatCount = Number.isFinite(t.seats) ? Math.max(1, Math.round(t.seats)) : 8;
-          const initial = Array.isArray(t.guestIds)
-            ? t.guestIds
-                .map((id) => (typeof id === "string" ? id : null))
-                .slice(0, seatCount)
-            : [];
-          while (initial.length < seatCount) initial.push(null);
-          return initial;
-        })(),
-        saved: typeof (t as { saved?: unknown }).saved === "boolean" ? Boolean((t as { saved?: unknown }).saved) : true,
-      }));
-      setTables(cleaned);
-      setSelectedTableId(cleaned[0]?.id ?? null);
-      setEditingTableId(null);
-      setZoom(
-        typeof parsed.zoom === "number" && Number.isFinite(parsed.zoom)
-          ? Math.min(180, Math.max(60, Math.round(parsed.zoom)))
-          : 100,
-      );
-      setSnapToGrid(typeof parsed.snapToGrid === "boolean" ? parsed.snapToGrid : true);
     } catch {
-      setTables([]);
-      setSelectedTableId(null);
-      setEditingTableId(null);
-      setZoom(100);
-      setSnapToGrid(true);
+      localLayout = null;
     }
+
+    applyLayout(localLayout);
+
+    void (async () => {
+      try {
+        const res = await fetch("/api/members/criteria/wedding-planner", { cache: "no-store" });
+        if (!res.ok) return;
+        const body = (await res.json().catch(() => ({}))) as { criteria?: Record<string, unknown> | null };
+        const fromDb = normalizePersistedLayout(body.criteria?.["seating-layout-v1"], guestsDb?.notionId ?? "");
+        if (!fromDb) return;
+        if (hydrationTokenRef.current !== token) return;
+        if (hasUserMutatedRef.current) return;
+        if (!localLayout || fromDb.updatedAt >= localLayout.updatedAt) {
+          isHydratingRef.current = true;
+          applyLayout(fromDb);
+        }
+      } catch {
+        // Keep UI resilient when DB criteria read fails.
+      } finally {
+        if (hydrationTokenRef.current === token) {
+          // Defer so the state updates above settle before tracking user mutations.
+          queueMicrotask(() => {
+            if (hydrationTokenRef.current === token) isHydratingRef.current = false;
+          });
+        }
+      }
+    })();
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
-  // Persist tables to localStorage
+  // Mark user mutations after hydration so async DB load doesn't clobber active edits.
   useEffect(() => {
-    if (!storageKey) return;
+    if (isHydratingRef.current) return;
+    hasUserMutatedRef.current = true;
+  }, [tables, zoom, snapToGrid]);
+
+  // Persist tables to localStorage + DB criteria (debounced)
+  useEffect(() => {
+    if (!storageKey || !guestsDb) return;
+    if (isHydratingRef.current) return;
+    const payload: PersistedSeatingLayout = {
+      dbNotionId: guestsDb.notionId,
+      updatedAt: Date.now(),
+      tables,
+      zoom,
+      snapToGrid,
+    };
     try {
-      window.localStorage.setItem(storageKey, JSON.stringify({ tables, zoom, snapToGrid }));
+      window.localStorage.setItem(storageKey, JSON.stringify(payload));
     } catch {
       // Ignore storage write errors.
     }
-  }, [storageKey, tables, zoom, snapToGrid]);
+
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const getRes = await fetch("/api/members/criteria/wedding-planner", { cache: "no-store" });
+          const getBody = getRes.ok
+            ? ((await getRes.json().catch(() => ({}))) as { criteria?: Record<string, unknown> | null })
+            : { criteria: null };
+          const nextCriteria = {
+            ...(getBody.criteria ?? {}),
+            "seating-layout-v1": payload,
+          };
+          await fetch("/api/members/criteria/wedding-planner", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ criteria: nextCriteria }),
+          });
+        } catch {
+          // Ignore transient DB criteria persistence failures; local cache is fallback.
+        }
+      })();
+    }, 1200);
+
+    return () => window.clearTimeout(timer);
+  }, [storageKey, guestsDb, tables, zoom, snapToGrid]);
 
   // Keep selectedTableId in sync
   useEffect(() => {

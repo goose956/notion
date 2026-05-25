@@ -837,7 +837,6 @@ function WeddingWorkspaceDashboard({
   weddingCriteria: Record<string, unknown> | null;
   onWeddingCriteriaUpdated: (criteria: Record<string, unknown>) => void;
 }) {
-  const HEADER_IMAGE_STORAGE_KEY = "wedding.dashboard.header.image";
   const [coupleNamesInput, setCoupleNamesInput] = useState(asText(weddingCriteria?.["couple-names"]) ?? "");
   const [venueInput, setVenueInput] = useState(asText(weddingCriteria?.["wedding-location"]) ?? "");
   const [guestCountInput, setGuestCountInput] = useState(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
@@ -848,29 +847,8 @@ function WeddingWorkspaceDashboard({
   const [guestScenarioCount, setGuestScenarioCount] = useState(100);
   const [savingDetails, setSavingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
-  const [headerImageDataUrl, setHeaderImageDataUrl] = useState<string | null>(null);
+  const [headerImageDataUrl, setHeaderImageDataUrl] = useState(asText(weddingCriteria?.["dashboard-header-image"]));
   const headerImageInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(HEADER_IMAGE_STORAGE_KEY);
-      setHeaderImageDataUrl(saved && saved.trim() !== "" ? saved : null);
-    } catch {
-      // Ignore localStorage read errors.
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      if (headerImageDataUrl && headerImageDataUrl.trim() !== "") {
-        window.localStorage.setItem(HEADER_IMAGE_STORAGE_KEY, headerImageDataUrl);
-      } else {
-        window.localStorage.removeItem(HEADER_IMAGE_STORAGE_KEY);
-      }
-    } catch {
-      // Ignore localStorage write errors.
-    }
-  }, [headerImageDataUrl]);
 
   useEffect(() => {
     setCoupleNamesInput(asText(weddingCriteria?.["couple-names"]) ?? "");
@@ -879,6 +857,7 @@ function WeddingWorkspaceDashboard({
     setBudgetInput(String(asNumber(weddingCriteria?.["total-budget"]) ?? ""));
     setCostPerGuestInput(String(asNumber(weddingCriteria?.["cost-per-guest"]) ?? 100));
     setDaysToGoInput(String(asNumber(weddingCriteria?.["countdown-days"]) ?? ""));
+    setHeaderImageDataUrl(asText(weddingCriteria?.["dashboard-header-image"]));
   }, [weddingCriteria]);
 
   const guestsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "guests") ?? null;
@@ -988,7 +967,7 @@ function WeddingWorkspaceDashboard({
             ? "rgb(234,179,8)"
             : "rgb(22,163,74)";
 
-  async function saveTopDetails(): Promise<boolean> {
+  async function saveTopDetails(nextHeaderImageDataUrl: string | null = headerImageDataUrl): Promise<boolean> {
     setSavingDetails(true);
     setDetailsError(null);
     try {
@@ -1021,6 +1000,7 @@ function WeddingWorkspaceDashboard({
           daysToGoInput.trim() === "" || !Number.isFinite(parsedCountdownDays)
             ? "date"
             : "manual",
+        "dashboard-header-image": nextHeaderImageDataUrl,
       };
 
       const res = await fetch("/api/members/criteria/wedding-planner", {
@@ -1066,7 +1046,11 @@ function WeddingWorkspaceDashboard({
     }
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === "string") setHeaderImageDataUrl(reader.result);
+      if (typeof reader.result === "string") {
+        const nextImage = reader.result;
+        setHeaderImageDataUrl(nextImage);
+        void saveTopDetails(nextImage);
+      }
     };
     reader.readAsDataURL(file);
     event.target.value = "";
@@ -1184,7 +1168,10 @@ function WeddingWorkspaceDashboard({
             {headerImageDataUrl && (
               <button
                 type="button"
-                onClick={() => setHeaderImageDataUrl(null)}
+                onClick={() => {
+                  setHeaderImageDataUrl(null);
+                  void saveTopDetails(null);
+                }}
                 style={{ border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", borderRadius: "6px", cursor: "pointer", padding: "4px 8px", color: "rgba(255,255,255,0.78)", fontSize: "11px", fontWeight: 600, fontFamily: N_FONT }}
               >
                 Remove
