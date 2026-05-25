@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart2, Blocks, Bot, FileText, LayoutDashboard, SlidersHorizontal, Users, Wrench } from "lucide-react";
