@@ -10,8 +10,10 @@ import {
   listAppDatabasesByWorkspace,
   listAppRowsByDatabase,
   createAppRow,
+  getAppWorkspaceForDatabase,
   createAppWorkspace,
   createAppDatabase,
+  updateAppDatabaseSchema,
   updateAppWorkspaceStatus,
 } from "@niche-factory/db";
 import { NotionApiClient } from "@niche-factory/notion-client";
@@ -50,7 +52,7 @@ export interface WorkspaceResponse {
   weddingCriteria?: Record<string, unknown> | null;
 }
 
-async function provisionAppWorkspace(userId: string, pack: NichePack): Promise<void> {
+async function provisionAppWorkspace(userId: string, pack: NichePack, schemaVersion = 1): Promise<void> {
   const workspaceId = randomUUID();
   await createAppWorkspace({
     id: workspaceId,
@@ -73,6 +75,7 @@ async function provisionAppWorkspace(userId: string, pack: NichePack): Promise<v
         workspaceId,
         packDbId: db.id,
         name: db.name,
+        schemaVersion,
         propertiesSchema: db.properties as unknown as Record<string, unknown>[],
         createdAt: new Date(),
       });
@@ -105,7 +108,7 @@ async function maybeProvisionDefaultAppWorkspace(userId: string): Promise<void> 
     defaultPack.onboardingQuestions.length > 0;
   const criteria = await getUserCriteria(userId, defaultNicheId).catch(() => undefined);
   if (!hasOnboardingQuestions || criteria) {
-    await provisionAppWorkspace(userId, defaultPack).catch(() => null);
+    await provisionAppWorkspace(userId, defaultPack, defaultPackRow.version).catch(() => null);
   }
 }
 
@@ -240,6 +243,7 @@ export async function GET(_req: NextRequest) {
                 workspaceId: workspace.id,
                 packDbId: db.id,
                 name: db.name,
+                schemaVersion: packRow.version,
                 propertiesSchema: db.properties as unknown as Record<string, unknown>[],
                 createdAt: new Date(),
               });
@@ -255,9 +259,29 @@ export async function GET(_req: NextRequest) {
             appDbs = await listAppDatabasesByWorkspace(workspace.id).catch(() => []);
           }
 
+          // Keep existing DB schemas in sync with the latest pack schema.
           for (const appDb of appDbs) {
-            const appRows = await listAppRowsByDatabase(appDb.id).catch(() => []);
-            const hasMore = appRows.length >= 50;
+            const def = pack.databases.find((d) => d.id === appDb.packDbId);
+            if (!def) continue;
+            const expectedSchema = def.properties as unknown as Record<string, unknown>[];
+            const schemaVersion = ((appDb as unknown as { schemaVersion?: number }).schemaVersion ?? 1);
+            const needsSchemaUpdate =
+              JSON.stringify(appDb.propertiesSchema) !== JSON.stringify(expectedSchema) ||
+              appDb.name !== def.name ||
+              schemaVersion !== packRow.version;
+            if (!needsSchemaUpdate) continue;
+            await updateAppDatabaseSchema(appDb.id, {
+              name: def.name,
+              schemaVersion: packRow.version,
+              propertiesSchema: expectedSchema,
+            }).catch(() => null);
+          }
+          appDbs = await listAppDatabasesByWorkspace(workspace.id).catch(() => []);
+
+          for (const appDb of appDbs) {
+            const appRowsPlusOne = await listAppRowsByDatabase(appDb.id, { limit: 51 }).catch(() => []);
+            const hasMore = appRowsPlusOne.length > 50;
+            const appRows = hasMore ? appRowsPlusOne.slice(0, 50) : appRowsPlusOne;
 
             const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
             const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
@@ -293,7 +317,9 @@ export async function GET(_req: NextRequest) {
           const pack = packRow.schemaSnapshot as unknown as NichePack;
           const appDbs = await listAppDatabasesByWorkspace(workspace.id).catch(() => []);
           for (const appDb of appDbs) {
-            const appRows = await listAppRowsByDatabase(appDb.id).catch(() => []);
+            const appRowsPlusOne = await listAppRowsByDatabase(appDb.id, { limit: 51 }).catch(() => []);
+            const hasMore = appRowsPlusOne.length > 50;
+            const appRows = hasMore ? appRowsPlusOne.slice(0, 50) : appRowsPlusOne;
             const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
             const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
             databases.push({
@@ -308,7 +334,7 @@ export async function GET(_req: NextRequest) {
                 pageId: r.id,
                 properties: r.properties as Record<string, string | number | boolean | null>,
               })),
-              hasMore: appRows.length >= 50,
+              hasMore,
             });
           }
         }
@@ -491,6 +517,14 @@ export async function POST(req: NextRequest) {
 
   // ── In-app flow ──────────────────────────────────────────────────────────
   if (!notionToken) {
+    const userEmail = session.user.email;
+    if (!userEmail) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const workspace = await getAppWorkspaceForDatabase(parsed.data.databaseId).catch(() => undefined);
+    if (!workspace || workspace.userId !== userEmail) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     try {
       const row = await createAppRow({
         id: crypto.randomUUID(),

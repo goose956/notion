@@ -6,6 +6,7 @@ import {
   jsonb,
   pgEnum,
   unique,
+  index,
   boolean,
 } from "drizzle-orm/pg-core";
 
@@ -416,6 +417,9 @@ export const appWorkspaces = pgTable("app_workspaces", {
     .notNull()
     .defaultNow(),
   completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (t) => ({
+  userStatusCreatedIdx: index("app_workspaces_user_status_created_idx").on(t.userId, t.status, t.createdAt),
+  userNicheStatusIdx: index("app_workspaces_user_niche_status_idx").on(t.userId, t.nichePackId, t.status),
 });
 
 export type AppWorkspaceRow = typeof appWorkspaces.$inferSelect;
@@ -431,11 +435,16 @@ export const appDatabases = pgTable("app_databases", {
     .references(() => appWorkspaces.id),
   packDbId: text("pack_db_id").notNull(),                 // e.g. "vendors", "guests"
   name: text("name").notNull(),
+  /** Snapshot version of the niche pack schema used for this DB */
+  schemaVersion: integer("schema_version").notNull().default(1),
   /** Array of { name: string; type: string } property definitions */
   propertiesSchema: jsonb("properties_schema").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+}, (t) => ({
+  workspaceIdx: index("app_databases_workspace_idx").on(t.workspaceId),
+  workspacePackDbUniq: unique().on(t.workspaceId, t.packDbId),
 });
 
 export type AppDatabaseRow = typeof appDatabases.$inferSelect;
@@ -459,6 +468,8 @@ export const appRows = pgTable("app_rows", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+}, (t) => ({
+  databaseCreatedIdx: index("app_rows_database_created_idx").on(t.databaseId, t.createdAt),
 });
 
 export type AppRowRow = typeof appRows.$inferSelect;

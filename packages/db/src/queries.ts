@@ -900,6 +900,24 @@ export async function createAppDatabase(
   return created;
 }
 
+export async function updateAppDatabaseSchema(
+  id: string,
+  update: {
+    propertiesSchema: Record<string, unknown>[];
+    schemaVersion?: number;
+    name?: string;
+  },
+): Promise<void> {
+  await db
+    .update(appDatabases)
+    .set({
+      propertiesSchema: update.propertiesSchema,
+      ...(typeof update.schemaVersion === "number" ? { schemaVersion: update.schemaVersion } : {}),
+      ...(typeof update.name === "string" ? { name: update.name } : {}),
+    })
+    .where(eq(appDatabases.id, id));
+}
+
 export async function getAppDatabase(id: string): Promise<AppDatabaseRow | undefined> {
   const rows = await db
     .select()
@@ -956,13 +974,15 @@ export async function listAppDatabasesByWorkspace(
 
 export async function listAppRowsByDatabase(
   databaseId: string,
+  opts?: { limit?: number },
 ): Promise<AppRowRow[]> {
+  const limit = Math.max(1, Math.min(opts?.limit ?? 50, 200));
   return db
     .select()
     .from(appRows)
     .where(eq(appRows.databaseId, databaseId))
     .orderBy(appRows.createdAt)
-    .limit(50);
+    .limit(limit);
 }
 
 export async function updateAppRow(

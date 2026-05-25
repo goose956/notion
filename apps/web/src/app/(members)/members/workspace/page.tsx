@@ -3511,9 +3511,11 @@ export default function WorkspacePage() {
     );
   }
 
+  const visibleDatabases = databases.filter((db) => !(db.nicheId === "wedding-planner" && db.dbId === "honeymoon"));
+
   // Group databases by niche
   const nicheGroups: Array<{ nicheId: string; nicheName: string; dbs: WorkspaceDatabase[] }> = [];
-  for (const db of databases) {
+  for (const db of visibleDatabases) {
     const existing = nicheGroups.find((g) => g.nicheId === db.nicheId);
     if (existing) {
       existing.dbs.push(db);
@@ -3535,8 +3537,6 @@ export default function WorkspacePage() {
           : [...activeDb.properties, { id: "Email", name: "Email", type: "email" }],
       }
     : activeDb;
-  const visibleDatabases = databases.filter((db) => !(db.nicheId === "wedding-planner" && db.dbId === "honeymoon"));
-
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: N_FONT }}>
 
