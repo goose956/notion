@@ -1747,6 +1747,7 @@ function WeddingInvitationCanvas({
   const [userPrompt, setUserPrompt] = useState("Create a romantic floral invitation with soft watercolor accents.");
   const [style, setStyle] = useState(asText(weddingCriteria?.["invitation-style"]) ?? "Romantic");
   const [colours, setColours] = useState(asText(weddingCriteria?.["invitation-colours"]) ?? "Blush pink, sage green, ivory");
+  const [mode, setMode] = useState<"invitation" | "thank-you">("invitation");
   const [canvasSize, setCanvasSize] = useState<"a5-portrait" | "five-by-seven" | "square-social">("a5-portrait");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1821,11 +1822,11 @@ function WeddingInvitationCanvas({
     const bodyName = findPropertyName(documentsDb.properties, ["Body", "Content", "Draft", "Email Body"]);
 
     if (titleName) {
-      properties[titleName] = `Invitation Design - ${new Date().toLocaleDateString()}`;
+      properties[titleName] = `${mode === "thank-you" ? "Thank You" : "Invitation"} Design - ${new Date().toLocaleDateString()}`;
       propertyTypes[titleName] = "title";
     }
     if (typeName) {
-      properties[typeName] = "Invitation Design";
+      properties[typeName] = mode === "thank-you" ? "Thank You Design" : "Invitation Design";
       propertyTypes[typeName] = "select";
     }
     if (createdName) {
@@ -1837,7 +1838,7 @@ function WeddingInvitationCanvas({
       propertyTypes[recipientName] = "rich_text";
     }
     if (subjectName) {
-      properties[subjectName] = `Invitation | ${namesField}`;
+      properties[subjectName] = `${mode === "thank-you" ? "Thank You" : "Invitation"} | ${namesField}`;
       propertyTypes[subjectName] = "rich_text";
     }
     if (summaryName) {
@@ -1892,7 +1893,7 @@ function WeddingInvitationCanvas({
           prompt,
           style,
           colours,
-          mode: "both",
+          mode,
           canvasSize,
           coupleNames: namesField.trim() || "Couple Names",
           weddingDate: dateField.trim() || "Wedding Date",
@@ -1970,6 +1971,14 @@ function WeddingInvitationCanvas({
 
         <div style={{ padding: "12px 14px", display: "grid", gap: "8px", borderBottom: `1px solid ${N_BORDER}` }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <select
+              value={mode}
+              onChange={(e) => setMode(e.target.value as "invitation" | "thank-you")}
+              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}
+            >
+              <option value="invitation">Invitation</option>
+              <option value="thank-you">Thank You</option>
+            </select>
             <input
               value={namesField}
               onChange={(e) => setNamesField(e.target.value)}
