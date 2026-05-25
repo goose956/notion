@@ -420,7 +420,7 @@ export const appWorkspaces = pgTable("app_workspaces", {
 }, (t) => ({
   userStatusCreatedIdx: index("app_workspaces_user_status_created_idx").on(t.userId, t.status, t.createdAt),
   userNicheStatusIdx: index("app_workspaces_user_niche_status_idx").on(t.userId, t.nichePackId, t.status),
-});
+}));
 
 export type AppWorkspaceRow = typeof appWorkspaces.$inferSelect;
 export type NewAppWorkspaceRow = typeof appWorkspaces.$inferInsert;
@@ -445,7 +445,7 @@ export const appDatabases = pgTable("app_databases", {
 }, (t) => ({
   workspaceIdx: index("app_databases_workspace_idx").on(t.workspaceId),
   workspacePackDbUniq: unique().on(t.workspaceId, t.packDbId),
-});
+}));
 
 export type AppDatabaseRow = typeof appDatabases.$inferSelect;
 export type NewAppDatabaseRow = typeof appDatabases.$inferInsert;
@@ -470,7 +470,7 @@ export const appRows = pgTable("app_rows", {
     .defaultNow(),
 }, (t) => ({
   databaseCreatedIdx: index("app_rows_database_created_idx").on(t.databaseId, t.createdAt),
-});
+}));
 
 export type AppRowRow = typeof appRows.$inferSelect;
 export type NewAppRowRow = typeof appRows.$inferInsert;
