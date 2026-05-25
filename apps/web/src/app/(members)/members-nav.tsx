@@ -7,6 +7,7 @@ const ITEMS = [
   { emoji: "🚀", label: "Get Started", href: "/members/get-started?view=1" },
   { emoji: "🗂️", label: "My Workspace", href: "/members/workspace" },
   { emoji: "🔍", label: "Research Assistant", href: "/members/chat" },
+  { emoji: "💳", label: "Credits", href: "/members/credits" },
   { emoji: "👤", label: "Profile", href: "/members/profile" },
 ] as const;
 
@@ -53,7 +54,7 @@ export function MembersNav({ collapsed = false }: { collapsed?: boolean }) {
         return (
           <Link
             key={item.href}
-            href={item.href}
+            href={item.href as never}
             style={{
               display: "flex",
               alignItems: "center",

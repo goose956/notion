@@ -239,9 +239,46 @@ export function MembersShell({
               />
             </div>
             {credits === 0 && (
-              <p style={{ fontSize: "11px", color: "#ef4444", marginTop: "4px" }}>
-                Contact support to top up.
-              </p>
+              <Link
+                href={"/members/credits" as never}
+                style={{
+                  marginTop: "6px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#991b1b",
+                  textDecoration: "none",
+                  borderRadius: "4px",
+                  padding: "5px 8px",
+                  border: "1px solid rgba(239,68,68,0.35)",
+                  background: "rgba(239,68,68,0.12)",
+                }}
+              >
+                Top up credits now
+              </Link>
+            )}
+            {credits > 0 && credits <= 5 && (
+              <Link
+                href={"/members/credits" as never}
+                style={{
+                  marginTop: "6px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#92400e",
+                  textDecoration: "none",
+                  borderRadius: "4px",
+                  padding: "5px 8px",
+                  border: "1px solid rgba(245,158,11,0.35)",
+                  background: "rgba(245,158,11,0.12)",
+                }}
+              >
+                Refill before you run out
+              </Link>
             )}
           </div>
         )}

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { findOrCreateCustomer, createPurchase, getSettings } from "@niche-factory/db";
+import {
+  addCustomerCredits,
+  createPurchase,
+  findOrCreateCustomer,
+  getSettingValue,
+  getSettings,
+  upsertSetting,
+} from "@niche-factory/db";
 
 // Required: disable body parsing so we can verify the Stripe signature
 export const dynamic = "force-dynamic";
@@ -33,10 +40,43 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Webhook verification failed: ${message}` }, { status: 400 });
   }
 
+  const eventDedupKey = `stripe.event.${event.id}`;
+  const alreadyProcessed = await getSettingValue(eventDedupKey);
+  if (alreadyProcessed) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const templateId = session.metadata?.["templateId"];
-    const email = session.customer_details?.email ?? null;
+    const metadata = session.metadata ?? {};
+    const email = session.customer_details?.email ?? metadata["userEmail"] ?? null;
+
+    if (metadata["kind"] === "credits") {
+      const credits = Number.parseInt(metadata["credits"] ?? "", 10);
+      if (!email || !Number.isFinite(credits) || credits <= 0) {
+        console.warn("[stripe-webhook] Missing email or invalid credits metadata", {
+          email,
+          credits,
+          sessionId: session.id,
+        });
+        return NextResponse.json({ received: true });
+      }
+
+      try {
+        const stripeCustomerId =
+          typeof session.customer === "string" ? session.customer : undefined;
+        await findOrCreateCustomer(email, stripeCustomerId);
+        await addCustomerCredits(email, credits);
+        await upsertSetting(eventDedupKey, new Date().toISOString());
+      } catch (err) {
+        console.error("[stripe-webhook] Failed to apply credits", err);
+        return NextResponse.json({ error: "DB error" }, { status: 500 });
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
+    const templateId = metadata["templateId"];
 
     if (!templateId || !email) {
       // Can't attribute purchase without both; log and return 200 to avoid Stripe retries
@@ -60,6 +100,7 @@ export async function POST(req: NextRequest) {
         amountPaid: session.amount_total ?? 0,
         currency: session.currency ?? "usd",
       });
+      await upsertSetting(eventDedupKey, new Date().toISOString());
     } catch (err) {
       console.error("[stripe-webhook] Failed to record purchase", err);
       return NextResponse.json({ error: "DB error" }, { status: 500 });

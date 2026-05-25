@@ -418,6 +418,28 @@ export async function setCustomerCredits(email: string, credits: number): Promis
     });
 }
 
+/** Add credits to a customer balance and return the new total. */
+export async function addCustomerCredits(email: string, amount: number): Promise<number> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return getCustomerCredits(email);
+  }
+
+  const { randomUUID } = await import("node:crypto");
+  const now = new Date();
+  await db
+    .insert(customers)
+    .values({ id: randomUUID(), email, credits: 25 + amount, createdAt: now, updatedAt: now })
+    .onConflictDoUpdate({
+      target: customers.email,
+      set: {
+        credits: sql`${customers.credits} + ${amount}`,
+        updatedAt: now,
+      },
+    });
+
+  return getCustomerCredits(email);
+}
+
 // ─── Purchase queries ────────────────────────────────────────────────────────
 
 export async function createPurchase(data: {

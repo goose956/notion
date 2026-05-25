@@ -355,7 +355,7 @@ function ChatPageInner() {
 
         if (!res.ok) {
           if (res.status === 402) {
-            setSummaryText("You have no credits left. Contact support to top up.");
+            setSummaryText("You have no credits left. Top up to continue.");
             setCredits(0);
             setHasResult(true);
             return;
@@ -722,9 +722,31 @@ function ChatPageInner() {
           {hasResult && !isLoading && (
             <div style={{ maxWidth: "900px" }}>
               {summaryText && (
-                <p style={{ fontSize: "14px", color: N_MUTED, marginBottom: "20px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                  {summaryText}
-                </p>
+                <div style={{ marginBottom: "20px" }}>
+                  <p style={{ fontSize: "14px", color: N_MUTED, margin: "0 0 10px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                    {summaryText}
+                  </p>
+                  {credits === 0 && (
+                    <Link
+                      href={"/members/credits" as never}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "6px",
+                        padding: "8px 12px",
+                        border: "1px solid rgba(37,99,235,0.35)",
+                        background: "rgba(59,130,246,0.12)",
+                        color: "#1e3a8a",
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                      }}
+                    >
+                      Open credit plans
+                    </Link>
+                  )}
+                </div>
               )}
               {resultItems !== null && (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "10px" }}>
