@@ -80,7 +80,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userEmail = session.user.email ?? "member";
+  const userEmail = session.user.email?.trim();
+  if (!userEmail) {
+    return NextResponse.json({ error: "Unable to resolve account email for credits." }, { status: 401 });
+  }
 
   let body: unknown;
   try {
@@ -156,7 +159,7 @@ export async function POST(req: NextRequest) {
     const generated = parsePayload(text);
     const safeSvg = sanitizeSvg(generated.svg);
 
-    const newCredits = await deductCredits(userEmail, CREDITS_PER_GENERATION).catch(() => null);
+    const newCredits = await deductCredits(userEmail, CREDITS_PER_GENERATION);
 
     return NextResponse.json({
       invitationText: generated.invitationText,
@@ -164,6 +167,7 @@ export async function POST(req: NextRequest) {
       colorPalette: generated.colorPalette,
       svg: safeSvg,
       credits: newCredits,
+      charged: CREDITS_PER_GENERATION,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Generation failed";
