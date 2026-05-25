@@ -16,10 +16,9 @@ export default function MembersPreviewLayout({
             href="/"
             className="font-semibold text-sm inline-flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <span className="icon-badge">
-              <Sparkles className="h-3.5 w-3.5" />
-            </span>
-            Niche Factory
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/s-logo.png" alt="Stridivo" style={{ height: "20px", width: "auto" }} />
+            Stridivo.com
           </Link>
         </div>
 

@@ -97,17 +97,13 @@ export function MembersShell({
             style={{
               width: "22px",
               height: "22px",
-              borderRadius: "3px",
-              background: "#37352F",
+              flexShrink: 0,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
             }}
           >
-            <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>
-              S
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/s-logo.png" alt="Stridivo" style={{ height: "22px", width: "auto" }} />
           </div>
 
           {!sidebarCollapsed && (
