@@ -6,25 +6,25 @@
   :root {
     --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     --font-display: Georgia, "Times New Roman", serif;
-    --background: 38 58% 98%;
-    --foreground: 217 33% 17%;
+    --background: 36 50% 99%;
+    --foreground: 20 15% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 217 33% 17%;
+    --card-foreground: 20 15% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 217 33% 17%;
-    --primary: 195 84% 34%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 45 92% 94%;
-    --secondary-foreground: 217 33% 17%;
-    --muted: 42 40% 94%;
-    --muted-foreground: 217 18% 42%;
-    --accent: 32 88% 56%;
-    --accent-foreground: 222 47% 11%;
+    --popover-foreground: 20 15% 14%;
+    --primary: 22 100% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 25 100% 95%;
+    --secondary-foreground: 20 15% 14%;
+    --muted: 30 20% 93%;
+    --muted-foreground: 20 8% 44%;
+    --accent: 215 55% 20%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 210 22% 87%;
-    --input: 210 22% 87%;
-    --ring: 195 84% 34%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 25% 86%;
+    --input: 30 25% 86%;
+    --ring: 22 100% 48%;
     --radius: 0.5rem;
   }
 
@@ -61,8 +61,8 @@
     letter-spacing: -0.01em;
     line-height: 1.5;
     background-image:
-      radial-gradient(circle at 12% 12%, hsl(var(--primary) / 0.12), transparent 42%),
-      radial-gradient(circle at 88% 6%, hsl(var(--accent) / 0.1), transparent 40%),
+      radial-gradient(circle at 12% 12%, hsl(var(--primary) / 0.08), transparent 42%),
+      radial-gradient(circle at 88% 6%, hsl(var(--primary) / 0.05), transparent 40%),
       linear-gradient(to bottom, hsl(var(--background)), hsl(var(--background)));
     background-attachment: fixed;
   }

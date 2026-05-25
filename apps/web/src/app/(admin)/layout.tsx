@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
-import { BarChart2, Blocks, Bot, LayoutDashboard, LogOut, SlidersHorizontal, Sparkles, Users, Wrench } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { AdminNav } from "./admin-nav";
 
 function isAdminEmail(email: string | null | undefined): boolean {
   const raw = process.env["ADMIN_EMAIL"] ?? "";
@@ -25,43 +26,11 @@ export default async function AdminLayout({
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur px-4 py-3 md:px-6 flex flex-wrap items-center gap-3 md:gap-6">
         <Link href="/admin" className="font-semibold text-lg tracking-tight inline-flex items-center gap-2">
-          <span className="icon-badge"><Sparkles className="h-4 w-4" /></span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/s-logo.png" alt="Stridivo" className="h-7 w-auto" />
           Stridivo.com
         </Link>
-        <nav className="order-3 w-full md:order-none md:w-auto flex gap-1 text-sm text-muted-foreground border rounded-xl p-1.5 bg-card/80 overflow-x-auto whitespace-nowrap">
-          <Link href="/admin" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
-            <LayoutDashboard className="h-3.5 w-3.5" />
-            Dashboard
-          </Link>
-          <Link href="/admin/niches" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
-            <Blocks className="h-3.5 w-3.5" />
-            Niches
-          </Link>
-          <Link href="/admin/templates" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
-            <Blocks className="h-3.5 w-3.5" />
-            Templates
-          </Link>
-          <Link href="/admin/customers" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" />
-            Customers
-          </Link>
-          <Link href="/admin/agents" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
-            <Bot className="h-3.5 w-3.5" />
-            Agents
-          </Link>
-          <Link href="/admin/tools" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
-            <Wrench className="h-3.5 w-3.5" />
-            Tools
-          </Link>
-          <Link href="/admin/settings" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            Settings
-          </Link>
-          <Link href="/admin/stats" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
-            <BarChart2 className="h-3.5 w-3.5" />
-            Stats
-          </Link>
-        </nav>
+        <AdminNav />
         <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground max-w-full">
           <span className="truncate max-w-[160px]">{userName}</span>
           <form

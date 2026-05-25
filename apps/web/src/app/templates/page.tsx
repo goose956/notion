@@ -144,7 +144,7 @@ function TemplateCard({ template: t }: { template: TemplateRow }) {
           {t.category}
         </span>
       )}
-      <h2 className="font-semibold text-base group-hover:underline leading-snug">
+      <h2 className="font-semibold text-base group-hover:underline leading-snug capitalize">
         {t.title}
       </h2>
       <p className="text-sm text-muted-foreground line-clamp-3 flex-1">

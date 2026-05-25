@@ -1,5 +1,6 @@
 import { signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { CheckCircle2 } from "lucide-react";
 
 function resolveSafeCallbackUrl(callbackUrl: string | undefined): string {
   if (!callbackUrl) return "/members/get-started";
@@ -20,9 +21,13 @@ export default function LoginPage({
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-sm space-y-6 px-6">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">Stridivo.com</h1>
+          <div className="flex justify-center mb-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/s-logo.png" alt="Stridivo" className="h-16 w-auto" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">Welcome to Stridivo</h1>
           <p className="text-sm text-muted-foreground">
-            Sign in with Notion to get started
+            Connect your Notion workspace and build niche systems with AI
           </p>
         </div>
 
@@ -44,6 +49,19 @@ export default function LoginPage({
           By signing in you grant read/write access to your Notion workspace so
           Stridivo.com can deploy databases on your behalf.
         </p>
+
+        <ul className="space-y-2 border-t pt-4">
+          {[
+            "Deploy a full Notion database schema in seconds",
+            "AI assistant pre-loaded with your niche context",
+            "25 free research credits included on signup",
+          ].map((feat) => (
+            <li key={feat} className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+              {feat}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

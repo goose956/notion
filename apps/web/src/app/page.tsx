@@ -167,10 +167,10 @@ export default async function HomePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold leading-snug group-hover:underline">
+                  <h3 className="text-lg font-semibold leading-snug group-hover:underline capitalize">
                     {workflow.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                     {workflow.painPoint}
                   </p>
                 </div>

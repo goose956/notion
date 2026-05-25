@@ -165,20 +165,8 @@ function SignupForm() {
       >
         {/* Logo mark */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "28px" }}>
-          <div
-            style={{
-              width: "28px",
-              height: "28px",
-              borderRadius: "5px",
-              background: "#37352F",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ color: "white", fontSize: "13px", fontWeight: 700 }}>S</span>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/s-logo.png" alt="Stridivo" style={{ height: "28px", width: "auto" }} />
           <span style={{ fontWeight: 700, fontSize: "15px", color: "#37352F" }}>
             Stridivo.com
           </span>
@@ -276,7 +264,7 @@ function SignupForm() {
               padding: "10px",
               borderRadius: "4px",
               border: "none",
-              background: loading ? "rgba(55,53,47,0.3)" : "#37352F",
+              background: loading ? "rgba(245,82,0,0.4)" : "#F55200",
               color: "white",
               fontSize: "15px",
               fontWeight: 600,
@@ -350,8 +338,8 @@ function SignupForm() {
                               style={{
                                 padding: "8px 10px",
                                 borderRadius: "999px",
-                                border: `1px solid ${selected ? "#37352F" : "rgba(55,53,47,0.15)"}`,
-                                background: selected ? "#37352F" : "white",
+                                border: `1px solid ${selected ? "#F55200" : "rgba(55,53,47,0.15)"}`,
+                                background: selected ? "#F55200" : "white",
                                 color: selected ? "white" : "#37352F",
                                 fontSize: "13px",
                                 cursor: "pointer",
@@ -396,7 +384,7 @@ function SignupForm() {
                     void submitSignup();
                   }}
                   disabled={loading}
-                  style={{ padding: "10px 14px", borderRadius: "6px", border: "none", background: loading ? "rgba(55,53,47,0.3)" : "#37352F", color: "white", fontWeight: 700, cursor: loading ? "default" : "pointer", fontFamily: "inherit" }}
+                  style={{ padding: "10px 14px", borderRadius: "6px", border: "none", background: loading ? "rgba(245,82,0,0.4)" : "#F55200", color: "white", fontWeight: 700, cursor: loading ? "default" : "pointer", fontFamily: "inherit" }}
                 >
                   {loading ? "Setting up your account…" : "Continue"}
                 </button>
