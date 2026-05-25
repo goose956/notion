@@ -228,10 +228,12 @@ export async function GET(_req: NextRequest) {
 
           let appDbs = await listAppDatabasesByWorkspace(workspace.id).catch(() => []);
 
-          // Self-heal: if workspace exists but has no app DB rows, recreate databases from schema.
-          if (appDbs.length === 0) {
+          // Self-heal: if workspace exists but has no app DB rows, or the schema has drifted, recreate missing databases.
+          const existingPackDbIds = new Set(appDbs.map((db) => db.packDbId));
+          const missingDbDefs = pack.databases.filter((db) => !existingPackDbIds.has(db.id));
+          if (appDbs.length === 0 || missingDbDefs.length > 0) {
             const rebuiltDatabaseIdMap: Record<string, string> = {};
-            for (const db of pack.databases) {
+            for (const db of missingDbDefs.length > 0 ? missingDbDefs : pack.databases) {
               const appDbId = randomUUID();
               await createAppDatabase({
                 id: appDbId,

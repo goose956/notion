@@ -27,6 +27,7 @@ const SEATING_TAB_ID = "__workspace_seating__";
 const DRAFT_TAB_ID = "__workspace_draft_letters__";
 const INVITATION_TAB_ID = "__workspace_invitation_canvas__";
 const SPEECH_TAB_ID = "__workspace_speech_writer__";
+const HONEYMOON_TAB_ID = "__workspace_honeymoon_planner__";
 
 // ─── Readonly property types (can't inline-edit these) ─────────────────────
 const READONLY_TYPES = new Set(["formula", "rollup", "relation", "created_time", "last_edited_time", "created_by", "last_edited_by"]);
@@ -768,6 +769,64 @@ interface DraftPayload {
   body: string;
   summary: string;
   type: string;
+}
+
+interface HoneymoonResultItem {
+  title: string;
+  category: string;
+  status: string;
+  location: string;
+  website: string;
+  phone: string;
+  email: string;
+  price: string;
+  notes: string;
+  source: string;
+}
+
+function parseResultItems(text: string): Record<string, unknown>[] | null {
+  const match = /```json\s*([\s\S]*?)```/.exec(text);
+  if (!match?.[1]) return null;
+  try {
+    const parsed: unknown = JSON.parse(match[1]);
+    if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "object") {
+      return parsed as Record<string, unknown>[];
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function getSummaryText(text: string): string {
+  const idx = text.indexOf("```json");
+  return idx === -1 ? text : text.slice(0, idx).trim();
+}
+
+function getItemTitle(item: Record<string, unknown>): string {
+  for (const [key, value] of Object.entries(item)) {
+    if (typeof value === "string" && value.trim() && /name|title|place|hotel|restaurant|transfer|business|venue/i.test(key)) {
+      return value;
+    }
+  }
+  const first = Object.values(item).find((value) => typeof value === "string" && value.trim());
+  return typeof first === "string" ? first : "Unnamed";
+}
+
+function normalizeHoneymoonResult(item: Record<string, unknown>, defaultCategory: string): HoneymoonResultItem {
+  const asString = (value: unknown): string => (typeof value === "string" ? value.trim() : "");
+  return {
+    title: getItemTitle(item),
+    category: asString(item["Category"]) || asString(item["category"]) || defaultCategory,
+    status: asString(item["Status"]) || asString(item["status"]) || "Researching",
+    location: asString(item["Location"]) || asString(item["location"]) || "",
+    website: asString(item["Website"]) || asString(item["website"]) || asString(item["url"]) || "",
+    phone: asString(item["Phone"]) || asString(item["phone"]) || "",
+    email: asString(item["Email"]) || asString(item["email"]) || "",
+    price: asString(item["Price"]) || asString(item["price"]) || "",
+    notes: asString(item["Notes"]) || asString(item["notes"]) || asString(item["summary"]) || "",
+    source: asString(item["Source"]) || asString(item["source"]) || "",
+  };
 }
 
 function findPropertyName(props: WorkspaceProperty[], candidates: string[]): string | null {
@@ -2656,6 +2715,389 @@ function WeddingSpeechWriter({
   );
 }
 
+function WeddingHoneymoonPlanner({
+  honeymoonDb,
+  onRowAdded,
+  onRowUpdated,
+  onRowDeleted,
+}: {
+  honeymoonDb: WorkspaceDatabase | null;
+  onRowAdded: (row: WorkspaceRow) => void;
+  onRowUpdated: (pageId: string, name: string, val: string | number | boolean | null) => void;
+  onRowDeleted: (pageId: string) => void;
+}) {
+  const [destination, setDestination] = useState("");
+  const [category, setCategory] = useState("Hotel");
+  const [travelStyle, setTravelStyle] = useState("Luxury but practical");
+  const [budget, setBudget] = useState("");
+  const [searchPrompt, setSearchPrompt] = useState("Find the best honeymoon options with detailed web research.");
+  const [extraInstructions, setExtraInstructions] = useState("");
+  const [researching, setResearching] = useState(false);
+  const [summaryText, setSummaryText] = useState("");
+  const [results, setResults] = useState<HoneymoonResultItem[]>([]);
+  const [savingIndex, setSavingIndex] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const categoryOptions = ["Hotel", "Taxi Transfer", "Restaurant", "Activity", "Tour", "Other"];
+  const statusOptions = ["Researching", "Shortlisted", "Contacted", "Booked", "Rejected"];
+
+  async function runResearch() {
+    const prompt = searchPrompt.trim();
+    if (!prompt) return;
+
+    setResearching(true);
+    setError(null);
+    setSuccess(null);
+    setSummaryText("");
+    setResults([]);
+
+    const requestText = [
+      `Honeymoon destination or area: ${destination.trim() || "Not specified"}`,
+      `Default category: ${category}`,
+      `Travel style: ${travelStyle}`,
+      `Budget guidance: ${budget.trim() || "Not specified"}`,
+      `Research request: ${prompt}`,
+      `Extra instructions: ${extraInstructions.trim() || "None"}`,
+      "Return a concise summary followed by a JSON code block containing an array of items.",
+      "Each JSON object must use these exact keys when possible: Place, Category, Status, Location, Website, Phone, Email, Price, Notes, Source.",
+      `Category should usually be one of: ${categoryOptions.join(", ")}.`,
+      "Prioritise current web search results and include enough detail to decide whether to shortlist the item.",
+    ].join("\n");
+
+    try {
+      const res = await fetch("/api/members/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "user", content: requestText }] }),
+      });
+
+      if (!res.ok) {
+        if (res.status === 402) {
+          throw new Error("You have no credits left. Top up to continue.");
+        }
+        throw new Error(await res.text());
+      }
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr) continue;
+          let event: { type?: string; content?: string; message?: string };
+          try {
+            event = JSON.parse(jsonStr) as { type?: string; content?: string; message?: string };
+          } catch {
+            continue;
+          }
+
+          if (event.type === "text" && typeof event.content === "string") {
+            fullText = event.content;
+          } else if (event.type === "error") {
+            throw new Error(event.message ?? "Research failed");
+          } else if (event.type === "done") {
+            // no-op; we read the final text after the stream completes
+          }
+        }
+      }
+
+      const parsed = parseResultItems(fullText);
+      setSummaryText(getSummaryText(fullText));
+      setResults((parsed ?? []).map((item) => normalizeHoneymoonResult(item, category)));
+      setSuccess("Research complete. Review the results and save the ones you want.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Research failed");
+    } finally {
+      setResearching(false);
+    }
+  }
+
+  async function saveResult(index: number, result: HoneymoonResultItem) {
+    if (!honeymoonDb) return;
+    setSavingIndex(index);
+    setError(null);
+
+    const properties: Record<string, string | number | boolean | null> = {};
+    const propertyTypes: Record<string, string> = {};
+    const titleName = findPropertyName(honeymoonDb.properties, ["Place", "Title", "Name"]);
+    const categoryName = findPropertyName(honeymoonDb.properties, ["Category"]);
+    const statusName = findPropertyName(honeymoonDb.properties, ["Status"]);
+    const locationName = findPropertyName(honeymoonDb.properties, ["Location"]);
+    const websiteName = findPropertyName(honeymoonDb.properties, ["Website", "URL", "Link"]);
+    const phoneName = findPropertyName(honeymoonDb.properties, ["Phone"]);
+    const emailName = findPropertyName(honeymoonDb.properties, ["Email"]);
+    const priceName = findPropertyName(honeymoonDb.properties, ["Price", "Cost", "Quote"]);
+    const notesName = findPropertyName(honeymoonDb.properties, ["Notes", "Summary", "Details"]);
+    const sourceName = findPropertyName(honeymoonDb.properties, ["Source"]);
+    const addedName = findPropertyName(honeymoonDb.properties, ["Added"]);
+
+    if (titleName) {
+      properties[titleName] = result.title.trim() || "Honeymoon Place";
+      propertyTypes[titleName] = "title";
+    }
+    if (categoryName) {
+      properties[categoryName] = result.category || category;
+      propertyTypes[categoryName] = "select";
+    }
+    if (statusName) {
+      properties[statusName] = result.status || "Researching";
+      propertyTypes[statusName] = "select";
+    }
+    if (locationName) {
+      properties[locationName] = result.location || destination;
+      propertyTypes[locationName] = "rich_text";
+    }
+    if (websiteName && result.website) {
+      properties[websiteName] = result.website;
+      propertyTypes[websiteName] = "url";
+    }
+    if (phoneName && result.phone) {
+      properties[phoneName] = result.phone;
+      propertyTypes[phoneName] = "phone_number";
+    }
+    if (emailName && result.email) {
+      properties[emailName] = result.email;
+      propertyTypes[emailName] = "email";
+    }
+    if (priceName) {
+      properties[priceName] = result.price || budget;
+      propertyTypes[priceName] = "rich_text";
+    }
+    if (notesName) {
+      properties[notesName] = result.notes;
+      propertyTypes[notesName] = "rich_text";
+    }
+    if (sourceName) {
+      properties[sourceName] = result.source || summaryText;
+      propertyTypes[sourceName] = "rich_text";
+    }
+    if (addedName) {
+      properties[addedName] = new Date().toISOString().slice(0, 10);
+      propertyTypes[addedName] = "date";
+    }
+
+    try {
+      const res = await fetch("/api/members/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          databaseId: honeymoonDb.notionId,
+          properties,
+          propertyTypes,
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { pageId?: string; error?: string };
+      if (!res.ok || !body.pageId) {
+        throw new Error(body.error ?? "Failed to save honeymoon item");
+      }
+      onRowAdded({ pageId: body.pageId, properties });
+      setSuccess(`Saved ${result.title} to the honeymoon planner.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save honeymoon item");
+    } finally {
+      setSavingIndex(null);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: "14px",
+        border: `1px solid ${N_BORDER}`,
+        borderRadius: "12px",
+        background: "#fff",
+        overflow: "hidden",
+      }}
+    >
+      <div style={{ padding: "12px 14px", borderBottom: `1px solid ${N_BORDER}`, background: "#f0fff7" }}>
+        <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#166534" }}>Honeymoon Planner</h3>
+        <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>
+          Use web research to collect hotels, transfers, restaurants, and activities, then save everything into one searchable planner.
+        </p>
+      </div>
+
+      <div style={{ padding: "12px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "12px" }}>
+        <section style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "#f8fff9", padding: "12px", display: "grid", gap: "8px", alignContent: "start" }}>
+          <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: "#166534", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Research Assistant
+          </p>
+          <input
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+            placeholder="Destination or region"
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+          />
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}
+          >
+            {categoryOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+          <input
+            value={travelStyle}
+            onChange={(e) => setTravelStyle(e.target.value)}
+            placeholder="Travel style"
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+          />
+          <input
+            value={budget}
+            onChange={(e) => setBudget(e.target.value)}
+            placeholder="Budget guidance"
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+          />
+          <textarea
+            value={searchPrompt}
+            onChange={(e) => setSearchPrompt(e.target.value)}
+            rows={4}
+            placeholder="What should the assistant research?"
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
+          />
+          <textarea
+            value={extraInstructions}
+            onChange={(e) => setExtraInstructions(e.target.value)}
+            rows={2}
+            placeholder="Extra instructions"
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
+          />
+          <button
+            type="button"
+            onClick={() => void runResearch()}
+            disabled={researching || !honeymoonDb}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              height: "36px",
+              borderRadius: "8px",
+              border: "none",
+              background: researching ? "rgba(22,101,52,0.25)" : "linear-gradient(135deg, #166534, #22c55e)",
+              color: "white",
+              fontSize: "13px",
+              fontWeight: 700,
+              fontFamily: N_FONT,
+              cursor: researching ? "default" : "pointer",
+              opacity: honeymoonDb ? 1 : 0.6,
+            }}
+          >
+            {researching ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <WandSparkles size={14} />}
+            {researching ? "Researching" : "Research honeymoon"}
+          </button>
+          {!honeymoonDb && <p style={{ margin: 0, color: N_MUTED, fontSize: "12px" }}>Honeymoon Planner database is not available yet.</p>}
+          {error && <p style={{ margin: 0, color: "rgb(220,38,38)", fontSize: "12px" }}>{error}</p>}
+          {success && <p style={{ margin: 0, color: "rgb(21,128,61)", fontSize: "12px" }}>{success}</p>}
+          {summaryText && <p style={{ margin: 0, fontSize: "13px", color: N_FG, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{summaryText}</p>}
+
+          {results.length > 0 && (
+            <div style={{ display: "grid", gap: "8px" }}>
+              {results.map((item, index) => (
+                <div key={`${item.title}-${index}`} style={{ border: `1px solid ${N_BORDER}`, borderRadius: "8px", background: "white", padding: "10px", display: "grid", gap: "8px" }}>
+                  <input
+                    value={item.title}
+                    onChange={(e) => setResults((prev) => prev.map((entry, entryIndex) => entryIndex === index ? { ...entry, title: e.target.value } : entry))}
+                    style={{ padding: "7px 9px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, fontWeight: 600 }}
+                  />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    <select
+                      value={item.category}
+                      onChange={(e) => setResults((prev) => prev.map((entry, entryIndex) => entryIndex === index ? { ...entry, category: e.target.value } : entry))}
+                      style={{ padding: "7px 9px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}
+                    >
+                      {categoryOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                    <select
+                      value={item.status}
+                      onChange={(e) => setResults((prev) => prev.map((entry, entryIndex) => entryIndex === index ? { ...entry, status: e.target.value } : entry))}
+                      style={{ padding: "7px 9px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}
+                    >
+                      {statusOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                  </div>
+                  <input
+                    value={item.location}
+                    onChange={(e) => setResults((prev) => prev.map((entry, entryIndex) => entryIndex === index ? { ...entry, location: e.target.value } : entry))}
+                    placeholder="Location"
+                    style={{ padding: "7px 9px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+                  />
+                  <input
+                    value={item.website}
+                    onChange={(e) => setResults((prev) => prev.map((entry, entryIndex) => entryIndex === index ? { ...entry, website: e.target.value } : entry))}
+                    placeholder="Website"
+                    style={{ padding: "7px 9px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+                  />
+                  <textarea
+                    value={item.notes}
+                    onChange={(e) => setResults((prev) => prev.map((entry, entryIndex) => entryIndex === index ? { ...entry, notes: e.target.value } : entry))}
+                    placeholder="Notes"
+                    rows={3}
+                    style={{ padding: "7px 9px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void saveResult(index, item)}
+                    disabled={savingIndex === index}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      padding: "8px 12px",
+                      borderRadius: "7px",
+                      border: `1px solid ${N_BORDER_MED}`,
+                      background: "white",
+                      color: "#166534",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      fontFamily: N_FONT,
+                      cursor: savingIndex === index ? "default" : "pointer",
+                    }}
+                  >
+                    {savingIndex === index ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Check size={13} />}
+                    {savingIndex === index ? "Saving..." : "Save to Honeymoon Planner"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "#ffffff", padding: "12px", display: "grid", gap: "8px", alignContent: "start" }}>
+          <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Saved Planner
+          </p>
+          {honeymoonDb ? (
+            <DatabaseTable
+              db={honeymoonDb}
+              isAppBackend={true}
+              onRowUpdated={onRowUpdated}
+              onRowDeleted={onRowDeleted}
+              onRowAdded={onRowAdded}
+            />
+          ) : (
+            <p style={{ margin: 0, color: N_MUTED, fontSize: "13px" }}>No honeymoon database is available yet.</p>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main workspace page component ────────────────────────────────────────────
 export default function WorkspacePage() {
   const searchParams = useSearchParams();
@@ -2700,6 +3142,7 @@ export default function WorkspacePage() {
         if (prev === DRAFT_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
         if (prev === INVITATION_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
         if (prev === SPEECH_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
+        if (prev === HONEYMOON_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
         if (prev && nextDatabases.some((d) => d.notionId === prev)) return prev;
         return nextDatabases[0]!.notionId;
       });
@@ -2717,6 +3160,7 @@ export default function WorkspacePage() {
       if (prev === DRAFT_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
       if (prev === INVITATION_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
       if (prev === SPEECH_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
+      if (prev === HONEYMOON_TAB_ID && nextBackend === "app" && hasWeddingWorkspace) return prev;
       if (prev && nextDatabases.some((d) => d.notionId === prev)) return prev;
       if (nextBackend === "app" && hasWeddingWorkspace) return DASHBOARD_TAB_ID;
       return nextDatabases[0]?.notionId ?? "";
@@ -2818,11 +3262,12 @@ export default function WorkspacePage() {
     }
   }
 
-  const activeDb = databases.find((d) => d.notionId === activeTab);
+  const activeDb = databases.find((d) => d.notionId === activeTab) ?? null;
   const guestsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "guests") ?? null;
   const documentsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "documents") ?? null;
+  const honeymoonDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "honeymoon") ?? null;
   const hasWeddingWorkspace = databases.some((d) => d.nicheId === "wedding-planner");
-  const activeDbDisplay = activeDb && backend === "app" && activeDb.nicheId === "wedding-planner" && activeDb.dbId === "documents"
+  const activeDbDisplay: WorkspaceDatabase | null = activeDb && backend === "app" && activeDb.nicheId === "wedding-planner" && activeDb.dbId === "documents"
     ? {
         ...activeDb,
         properties: activeDb.properties.some((p) => p.name === "Email")
@@ -2830,6 +3275,7 @@ export default function WorkspacePage() {
           : [...activeDb.properties, { id: "Email", name: "Email", type: "email" }],
       }
     : activeDb;
+  const visibleDatabases = databases.filter((db) => !(db.nicheId === "wedding-planner" && db.dbId === "honeymoon"));
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: N_FONT }}>
@@ -3145,6 +3591,29 @@ export default function WorkspacePage() {
                             <span style={{ fontSize: "14px", flexShrink: 0 }}>🎤</span>
                             AI Speech Writer
                           </button>
+                            <button
+                              onClick={() => setActiveTab(HONEYMOON_TAB_ID)}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "7px",
+                                width: "100%",
+                                padding: "5px 10px 5px 20px",
+                                borderRadius: "0 4px 4px 0",
+                                border: "none",
+                                borderLeft: activeTab === HONEYMOON_TAB_ID ? "2px solid #be185d" : "2px solid transparent",
+                                fontSize: "13px",
+                                color: activeTab === HONEYMOON_TAB_ID ? "#9d174d" : N_FG,
+                                background: activeTab === HONEYMOON_TAB_ID ? "rgba(190,24,93,0.10)" : "none",
+                                fontFamily: N_FONT,
+                                cursor: "pointer",
+                                textAlign: "left",
+                              }}
+                              className="hover:bg-[rgba(190,24,93,0.06)]"
+                            >
+                              <span style={{ fontSize: "14px", flexShrink: 0 }}>🌴</span>
+                              Honeymoon Planner
+                            </button>
                         </>
                       )}
                     </div>
@@ -3292,6 +3761,24 @@ export default function WorkspacePage() {
             <WeddingSpeechWriter
               weddingCriteria={weddingCriteria}
               onWeddingCriteriaUpdated={(criteria) => setWeddingCriteria(criteria)}
+            />
+          </div>
+        ) : activeTab === HONEYMOON_TAB_ID ? (
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+            <WeddingHoneymoonPlanner
+              honeymoonDb={honeymoonDb}
+              onRowAdded={(row) => {
+                if (!honeymoonDb) return;
+                handleRowAdded(honeymoonDb.notionId, row);
+              }}
+              onRowUpdated={(pageId, name, val) => {
+                if (!honeymoonDb) return;
+                handleRowUpdated(honeymoonDb.notionId, pageId, name, val);
+              }}
+              onRowDeleted={(pageId) => {
+                if (!honeymoonDb) return;
+                handleRowDeleted(honeymoonDb.notionId, pageId);
+              }}
             />
           </div>
         ) : !activeDbDisplay ? null : (

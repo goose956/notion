@@ -194,6 +194,55 @@
       ]
     },
     {
+      "id": "honeymoon",
+      "name": "Honeymoon Planner",
+      "description": "Research and compare honeymoon hotels, transfers, restaurants, and activities in one place.",
+      "icon": "🌴",
+      "cover": {
+        "type": "external",
+        "url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80"
+      },
+      "properties": [
+        { "type": "title", "name": "Place" },
+        {
+          "type": "select",
+          "name": "Category",
+          "options": [
+            { "name": "Hotel", "color": "blue" },
+            { "name": "Taxi Transfer", "color": "gray" },
+            { "name": "Restaurant", "color": "orange" },
+            { "name": "Activity", "color": "green" },
+            { "name": "Tour", "color": "yellow" },
+            { "name": "Other", "color": "default" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "Status",
+          "options": [
+            { "name": "Researching", "color": "yellow" },
+            { "name": "Shortlisted", "color": "blue" },
+            { "name": "Contacted", "color": "orange" },
+            { "name": "Booked", "color": "green" },
+            { "name": "Rejected", "color": "red" }
+          ]
+        },
+        { "type": "rich_text", "name": "Location" },
+        { "type": "url", "name": "Website" },
+        { "type": "phone_number", "name": "Phone" },
+        { "type": "email", "name": "Email" },
+        { "type": "rich_text", "name": "Price" },
+        { "type": "rich_text", "name": "Notes" },
+        { "type": "rich_text", "name": "Source" },
+        { "type": "date", "name": "Added" }
+      ],
+      "views": [
+        { "name": "All Places", "type": "table" },
+        { "name": "By Category", "type": "board", "groupByProperty": "Category" },
+        { "name": "Shortlist", "type": "table", "filters": [{ "propertyName": "Status", "condition": "equals", "value": "Shortlisted" }] }
+      ]
+    },
+    {
       "id": "timeline",
       "name": "Planning Timeline",
       "description": "Every task needed to pull off the wedding, with deadlines and categories.",
