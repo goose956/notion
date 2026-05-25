@@ -1090,7 +1090,7 @@ function WeddingWorkspaceDashboard({
     ? Math.ceil((weddingDate.getTime() - now.getTime()) / 86_400_000)
     : null;
   const useManualCountdown =
-    countdownMode === "manual" ? manualCountdownDays !== null : manualCountdownDays !== null;
+    countdownMode === "manual" && manualCountdownDays !== null;
   const countdownDays = useManualCountdown ? manualCountdownDays : computedFromDate;
 
   const countdownLabel =
