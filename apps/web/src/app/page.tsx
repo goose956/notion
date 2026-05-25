@@ -232,7 +232,7 @@ function categoryColor(cat: string): string {
   return "bg-primary/8 text-primary border-primary/20";
 }
 
-({ icon, label }: { icon: React.ReactNode; label: string }) {
+function FeaturePill({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div className="surface-card px-3 py-2 text-sm flex items-center gap-2 bg-card/80">
       <span className="icon-badge">{icon}</span>
