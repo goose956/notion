@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CREDIT_PACKAGES,
@@ -23,96 +23,6 @@ function getDiscountVsStarter(pkg: CreditPackage, starter: CreditPackage): numbe
   return Math.max(0, (1 - pkgCost / starterCost) * 100);
 }
 
-function TierPill({
-  pkg,
-  selected,
-  onSelect,
-  starter,
-}: {
-  pkg: CreditPackage;
-  selected: boolean;
-  onSelect: () => void;
-  starter: CreditPackage;
-}) {
-  const costPerCredit = getCostPerCredit(pkg);
-  const savings = getDiscountVsStarter(pkg, starter);
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      style={{
-        width: "100%",
-        borderRadius: "14px",
-        border: selected ? "2px solid rgba(37,99,235,0.4)" : "1px solid rgba(55,53,47,0.12)",
-        background: selected
-          ? "linear-gradient(160deg, rgba(239,246,255,0.98) 0%, rgba(255,255,255,1) 70%)"
-          : "rgba(255,255,255,0.92)",
-        boxShadow: selected ? "0 18px 42px rgba(37,99,235,0.12)" : "0 10px 24px rgba(0,0,0,0.05)",
-        padding: "14px",
-        textAlign: "left",
-        cursor: "pointer",
-        color: "#111827",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {pkg.highlight && (
-        <span
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            fontSize: "10px",
-            fontWeight: 800,
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
-            color: pkg.highlight === "best" ? "#166534" : "#1d4ed8",
-            background: pkg.highlight === "best" ? "rgba(22,163,74,0.12)" : "rgba(59,130,246,0.12)",
-            borderRadius: "999px",
-            padding: "4px 8px",
-          }}
-        >
-          {pkg.highlight === "best" ? "Best Value" : "Popular"}
-        </span>
-      )}
-
-      <div style={{ paddingRight: pkg.highlight ? "72px" : 0 }}>
-        <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: "rgba(55,53,47,0.7)" }}>{pkg.name}</p>
-        <p style={{ margin: "6px 0 2px", fontSize: "28px", lineHeight: 1, fontWeight: 800 }}>{centsToUsd(pkg.priceCents)}</p>
-        <p style={{ margin: 0, fontSize: "13px", color: "rgba(55,53,47,0.72)" }}>{pkg.credits} credits</p>
-      </div>
-
-      <div
-        style={{
-          marginTop: "12px",
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-          gap: "12px",
-        }}
-      >
-        <div>
-          <p style={{ margin: 0, fontSize: "11px", color: "rgba(55,53,47,0.56)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-            Cost per credit
-          </p>
-          <p style={{ margin: "4px 0 0", fontSize: "14px", fontWeight: 800, color: selected ? "#1d4ed8" : "#111827" }}>
-            ${costPerCredit.toFixed(3)}
-          </p>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <p style={{ margin: 0, fontSize: "11px", color: "rgba(55,53,47,0.56)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-            vs starter
-          </p>
-          <p style={{ margin: "4px 0 0", fontSize: "14px", fontWeight: 800, color: savings >= 50 ? "#166534" : "#92400e" }}>
-            {formatPercent(savings)} cheaper
-          </p>
-        </div>
-      </div>
-    </button>
-  );
-}
-
 export default function CreditsPage() {
   const params = useSearchParams();
   const [selectedIndex, setSelectedIndex] = useState(2);
@@ -126,8 +36,7 @@ export default function CreditsPage() {
   const selectedCostPerCredit = getCostPerCredit(selectedPackage);
   const starterCostPerCredit = getCostPerCredit(starterPackage);
   const selectedSavingsVsStarter = getDiscountVsStarter(selectedPackage, starterPackage);
-
-  const tiers = useMemo(() => CREDIT_PACKAGES, []);
+  const tiers = CREDIT_PACKAGES;
 
   async function handleBuy(packageId: string) {
     setLoadingId(packageId);
@@ -224,14 +133,7 @@ export default function CreditsPage() {
           </div>
         )}
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(320px, 0.95fr) minmax(0, 1.05fr)",
-            gap: "18px",
-            alignItems: "start",
-          }}
-        >
+        <div style={{ maxWidth: "760px" }}>
           <section
             style={{
               borderRadius: "22px",
@@ -397,20 +299,6 @@ export default function CreditsPage() {
             >
               {loadingId === selectedPackage.id ? "Redirecting to Stripe..." : `Buy ${selectedPackage.credits} credits for ${centsToUsd(selectedPackage.priceCents)}`}
             </button>
-          </section>
-
-          <section>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
-              {tiers.map((pkg, index) => (
-                <TierPill
-                  key={pkg.id}
-                  pkg={pkg}
-                  selected={index === selectedIndex}
-                  onSelect={() => setSelectedIndex(index)}
-                  starter={starterPackage}
-                />
-              ))}
-            </div>
           </section>
         </div>
       </div>
