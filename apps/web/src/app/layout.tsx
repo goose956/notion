@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Niche Factory",
-  description: "Generate and deploy Notion niche packs with AI",
+  title: "Stridivo.com",
+  description: "Generate and deploy Notion workflow systems with AI",
 };
 
 export default function RootLayout({

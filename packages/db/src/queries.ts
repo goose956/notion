@@ -418,6 +418,22 @@ export async function setCustomerCredits(email: string, credits: number): Promis
     });
 }
 
+/** Delete a customer by email, including dependent purchases. */
+export async function deleteCustomerByEmail(email: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: customers.id })
+    .from(customers)
+    .where(eq(customers.email, email))
+    .limit(1);
+
+  const customerId = rows[0]?.id;
+  if (!customerId) return false;
+
+  await db.delete(purchases).where(eq(purchases.customerId, customerId));
+  await db.delete(customers).where(eq(customers.id, customerId));
+  return true;
+}
+
 /** Add credits to a customer balance and return the new total. */
 export async function addCustomerCredits(email: string, amount: number): Promise<number> {
   if (!Number.isFinite(amount) || amount <= 0) {

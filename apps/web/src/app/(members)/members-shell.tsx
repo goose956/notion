@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Coins, LogOut, Settings2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Coins, LogOut, Menu, Settings2, X } from "lucide-react";
 import { MembersNav } from "./members-nav";
 
 const N_FONT =
@@ -26,6 +26,22 @@ export function MembersShell({
   signOutAction,
 }: MembersShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => {
+      const mobile = window.innerWidth < 960;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setMobileNavOpen(false);
+      }
+    };
+
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   return (
     <div
@@ -34,18 +50,39 @@ export function MembersShell({
         height: "100vh",
         overflow: "hidden",
         fontFamily: N_FONT,
+        position: "relative",
       }}
     >
+      {isMobile && mobileNavOpen && (
+        <button
+          type="button"
+          onClick={() => setMobileNavOpen(false)}
+          aria-label="Close members sidebar"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.35)",
+            border: "none",
+            zIndex: 29,
+            cursor: "pointer",
+          }}
+        />
+      )}
+
       <aside
         style={{
-          width: sidebarCollapsed ? "56px" : "240px",
+          width: isMobile ? "260px" : sidebarCollapsed ? "56px" : "240px",
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",
           background: "#F7F6F3",
           borderRight: "1px solid rgba(55,53,47,0.09)",
-          transition: "width 0.18s ease",
+          transition: isMobile ? "transform 0.2s ease" : "width 0.18s ease",
           overflow: "hidden",
+          position: isMobile ? "fixed" : "relative",
+          inset: isMobile ? "0 auto 0 0" : "auto",
+          zIndex: 30,
+          transform: isMobile ? (mobileNavOpen ? "translateX(0)" : "translateX(-100%)") : "none",
         }}
       >
         <div
@@ -69,7 +106,7 @@ export function MembersShell({
             }}
           >
             <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>
-              N
+              S
             </span>
           </div>
 
@@ -85,13 +122,19 @@ export function MembersShell({
                 whiteSpace: "nowrap",
               }}
             >
-              Niche Factory
+              Stridivo.com
             </span>
           )}
 
           <button
             type="button"
-            onClick={() => setSidebarCollapsed((prev) => !prev)}
+            onClick={() => {
+              if (isMobile) {
+                setMobileNavOpen(false);
+                return;
+              }
+              setSidebarCollapsed((prev) => !prev);
+            }}
             aria-label={sidebarCollapsed ? "Expand members sidebar" : "Collapse members sidebar"}
             title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             style={{
@@ -109,7 +152,9 @@ export function MembersShell({
             }}
             className="hover:bg-[rgba(55,53,47,0.06)]"
           >
-            {sidebarCollapsed ? (
+            {isMobile ? (
+              <X style={{ width: "14px", height: "14px" }} />
+            ) : sidebarCollapsed ? (
               <ChevronRight style={{ width: "14px", height: "14px" }} />
             ) : (
               <ChevronLeft style={{ width: "14px", height: "14px" }} />
@@ -345,6 +390,48 @@ export function MembersShell({
           fontFamily: N_FONT,
         }}
       >
+        {isMobile && (
+          <div
+            style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "10px",
+              padding: "10px 12px",
+              background: "rgba(255,255,255,0.92)",
+              backdropFilter: "blur(6px)",
+              borderBottom: "1px solid rgba(55,53,47,0.09)",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              style={{
+                width: "34px",
+                height: "34px",
+                borderRadius: "6px",
+                border: "1px solid rgba(55,53,47,0.15)",
+                background: "white",
+                color: "#37352F",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              aria-label="Open members sidebar"
+            >
+              <Menu style={{ width: "16px", height: "16px" }} />
+            </button>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "#37352F" }}>
+              Stridivo.com
+            </span>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "rgba(55,53,47,0.65)" }}>
+              {credits} credits
+            </span>
+          </div>
+        )}
         {children}
       </main>
     </div>

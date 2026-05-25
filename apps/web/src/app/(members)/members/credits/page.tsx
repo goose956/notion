@@ -62,7 +62,7 @@ export default function CreditsPage() {
     <div
       style={{
         minHeight: "100%",
-        padding: "34px 26px 50px",
+        padding: "clamp(16px, 3.6vw, 34px) clamp(12px, 3.2vw, 26px) clamp(26px, 4.5vw, 50px)",
         fontFamily: FONT,
         background:
           "radial-gradient(circle at top left, rgba(16,185,129,0.12), transparent 36%), radial-gradient(circle at 85% 20%, rgba(59,130,246,0.1), transparent 30%), #ffffff",
@@ -143,12 +143,12 @@ export default function CreditsPage() {
               padding: "20px",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", alignItems: "flex-start" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", alignItems: "flex-start", flexWrap: "wrap" }}>
               <div>
                 <p style={{ margin: 0, fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(55,53,47,0.55)", fontWeight: 700 }}>
                   Selected pack
                 </p>
-                <h2 style={{ margin: "8px 0 6px", fontSize: "30px", lineHeight: 1.05, color: "#111827" }}>
+                <h2 style={{ margin: "8px 0 6px", fontSize: "clamp(24px, 6vw, 30px)", lineHeight: 1.05, color: "#111827" }}>
                   {selectedPackage.name}
                 </h2>
                 <p style={{ margin: 0, fontSize: "15px", color: "rgba(55,53,47,0.72)", lineHeight: 1.6 }}>
@@ -183,12 +183,12 @@ export default function CreditsPage() {
                 padding: "18px",
               }}
             >
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "12px" }}>
                 <div>
                   <p style={{ margin: 0, fontSize: "11px", color: "rgba(55,53,47,0.58)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     Price
                   </p>
-                  <p style={{ margin: "4px 0 0", fontSize: "42px", fontWeight: 900, color: "#111827", lineHeight: 1 }}>
+                  <p style={{ margin: "4px 0 0", fontSize: "clamp(30px, 10vw, 42px)", fontWeight: 900, color: "#111827", lineHeight: 1 }}>
                     {centsToUsd(selectedPackage.priceCents)}
                   </p>
                 </div>
@@ -196,7 +196,7 @@ export default function CreditsPage() {
                   <p style={{ margin: 0, fontSize: "11px", color: "rgba(55,53,47,0.58)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     Credits
                   </p>
-                  <p style={{ margin: "4px 0 0", fontSize: "42px", fontWeight: 900, color: "#111827", lineHeight: 1 }}>
+                  <p style={{ margin: "4px 0 0", fontSize: "clamp(30px, 10vw, 42px)", fontWeight: 900, color: "#111827", lineHeight: 1 }}>
                     {selectedPackage.credits}
                   </p>
                 </div>
@@ -245,7 +245,7 @@ export default function CreditsPage() {
                 style={{
                   marginTop: "16px",
                   display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
                   gap: "12px",
                 }}
               >

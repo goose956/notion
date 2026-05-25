@@ -14,7 +14,7 @@ import {
 import { randomUUID } from "node:crypto";
 import { MembersNav } from "../../../(members)/members-nav";
 
-export const metadata = { title: "Get Started â€” Niche Factory" };
+export const metadata = { title: "Get Started - Stridivo.com" };
 
 export const dynamic = "force-dynamic";
 
@@ -40,12 +40,12 @@ function TopBar({ showMembersLink }: { showMembersLink: boolean }) {
   return (
     <div style={{ borderBottom: `1px solid ${N_BORDER}`, padding: "12px 24px", display: "flex", alignItems: "center", gap: "8px" }}>
       <div style={{ width: "22px", height: "22px", borderRadius: "3px", background: "#37352F", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>N</span>
+        <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>S</span>
       </div>
-      <span style={{ fontSize: "14px", fontWeight: 600, color: N_FG }}>Niche Factory</span>
+      <span style={{ fontSize: "14px", fontWeight: 600, color: N_FG }}>Stridivo.com</span>
       {showMembersLink && (
         <Link href="/members/chat" style={{ marginLeft: "auto", fontSize: "13px", color: N_BLUE, textDecoration: "none" }}>
-          Go to members area â†’
+          Go to members area
         </Link>
       )}
     </div>
@@ -72,8 +72,9 @@ function InAppGetStarted({
     : nextUrl ?? "/members/chat";
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "white", fontFamily: N_FONT, color: N_FG }}>
+    <div className="inapp-shell" style={{ display: "flex", minHeight: "100vh", background: "white", fontFamily: N_FONT, color: N_FG }}>
       <aside
+        className="inapp-shell-sidebar"
         style={{
           width: "240px",
           flexShrink: 0,
@@ -104,7 +105,7 @@ function InAppGetStarted({
             }}
           >
             <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>
-              N
+              S
             </span>
           </div>
           <span
@@ -118,7 +119,7 @@ function InAppGetStarted({
               whiteSpace: "nowrap",
             }}
           >
-            Niche Factory
+            Stridivo.com
           </span>
         </div>
 
@@ -178,7 +179,7 @@ function InAppGetStarted({
         )}
       </aside>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "linear-gradient(180deg, #E8F4FF 0%, #F7FBFF 100%)" }}>
+      <div className="inapp-shell-content" style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "linear-gradient(180deg, #E8F4FF 0%, #F7FBFF 100%)" }}>
         <TopBar showMembersLink={isAuthenticated} />
 
         <div
@@ -292,6 +293,19 @@ function InAppGetStarted({
       </div>
       </div>
       </div>
+      <style jsx>{`
+        @media (max-width: 960px) {
+          .inapp-shell {
+            display: block !important;
+          }
+          .inapp-shell-sidebar {
+            display: none !important;
+          }
+          .inapp-shell-content {
+            min-height: 100vh;
+          }
+        }
+      `}</style>
     </div>
   );
 }

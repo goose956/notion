@@ -23,12 +23,12 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur px-6 py-3 flex items-center gap-6">
+      <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur px-4 py-3 md:px-6 flex flex-wrap items-center gap-3 md:gap-6">
         <Link href="/admin" className="font-semibold text-lg tracking-tight inline-flex items-center gap-2">
           <span className="icon-badge"><Sparkles className="h-4 w-4" /></span>
-          Niche Factory
+          Stridivo.com
         </Link>
-        <nav className="flex gap-1 text-sm text-muted-foreground border rounded-xl p-1.5 bg-card/80">
+        <nav className="order-3 w-full md:order-none md:w-auto flex gap-1 text-sm text-muted-foreground border rounded-xl p-1.5 bg-card/80 overflow-x-auto whitespace-nowrap">
           <Link href="/admin" className="rounded-lg px-3 py-1.5 hover:bg-muted/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5">
             <LayoutDashboard className="h-3.5 w-3.5" />
             Dashboard
@@ -62,7 +62,7 @@ export default async function AdminLayout({
             Stats
           </Link>
         </nav>
-        <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground max-w-full">
           <span className="truncate max-w-[160px]">{userName}</span>
           <form
             action={async () => {

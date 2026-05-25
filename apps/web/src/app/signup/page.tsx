@@ -160,7 +160,7 @@ function SignupForm() {
           borderRadius: "8px",
           border: "1px solid rgba(55,53,47,0.09)",
           boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-          padding: "40px 36px 36px",
+          padding: "clamp(22px, 4vw, 40px) clamp(16px, 4vw, 36px) clamp(20px, 4vw, 36px)",
         }}
       >
         {/* Logo mark */}
@@ -177,10 +177,10 @@ function SignupForm() {
               flexShrink: 0,
             }}
           >
-            <span style={{ color: "white", fontSize: "13px", fontWeight: 700 }}>N</span>
+            <span style={{ color: "white", fontSize: "13px", fontWeight: 700 }}>S</span>
           </div>
           <span style={{ fontWeight: 700, fontSize: "15px", color: "#37352F" }}>
-            Niche Factory
+            Stridivo.com
           </span>
         </div>
 
@@ -315,7 +315,7 @@ function SignupForm() {
                 </p>
               </div>
 
-              <div style={{ padding: "20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div style={{ padding: "20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px", maxHeight: "65vh", overflowY: "auto" }}>
                 {WEDDING_QUESTIONS.map((q) => (
                   <div key={q.id} style={{ gridColumn: q.id === "priority-vendors" ? "1 / -1" : undefined }}>
                     <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#37352F", marginBottom: "6px" }}>

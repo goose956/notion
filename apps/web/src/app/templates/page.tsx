@@ -7,7 +7,7 @@ import { Search, Shapes, Sparkles } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Notion Workflow Templates | Niche Factory",
+  title: "Notion Workflow Templates | Stridivo.com",
   description:
     "Browse ready-made Notion workflow templates for every niche. Find the exact system that solves your workflow problem.",
 };

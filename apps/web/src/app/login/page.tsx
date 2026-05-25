@@ -20,7 +20,7 @@ export default function LoginPage({
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-sm space-y-6 px-6">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">Niche Factory</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Stridivo.com</h1>
           <p className="text-sm text-muted-foreground">
             Sign in with Notion to get started
           </p>
@@ -42,7 +42,7 @@ export default function LoginPage({
 
         <p className="text-center text-xs text-muted-foreground">
           By signing in you grant read/write access to your Notion workspace so
-          Niche Factory can deploy databases on your behalf.
+          Stridivo.com can deploy databases on your behalf.
         </p>
       </div>
     </div>

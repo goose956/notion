@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listCustomers, listPurchasesWithDetails } from "@niche-factory/db";
 import { Coins, ShoppingBag, Sparkles, Users } from "lucide-react";
 import { CreditsEditor } from "./credits-editor";
+import { DeleteCustomerButton } from "./delete-customer-button";
 
 export const dynamic = "force-dynamic";
 
@@ -110,6 +111,7 @@ export default async function AdminCustomersPage() {
                     <p className="text-xs text-muted-foreground">
                       {new Date(c.createdAt).toLocaleDateString()}
                     </p>
+                    <DeleteCustomerButton email={c.email} />
                   </div>
                 </div>
               );
