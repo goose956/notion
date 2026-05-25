@@ -1747,7 +1747,6 @@ function WeddingInvitationCanvas({
   const [userPrompt, setUserPrompt] = useState("Create a romantic floral invitation with soft watercolor accents.");
   const [style, setStyle] = useState(asText(weddingCriteria?.["invitation-style"]) ?? "Romantic");
   const [colours, setColours] = useState(asText(weddingCriteria?.["invitation-colours"]) ?? "Blush pink, sage green, ivory");
-  const [mode, setMode] = useState<"both" | "invitation" | "thank-you">("both");
   const [canvasSize, setCanvasSize] = useState<"a5-portrait" | "five-by-seven" | "square-social">("a5-portrait");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1763,6 +1762,15 @@ function WeddingInvitationCanvas({
   const coupleNames = asText(weddingCriteria?.["couple-names"]) ?? "Couple Names";
   const weddingDate = asText(weddingCriteria?.["wedding-date"]) ?? "Wedding Date";
   const venue = asText(weddingCriteria?.["wedding-location"]) ?? "Wedding Venue";
+  const [namesField, setNamesField] = useState(coupleNames);
+  const [dateField, setDateField] = useState(weddingDate);
+  const [venueField, setVenueField] = useState(venue);
+
+  useEffect(() => {
+    setNamesField(coupleNames);
+    setDateField(weddingDate);
+    setVenueField(venue);
+  }, [coupleNames, weddingDate, venue]);
 
   const canvasDimensions: Record<"a5-portrait" | "five-by-seven" | "square-social", { width: number; height: number; label: string }> = {
     "a5-portrait": { width: 1200, height: 1800, label: "A5 Portrait" },
@@ -1813,7 +1821,7 @@ function WeddingInvitationCanvas({
     const bodyName = findPropertyName(documentsDb.properties, ["Body", "Content", "Draft", "Email Body"]);
 
     if (titleName) {
-      properties[titleName] = `${mode === "thank-you" ? "Thank You" : "Invitation"} Design - ${new Date().toLocaleDateString()}`;
+      properties[titleName] = `Invitation Design - ${new Date().toLocaleDateString()}`;
       propertyTypes[titleName] = "title";
     }
     if (typeName) {
@@ -1825,15 +1833,15 @@ function WeddingInvitationCanvas({
       propertyTypes[createdName] = "date";
     }
     if (recipientName) {
-      properties[recipientName] = coupleNames;
+      properties[recipientName] = namesField;
       propertyTypes[recipientName] = "rich_text";
     }
     if (subjectName) {
-      properties[subjectName] = `${mode === "thank-you" ? "Thank You Card" : "Invitation"} | ${coupleNames}`;
+      properties[subjectName] = `Invitation | ${namesField}`;
       propertyTypes[subjectName] = "rich_text";
     }
     if (summaryName) {
-      properties[summaryName] = `Style: ${style}. Colours: ${colours}. Size: ${activeSize.label}. Prompt: ${generationPrompt}`;
+      properties[summaryName] = `Names: ${namesField}. Date: ${dateField}. Venue: ${venueField}. Style: ${style}. Colours: ${colours}. Size: ${activeSize.label}. Prompt: ${generationPrompt}`;
       propertyTypes[summaryName] = "rich_text";
     }
     if (bodyName) {
@@ -1884,11 +1892,11 @@ function WeddingInvitationCanvas({
           prompt,
           style,
           colours,
-          mode,
+          mode: "both",
           canvasSize,
-          coupleNames,
-          weddingDate,
-          venue,
+          coupleNames: namesField.trim() || "Couple Names",
+          weddingDate: dateField.trim() || "Wedding Date",
+          venue: venueField.trim() || "Wedding Venue",
         }),
       });
 
@@ -1957,20 +1965,17 @@ function WeddingInvitationCanvas({
       >
         <div style={{ padding: "12px 14px", borderBottom: `1px solid ${N_BORDER}`, background: "#fff7fb" }}>
           <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#9d174d" }}>Invitation Assistant</h3>
-          <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>Describe the look and Claude will generate copy and design. Cost: 5 credits.</p>
+          <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>Fill in names, date, and venue, then describe your preferred look. Cost: 5 credits.</p>
         </div>
 
         <div style={{ padding: "12px 14px", display: "grid", gap: "8px", borderBottom: `1px solid ${N_BORDER}` }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-            <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value as "both" | "invitation" | "thank-you")}
-              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}
-            >
-              <option value="both">Invitation + Thank You</option>
-              <option value="invitation">Invitation only</option>
-              <option value="thank-you">Thank You only</option>
-            </select>
+            <input
+              value={namesField}
+              onChange={(e) => setNamesField(e.target.value)}
+              placeholder="Names (e.g. Olivia & James)"
+              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+            />
             <select
               value={canvasSize}
               onChange={(e) => setCanvasSize(e.target.value as "a5-portrait" | "five-by-seven" | "square-social")}
@@ -1980,6 +1985,20 @@ function WeddingInvitationCanvas({
               <option value="five-by-seven">5x7 Card</option>
               <option value="square-social">Square Social</option>
             </select>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <input
+              value={dateField}
+              onChange={(e) => setDateField(e.target.value)}
+              placeholder="Date (e.g. Saturday, 14 June 2026)"
+              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+            />
+            <input
+              value={venueField}
+              onChange={(e) => setVenueField(e.target.value)}
+              placeholder="Venue (e.g. The Barn, Cotswolds)"
+              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+            />
           </div>
           <input
             value={style}
@@ -2060,7 +2079,7 @@ function WeddingInvitationCanvas({
         <div style={{ padding: "10px 12px", borderBottom: `1px solid ${N_BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", background: "#fffdfc" }}>
           <div>
             <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: N_FG }}>Invitation Canvas</h3>
-            <p style={{ margin: "3px 0 0", fontSize: "12px", color: N_MUTED }}>{coupleNames} · {weddingDate} · {venue}</p>
+            <p style={{ margin: "3px 0 0", fontSize: "12px", color: N_MUTED }}>{namesField || "Couple Names"} · {dateField || "Wedding Date"} · {venueField || "Wedding Venue"}</p>
           </div>
           <button
             type="button"
