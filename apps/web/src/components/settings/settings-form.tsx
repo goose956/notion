@@ -19,6 +19,22 @@ type SettingsResponse = {
   apifyTokenConfigured: boolean;
 };
 
+type PricingCurrency = "USD" | "GBP" | "EUR";
+
+type CreditPackage = {
+  id: string;
+  name: string;
+  credits: number;
+  priceCents: number;
+  highlight?: "best" | "popular";
+};
+
+type PricingResponse = {
+  currencies: PricingCurrency[];
+  packages: CreditPackage[];
+  table: Record<string, Record<PricingCurrency, number>>;
+};
+
 export function SettingsForm() {
   const [stripeSecretKey, setStripeSecretKey] = useState("");
   const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
@@ -41,11 +57,17 @@ export function SettingsForm() {
 
   const [saving, setSaving] = useState(false);
   const [savingCustomer, setSavingCustomer] = useState(false);
+  const [savingPricing, setSavingPricing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [customerMessage, setCustomerMessage] = useState<string | null>(null);
   const [customerError, setCustomerError] = useState<string | null>(null);
+  const [pricingMessage, setPricingMessage] = useState<string | null>(null);
+  const [pricingError, setPricingError] = useState<string | null>(null);
+  const [pricingCurrencies, setPricingCurrencies] = useState<PricingCurrency[]>(["USD", "GBP", "EUR"]);
+  const [pricingPackages, setPricingPackages] = useState<CreditPackage[]>([]);
+  const [pricingValues, setPricingValues] = useState<Record<string, Record<PricingCurrency, string>>>({});
 
   useEffect(() => {
     async function load() {
@@ -62,6 +84,23 @@ export function SettingsForm() {
         setSerperConfigured(data.serperApiKeyConfigured);
         setResendConfigured(data.resendApiKeyConfigured);
         setApifyConfigured(data.apifyTokenConfigured);
+
+        const pricingRes = await fetch("/api/admin/credit-pricing", { cache: "no-store" });
+        if (pricingRes.ok) {
+          const pricingData = (await pricingRes.json()) as PricingResponse;
+          setPricingCurrencies(pricingData.currencies);
+          setPricingPackages(pricingData.packages);
+          const nextValues: Record<string, Record<PricingCurrency, string>> = {};
+          for (const pkg of pricingData.packages) {
+            const row = pricingData.table[pkg.id] ?? { USD: pkg.priceCents, GBP: pkg.priceCents, EUR: pkg.priceCents };
+            nextValues[pkg.id] = {
+              USD: ((row.USD ?? pkg.priceCents) / 100).toFixed(2),
+              GBP: ((row.GBP ?? pkg.priceCents) / 100).toFixed(2),
+              EUR: ((row.EUR ?? pkg.priceCents) / 100).toFixed(2),
+            };
+          }
+          setPricingValues(nextValues);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load settings");
       } finally {
@@ -154,6 +193,48 @@ export function SettingsForm() {
     }
   }
 
+  async function handleSavePricing() {
+    setSavingPricing(true);
+    setPricingMessage(null);
+    setPricingError(null);
+
+    try {
+      const payload: Record<string, Record<PricingCurrency, number>> = {};
+      for (const pkg of pricingPackages) {
+        const row = pricingValues[pkg.id];
+        if (!row) continue;
+        const usd = Number.parseFloat(row.USD);
+        const gbp = Number.parseFloat(row.GBP);
+        const eur = Number.parseFloat(row.EUR);
+        if (![usd, gbp, eur].every((n) => Number.isFinite(n) && n > 0)) {
+          throw new Error(`Invalid pricing for ${pkg.name}. Use positive amounts.`);
+        }
+        payload[pkg.id] = {
+          USD: Math.round(usd * 100),
+          GBP: Math.round(gbp * 100),
+          EUR: Math.round(eur * 100),
+        };
+      }
+
+      const res = await fetch("/api/admin/credit-pricing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table: payload }),
+      });
+
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "Failed to save credit pricing");
+      }
+
+      setPricingMessage("Credit pricing saved.");
+    } catch (err) {
+      setPricingError(err instanceof Error ? err.message : "Failed to save credit pricing");
+    } finally {
+      setSavingPricing(false);
+    }
+  }
+
   const inputCls =
     "w-full rounded-lg border bg-background/80 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30";
 
@@ -164,6 +245,75 @@ export function SettingsForm() {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSave} className="space-y-6">
+        <section className="surface-card p-5 space-y-3">
+          <h2 className="font-semibold">Credits Pricing Table</h2>
+          <p className="text-xs text-muted-foreground">
+            Set friendly local prices for each slider tier. These values drive Stripe checkout amounts.
+          </p>
+
+          <div className="space-y-3">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="py-2 pr-3 font-medium">Package</th>
+                    <th className="py-2 pr-3 font-medium">Credits</th>
+                    {pricingCurrencies.map((currency) => (
+                      <th key={currency} className="py-2 pr-3 font-medium">{currency}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pricingPackages.map((pkg) => (
+                    <tr key={pkg.id} className="border-b last:border-b-0">
+                      <td className="py-2 pr-3">{pkg.name}</td>
+                      <td className="py-2 pr-3 text-muted-foreground">{pkg.credits}</td>
+                      {pricingCurrencies.map((currency) => (
+                        <td key={`${pkg.id}:${currency}`} className="py-2 pr-3">
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={pricingValues[pkg.id]?.[currency] ?? ""}
+                            onChange={(e) =>
+                              setPricingValues((prev) => ({
+                                ...prev,
+                                [pkg.id]: {
+                                  USD: prev[pkg.id]?.USD ?? "",
+                                  GBP: prev[pkg.id]?.GBP ?? "",
+                                  EUR: prev[pkg.id]?.EUR ?? "",
+                                  [currency]: e.target.value,
+                                },
+                              }))
+                            }
+                            className="w-28 rounded-lg border bg-background/80 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                            placeholder="0.00"
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  void handleSavePricing();
+                }}
+                disabled={savingPricing || pricingPackages.length === 0}
+                className="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-medium h-9 px-4 hover:bg-primary/90 disabled:opacity-60"
+              >
+                {savingPricing ? "Saving..." : "Save Credit Pricing"}
+              </button>
+              {pricingMessage && <p className="text-sm text-green-700">{pricingMessage}</p>}
+              {pricingError && <p className="text-sm text-red-700">{pricingError}</p>}
+            </div>
+          </div>
+        </section>
+
         <section className="surface-card p-5 space-y-3">
           <h2 className="font-semibold">Stripe</h2>
           <p className="text-xs text-muted-foreground">

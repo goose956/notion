@@ -133,7 +133,7 @@ export default function CreditsPage() {
           </div>
         )}
 
-        <div style={{ maxWidth: "760px" }}>
+        <div style={{ maxWidth: "760px", margin: "0 auto" }}>
           <section
             style={{
               borderRadius: "22px",
