@@ -120,7 +120,7 @@ function CellEditor({
     );
   }
 
-  if (type === "select" && options && options.length > 0) {
+  if ((type === "select" || type === "status") && options && options.length > 0) {
     return (
       <select
         ref={inputRef as React.RefObject<HTMLSelectElement>}
