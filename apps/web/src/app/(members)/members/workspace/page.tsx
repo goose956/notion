@@ -33,6 +33,14 @@ const HONEYMOON_TAB_ID = "__workspace_honeymoon_planner__";
 const READONLY_TYPES = new Set(["formula", "rollup", "relation", "created_time", "last_edited_time", "created_by", "last_edited_by"]);
 
 // ─── Format a cell value for display ───────────────────────────────────────
+function statusRowBg(status: string | null | undefined): string {
+  const s = (status ?? "").toLowerCase();
+  if (s === "booked") return "rgba(209,250,229,0.6)";
+  if (s === "cancelled") return "rgba(254,226,226,0.6)";
+  if (s === "contacted") return "rgba(219,234,254,0.6)";
+  return "white";
+}
+
 function formatCell(value: string | number | boolean | null, type: string, format?: string): string {
   if (value === null || value === undefined) return "";
   if (type === "checkbox") return value ? "✓" : "✗";
@@ -597,11 +605,14 @@ function DatabaseTable({
               </td>
             </tr>
           )}
-          {db.rows.map((row) => (
+          {db.rows.map((row) => {
+            const rowStatus = Object.entries(row.properties).find(([k]) => k.toLowerCase() === "status")?.[1];
+            const rowBg = statusRowBg(typeof rowStatus === "string" ? rowStatus : null);
+            return (
             <tr
               key={row.pageId}
-              style={{ background: "white" }}
-              className="hover:bg-[rgba(55,53,47,0.02)]"
+              style={{ background: rowBg }}
+              className="hover:brightness-95"
             >
               {visibleCols.map((col) => {
                 const val = row.properties[col.name] ?? null;
@@ -612,7 +623,6 @@ function DatabaseTable({
                   savingCell?.pageId === row.pageId &&
                   savingCell?.prop === col.name;
                 const readonly = READONLY_TYPES.has(col.type);
-
                 return (
                   <td
                     key={col.id}
@@ -735,7 +745,8 @@ function DatabaseTable({
                 </div>
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
 
@@ -2845,7 +2856,7 @@ function WeddingHoneymoonPlanner({
   const abortRef = useRef<AbortController | null>(null);
 
   const categoryOptions = ["Hotel", "Taxi Transfer", "Restaurant", "Activity", "Tour", "Other"];
-  const statusOptions = ["Researching", "Shortlisted", "Contacted", "Booked", "Rejected"];
+  const statusOptions = ["Not Contacted", "Contacted", "Booked", "Cancelled"];
 
   useEffect(() => {
     transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight });

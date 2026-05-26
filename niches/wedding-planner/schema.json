@@ -44,11 +44,10 @@
           "type": "status",
           "name": "Status",
           "options": [
-            { "name": "Shortlisted", "color": "yellow" },
+            { "name": "Not Contacted", "color": "gray" },
             { "name": "Contacted", "color": "blue" },
-            { "name": "Quote Received", "color": "orange" },
             { "name": "Booked", "color": "green" },
-            { "name": "Rejected", "color": "red" }
+            { "name": "Cancelled", "color": "red" }
           ]
         },
         { "type": "number", "name": "Quoted Price", "format": "pound" },
