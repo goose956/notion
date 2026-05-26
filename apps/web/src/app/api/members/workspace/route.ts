@@ -306,6 +306,14 @@ export async function GET(_req: NextRequest) {
                 pageId: r.id,
                 properties: r.properties as Record<string, string | number | boolean | null>,
               })),
+              hasMore,
+            });
+          }
+        } catch {
+          // Keep other workspaces visible even if one workspace is broken.
+          continue;
+        }
+      }
 
       // If everything was empty due drift, retry a default provision once.
       if (databases.length === 0) {
