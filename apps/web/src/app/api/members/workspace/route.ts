@@ -299,8 +299,8 @@ export async function GET(_req: NextRequest) {
                 id: p.name,
                 name: p.name,
                 type: p.type,
-                options: Array.isArray(p.options) ? p.options.map((o) => typeof o === "string" ? o : o.name) : undefined,
-                format: p.format,
+                ...(Array.isArray(p.options) ? { options: p.options.map((o) => typeof o === "string" ? o : o.name) } : {}),
+                ...(p.format !== undefined ? { format: p.format } : {}),
               })),
               rows: appRows.map((r) => ({
                 pageId: r.id,
@@ -341,8 +341,8 @@ export async function GET(_req: NextRequest) {
                 id: p.name,
                 name: p.name,
                 type: p.type,
-                options: Array.isArray(p.options) ? p.options.map((o) => typeof o === "string" ? o : o.name) : undefined,
-                format: p.format,
+                ...(Array.isArray(p.options) ? { options: p.options.map((o) => typeof o === "string" ? o : o.name) } : {}),
+                ...(p.format !== undefined ? { format: p.format } : {}),
               })),
               rows: appRows.map((r) => ({
                 pageId: r.id,
