@@ -176,6 +176,15 @@ function getGuestDisplayName(row: WorkspaceDatabase["rows"][number]): string {
   return "Guest";
 }
 
+function findPlusOneName(row: WorkspaceDatabase["rows"][number]): string | null {
+  const candidates = ["Plus One Name", "Plus One", "Partner Name", "Partner", "+1 Name", "+1"];
+  for (const key of candidates) {
+    const val = row.properties[key];
+    if (typeof val === "string" && val.trim().length > 0) return val.trim();
+  }
+  return null;
+}
+
 function getGuestInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -235,7 +244,15 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
 
   const guests = useMemo<SeatingGuest[]>(() => {
     if (!guestsDb) return [];
-    return guestsDb.rows.map((row) => ({ id: row.pageId, name: getGuestDisplayName(row) }));
+    const list: SeatingGuest[] = [];
+    for (const row of guestsDb.rows) {
+      list.push({ id: row.pageId, name: getGuestDisplayName(row) });
+      const plusOne = findPlusOneName(row);
+      if (plusOne) {
+        list.push({ id: `${row.pageId}-plus-one`, name: `${plusOne} (+1)` });
+      }
+    }
+    return list;
   }, [guestsDb]);
 
   const storageKey = guestsDb ? `wedding.seating.${guestsDb.notionId}` : null;
