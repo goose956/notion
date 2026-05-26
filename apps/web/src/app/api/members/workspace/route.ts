@@ -286,6 +286,9 @@ export async function GET(_req: NextRequest) {
             const appRows = hasMore ? appRowsPlusOne.slice(0, 50) : appRowsPlusOne;
 
             const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
+            const packPropsMap = new Map<string, { options?: Array<{ name: string } | string>; format?: string }>(
+              ((packDbDef?.properties ?? []) as Array<{ name: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => [p.name, p])
+            );
             const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
 
             databases.push({
@@ -295,13 +298,18 @@ export async function GET(_req: NextRequest) {
               dbId: appDb.packDbId,
               dbName: appDb.name,
               icon: packDbDef?.icon ?? null,
-              properties: (propertiesSchema as Array<{ name: string; type: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => ({
-                id: p.name,
-                name: p.name,
-                type: p.type,
-                ...(Array.isArray(p.options) ? { options: p.options.map((o) => typeof o === "string" ? o : o.name) } : {}),
-                ...(p.format !== undefined ? { format: p.format } : {}),
-              })),
+              properties: propertiesSchema.map((p) => {
+                const fresh = packPropsMap.get(p.name);
+                const opts = fresh?.options ?? (p as { options?: Array<{ name: string } | string> }).options;
+                const fmt = fresh?.format ?? (p as { format?: string }).format;
+                return {
+                  id: p.name,
+                  name: p.name,
+                  type: p.type,
+                  ...(Array.isArray(opts) ? { options: opts.map((o) => typeof o === "string" ? o : o.name) } : {}),
+                  ...(fmt !== undefined ? { format: fmt } : {}),
+                };
+              }),
               rows: appRows.map((r) => ({
                 pageId: r.id,
                 properties: r.properties as Record<string, string | number | boolean | null>,
@@ -329,6 +337,9 @@ export async function GET(_req: NextRequest) {
             const hasMore = appRowsPlusOne.length > 50;
             const appRows = hasMore ? appRowsPlusOne.slice(0, 50) : appRowsPlusOne;
             const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
+            const packPropsMap = new Map<string, { options?: Array<{ name: string } | string>; format?: string }>(
+              ((packDbDef?.properties ?? []) as Array<{ name: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => [p.name, p])
+            );
             const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
             databases.push({
               notionId: appDb.id,
@@ -337,13 +348,18 @@ export async function GET(_req: NextRequest) {
               dbId: appDb.packDbId,
               dbName: appDb.name,
               icon: packDbDef?.icon ?? null,
-              properties: (propertiesSchema as Array<{ name: string; type: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => ({
-                id: p.name,
-                name: p.name,
-                type: p.type,
-                ...(Array.isArray(p.options) ? { options: p.options.map((o) => typeof o === "string" ? o : o.name) } : {}),
-                ...(p.format !== undefined ? { format: p.format } : {}),
-              })),
+              properties: propertiesSchema.map((p) => {
+                const fresh = packPropsMap.get(p.name);
+                const opts = fresh?.options ?? (p as { options?: Array<{ name: string } | string> }).options;
+                const fmt = fresh?.format ?? (p as { format?: string }).format;
+                return {
+                  id: p.name,
+                  name: p.name,
+                  type: p.type,
+                  ...(Array.isArray(opts) ? { options: opts.map((o) => typeof o === "string" ? o : o.name) } : {}),
+                  ...(fmt !== undefined ? { format: fmt } : {}),
+                };
+              }),
               rows: appRows.map((r) => ({
                 pageId: r.id,
                 properties: r.properties as Record<string, string | number | boolean | null>,
