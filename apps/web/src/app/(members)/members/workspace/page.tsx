@@ -33,11 +33,12 @@ const HONEYMOON_TAB_ID = "__workspace_honeymoon_planner__";
 const READONLY_TYPES = new Set(["formula", "rollup", "relation", "created_time", "last_edited_time", "created_by", "last_edited_by"]);
 
 // ─── Format a cell value for display ───────────────────────────────────────
-function formatCell(value: string | number | boolean | null, type: string): string {
+function formatCell(value: string | number | boolean | null, type: string, format?: string): string {
   if (value === null || value === undefined) return "";
   if (type === "checkbox") return value ? "✓" : "✗";
   if (type === "number" && typeof value === "number") {
-    return value.toLocaleString();
+    const prefix = format === "pound" ? "£" : format === "dollar" ? "$" : format === "euro" ? "€" : format === "yen" ? "¥" : "";
+    return prefix + value.toLocaleString();
   }
   return String(value);
 }
@@ -47,12 +48,14 @@ function CellEditor({
   value,
   type,
   options,
+  format,
   onSave,
   onCancel,
 }: {
   value: string | number | boolean | null;
   type: string;
   options?: string[] | undefined;
+  format?: string | undefined;
   onSave: (val: string | number | boolean | null) => void;
   onCancel: () => void;
 }) {
@@ -153,16 +156,27 @@ function CellEditor({
     );
   }
 
+  const currencyPrefix = type === "number" && format
+    ? (format === "pound" ? "£" : format === "dollar" ? "$" : format === "euro" ? "€" : format === "yen" ? "¥" : "")
+    : "";
+
   return (
-    <input
-      ref={inputRef as React.RefObject<HTMLInputElement>}
-      type={type === "number" ? "number" : type === "url" || type === "email" ? type : "text"}
-      value={draft}
-      onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
-      onBlur={commit}
-      onKeyDown={handleKey}
-      style={inputStyle}
-    />
+    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+      {currencyPrefix && (
+        <span style={{ position: "absolute", left: "8px", fontSize: "13px", color: N_MUTED, pointerEvents: "none" }}>
+          {currencyPrefix}
+        </span>
+      )}
+      <input
+        ref={inputRef as React.RefObject<HTMLInputElement>}
+        type={type === "number" ? "number" : type === "url" || type === "email" ? type : "text"}
+        value={draft}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={handleKey}
+        style={currencyPrefix ? { ...inputStyle, paddingLeft: "22px" } : inputStyle}
+      />
+    </div>
   );
 }
 
@@ -303,17 +317,15 @@ function DatabaseTable({
   const typeMap: Record<string, string> = {};
   for (const p of db.properties) typeMap[p.name] = p.type;
 
-  // Options map (select/status) — we derive from existing row values
+  // Options map (select/status) — prefer schema-defined options, fall back to row values
   const optionsMap: Record<string, string[]> = {};
-  for (const row of db.rows) {
-    for (const [name, val] of Object.entries(row.properties)) {
-      const type = typeMap[name];
-      if ((type === "select" || type === "status") && val && !optionsMap[name]) {
-        // We'll collect from all rows
-        optionsMap[name] = optionsMap[name] ?? [];
-      }
+  // 1. Seed from schema options (always has the full list)
+  for (const col of db.properties) {
+    if ((col.type === "select" || col.type === "status") && col.options && col.options.length > 0) {
+      optionsMap[col.name] = [...col.options];
     }
   }
+  // 2. Supplement with any values already in rows that aren't in the schema list
   for (const row of db.rows) {
     for (const [name, val] of Object.entries(row.properties)) {
       const type = typeMap[name];
@@ -630,6 +642,7 @@ function DatabaseTable({
                         value={val}
                         type={col.type}
                         options={optionsMap[col.name]}
+                        format={col.format}
                         onSave={(v) => void handleSave(row.pageId, col.name, v)}
                         onCancel={() => setEditingCell(null)}
                       />
@@ -655,7 +668,7 @@ function DatabaseTable({
                             {String(val)}
                           </a>
                         ) : (
-                          formatCell(val, col.type) || (
+                          formatCell(val, col.type, col.format) || (
                             <span style={{ color: N_SUBTLE, fontStyle: "italic" }}>
                               {readonly ? "—" : "Empty"}
                             </span>

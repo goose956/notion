@@ -26,6 +26,8 @@ export interface WorkspaceProperty {
   id: string;
   name: string;
   type: string;
+  options?: string[];
+  format?: string;
 }
 
 export interface WorkspaceRow {
@@ -293,19 +295,17 @@ export async function GET(_req: NextRequest) {
               dbId: appDb.packDbId,
               dbName: appDb.name,
               icon: packDbDef?.icon ?? null,
-              properties: propertiesSchema.map((p) => ({ id: p.name, name: p.name, type: p.type })),
+              properties: (propertiesSchema as Array<{ name: string; type: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => ({
+                id: p.name,
+                name: p.name,
+                type: p.type,
+                options: Array.isArray(p.options) ? p.options.map((o) => typeof o === "string" ? o : o.name) : undefined,
+                format: p.format,
+              })),
               rows: appRows.map((r) => ({
                 pageId: r.id,
                 properties: r.properties as Record<string, string | number | boolean | null>,
               })),
-              hasMore,
-            });
-          }
-        } catch {
-          // Keep other workspaces visible even if one workspace is broken.
-          continue;
-        }
-      }
 
       // If everything was empty due drift, retry a default provision once.
       if (databases.length === 0) {
@@ -329,7 +329,13 @@ export async function GET(_req: NextRequest) {
               dbId: appDb.packDbId,
               dbName: appDb.name,
               icon: packDbDef?.icon ?? null,
-              properties: propertiesSchema.map((p) => ({ id: p.name, name: p.name, type: p.type })),
+              properties: (propertiesSchema as Array<{ name: string; type: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => ({
+                id: p.name,
+                name: p.name,
+                type: p.type,
+                options: Array.isArray(p.options) ? p.options.map((o) => typeof o === "string" ? o : o.name) : undefined,
+                format: p.format,
+              })),
               rows: appRows.map((r) => ({
                 pageId: r.id,
                 properties: r.properties as Record<string, string | number | boolean | null>,
