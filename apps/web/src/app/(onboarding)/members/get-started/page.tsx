@@ -325,6 +325,11 @@ export default async function GetStartedPage({
     rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
   const forceView = searchParams.view === "1";
 
+  // Activation links handle their own provisioning — skip get-started entirely
+  if (nextUrl?.startsWith("/activate/")) {
+    redirect(nextUrl);
+  }
+
   // If next points to a setup page, extract the nicheId and load the niche name
   const setupMatch = /^\/members\/setup\/([a-z0-9-]+)$/.exec(nextUrl ?? "");
   const nicheIdFromNext = setupMatch?.[1] ?? null;
