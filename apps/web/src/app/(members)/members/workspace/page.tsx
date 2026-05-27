@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, type ChangeEvent, type KeyboardEvent } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, type ChangeEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowUp, Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal, Mail, LayoutDashboard, CalendarDays, MapPin, Users, CheckCircle2, ListChecks, FileText, Pencil, Check, X, Download, Palette, Globe, Link2, DatabaseZap } from "lucide-react";
