@@ -38,8 +38,8 @@ export function CreateLinkForm({ niches }: Props) {
     setLoading(true);
     try {
       const body: Record<string, unknown> = { nichePackId, credits, label };
-      if (maxUses.trim() !== "") body.maxUses = parseInt(maxUses, 10);
-      if (expiresAt.trim() !== "") body.expiresAt = new Date(expiresAt).toISOString();
+      if (maxUses.trim() !== "") body["maxUses"] = parseInt(maxUses, 10);
+      if (expiresAt.trim() !== "") body["expiresAt"] = new Date(expiresAt).toISOString();
 
       const res = await fetch("/api/admin/activation-links", {
         method: "POST",
