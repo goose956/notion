@@ -61,6 +61,18 @@ if (!hasAppWorkspaceTable) {
   console.log("Applied fallback migration: 0013_app_workspace.sql");
 }
 
+// Recovery fix: same pattern for activation_links table.
+const activationLinksRegclass = await client.unsafe(
+  "select to_regclass('public.activation_links') as regclass",
+);
+const hasActivationLinksTable = activationLinksRegclass?.[0]?.regclass !== null;
+if (!hasActivationLinksTable) {
+  const activationLinksSqlPath = join(__dirname, "../drizzle/0015_activation_links.sql");
+  const activationLinksSql = fs.readFileSync(activationLinksSqlPath, "utf-8");
+  await client.unsafe(activationLinksSql);
+  console.log("Applied fallback migration: 0015_activation_links.sql");
+}
+
 console.log("Schema fixups complete.");
 
 await client.end();
