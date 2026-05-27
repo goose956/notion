@@ -299,5 +299,3 @@ function Spinner() {
     </svg>
   );
 }
-  );
-}
