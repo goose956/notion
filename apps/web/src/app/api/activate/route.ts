@@ -50,8 +50,15 @@ export async function POST(req: NextRequest) {
   if (!link) {
     return NextResponse.json({ error: "Invalid activation link" }, { status: 404 });
   }
-  if (link.usedAt) {
-    return NextResponse.json({ error: "This activation link has already been redeemed" }, { status: 409 });
+  const now = new Date();
+  if (link.revoked) {
+    return NextResponse.json({ error: "This activation link has been revoked" }, { status: 409 });
+  }
+  if (link.expiresAt && link.expiresAt < now) {
+    return NextResponse.json({ error: "This activation link has expired" }, { status: 409 });
+  }
+  if (link.maxUses != null && link.uses >= link.maxUses) {
+    return NextResponse.json({ error: "This activation link has reached its maximum uses" }, { status: 409 });
   }
 
   // Redeem — this atomically marks the link used and sets credits
@@ -60,9 +67,6 @@ export async function POST(req: NextRequest) {
     redeemedLink = await redeemActivationLink(token, email);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Redemption failed";
-    if (message.includes("already redeemed")) {
-      return NextResponse.json({ error: "This activation link has already been redeemed" }, { status: 409 });
-    }
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
@@ -70,11 +74,16 @@ export async function POST(req: NextRequest) {
   const { nichePackId } = redeemedLink;
   await provisionIfNeeded(userId, nichePackId);
 
+  // Let the client know if criteria already exist so it can skip the onboarding form
+  const existingCriteria = await getUserCriteria(userId, nichePackId).catch(() => undefined);
+  const hasCriteria = existingCriteria != null && Object.keys(existingCriteria.criteria ?? {}).length > 0;
+
   return NextResponse.json({
     ok: true,
     nichePackId,
     credits: redeemedLink.credits,
     label: redeemedLink.label,
+    hasCriteria,
   });
 }
 
@@ -93,12 +102,8 @@ async function provisionIfNeeded(userId: string, nichePackId: string): Promise<v
   // with an empty-criteria workspace so the user lands in the members area.
   const criteria = await getUserCriteria(userId, nichePackId).catch(() => undefined);
   // Only auto-provision if either: no onboarding questions OR criteria already set
-  const hasOnboarding =
-    Array.isArray(pack.onboardingQuestions) && pack.onboardingQuestions.length > 0;
-  if (hasOnboarding && !criteria) {
-    // Leave provisioning for the workspace route to handle after onboarding
-    return;
-  }
+  // For activation flow we always provision so the workspace is immediately accessible.
+  // The onboarding form is shown in ActivateClient and criteria saved separately.
 
   const workspaceId = randomUUID();
   await createAppWorkspace({

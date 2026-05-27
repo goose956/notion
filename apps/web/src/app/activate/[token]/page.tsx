@@ -14,7 +14,16 @@ export default async function ActivatePage({ params }: Props) {
   // Look up the link to give a better UX (show what they're getting before login)
   const link = await getActivationLink(token).catch(() => undefined);
 
-  if (link?.usedAt) {
+  // Check if the link is blocked (revoked, expired, or maxed out)
+  const now = new Date();
+  const isBlocked = link && (
+    link.revoked ||
+    (link.expiresAt != null && link.expiresAt < now) ||
+    (link.maxUses != null && link.uses >= link.maxUses)
+  );
+
+  if (isBlocked) {
+    const reason = link.revoked ? "revoked" : (link.expiresAt != null && link.expiresAt < now) ? "expired" : "reached its maximum uses";
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4 max-w-sm px-6">
@@ -25,9 +34,9 @@ export default async function ActivatePage({ params }: Props) {
               </svg>
             </div>
           </div>
-          <h1 className="text-xl font-semibold">Link already used</h1>
+          <h1 className="text-xl font-semibold">Link unavailable</h1>
           <p className="text-sm text-muted-foreground">
-            This activation link has already been redeemed. If you think this is a mistake, please contact support.
+            This activation link has {reason}. Please contact support if you need help.
           </p>
           <Link
             href="/login"
@@ -57,7 +66,8 @@ export default async function ActivatePage({ params }: Props) {
   const session = await auth();
   if (!session?.user) {
     const callbackUrl = encodeURIComponent(`/activate/${token}`);
-    redirect(`/signup?callbackUrl=${callbackUrl}`);
+    const title = encodeURIComponent(niceNicheName);
+    redirect(`/signup?callbackUrl=${callbackUrl}&title=${title}`);
   }
 
   const niceNicheName = link.nichePackId

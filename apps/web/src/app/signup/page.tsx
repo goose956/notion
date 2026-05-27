@@ -41,7 +41,8 @@ function SignupForm() {
 
   const callbackUrl = searchParams.get("callbackUrl") ?? "/members/get-started";
   const templateTitle = searchParams.get("title");
-  const isWeddingSignup = /wedding/i.test(templateTitle ?? "") || /\/members\/setup\/wedding-planner/.test(callbackUrl);
+  const isActivationSignup = callbackUrl.startsWith("/activate/");
+  const isWeddingSignup = isActivationSignup ? false : (/wedding/i.test(templateTitle ?? "") || /\/members\/setup\/wedding-planner/.test(callbackUrl));
   const nicheId = /\/members\/setup\/([a-z0-9-]+)$/.exec(callbackUrl)?.[1] ?? undefined;
 
   const [name, setName] = useState("");
@@ -181,10 +182,14 @@ function SignupForm() {
             lineHeight: 1.25,
           }}
         >
-          Create your free account
+          Create your {isActivationSignup ? "account" : "free account"}
         </h1>
 
-        {templateTitle ? (
+        {isActivationSignup ? (
+          <p style={{ fontSize: "14px", color: "rgba(55,53,47,0.65)", margin: "0 0 24px", lineHeight: 1.5 }}>
+            Create an account to access your{templateTitle ? <> <strong style={{ color: "#37352F" }}>{templateTitle}</strong></> : ""} workspace.
+          </p>
+        ) : templateTitle ? (
           <p style={{ fontSize: "14px", color: "rgba(55,53,47,0.65)", margin: "0 0 24px", lineHeight: 1.5 }}>
             Get instant access to <strong style={{ color: "#37352F" }}>{templateTitle}</strong> plus 25 free research credits.
           </p>
