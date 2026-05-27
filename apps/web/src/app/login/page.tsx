@@ -1,6 +1,5 @@
 import { signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2 } from "lucide-react";
 
 function resolveSafeCallbackUrl(callbackUrl: string | undefined): string {
   if (!callbackUrl) return "/members/get-started";
@@ -16,6 +15,7 @@ export default function LoginPage({
   searchParams: { callbackUrl?: string };
 }) {
   const callbackUrl = resolveSafeCallbackUrl(searchParams.callbackUrl);
+  const isActivateFlow = callbackUrl.startsWith("/activate/");
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -25,43 +25,73 @@ export default function LoginPage({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/s-logo.png" alt="Stridivo" className="h-16 w-auto" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Welcome to Stridivo</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {isActivateFlow ? "Create your account" : "Welcome to Stridivo"}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Connect your Notion workspace and build niche systems with AI
+            {isActivateFlow
+              ? "Enter your email to activate your purchase"
+              : "Sign in to continue"}
           </p>
         </div>
 
+        {/* Email sign-in form — shown first for activation flow, always available */}
+        <form
+          action={async (formData: FormData) => {
+            "use server";
+            const email = (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
+            if (!email || !email.includes("@")) return;
+            await signIn("email", { email, redirectTo: callbackUrl });
+          }}
+          className="space-y-3"
+        >
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
+              Email address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <Button type="submit" className="w-full">
+            Continue with email
+          </Button>
+        </form>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">or</span>
+          </div>
+        </div>
+
+        {/* Notion OAuth — for users who want to sync to Notion */}
         <form
           action={async () => {
             "use server";
-            await signIn("notion", {
-              redirectTo: callbackUrl,
-            });
+            await signIn("notion", { redirectTo: callbackUrl });
           }}
         >
-          <Button type="submit" className="w-full gap-2">
+          <Button type="submit" variant="outline" className="w-full gap-2">
             <NotionIcon />
             Continue with Notion
           </Button>
         </form>
 
         <p className="text-center text-xs text-muted-foreground">
-          By signing in you grant read/write access to your Notion workspace so
-          Stridivo.com can deploy databases on your behalf.
+          {isActivateFlow
+            ? "Your credits and workspace will be set up automatically after sign-in."
+            : "Sign in with Notion to sync your databases, or use email for the in-app workspace."}
         </p>
-
-        <ul className="space-y-2 border-t pt-4">
-          {[
-            "Deploy a full Notion database schema in seconds",
-            "AI assistant pre-loaded with your niche context",
-            "25 free research credits included on signup",
-          ].map((feat) => (
-            <li key={feat} className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-              {feat}
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );
