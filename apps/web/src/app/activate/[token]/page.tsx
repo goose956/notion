@@ -57,7 +57,7 @@ export default async function ActivatePage({ params }: Props) {
   const session = await auth();
   if (!session?.user) {
     const callbackUrl = encodeURIComponent(`/activate/${token}`);
-    redirect(`/login?callbackUrl=${callbackUrl}`);
+    redirect(`/signup?callbackUrl=${callbackUrl}`);
   }
 
   const niceNicheName = link.nichePackId
