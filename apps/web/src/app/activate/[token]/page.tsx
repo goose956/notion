@@ -68,17 +68,17 @@ export default async function ActivatePage({ params }: Props) {
   }
 
   // Gate: user must be logged in to activate
+  const niceNicheName = link.nichePackId
+    .split("-")
+    .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
   const session = await auth();
   if (!session?.user) {
     const callbackUrl = encodeURIComponent(`/activate/${token}`);
     const title = encodeURIComponent(niceNicheName);
     redirect(`/signup?callbackUrl=${callbackUrl}&title=${title}`);
   }
-
-  const niceNicheName = link.nichePackId
-    .split("-")
-    .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
