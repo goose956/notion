@@ -18,11 +18,8 @@ function isAdminEmail(email: string | null | undefined): boolean {
 
 async function requireAdmin(): Promise<NextResponse | null> {
   const session = await auth();
-  if (!session?.user) {
+  if (!isAdminEmail(session?.user?.email)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!isAdminEmail(session.user.email)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   return null;
 }
