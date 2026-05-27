@@ -21,12 +21,12 @@ const BodySchema = z.object({
 /** POST /api/activate — redeem an activation link for the currently logged-in user. */
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user?.email || !session.user.id) {
+  if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const email = session.user.email;
-  const userId = session.user.id;
+  const userId = session.user.email; // email is the userId for in-app (credentials) users
 
   let body: unknown;
   try {
