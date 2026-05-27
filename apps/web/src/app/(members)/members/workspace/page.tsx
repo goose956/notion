@@ -4146,7 +4146,7 @@ export default function WorkspacePage() {
               <DatabaseTable
                 db={activeDbDisplay}
                 isAppBackend={backend === "app"}
-                seatedGuestIds={activeDbDisplay.dbId === "guests" ? seatedGuestIds : undefined}
+                {...(activeDbDisplay.dbId === "guests" ? { seatedGuestIds } : {})}
                 onRowUpdated={(pageId, name, val) =>
                   handleRowUpdated(activeDbDisplay.notionId, pageId, name, val)
                 }
