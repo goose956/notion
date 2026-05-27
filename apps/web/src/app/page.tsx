@@ -107,21 +107,23 @@ export default async function HomePage() {
         <div className="relative max-w-6xl mx-auto px-6 py-16 md:py-20">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/8 px-3 py-1 text-xs font-medium text-primary shadow-sm">
             <Sparkles className="h-3.5 w-3.5" />
-            Niche Workflow Template Directory
+            AI-Powered · Done For You
           </div>
           <h1 className="mt-4 max-w-3xl text-4xl md:text-5xl font-bold tracking-tight leading-tight">
-            Discover Workflows That Solve Specific Niche Problems
+            The AI does the work.<br />You make the decisions.
           </h1>
           <p className="mt-4 max-w-2xl text-base md:text-lg text-muted-foreground">
-            Browse template systems built around real-world jobs-to-be-done — from creator operations to local lead generation. Deploy a full database in seconds.
+            Stridivo builds AI workspaces for specific niches — not static templates, but a{" "}
+            <strong className="text-foreground font-semibold">live AI that researches, drafts, and plans for you</strong>.
+            Start with the Wedding Planner. More niches launching soon.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              href="/templates"
+              href="/templates/wedding-planner"
               className="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground h-10 px-5 text-sm font-medium hover:bg-primary/90 transition-colors"
             >
-              Browse Templates
+              Start with Wedding Planner
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
@@ -129,7 +131,7 @@ export default async function HomePage() {
               className="inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground h-10 px-5 text-sm font-medium hover:bg-accent/90 transition-colors"
             >
               <Zap className="h-4 w-4" />
-              Get started free
+              Try free — 25 credits
             </Link>
           </div>
 
@@ -148,9 +150,9 @@ export default async function HomePage() {
           )}
 
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
-            <FeaturePill icon={<Compass className="h-4 w-4 text-primary" />} label="Niche-specific systems" />
-            <FeaturePill icon={<Bot className="h-4 w-4 text-primary" />} label="AI research assistant" />
-            <FeaturePill icon={<Database className="h-4 w-4 text-primary" />} label="Deploy in 30 seconds" />
+            <FeaturePill icon={<Compass className="h-4 w-4 text-primary" />} label="AI finds vendors for you" />
+            <FeaturePill icon={<Bot className="h-4 w-4 text-primary" />} label="Emails drafted in seconds" />
+            <FeaturePill icon={<Workflow className="h-4 w-4 text-primary" />} label="Speeches, plans & more" />
           </div>
         </div>
       </section>
@@ -158,11 +160,11 @@ export default async function HomePage() {
       <section className="max-w-6xl mx-auto px-6 py-10 md:py-12">
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight">Template Gallery</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">AI Workspaces</h2>
             <p className="text-sm text-muted-foreground mt-1">
               {liveTemplates.length > 0
-                ? "Browse published workflow systems — click any card to preview and deploy."
-                : "Explore niche workflow systems and deploy the right one in seconds."}
+                ? "Each workspace is a live AI built for one specific niche. Pick yours and get started."
+                : "Each workspace is a live AI built for one specific niche — not a template, a tool that works."}
             </p>
           </div>
           <div className="hidden md:flex items-center gap-2 text-xs">
