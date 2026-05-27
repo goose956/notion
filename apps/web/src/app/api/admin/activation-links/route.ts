@@ -46,6 +46,9 @@ const CreateSchema = z.object({
   label: z.string().max(200).default(""),
   maxUses: z.number().int().min(1).optional(),
   expiresAt: z.string().datetime().optional(),
+  source: z.string().max(100).optional(),
+  medium: z.string().max(100).optional(),
+  campaign: z.string().max(100).optional(),
 });
 
 /** POST /api/admin/activation-links — create a new activation link */
@@ -68,7 +71,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { nichePackId, credits, label, maxUses, expiresAt } = parsed.data;
+  const { nichePackId, credits, label, maxUses, expiresAt, source, medium, campaign } = parsed.data;
 
   try {
     const link = await createActivationLink(
@@ -77,6 +80,9 @@ export async function POST(req: NextRequest) {
       label,
       maxUses,
       expiresAt ? new Date(expiresAt) : undefined,
+      source,
+      medium,
+      campaign,
     );
     const baseUrl =
       process.env["NEXT_PUBLIC_APP_URL"] ??

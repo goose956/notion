@@ -10,6 +10,8 @@ import {
   createAppWorkspace,
   createAppDatabase,
   updateAppWorkspaceStatus,
+  findOrCreateCustomer,
+  logFunnelEvent,
 } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 import { randomUUID } from "node:crypto";
@@ -70,9 +72,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
+  // Ensure customer row exists so we can attach funnel events to it
+  const customer = await findOrCreateCustomer(email).catch(() => null);
+
+  // Log activation_redeemed funnel event
+  if (customer) {
+    void logFunnelEvent({
+      customerId: customer.id,
+      event: "activation_redeemed",
+      properties: { nichePackId: redeemedLink.nichePackId, token },
+      sourceToken: token,
+      sourceChannel: redeemedLink.source ?? null,
+    });
+  }
+
   // Provision the workspace for this niche pack (if not already provisioned)
   const { nichePackId } = redeemedLink;
   await provisionIfNeeded(userId, nichePackId);
+
+  // Log workspace_created event
+  if (customer) {
+    void logFunnelEvent({
+      customerId: customer.id,
+      event: "workspace_created",
+      properties: { nichePackId },
+      sourceToken: token,
+      sourceChannel: redeemedLink.source ?? null,
+    });
+  }
 
   // Let the client know if criteria already exist so it can skip the onboarding form
   const existingCriteria = await getUserCriteria(userId, nichePackId).catch(() => undefined);

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { getActivationLink } from "@niche-factory/db";
+import { getActivationLink, trackLinkClick } from "@niche-factory/db";
 import ActivateClient from "./ActivateClient";
 import Link from "next/link";
 
@@ -13,6 +13,11 @@ export default async function ActivatePage({ params }: Props) {
 
   // Look up the link to give a better UX (show what they're getting before login)
   const link = await getActivationLink(token).catch(() => undefined);
+
+  // Track the click (fire-and-forget — never breaks the page)
+  if (link && !link.revoked) {
+    void trackLinkClick(token);
+  }
 
   // Check if the link is blocked (revoked, expired, or maxed out)
   const now = new Date();

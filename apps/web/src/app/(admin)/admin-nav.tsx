@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart2, Blocks, Bot, FileText, LayoutDashboard, SlidersHorizontal, Users, Wrench } from "lucide-react";
+import { BarChart2, Blocks, Bot, FileText, LayoutDashboard, SlidersHorizontal, TrendingUp, Users, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/admin/tools", label: "Tools", icon: Wrench, exact: false as boolean },
   { href: "/admin/settings", label: "Settings", icon: SlidersHorizontal, exact: false as boolean },
   { href: "/admin/stats", label: "Stats", icon: BarChart2, exact: false as boolean },
+  { href: "/admin/funnel", label: "Funnel", icon: TrendingUp, exact: false as boolean },
 ] as const;
 
 export function AdminNav() {

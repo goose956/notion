@@ -24,6 +24,7 @@ import {
   appDatabases,
   appRows,
   activationLinks,
+  funnelEvents,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
@@ -48,6 +49,7 @@ import {
   type AppRowRow,
   type NewAppRowRow,
   type ActivationLinkRow,
+  type FunnelEventRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -1044,13 +1046,16 @@ export async function deleteAppRow(id: string): Promise<void> {
 
 // ─── Activation Link queries ─────────────────────────────────────────────────
 
-/** Create a new single-use activation link and return the generated token. */
+/** Create a new activation link and return the generated token. */
 export async function createActivationLink(
   nichePackId: string,
   credits: number,
   label: string,
   maxUses?: number,
   expiresAt?: Date,
+  source?: string,
+  medium?: string,
+  campaign?: string,
 ): Promise<ActivationLinkRow> {
   const { randomUUID } = await import("node:crypto");
   const token = randomUUID();
@@ -1064,6 +1069,9 @@ export async function createActivationLink(
       createdAt: new Date(),
       ...(maxUses != null ? { maxUses } : {}),
       ...(expiresAt != null ? { expiresAt } : {}),
+      ...(source != null ? { source } : {}),
+      ...(medium != null ? { medium } : {}),
+      ...(campaign != null ? { campaign } : {}),
     })
     .returning();
   const row = result[0];
@@ -1138,7 +1146,125 @@ export async function redeemActivationLink(
   const newCredits = Math.max(currentCredits, link.credits);
   await setCustomerCredits(email, newCredits);
 
+  // Set attribution on customer record (only if not already set — first touch)
+  if (link.source) {
+    await db
+      .update(customers)
+      .set({
+        sourceToken: sql`COALESCE(${customers.sourceToken}, ${token})`,
+        sourceChannel: sql`COALESCE(${customers.sourceChannel}, ${link.source})`,
+        updatedAt: now,
+      })
+      .where(eq(customers.email, email));
+  }
+
   return updated[0];
+}
+
+/** Increment the click counter on an activation link. Fire-and-forget safe. */
+export async function trackLinkClick(token: string): Promise<void> {
+  try {
+    await db
+      .update(activationLinks)
+      .set({ clickCount: sql`${activationLinks.clickCount} + 1` })
+      .where(eq(activationLinks.token, token));
+  } catch {
+    // never break the page load
+  }
+}
+
+/** Log a funnel event. Fire-and-forget safe — never throws. */
+export async function logFunnelEvent(data: {
+  customerId: string;
+  event: string;
+  properties?: Record<string, unknown>;
+  sourceToken?: string | null;
+  sourceChannel?: string | null;
+}): Promise<void> {
+  try {
+    const { randomUUID } = await import("node:crypto");
+    await db.insert(funnelEvents).values({
+      id: randomUUID(),
+      customerId: data.customerId,
+      event: data.event,
+      properties: data.properties ?? {},
+      ...(data.sourceToken != null ? { sourceToken: data.sourceToken } : {}),
+      ...(data.sourceChannel != null ? { sourceChannel: data.sourceChannel } : {}),
+    });
+  } catch {
+    // analytics must never break the main request
+  }
+}
+
+export type { FunnelEventRow };
+
+/**
+ * Funnel stats by channel for the admin dashboard.
+ * Returns one row per channel with click, signup, activation, and workspace counts.
+ */
+export async function getFunnelStats(days = 30): Promise<
+  Array<{
+    channel: string;
+    clicks: number;
+    signups: number;
+    activations: number;
+    workspacesCreated: number;
+    conversionRate: number;
+  }>
+> {
+  const rows = await db.execute(sql`
+    SELECT
+      COALESCE(source_channel, 'unknown') AS channel,
+      SUM(CASE WHEN event = 'activation_link_clicked' THEN 1 ELSE 0 END)::int  AS clicks,
+      SUM(CASE WHEN event = 'signup_completed'        THEN 1 ELSE 0 END)::int  AS signups,
+      SUM(CASE WHEN event = 'activation_redeemed'     THEN 1 ELSE 0 END)::int  AS activations,
+      SUM(CASE WHEN event = 'workspace_created'       THEN 1 ELSE 0 END)::int  AS workspaces_created
+    FROM funnel_events
+    WHERE created_at >= NOW() - (${days} || ' days')::interval
+    GROUP BY 1
+    ORDER BY activations DESC, clicks DESC
+  `);
+
+  return (rows as unknown as Array<{
+    channel: string;
+    clicks: number;
+    signups: number;
+    activations: number;
+    workspaces_created: number;
+  }>).map((r) => ({
+    channel: r.channel,
+    clicks: Number(r.clicks),
+    signups: Number(r.signups),
+    activations: Number(r.activations),
+    workspacesCreated: Number(r.workspaces_created),
+    conversionRate: r.clicks > 0 ? Math.round((r.activations / r.clicks) * 100) : 0,
+  }));
+}
+
+/** Funnel totals for summary cards. */
+export async function getFunnelTotals(days = 30): Promise<{
+  totalClicks: number;
+  totalSignups: number;
+  totalActivations: number;
+  overallConversion: number;
+}> {
+  const rows = await db.execute(sql`
+    SELECT
+      SUM(CASE WHEN event = 'activation_link_clicked' THEN 1 ELSE 0 END)::int AS total_clicks,
+      SUM(CASE WHEN event = 'signup_completed'        THEN 1 ELSE 0 END)::int AS total_signups,
+      SUM(CASE WHEN event = 'activation_redeemed'     THEN 1 ELSE 0 END)::int AS total_activations
+    FROM funnel_events
+    WHERE created_at >= NOW() - (${days} || ' days')::interval
+  `);
+  const r = (rows as unknown as Array<{ total_clicks: number; total_signups: number; total_activations: number }>)[0];
+  const clicks = Number(r?.total_clicks ?? 0);
+  const activations = Number(r?.total_activations ?? 0);
+  return {
+    totalClicks: clicks,
+    totalSignups: Number(r?.total_signups ?? 0),
+    totalActivations: activations,
+    overallConversion: clicks > 0 ? Math.round((activations / clicks) * 100) : 0,
+  };
 }
 
 /** Revoke a link so it can no longer be redeemed. Idempotent. */

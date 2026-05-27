@@ -27,6 +27,9 @@ export function CreateLinkForm({ niches }: Props) {
   const [label, setLabel] = useState("");
   const [maxUses, setMaxUses] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  const [source, setSource] = useState("");
+  const [medium, setMedium] = useState("");
+  const [campaign, setCampaign] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedLink | null>(null);
@@ -40,6 +43,9 @@ export function CreateLinkForm({ niches }: Props) {
       const body: Record<string, unknown> = { nichePackId, credits, label };
       if (maxUses.trim() !== "") body["maxUses"] = parseInt(maxUses, 10);
       if (expiresAt.trim() !== "") body["expiresAt"] = new Date(expiresAt).toISOString();
+      if (source.trim() !== "") body["source"] = source.trim();
+      if (medium.trim() !== "") body["medium"] = medium.trim();
+      if (campaign.trim() !== "") body["campaign"] = campaign.trim();
 
       const res = await fetch("/api/admin/activation-links", {
         method: "POST",
@@ -72,6 +78,9 @@ export function CreateLinkForm({ niches }: Props) {
       setLabel("");
       setMaxUses("");
       setExpiresAt("");
+      setSource("");
+      setMedium("");
+      setCampaign("");
     } catch {
       setError("Network error — please try again.");
     } finally {
@@ -158,6 +167,45 @@ export function CreateLinkForm({ niches }: Props) {
               type="date"
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium" htmlFor="source">Source (optional)</label>
+            <input
+              id="source"
+              type="text"
+              placeholder="e.g. etsy, notion, pinterest"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              maxLength={100}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium" htmlFor="medium">Medium (optional)</label>
+            <input
+              id="medium"
+              type="text"
+              placeholder="e.g. pdf_guide, free_template"
+              value={medium}
+              onChange={(e) => setMedium(e.target.value)}
+              maxLength={100}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium" htmlFor="campaign">Campaign (optional)</label>
+            <input
+              id="campaign"
+              type="text"
+              placeholder="e.g. wedding-planner-may"
+              value={campaign}
+              onChange={(e) => setCampaign(e.target.value)}
+              maxLength={100}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>

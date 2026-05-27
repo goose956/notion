@@ -169,6 +169,9 @@ export const customers = pgTable("customers", {
   stripeCustomerId: text("stripe_customer_id"),
   notionUserId: text("notion_user_id"),                   // set on first sign-in
   credits: integer("credits").notNull().default(25),      // free tier starts at 25
+  // Channel attribution — set once on first activation, never overwritten
+  sourceToken: text("source_token"),                      // activation_links.token that brought this customer
+  sourceChannel: text("source_channel"),                  // copied from activation_links.source
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -414,6 +417,11 @@ export const activationLinks = pgTable("activation_links", {
   revoked: boolean("revoked").notNull().default(false),    // admin can block a link
   usedAt: timestamp("used_at", { withTimezone: true }),    // first redemption timestamp
   usedBy: text("used_by"),                                 // email of first redeemer
+  // Channel attribution
+  source: text("source"),                                  // e.g. "etsy", "notion", "pinterest"
+  medium: text("medium"),                                  // e.g. "pdf_guide", "free_template"
+  campaign: text("campaign"),                              // e.g. "wedding-planner"
+  clickCount: integer("click_count").notNull().default(0), // total URL visits (not just redemptions)
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -421,6 +429,26 @@ export const activationLinks = pgTable("activation_links", {
 
 export type ActivationLinkRow = typeof activationLinks.$inferSelect;
 export type NewActivationLinkRow = typeof activationLinks.$inferInsert;
+
+// ─── Funnel Events ───────────────────────────────────────────────────────────
+
+/**
+ * funnel_events — one row per tracked conversion event.
+ *
+ * Events: activation_link_clicked | signup_completed | activation_redeemed | workspace_created
+ */
+export const funnelEvents = pgTable("funnel_events", {
+  id: text("id").primaryKey(),                              // uuid
+  customerId: text("customer_id").notNull(),                // fk to customers.id
+  event: text("event").notNull(),                           // see events above
+  properties: jsonb("properties").notNull().default({}),
+  sourceToken: text("source_token"),                        // activation_links.token (nullable)
+  sourceChannel: text("source_channel"),                    // copied from link for fast grouping
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type FunnelEventRow = typeof funnelEvents.$inferSelect;
+export type NewFunnelEventRow = typeof funnelEvents.$inferInsert;
 
 // ─── In-App Workspace ────────────────────────────────────────────────────────
 
