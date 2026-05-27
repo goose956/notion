@@ -286,8 +286,8 @@ export async function GET(_req: NextRequest) {
             const appRows = hasMore ? appRowsPlusOne.slice(0, 50) : appRowsPlusOne;
 
             const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
-            const packPropsMap = new Map<string, { options?: Array<{ name: string } | string>; format?: string }>(
-              ((packDbDef?.properties ?? []) as Array<{ name: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => [p.name, p])
+            const packPropsMap = new Map<string, { type?: string; options?: Array<{ name: string } | string>; format?: string }>(
+              ((packDbDef?.properties ?? []) as Array<{ name: string; type?: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => [p.name, p])
             );
             const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
 
@@ -337,8 +337,8 @@ export async function GET(_req: NextRequest) {
             const hasMore = appRowsPlusOne.length > 50;
             const appRows = hasMore ? appRowsPlusOne.slice(0, 50) : appRowsPlusOne;
             const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
-            const packPropsMap = new Map<string, { options?: Array<{ name: string } | string>; format?: string }>(
-              ((packDbDef?.properties ?? []) as Array<{ name: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => [p.name, p])
+            const packPropsMap = new Map<string, { type?: string; options?: Array<{ name: string } | string>; format?: string }>(
+              ((packDbDef?.properties ?? []) as Array<{ name: string; type?: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => [p.name, p])
             );
             const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
             databases.push({
