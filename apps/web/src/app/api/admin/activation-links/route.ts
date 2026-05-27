@@ -32,8 +32,13 @@ export async function GET() {
   const denied = await requireAdmin();
   if (denied) return denied;
 
-  const links = await listActivationLinks();
-  return NextResponse.json({ links });
+  try {
+    const links = await listActivationLinks();
+    return NextResponse.json({ links });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to list links";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 const CreateSchema = z.object({
@@ -63,13 +68,17 @@ export async function POST(req: NextRequest) {
   }
 
   const { nichePackId, credits, label } = parsed.data;
-  const link = await createActivationLink(nichePackId, credits, label);
 
-  const baseUrl =
-    process.env["NEXT_PUBLIC_APP_URL"] ??
-    process.env["NEXTAUTH_URL"] ??
-    "";
-  const url = `${baseUrl}/activate/${link.token}`;
-
-  return NextResponse.json({ link, url }, { status: 201 });
+  try {
+    const link = await createActivationLink(nichePackId, credits, label);
+    const baseUrl =
+      process.env["NEXT_PUBLIC_APP_URL"] ??
+      process.env["NEXTAUTH_URL"] ??
+      "";
+    const url = `${baseUrl}/activate/${link.token}`;
+    return NextResponse.json({ link, url }, { status: 201 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create link";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

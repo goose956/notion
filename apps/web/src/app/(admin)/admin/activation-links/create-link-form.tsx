@@ -39,11 +39,13 @@ export function CreateLinkForm({ niches }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nichePackId, credits, label }),
       });
-      const data = (await res.json()) as {
-        link?: { token: string; nichePackId: string; credits: number; label: string };
-        url?: string;
-        error?: string;
-      };
+      let data: { link?: { token: string; nichePackId: string; credits: number; label: string }; url?: string; error?: string } = {};
+      try {
+        data = (await res.json()) as typeof data;
+      } catch {
+        setError("Server returned an unexpected response. Check the deploy logs.");
+        return;
+      }
       if (!res.ok || !data.link) {
         setError(data.error ?? "Failed to create link");
         return;
