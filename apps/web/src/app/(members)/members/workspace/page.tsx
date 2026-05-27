@@ -192,12 +192,14 @@ function CellEditor({
 function DatabaseTable({
   db,
   isAppBackend,
+  seatedGuestIds,
   onRowUpdated,
   onRowDeleted,
   onRowAdded,
 }: {
   db: WorkspaceDatabase;
   isAppBackend: boolean;
+  seatedGuestIds?: Set<string>;
   onRowUpdated: (pageId: string, name: string, val: string | number | boolean | null) => void;
   onRowDeleted: (pageId: string) => void;
   onRowAdded: (row: WorkspaceRow) => void;
@@ -606,8 +608,9 @@ function DatabaseTable({
             </tr>
           )}
           {db.rows.map((row) => {
+            const isSeated = seatedGuestIds != null && (seatedGuestIds.has(row.pageId) || seatedGuestIds.has(row.pageId + "-plus-one"));
             const rowStatus = Object.entries(row.properties).find(([k]) => k.toLowerCase() === "status")?.[1];
-            const rowBg = statusRowBg(typeof rowStatus === "string" ? rowStatus : null);
+            const rowBg = isSeated ? "rgba(209,250,229,0.7)" : statusRowBg(typeof rowStatus === "string" ? rowStatus : null);
             return (
             <tr
               key={row.pageId}
@@ -1049,6 +1052,17 @@ function WeddingWorkspaceDashboard({
   const currencyCode = getCurrencyCode(weddingCriteria);
   const countdownMode = asText(weddingCriteria?.["countdown-mode"]);
   const manualCountdownDays = asNumber(weddingCriteria?.["countdown-days"]);
+
+  const seatedGuestIds = useMemo<Set<string>>(() => {
+    const layout = weddingCriteria?.["seating-layout-v1"] as { tables?: Array<{ guestIds?: Array<string | null> }> } | null | undefined;
+    const ids = new Set<string>();
+    for (const table of layout?.tables ?? []) {
+      for (const id of table.guestIds ?? []) {
+        if (id) ids.add(id);
+      }
+    }
+    return ids;
+  }, [weddingCriteria]);
 
   const trackedGuests = guestsDb?.rows.length ?? 0;
   const targetGuests = plannedGuests ?? trackedGuests;
@@ -4121,6 +4135,7 @@ export default function WorkspacePage() {
               <DatabaseTable
                 db={activeDbDisplay}
                 isAppBackend={backend === "app"}
+                seatedGuestIds={activeDbDisplay.dbId === "guests" ? seatedGuestIds : undefined}
                 onRowUpdated={(pageId, name, val) =>
                   handleRowUpdated(activeDbDisplay.notionId, pageId, name, val)
                 }
