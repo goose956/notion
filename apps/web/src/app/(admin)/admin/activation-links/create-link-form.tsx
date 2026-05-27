@@ -52,7 +52,11 @@ export function CreateLinkForm({ niches }: Props) {
       }
       setCreated({
         token: data.link.token,
-        url: data.url ?? "",
+        url: (() => {
+          const raw = data.url ?? "";
+          if (raw.startsWith("/")) return window.location.origin + raw;
+          return raw;
+        })(),
         nichePackId: data.link.nichePackId,
         credits: data.link.credits,
         label: data.link.label,
