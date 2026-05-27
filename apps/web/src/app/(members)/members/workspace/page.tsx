@@ -3567,6 +3567,17 @@ export default function WorkspacePage() {
   const documentsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "documents") ?? null;
   const honeymoonDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "honeymoon") ?? null;
   const hasWeddingWorkspace = databases.some((d) => d.nicheId === "wedding-planner");
+
+  const seatedGuestIds = useMemo<Set<string>>(() => {
+    const layout = weddingCriteria?.["seating-layout-v1"] as { tables?: Array<{ guestIds?: Array<string | null> }> } | null | undefined;
+    const ids = new Set<string>();
+    for (const table of layout?.tables ?? []) {
+      for (const id of table.guestIds ?? []) {
+        if (id) ids.add(id);
+      }
+    }
+    return ids;
+  }, [weddingCriteria]);
   const activeDbDisplay: WorkspaceDatabase | null = activeDb && backend === "app" && activeDb.nicheId === "wedding-planner" && activeDb.dbId === "documents"
     ? {
         ...activeDb,
