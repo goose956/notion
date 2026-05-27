@@ -64,9 +64,9 @@ export default async function FunnelPage() {
           accent="icon-badge-green"
         />
         <StatCard
-          label="Workspaces created"
-          value={totals.totalWorkspacesCreated.toLocaleString()}
-          sub="after activation"
+          label="Signups"
+          value={totals.totalSignups.toLocaleString()}
+          sub="email signups"
           icon={<Users className="h-4 w-4" />}
           accent="icon-badge-purple"
         />
