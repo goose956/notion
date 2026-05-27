@@ -265,7 +265,7 @@ function DatabaseTable({
   // Visible columns: skip formula/rollup/relation by default, always show title first
   const titleCol = db.properties.find((p) => p.type === "title");
   const otherCols = db.properties.filter(
-    (p) => p.type !== "title" && p.type !== "created_time" && p.type !== "last_edited_time" && p.type !== "created_by" && p.type !== "last_edited_by",
+    (p) => p.type !== "title" && p.type !== "created_time" && p.type !== "last_edited_time" && p.type !== "created_by" && p.type !== "last_edited_by" && p.type !== "formula",
   );
   const allCols: WorkspaceProperty[] = titleCol
     ? [titleCol, ...otherCols]

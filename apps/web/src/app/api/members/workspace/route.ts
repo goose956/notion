@@ -305,7 +305,7 @@ export async function GET(_req: NextRequest) {
                 return {
                   id: p.name,
                   name: p.name,
-                  type: p.type,
+                  type: fresh?.type ?? p.type,
                   ...(Array.isArray(opts) ? { options: opts.map((o) => typeof o === "string" ? o : o.name) } : {}),
                   ...(fmt !== undefined ? { format: fmt } : {}),
                 };
@@ -355,7 +355,7 @@ export async function GET(_req: NextRequest) {
                 return {
                   id: p.name,
                   name: p.name,
-                  type: p.type,
+                  type: fresh?.type ?? p.type,
                   ...(Array.isArray(opts) ? { options: opts.map((o) => typeof o === "string" ? o : o.name) } : {}),
                   ...(fmt !== undefined ? { format: fmt } : {}),
                 };

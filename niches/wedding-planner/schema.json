@@ -106,17 +106,7 @@
         { "type": "number", "name": "Deposit", "format": "pound" },
         { "type": "checkbox", "name": "Paid" },
         { "type": "date", "name": "Due Date" },
-        {
-          "type": "formula",
-          "name": "Variance",
-          "expression": "prop(\"Actual Cost\") - prop(\"Estimated Cost\")"
-        },
-        {
-          "type": "relation",
-          "name": "Vendor",
-          "targetDatabaseId": "vendors",
-          "dualProperty": false
-        },
+        { "type": "rich_text", "name": "Vendor" },
         { "type": "rich_text", "name": "Notes" }
       ],
       "views": [
