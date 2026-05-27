@@ -5,7 +5,7 @@
  * Import { db } is the lazy singleton from client.ts.
  */
 
-import { eq, desc, and, ilike, or, sql, lte, isNull } from "drizzle-orm";
+import { eq, desc, and, ilike, or, sql, lte, isNull, gt } from "drizzle-orm";
 import { db } from "./client.js";
 import {
   nichePacks,
@@ -1049,12 +1049,22 @@ export async function createActivationLink(
   nichePackId: string,
   credits: number,
   label: string,
+  maxUses?: number,
+  expiresAt?: Date,
 ): Promise<ActivationLinkRow> {
   const { randomUUID } = await import("node:crypto");
   const token = randomUUID();
   const result = await db
     .insert(activationLinks)
-    .values({ token, nichePackId, credits, label, createdAt: new Date() })
+    .values({
+      token,
+      nichePackId,
+      credits,
+      label,
+      createdAt: new Date(),
+      ...(maxUses != null ? { maxUses } : {}),
+      ...(expiresAt != null ? { expiresAt } : {}),
+    })
     .returning();
   const row = result[0];
   if (!row) throw new Error("createActivationLink: no row returned");
@@ -1079,12 +1089,13 @@ export async function listActivationLinks(): Promise<ActivationLinkRow[]> {
 /**
  * Redeem an activation link for the given user email.
  *
- * - Marks the link as used (usedAt + usedBy).
- * - Sets the user's credits to the GREATER of their current balance and the link's credits
- *   (so buying an upgrade never lowers an existing high balance).
- * - Returns the link row so callers can read nichePackId / credits.
+ * Supports multi-use links. Validity rules (all checked atomically in the UPDATE WHERE):
+ *   - not revoked
+ *   - not expired  (expires_at IS NULL OR expires_at > NOW())
+ *   - uses not exhausted  (max_uses IS NULL OR uses < max_uses)
  *
- * Throws if the token is unknown or already redeemed.
+ * Sets the user's credits to MAX(current, link.credits) so upgrades never lower a balance.
+ * Throws a descriptive error if the token is invalid or any rule fails.
  */
 export async function redeemActivationLink(
   token: string,
@@ -1092,16 +1103,35 @@ export async function redeemActivationLink(
 ): Promise<ActivationLinkRow> {
   const link = await getActivationLink(token);
   if (!link) throw new Error("Activation link not found");
-  if (link.usedAt) throw new Error("Activation link already redeemed");
+  if (link.revoked) throw new Error("Activation link has been revoked");
+  if (link.expiresAt && link.expiresAt < new Date()) throw new Error("Activation link has expired");
+  if (link.maxUses != null && link.uses >= link.maxUses) throw new Error("Activation link has reached its maximum uses");
 
   const now = new Date();
   const updated = await db
     .update(activationLinks)
-    .set({ usedAt: now, usedBy: email })
-    .where(and(eq(activationLinks.token, token), isNull(activationLinks.usedAt)))
+    .set({
+      uses: sql`${activationLinks.uses} + 1`,
+      usedAt: sql`COALESCE(${activationLinks.usedAt}, ${now.toISOString()})`,
+      usedBy: sql`COALESCE(${activationLinks.usedBy}, ${email})`,
+    })
+    .where(
+      and(
+        eq(activationLinks.token, token),
+        eq(activationLinks.revoked, false),
+        or(
+          isNull(activationLinks.expiresAt),
+          gt(activationLinks.expiresAt, now),
+        ),
+        or(
+          isNull(activationLinks.maxUses),
+          sql`${activationLinks.uses} < ${activationLinks.maxUses}`,
+        ),
+      ),
+    )
     .returning();
 
-  if (!updated[0]) throw new Error("Activation link already redeemed");
+  if (!updated[0]) throw new Error("Activation link could not be redeemed");
 
   // Grant credits — use MAX so an existing high balance is never reduced.
   const currentCredits = await getCustomerCredits(email);
@@ -1109,5 +1139,20 @@ export async function redeemActivationLink(
   await setCustomerCredits(email, newCredits);
 
   return updated[0];
+}
+
+/** Revoke a link so it can no longer be redeemed. Idempotent. */
+export async function revokeActivationLink(token: string): Promise<void> {
+  await db
+    .update(activationLinks)
+    .set({ revoked: true })
+    .where(eq(activationLinks.token, token));
+}
+
+/** Permanently delete an activation link. */
+export async function deleteActivationLink(token: string): Promise<void> {
+  await db
+    .delete(activationLinks)
+    .where(eq(activationLinks.token, token));
 }
 

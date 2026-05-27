@@ -73,6 +73,19 @@ if (!hasActivationLinksTable) {
   console.log("Applied fallback migration: 0015_activation_links.sql");
 }
 
+// Recovery fix: add multi-use columns to activation_links if they don't exist yet.
+const usesColumnCheck = await client.unsafe(`
+  SELECT 1 FROM information_schema.columns
+  WHERE table_name = 'activation_links' AND column_name = 'uses'
+  LIMIT 1
+`);
+if (!usesColumnCheck?.[0]) {
+  const v2SqlPath = join(__dirname, "../drizzle/0016_activation_links_v2.sql");
+  const v2Sql = fs.readFileSync(v2SqlPath, "utf-8");
+  await client.unsafe(v2Sql);
+  console.log("Applied fallback migration: 0016_activation_links_v2.sql");
+}
+
 console.log("Schema fixups complete.");
 
 await client.end();

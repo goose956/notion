@@ -113,6 +113,13 @@
       "when": 1748649600000,
       "tag": "0015_activation_links",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1748736000000,
+      "tag": "0016_activation_links_v2",
+      "breakpoints": true
     }
   ]
 }

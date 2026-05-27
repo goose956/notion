@@ -18,12 +18,15 @@ interface CreatedLink {
   nichePackId: string;
   credits: number;
   label: string;
+  maxUses?: number;
 }
 
 export function CreateLinkForm({ niches }: Props) {
   const [nichePackId, setNichePackId] = useState(niches[0]?.id ?? "");
   const [credits, setCredits] = useState(500);
   const [label, setLabel] = useState("");
+  const [maxUses, setMaxUses] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedLink | null>(null);
@@ -34,12 +37,16 @@ export function CreateLinkForm({ niches }: Props) {
     setError(null);
     setLoading(true);
     try {
+      const body: Record<string, unknown> = { nichePackId, credits, label };
+      if (maxUses.trim() !== "") body.maxUses = parseInt(maxUses, 10);
+      if (expiresAt.trim() !== "") body.expiresAt = new Date(expiresAt).toISOString();
+
       const res = await fetch("/api/admin/activation-links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nichePackId, credits, label }),
+        body: JSON.stringify(body),
       });
-      let data: { link?: { token: string; nichePackId: string; credits: number; label: string }; url?: string; error?: string } = {};
+      let data: { link?: { token: string; nichePackId: string; credits: number; label: string; maxUses?: number }; url?: string; error?: string } = {};
       try {
         data = (await res.json()) as typeof data;
       } catch {
@@ -60,8 +67,11 @@ export function CreateLinkForm({ niches }: Props) {
         nichePackId: data.link.nichePackId,
         credits: data.link.credits,
         label: data.link.label,
+        ...(data.link.maxUses != null ? { maxUses: data.link.maxUses } : {}),
       });
       setLabel("");
+      setMaxUses("");
+      setExpiresAt("");
     } catch {
       setError("Network error — please try again.");
     } finally {
@@ -80,7 +90,7 @@ export function CreateLinkForm({ niches }: Props) {
       <div className="p-4 border-b">
         <h2 className="font-semibold text-sm">Create activation link</h2>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Each link is single-use. Share the generated URL with a buyer.
+          Share the generated URL with a buyer. Optionally limit uses or set an expiry date.
         </p>
       </div>
 
@@ -127,6 +137,32 @@ export function CreateLinkForm({ niches }: Props) {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium" htmlFor="maxUses">Max uses (leave empty for unlimited)</label>
+            <input
+              id="maxUses"
+              type="number"
+              min={1}
+              placeholder="e.g. 100"
+              value={maxUses}
+              onChange={(e) => setMaxUses(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium" htmlFor="expiresAt">Expiry date (leave empty for no expiry)</label>
+            <input
+              id="expiresAt"
+              type="date"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+
         {error && (
           <p className="text-xs text-red-600 bg-red-50 rounded-md px-3 py-2 border border-red-200">
             {error}
@@ -147,7 +183,7 @@ export function CreateLinkForm({ niches }: Props) {
         <div className="px-4 pb-4">
           <div className="rounded-md border border-green-200 bg-green-50 p-3 space-y-2">
             <p className="text-xs font-medium text-green-800">
-              Link created — share this URL with your buyer:
+              Link created{created.maxUses != null ? ` (max ${created.maxUses} uses)` : " (unlimited uses)"} — share this URL:
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 text-xs bg-white rounded border px-2 py-1.5 font-mono truncate">

@@ -4,6 +4,8 @@ import { auth } from "@/auth";
 import {
   createActivationLink,
   listActivationLinks,
+  revokeActivationLink,
+  deleteActivationLink,
 } from "@niche-factory/db";
 
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -42,6 +44,8 @@ const CreateSchema = z.object({
   nichePackId: z.string().min(1),
   credits: z.number().int().min(1).max(100_000),
   label: z.string().max(200).default(""),
+  maxUses: z.number().int().min(1).optional(),
+  expiresAt: z.string().datetime().optional(),
 });
 
 /** POST /api/admin/activation-links — create a new activation link */
@@ -64,10 +68,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { nichePackId, credits, label } = parsed.data;
+  const { nichePackId, credits, label, maxUses, expiresAt } = parsed.data;
 
   try {
-    const link = await createActivationLink(nichePackId, credits, label);
+    const link = await createActivationLink(
+      nichePackId,
+      credits,
+      label,
+      maxUses,
+      expiresAt ? new Date(expiresAt) : undefined,
+    );
     const baseUrl =
       process.env["NEXT_PUBLIC_APP_URL"] ??
       process.env["NEXTAUTH_URL"] ??
@@ -76,6 +86,51 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ link, url }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create link";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/** PATCH /api/admin/activation-links — revoke a link */
+export async function PATCH(req: NextRequest) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = z.object({ token: z.string().min(1) }).safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "token is required" }, { status: 422 });
+  }
+
+  try {
+    await revokeActivationLink(parsed.data.token);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to revoke link";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/** DELETE /api/admin/activation-links?token=xxx — permanently delete a link */
+export async function DELETE(req: NextRequest) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
+  const token = req.nextUrl.searchParams.get("token");
+  if (!token) {
+    return NextResponse.json({ error: "token query param required" }, { status: 422 });
+  }
+
+  try {
+    await deleteActivationLink(token);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete link";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

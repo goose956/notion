@@ -408,8 +408,12 @@ export const activationLinks = pgTable("activation_links", {
   nichePackId: text("niche_pack_id").notNull(),            // e.g. "wedding-planner"
   credits: integer("credits").notNull().default(500),      // credits granted on redemption
   label: text("label").notNull().default(""),              // admin note (e.g. "Etsy – May 2025")
-  usedAt: timestamp("used_at", { withTimezone: true }),    // null = not yet redeemed
-  usedBy: text("used_by"),                                 // email of the user who redeemed it
+  uses: integer("uses").notNull().default(0),              // how many times redeemed so far
+  maxUses: integer("max_uses"),                            // null = unlimited
+  expiresAt: timestamp("expires_at", { withTimezone: true }), // null = never
+  revoked: boolean("revoked").notNull().default(false),    // admin can block a link
+  usedAt: timestamp("used_at", { withTimezone: true }),    // first redemption timestamp
+  usedBy: text("used_by"),                                 // email of first redeemer
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
