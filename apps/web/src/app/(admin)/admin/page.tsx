@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Blocks, Bot, ExternalLink, FileText, SlidersHorizontal, Sparkles, Users, Wrench } from "lucide-react";
+import { ArrowRight, Blocks, Bot, ExternalLink, FileText, Link2, SlidersHorizontal, Sparkles, Users, Wrench } from "lucide-react";
 
 export default function AdminHomePage() {
   return (
@@ -102,6 +102,21 @@ export default function AdminHomePage() {
           </p>
           <span className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-primary">
             Open settings
+            <ArrowRight className="h-3.5 w-3.5" />
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/activation-links"
+          className="surface-card p-5 hover:shadow-lg transition-shadow"
+        >
+          <div className="icon-badge"><Link2 className="h-4 w-4" /></div>
+          <h2 className="font-semibold mt-3">Activation Links</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Create single-use purchase links (Etsy etc.) that grant credits and provision a niche pack on first use.
+          </p>
+          <span className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-primary">
+            Manage links
             <ArrowRight className="h-3.5 w-3.5" />
           </span>
         </Link>

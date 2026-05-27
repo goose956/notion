@@ -23,6 +23,7 @@ import {
   appWorkspaces,
   appDatabases,
   appRows,
+  activationLinks,
   type NichePackRow,
   type NewNichePackRow,
   type DeployRow,
@@ -46,6 +47,7 @@ import {
   type NewAppDatabaseRow,
   type AppRowRow,
   type NewAppRowRow,
+  type ActivationLinkRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -1038,5 +1040,74 @@ export async function updateAppRow(
 
 export async function deleteAppRow(id: string): Promise<void> {
   await db.delete(appRows).where(eq(appRows.id, id));
+}
+
+// ─── Activation Link queries ─────────────────────────────────────────────────
+
+/** Create a new single-use activation link and return the generated token. */
+export async function createActivationLink(
+  nichePackId: string,
+  credits: number,
+  label: string,
+): Promise<ActivationLinkRow> {
+  const { randomUUID } = await import("node:crypto");
+  const token = randomUUID();
+  const result = await db
+    .insert(activationLinks)
+    .values({ token, nichePackId, credits, label, createdAt: new Date() })
+    .returning();
+  const row = result[0];
+  if (!row) throw new Error("createActivationLink: no row returned");
+  return row;
+}
+
+/** Fetch a single activation link by token. Returns undefined if not found. */
+export async function getActivationLink(token: string): Promise<ActivationLinkRow | undefined> {
+  const rows = await db
+    .select()
+    .from(activationLinks)
+    .where(eq(activationLinks.token, token))
+    .limit(1);
+  return rows[0];
+}
+
+/** Return all activation links ordered newest first. */
+export async function listActivationLinks(): Promise<ActivationLinkRow[]> {
+  return db.select().from(activationLinks).orderBy(desc(activationLinks.createdAt));
+}
+
+/**
+ * Redeem an activation link for the given user email.
+ *
+ * - Marks the link as used (usedAt + usedBy).
+ * - Sets the user's credits to the GREATER of their current balance and the link's credits
+ *   (so buying an upgrade never lowers an existing high balance).
+ * - Returns the link row so callers can read nichePackId / credits.
+ *
+ * Throws if the token is unknown or already redeemed.
+ */
+export async function redeemActivationLink(
+  token: string,
+  email: string,
+): Promise<ActivationLinkRow> {
+  const link = await getActivationLink(token);
+  if (!link) throw new Error("Activation link not found");
+  if (link.usedAt) throw new Error("Activation link already redeemed");
+
+  const now = new Date();
+  const updated = await db
+    .update(activationLinks)
+    .set({ usedAt: now, usedBy: email })
+    .where(and(eq(activationLinks.token, token), isNull(activationLinks.usedAt)))
+    .returning();
+
+  if (!updated[0]) throw new Error("Activation link already redeemed");
+
+  // Grant credits — use MAX so an existing high balance is never reduced.
+  const currentCredits = await getCustomerCredits(email);
+  const newCredits = Math.max(currentCredits, link.credits);
+  await setCustomerCredits(email, newCredits);
+
+  return updated[0];
 }
 

@@ -393,6 +393,31 @@ export type CustomSkillRow = CustomToolRow;
 /** @deprecated Use NewCustomToolRow instead */
 export type NewCustomSkillRow = NewCustomToolRow;
 
+// ─── Activation Links ────────────────────────────────────────────────────────
+
+/**
+ * activation_links — one-time purchase links for Etsy (and similar) sales.
+ *
+ * Admin creates a link specifying a niche pack and credits amount.
+ * Buyer visits /activate/[token], logs in (or signs up), and receives the
+ * specified credits plus a provisioned workspace for the niche pack.
+ * Each token can only be redeemed once (used_at is set on redemption).
+ */
+export const activationLinks = pgTable("activation_links", {
+  token: text("token").primaryKey(),                       // random UUID
+  nichePackId: text("niche_pack_id").notNull(),            // e.g. "wedding-planner"
+  credits: integer("credits").notNull().default(500),      // credits granted on redemption
+  label: text("label").notNull().default(""),              // admin note (e.g. "Etsy – May 2025")
+  usedAt: timestamp("used_at", { withTimezone: true }),    // null = not yet redeemed
+  usedBy: text("used_by"),                                 // email of the user who redeemed it
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type ActivationLinkRow = typeof activationLinks.$inferSelect;
+export type NewActivationLinkRow = typeof activationLinks.$inferInsert;
+
 // ─── In-App Workspace ────────────────────────────────────────────────────────
 
 /**
