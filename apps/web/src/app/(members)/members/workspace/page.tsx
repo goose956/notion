@@ -3411,6 +3411,8 @@ export default function WorkspacePage() {
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
 
   const [weddingCriteria, setWeddingCriteria] = useState<Record<string, unknown> | null>(null);
+  // Updated live when the user assigns seats – overrides the DB-derived value
+  const [liveSeatedIds, setLiveSeatedIds] = useState<Set<string> | null>(null);
   const lastUrlSelectionKeyRef = useRef<string>("");
 
   function applyRequestedSelection(
@@ -3569,6 +3571,8 @@ export default function WorkspacePage() {
   const hasWeddingWorkspace = databases.some((d) => d.nicheId === "wedding-planner");
 
   const seatedGuestIds = useMemo<Set<string>>(() => {
+    // Prefer live updates from the seating planner (avoids stale DB-loaded criteria)
+    if (liveSeatedIds !== null) return liveSeatedIds;
     const layout = weddingCriteria?.["seating-layout-v1"] as { tables?: Array<{ guestIds?: Array<string | null> }> } | null | undefined;
     const ids = new Set<string>();
     for (const table of layout?.tables ?? []) {
@@ -3577,7 +3581,7 @@ export default function WorkspacePage() {
       }
     }
     return ids;
-  }, [weddingCriteria]);
+  }, [liveSeatedIds, weddingCriteria]);
   const activeDbDisplay: WorkspaceDatabase | null = activeDb && backend === "app" && activeDb.nicheId === "wedding-planner" && activeDb.dbId === "documents"
     ? {
         ...activeDb,
@@ -4031,7 +4035,7 @@ export default function WorkspacePage() {
             />
           </div>
         ) : activeTab === SEATING_TAB_ID ? (
-          <SeatingPlannerView guestsDb={guestsDb} embedded />
+          <SeatingPlannerView guestsDb={guestsDb} embedded onSeatingChanged={setLiveSeatedIds} />
         ) : activeTab === DRAFT_TAB_ID ? (
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
             {documentsDb ? (

@@ -212,9 +212,11 @@ type SeatingPlannerViewProps = {
   onBack?: () => void;
   /** When true, the wrapper uses flex+overflow styling (for embedded use inside workspace) */
   embedded?: boolean;
+  /** Called whenever the seated guest IDs change (used by parent to highlight guest list rows). */
+  onSeatingChanged?: (seatedIds: Set<string>) => void;
 };
 
-export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = false }: SeatingPlannerViewProps) {
+export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = false, onSeatingChanged }: SeatingPlannerViewProps) {
   const ROOM_WIDTH = 1200;
   const ROOM_HEIGHT = 780;
   const GRID_SIZE = 24;
@@ -385,6 +387,20 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
   }, [tables, zoom, snapToGrid]);
 
   // Persist tables to localStorage + DB criteria (debounced)
+  // Notify parent of seated guest IDs whenever tables change (for guest list highlighting)
+  useEffect(() => {
+    if (isHydratingRef.current) return;
+    const ids = new Set<string>();
+    for (const table of tables) {
+      for (const id of table.guestIds) {
+        if (id) ids.add(id);
+      }
+    }
+    onSeatingChanged?.(ids);
+  // onSeatingChanged intentionally omitted — callers should use a stable ref
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tables]);
+
   useEffect(() => {
     if (!storageKey || !guestsDb) return;
     if (isHydratingRef.current) return;
