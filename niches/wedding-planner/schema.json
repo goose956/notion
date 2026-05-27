@@ -137,7 +137,7 @@
         },
         { "type": "email", "name": "Email" },
         { "type": "phone_number", "name": "Phone" },
-        { "type": "checkbox", "name": "Plus One" },
+        { "type": "checkbox", "name": "Seated" },
         { "type": "rich_text", "name": "Plus One Name" },
         {
           "type": "select",

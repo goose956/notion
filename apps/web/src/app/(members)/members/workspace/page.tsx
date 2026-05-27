@@ -618,14 +618,15 @@ function DatabaseTable({
               className="hover:brightness-95"
             >
               {visibleCols.map((col) => {
-                const val = row.properties[col.name] ?? null;
+                const isSeatedCol = col.name === "Seated" && seatedGuestIds != null;
+                const val = isSeatedCol ? isSeated : (row.properties[col.name] ?? null);
                 const isEditing =
                   editingCell?.pageId === row.pageId &&
                   editingCell?.prop === col.name;
                 const isSaving =
                   savingCell?.pageId === row.pageId &&
                   savingCell?.prop === col.name;
-                const readonly = READONLY_TYPES.has(col.type);
+                const readonly = READONLY_TYPES.has(col.type) || isSeatedCol;
                 return (
                   <td
                     key={col.id}
