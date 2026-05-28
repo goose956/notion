@@ -3,7 +3,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
 import {
-  listDeploysByUser,
   getNichePack,
   getLatestAppWorkspaceByNiche,
   getUserCriteria,
@@ -276,17 +275,8 @@ export default async function GetStartedPage({
   const session = await auth();
   const isLoggedIn = !!session;
   const userName = session?.user?.name?.split(" ")[0] ?? "there";
-  const notionUserId = (session as unknown as Record<string, unknown>)?.[
-    "notionUserId"
-  ] as string | undefined;
-  const notionToken = (session as unknown as Record<string, unknown>)?.[
-    "notionToken"
-  ] as string | undefined;
-  const isInApp = isLoggedIn && !notionToken;
-
-  const deploys = notionUserId
-    ? await listDeploysByUser(notionUserId).catch(() => [])
-    : [];
+  const isInApp = true;
+  const deploys: Array<{ id: string; nicheName: string; notionParentPageId: string }> = [];
 
   // Only allow same-origin relative paths to prevent open-redirect
   const rawNext = searchParams.next ?? "";
