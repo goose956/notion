@@ -13,7 +13,9 @@ import { resolvePublicAppUrl, resolveNotionRedirectUri } from "@/lib/notion-oaut
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.email) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", "/members/connections");
+    return NextResponse.redirect(loginUrl);
   }
 
   // CSRF protection

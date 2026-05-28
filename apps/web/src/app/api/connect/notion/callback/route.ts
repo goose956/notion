@@ -17,7 +17,9 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.email) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", "/members/connections");
+      return NextResponse.redirect(loginUrl);
     }
 
     const { searchParams } = new URL(req.url);
