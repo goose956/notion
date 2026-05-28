@@ -258,21 +258,7 @@ function InAppGetStarted({
           </div>
         </div>
 
-        {/* Notion upsell — subtle callout */}
-        <div style={{ marginTop: "48px", padding: "16px 18px", borderRadius: "6px", background: "#F7F6F3", border: `1px solid ${N_BORDER}` }}>
-          <p style={{ margin: "0 0 4px", fontSize: "13px", fontWeight: 600, color: N_FG }}>
-            Want to sync with Notion?
-          </p>
-          <p style={{ margin: "0 0 10px", fontSize: "13px", color: N_MUTED, lineHeight: 1.5 }}>
-            You can connect a Notion account at any time to push your workspace databases directly into Notion.
-          </p>
-          <Link
-            href={`/login?callbackUrl=${encodeURIComponent("/members/get-started")}`}
-            style={{ fontSize: "13px", color: N_BLUE, textDecoration: "none", fontWeight: 500 }}
-          >
-            Connect Notion →
-          </Link>
-        </div>
+        {/* Notion upsell removed — users connect Notion from /members/connections */}
       </div>
       </div>
       </div>
