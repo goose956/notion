@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { NichePackSchema } from "@niche-factory/schema";
+import type { NichePack } from "@niche-factory/schema";
 import { deploy } from "@niche-factory/deployer";
 import { NotionApiClient } from "@niche-factory/notion-client";
 import {
@@ -22,6 +23,35 @@ const DeployRequestSchema = z.object({
   parentPageId: z.string().min(1).optional(),
   onboardingAnswers: z.record(z.string(), z.unknown()).optional(),
 });
+
+function buildNotionDeployPack(pack: NichePack): NichePack {
+  const notionDatabases = pack.databases.filter((db) => db.notionDeploy !== false);
+  const notionDbIds = new Set(notionDatabases.map((db) => db.id));
+
+  // Strict mode: relation targets must remain inside the Notion deploy subset.
+  const invalidRelations: string[] = [];
+  for (const db of notionDatabases) {
+    for (const prop of db.properties) {
+      if (prop.type === "relation" && !notionDbIds.has(prop.targetDatabaseId)) {
+        invalidRelations.push(`${db.id}.${prop.name} -> ${prop.targetDatabaseId}`);
+      }
+    }
+  }
+  if (invalidRelations.length > 0) {
+    throw new Error(
+      "Notion strict deploy blocked: relation targets excluded databases. " +
+      `Fix these relations: ${invalidRelations.join(", ")}`,
+    );
+  }
+
+  return {
+    ...pack,
+    databases: notionDatabases,
+    dataSources: pack.dataSources.filter((s) => notionDbIds.has(s.targetDatabaseId)),
+    enrichmentPrompts: pack.enrichmentPrompts?.filter((p) => notionDbIds.has(p.targetDatabaseId)),
+    seedPages: pack.seedPages?.filter((p) => notionDbIds.has(p.databaseId)),
+  };
+}
 
 // POST /api/deploy — push a niche pack to a Notion workspace OR an in-app workspace
 export async function POST(request: NextRequest) {
@@ -153,7 +183,8 @@ export async function POST(request: NextRequest) {
 
   let result;
   try {
-    result = await deploy(pack, input.data.parentPageId, client);
+    const notionPack = buildNotionDeployPack(pack);
+    result = await deploy(notionPack, input.data.parentPageId, client);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Deploy failed";
     console.error("[POST /api/deploy] deploy() failed:", message);

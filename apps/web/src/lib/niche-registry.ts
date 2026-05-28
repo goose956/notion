@@ -43,6 +43,8 @@ export interface NicheSidebarTab {
   label: string;
   /** Emoji shown as the icon. */
   icon: string;
+  /** True for app-only tool tabs that are not standalone Notion databases. */
+  appOnly?: boolean;
   /**
    * When set, the tab is disabled/greyed out if no DB with this dbId
    * exists in the user's workspace.
@@ -101,15 +103,15 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
     accent:       WEDDING_ACCENT,
     sidebarEmoji: "🌸",
     topTabs: [
-      { tabId: WEDDING_TABS.DASHBOARD, label: "Dashboard", icon: "🏠" },
+      { tabId: WEDDING_TABS.DASHBOARD, label: "Dashboard", icon: "🏠", appOnly: true },
     ],
     afterDbNamePattern: /planning\s*(timetable|timeline)/i,
     afterDbTabs: [
-      { tabId: WEDDING_TABS.SEATING,    label: "Seating Planner",   icon: "🪑" },
-      { tabId: WEDDING_TABS.DRAFT,      label: "Draft Letters",     icon: "✍️", requiresDbId: "documents" },
-      { tabId: WEDDING_TABS.INVITATION, label: "Invitation Canvas", icon: "🎨" },
-      { tabId: WEDDING_TABS.SPEECH,     label: "AI Speech Writer",  icon: "🎤" },
-      { tabId: WEDDING_TABS.HONEYMOON,  label: "Honeymoon Planner", icon: "🌴" },
+      { tabId: WEDDING_TABS.SEATING,    label: "Seating Planner",   icon: "🪑", appOnly: true },
+      { tabId: WEDDING_TABS.DRAFT,      label: "Draft Letters",     icon: "✍️", appOnly: true, requiresDbId: "documents" },
+      { tabId: WEDDING_TABS.INVITATION, label: "Invitation Canvas", icon: "🎨", appOnly: true },
+      { tabId: WEDDING_TABS.SPEECH,     label: "AI Speech Writer",  icon: "🎤", appOnly: true },
+      { tabId: WEDDING_TABS.HONEYMOON,  label: "Honeymoon Planner", icon: "🌴", appOnly: true },
     ],
     dbPropertyInjections: {
       documents: [{ id: "Email", name: "Email", type: "email" }],
@@ -143,6 +145,15 @@ export function getNicheEntry(nicheId: string): NicheRegistryEntry | undefined {
  */
 export function isVirtualTab(tabId: string): boolean {
   return NICHE_REGISTRY.some((e) => e.virtualTabIds.has(tabId));
+}
+
+/** True when the tab is a virtual niche tab explicitly marked app-only. */
+export function isAppOnlyVirtualTab(tabId: string): boolean {
+  return NICHE_REGISTRY.some((entry) => {
+    const top = entry.topTabs.some((t) => t.tabId === tabId && t.appOnly === true);
+    const after = (entry.afterDbTabs ?? []).some((t) => t.tabId === tabId && t.appOnly === true);
+    return top || after;
+  });
 }
 
 /**

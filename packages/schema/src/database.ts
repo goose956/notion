@@ -29,6 +29,12 @@ export const DatabaseSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   icon: z.string().optional(),
+  /**
+   * Whether this DB should be deployed to Notion.
+   * Default behavior is true when omitted.
+   * Set false for app-only helper/state databases.
+   */
+  notionDeploy: z.boolean().optional(),
   /** The first property must be a title property */
   properties: z.array(PropertySchema).min(1),
   views: z.array(ViewSchema).optional(),

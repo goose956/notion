@@ -47,14 +47,15 @@ for (const nicheId of nicheFolders) {
 
   const schema = JSON.parse(fs.readFileSync(schemaPath, "utf8"));
   const databases = Array.isArray(schema.databases) ? schema.databases : [];
-  const dbIds = new Set(databases.map((d) => d.id));
+  const deployDatabases = databases.filter((d) => d.notionDeploy !== false);
+  const dbIds = new Set(deployDatabases.map((d) => d.id));
 
   const typeCounts = new Map();
   const unsupported = [];
   const skipped = [];
   const badRelations = [];
 
-  for (const db of databases) {
+  for (const db of deployDatabases) {
     for (const prop of db.properties ?? []) {
       typeCounts.set(prop.type, (typeCounts.get(prop.type) ?? 0) + 1);
 
@@ -82,7 +83,7 @@ for (const nicheId of nicheFolders) {
     .join(", ");
 
   console.log(`\n[${nicheId}]`);
-  console.log(`  databases: ${databases.length}`);
+  console.log(`  databases: ${deployDatabases.length} deployable / ${databases.length} total`);
   console.log(`  property types: ${typeSummary || "(none)"}`);
 
   if (unsupported.length > 0) {
