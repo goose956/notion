@@ -15,7 +15,7 @@ const WEDDING_QUESTIONS = [
   { id: "wedding-date", label: "Wedding date or approximate timeframe", type: "text", required: true, placeholder: "e.g. 14 June 2026 or Summer 2026" },
   { id: "wedding-location", label: "Wedding location", type: "text", required: true, placeholder: "e.g. Cotswolds, Edinburgh, Bristol" },
   { id: "guest-count", label: "Guest count", type: "number", required: true, placeholder: "e.g. 80" },
-  { id: "total-budget", label: "Total budget (£)", type: "number", required: true, placeholder: "e.g. 15000" },
+  { id: "total-budget", label: "Total budget", type: "number", required: true, placeholder: "e.g. 15000" },
   { id: "wedding-style", label: "Wedding style (optional)", type: "select", required: false, options: ["Rustic / Barn", "Classic / Traditional", "Modern / Minimalist", "Boho / Wildflower", "Black Tie / Formal", "Outdoor / Festival", "Intimate / Micro-wedding", "Not sure yet"] },
 ] as const;
 
