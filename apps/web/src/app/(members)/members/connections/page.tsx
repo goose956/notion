@@ -234,6 +234,8 @@ export default async function ConnectionsPage({
         invalid_state: "Security check failed — please try again.",
         notion_config: "Notion integration is not configured correctly (missing client ID or redirect URI).",
         token_exchange: "Could not exchange the authorisation code. Check your Notion integration settings.",
+        connection_save: "Connected to Notion, but failed to save the connection in our database.",
+        notion_callback: "Unexpected error while processing the Notion callback.",
       }[searchParams.error] ?? "An unexpected error occurred.")
     : null;
 
