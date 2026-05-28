@@ -39,9 +39,7 @@ function isNextRedirectError(err: unknown): boolean {
 function TopBar({ showMembersLink }: { showMembersLink: boolean }) {
   return (
     <div style={{ borderBottom: `1px solid ${N_BORDER}`, padding: "12px 24px", display: "flex", alignItems: "center", gap: "8px" }}>
-      <div style={{ width: "22px", height: "22px", borderRadius: "3px", background: "#37352F", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>S</span>
-      </div>
+      <img src="/s-logo.png" alt="Stridivo" style={{ height: "22px", width: "auto" }} />
       <span style={{ fontSize: "14px", fontWeight: 600, color: N_FG }}>Stridivo.com</span>
       {showMembersLink && (
         <Link href="/members/chat" style={{ marginLeft: "auto", fontSize: "13px", color: N_BLUE, textDecoration: "none" }}>
@@ -92,22 +90,7 @@ function InAppGetStarted({
             padding: "12px 14px 8px",
           }}
         >
-          <div
-            style={{
-              width: "22px",
-              height: "22px",
-              borderRadius: "3px",
-              background: "#37352F",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>
-              S
-            </span>
-          </div>
+          <img src="/s-logo.png" alt="Stridivo" style={{ height: "22px", width: "auto", flexShrink: 0 }} />
           <span
             style={{
               fontSize: "14px",
