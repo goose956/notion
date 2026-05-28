@@ -4,12 +4,10 @@
 // The workspace page reads this registry instead of hard-coding per-niche logic.
 //
 // Usage when building a new niche:
-//   1. Create components/niches/<your-niche>/ with dashboard + sidebar-tabs files
-//   2. Add an entry to NICHE_REGISTRY below
-//   3. Add an import + render case in the main content switch in page.tsx
-//   4. Add <YourNicheSidebarTabs> in the sidebar section of page.tsx
-//
-// That's it — all navigation/selection logic is driven from this file.
+//   1. Create components/niches/<your-niche>/ with dashboard + tool files
+//   2. Add a NICHE_TABS constant and an entry to NICHE_REGISTRY below
+//   3. Add an import + render case in renderNicheContent() in page.tsx
+//   That's it — navigation, sidebar, and selection logic are fully data-driven.
 
 // ─── Wedding Planner tab IDs ───────────────────────────────────────────────────
 export const WEDDING_TABS = {
@@ -21,6 +19,37 @@ export const WEDDING_TABS = {
   HONEYMOON:  "__workspace_honeymoon_planner__",
 } as const;
 
+// ─── Accent palette ───────────────────────────────────────────────────────────
+export interface NicheAccent {
+  /** Primary colour hex, used for active borders and icon tints. */
+  hex: string;
+  /** Active tab text colour. */
+  fgActive: string;
+  /** Group header text colour. */
+  fgHeader: string;
+  /** Active tab background. */
+  bgActive: string;
+  /** Hover background for tab buttons. */
+  bgHover: string;
+  /** Niche group header background. */
+  bgGroupHeader: string;
+  /** Niche group header top border (full CSS value). */
+  borderTop: string;
+}
+
+// ─── Sidebar tab definition ────────────────────────────────────────────────────
+export interface NicheSidebarTab {
+  tabId: string;
+  label: string;
+  /** Emoji shown as the icon. */
+  icon: string;
+  /**
+   * When set, the tab is disabled/greyed out if no DB with this dbId
+   * exists in the user's workspace.
+   */
+  requiresDbId?: string;
+}
+
 // ─── Registry entry shape ─────────────────────────────────────────────────────
 export interface NicheRegistryEntry {
   nicheId: string;
@@ -30,16 +59,53 @@ export interface NicheRegistryEntry {
   defaultTabId: string;
   /** Database IDs to hide from the sidebar (e.g. helper DBs). */
   hiddenDbIds: string[];
+  /** Accent colour palette for the sidebar. */
+  accent: NicheAccent;
+  /** Emoji prefix shown in the sidebar group header. */
+  sidebarEmoji: string;
+  /** Tabs rendered at the top of the niche group (before DB rows). */
+  topTabs: NicheSidebarTab[];
+  /**
+   * Pattern to match the DB name that acts as an "anchor".
+   * `afterDbTabs` are injected directly after that DB's row.
+   */
+  afterDbNamePattern?: RegExp;
+  /** Tabs injected after the anchor DB row. */
+  afterDbTabs?: NicheSidebarTab[];
 }
+
+// ─── Wedding Planner accent ───────────────────────────────────────────────────
+const WEDDING_ACCENT: NicheAccent = {
+  hex:            "#be185d",
+  fgActive:       "#9d174d",
+  fgHeader:       "#6b2040",
+  bgActive:       "rgba(190,24,93,0.12)",
+  bgHover:        "rgba(190,24,93,0.06)",
+  bgGroupHeader:  "rgba(190,24,93,0.06)",
+  borderTop:      "1px solid rgba(190,24,93,0.12)",
+};
 
 // ─── Registry ─────────────────────────────────────────────────────────────────
 export const NICHE_REGISTRY: NicheRegistryEntry[] = [
   // ── Wedding Planner ──────────────────────────────────────────────────────────
   {
-    nicheId: "wedding-planner",
+    nicheId:      "wedding-planner",
     virtualTabIds: new Set(Object.values(WEDDING_TABS)),
     defaultTabId: WEDDING_TABS.DASHBOARD,
-    hiddenDbIds: ["honeymoon"],
+    hiddenDbIds:  ["honeymoon"],
+    accent:       WEDDING_ACCENT,
+    sidebarEmoji: "🌸",
+    topTabs: [
+      { tabId: WEDDING_TABS.DASHBOARD, label: "Dashboard", icon: "🏠" },
+    ],
+    afterDbNamePattern: /planning\s*(timetable|timeline)/i,
+    afterDbTabs: [
+      { tabId: WEDDING_TABS.SEATING,    label: "Seating Planner",   icon: "🪑" },
+      { tabId: WEDDING_TABS.DRAFT,      label: "Draft Letters",     icon: "✍️", requiresDbId: "documents" },
+      { tabId: WEDDING_TABS.INVITATION, label: "Invitation Canvas", icon: "🎨" },
+      { tabId: WEDDING_TABS.SPEECH,     label: "AI Speech Writer",  icon: "🎤" },
+      { tabId: WEDDING_TABS.HONEYMOON,  label: "Honeymoon Planner", icon: "🌴" },
+    ],
   },
 
   // ── Add your next niche here ──────────────────────────────────────────────
@@ -48,6 +114,11 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
   //   virtualTabIds: new Set(Object.values(LOCAL_BUSINESS_TABS)),
   //   defaultTabId: LOCAL_BUSINESS_TABS.DASHBOARD,
   //   hiddenDbIds: [],
+  //   accent: { hex: "#0ea5e9", fgActive: "#0369a1", fgHeader: "#0c4a6e",
+  //             bgActive: "rgba(14,165,233,0.12)", bgHover: "rgba(14,165,233,0.06)",
+  //             bgGroupHeader: "rgba(14,165,233,0.06)", borderTop: "1px solid rgba(14,165,233,0.12)" },
+  //   sidebarEmoji: "📍",
+  //   topTabs: [{ tabId: LOCAL_BUSINESS_TABS.DASHBOARD, label: "Dashboard", icon: "🏠" }],
   // },
 ];
 

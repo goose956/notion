@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, ExternalLink, RefreshCw, ChevronDown, ChevronRight, LayoutDashboard } from "lucide-react";
+import { Loader2, Plus, ExternalLink, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
 import { SeatingPlannerView } from "../seating/SeatingPlannerView";
 import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
 import type {
@@ -12,13 +12,109 @@ import type {
   WorkspaceResponse,
 } from "@/app/api/members/workspace/route";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_BLUE, N_FONT } from "@/lib/workspace-tokens";
-import { WEDDING_TABS, isVirtualTab, getDefaultTabId, getHiddenDbIds } from "@/lib/niche-registry";
+import { WEDDING_TABS, isVirtualTab, getDefaultTabId, getHiddenDbIds, getNicheEntry, type NicheAccent, type NicheSidebarTab } from "@/lib/niche-registry";
 import { DatabaseTable } from "@/components/workspace/database-table";
 import { WeddingWorkspaceDashboard } from "@/components/niches/wedding-planner/dashboard";
 import { WeddingDraftStudio } from "@/components/niches/wedding-planner/draft-studio";
 import { WeddingInvitationCanvas } from "@/components/niches/wedding-planner/invitation-canvas";
 import { WeddingSpeechWriter } from "@/components/niches/wedding-planner/speech-writer";
 import { WeddingHoneymoonPlanner } from "@/components/niches/wedding-planner/honeymoon-planner";
+
+// ─── Reusable sidebar tab button ─────────────────────────────────────────────
+// Driven by registry data — no per-niche JSX needed.
+function NicheSidebarTabBtn({
+  tab,
+  accent,
+  activeTab,
+  databases,
+  onSelect,
+}: {
+  tab: NicheSidebarTab;
+  accent: NicheAccent;
+  activeTab: string;
+  databases: WorkspaceDatabase[];
+  onSelect: (tabId: string) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const active = activeTab === tab.tabId;
+  const disabled = tab.requiresDbId !== undefined &&
+    !databases.some((d) => d.dbId === tab.requiresDbId);
+  const bg = active ? accent.bgActive : hovered && !disabled ? accent.bgHover : "none";
+  return (
+    <button
+      onClick={() => !disabled && onSelect(tab.tabId)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "7px",
+        width: "100%",
+        padding: "5px 10px 5px 20px",
+        borderRadius: "0 4px 4px 0",
+        border: "none",
+        borderLeft: active ? `2px solid ${accent.hex}` : "2px solid transparent",
+        fontSize: "13px",
+        color: active ? accent.fgActive : N_FG,
+        background: bg,
+        fontFamily: N_FONT,
+        cursor: disabled ? "default" : "pointer",
+        textAlign: "left",
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      <span style={{ fontSize: "14px", flexShrink: 0 }}>{tab.icon}</span>
+      {tab.label}
+    </button>
+  );
+}
+
+// ─── Database row button in the sidebar ───────────────────────────────────────
+function DbRowButton({
+  db,
+  active,
+  accent,
+  onSelect,
+}: {
+  db: WorkspaceDatabase;
+  active: boolean;
+  accent: import("@/lib/niche-registry").NicheAccent | null;
+  onSelect: (id: string) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const bg = active ? (accent?.bgActive ?? N_ACTIVE) : hovered ? (accent?.bgHover ?? "rgba(55,53,47,0.06)") : "none";
+  return (
+    <button
+      onClick={() => onSelect(db.notionId)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "7px",
+        width: "100%",
+        padding: "5px 10px 5px 20px",
+        background: bg,
+        border: "none",
+        borderLeft: accent ? (active ? `2px solid ${accent.hex}` : "2px solid transparent") : "none",
+        cursor: "pointer",
+        fontSize: "13px",
+        color: active && accent ? accent.fgActive : N_FG,
+        fontFamily: N_FONT,
+        textAlign: "left",
+        borderRadius: "0 4px 4px 0",
+      }}
+    >
+      <span style={{ fontSize: "14px", flexShrink: 0 }}>{db.icon ?? "📋"}</span>
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: active ? 500 : 400 }}>
+        {db.dbName}
+      </span>
+      <span style={{ marginLeft: "auto", fontSize: "11px", color: N_SUBTLE, flexShrink: 0 }}>
+        {db.rows.length}
+      </span>
+    </button>
+  );
+}
 
 export default function WorkspacePage() {
   const searchParams = useSearchParams();
@@ -204,6 +300,66 @@ export default function WorkspacePage() {
           : [...activeDb.properties, { id: "Email", name: "Email", type: "email" }],
       }
     : activeDb;
+
+  // ─── Virtual-tab content switch ───────────────────────────────────────────
+  // Add one `if` block here when you add a new niche's virtual tabs.
+  function renderNicheContent() {
+    if (activeTab === WEDDING_TABS.DASHBOARD) return (
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+        <WeddingWorkspaceDashboard
+          databases={databases}
+          weddingCriteria={weddingCriteria}
+          onWeddingCriteriaUpdated={(criteria) => setWeddingCriteria(criteria)}
+        />
+      </div>
+    );
+    if (activeTab === WEDDING_TABS.SEATING) return (
+      <SeatingPlannerView guestsDb={guestsDb} embedded onSeatingChanged={setLiveSeatedIds} />
+    );
+    if (activeTab === WEDDING_TABS.DRAFT) return (
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+        {documentsDb ? (
+          <WeddingDraftStudio
+            db={documentsDb}
+            onRowAdded={(row) => handleRowAdded(documentsDb.notionId, row)}
+          />
+        ) : (
+          <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "8px", background: "#fff9f8", padding: "16px", color: N_MUTED, fontSize: "13px" }}>
+            Draft Letters needs the Documents database to be available.
+          </div>
+        )}
+      </div>
+    );
+    if (activeTab === WEDDING_TABS.INVITATION) return (
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+        <WeddingInvitationCanvas
+          weddingCriteria={weddingCriteria}
+          documentsDb={documentsDb}
+          onDocumentSaved={(row) => { if (!documentsDb) return; handleRowAdded(documentsDb.notionId, row); }}
+        />
+      </div>
+    );
+    if (activeTab === WEDDING_TABS.SPEECH) return (
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+        <WeddingSpeechWriter
+          weddingCriteria={weddingCriteria}
+          onWeddingCriteriaUpdated={(criteria) => setWeddingCriteria(criteria)}
+        />
+      </div>
+    );
+    if (activeTab === WEDDING_TABS.HONEYMOON) return (
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+        <WeddingHoneymoonPlanner
+          honeymoonDb={honeymoonDb}
+          onRowAdded={(row) => { if (!honeymoonDb) return; handleRowAdded(honeymoonDb.notionId, row); }}
+          onRowUpdated={(pageId, name, val) => { if (!honeymoonDb) return; handleRowUpdated(honeymoonDb.notionId, pageId, name, val); }}
+          onRowDeleted={(pageId) => { if (!honeymoonDb) return; handleRowDeleted(honeymoonDb.notionId, pageId); }}
+        />
+      </div>
+    );
+    return null;
+  }
+
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: N_FONT }}>
 
@@ -215,7 +371,7 @@ export default function WorkspacePage() {
           borderRight: `1px solid ${N_BORDER}`,
           display: "flex",
           flexDirection: "column",
-          background: "linear-gradient(180deg, #fff9f8 0%, #fef0f1 100%)",
+          background: "white",
           overflowY: "auto",
         }}
       >
@@ -228,7 +384,7 @@ export default function WorkspacePage() {
             justifyContent: "space-between",
           }}
         >
-          <span style={{ fontSize: "13px", fontWeight: 700, color: "#6b2040", letterSpacing: "0.01em" }}>💍 My Workspace</span>
+          <span style={{ fontSize: "13px", fontWeight: 700, color: N_FG, letterSpacing: "0.01em" }}>🗂️ My Workspace</span>
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
             <Link
               href="/templates"
@@ -311,6 +467,7 @@ export default function WorkspacePage() {
 
         {nicheGroups.map((group) => {
           const expanded = expandedNiches.has(group.nicheId);
+          const nicheEntry = getNicheEntry(group.nicheId);
           return (
             <div key={group.nicheId}>
               <button
@@ -328,13 +485,13 @@ export default function WorkspacePage() {
                   gap: "4px",
                   width: "100%",
                   padding: "7px 10px 5px",
-                  background: group.nicheId === "wedding-planner" ? "rgba(190,24,93,0.06)" : "none",
+                  background: nicheEntry?.accent.bgGroupHeader ?? "none",
                   border: "none",
-                  borderTop: group.nicheId === "wedding-planner" ? "1px solid rgba(190,24,93,0.12)" : "none",
+                  borderTop: nicheEntry?.accent.borderTop ?? "none",
                   cursor: "pointer",
                   fontSize: "11px",
                   fontWeight: 700,
-                  color: group.nicheId === "wedding-planner" ? "#9d174d" : N_SUBTLE,
+                  color: nicheEntry?.accent.fgActive ?? N_SUBTLE,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   fontFamily: N_FONT,
@@ -342,207 +499,41 @@ export default function WorkspacePage() {
                 }}
               >
                 {expanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                {group.nicheId === "wedding-planner" ? "🌸 " : ""}{group.nicheName}
+                {nicheEntry?.sidebarEmoji ? `${nicheEntry.sidebarEmoji} ` : ""}{group.nicheName}
               </button>
 
-              {expanded && backend === "app" && group.nicheId === "wedding-planner" && (
-                <button
-                  onClick={() => setActiveTab(WEDDING_TABS.DASHBOARD)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "7px",
-                    width: "100%",
-                    padding: "6px 10px 6px 20px",
-                    background: activeTab === WEDDING_TABS.DASHBOARD ? "rgba(190,24,93,0.12)" : "none",
-                    border: "none",
-                    borderLeft: activeTab === WEDDING_TABS.DASHBOARD ? "2px solid #be185d" : "2px solid transparent",
-                    cursor: "pointer",
-                    fontSize: "13px",
-                    color: activeTab === WEDDING_TABS.DASHBOARD ? "#9d174d" : N_FG,
-                    fontFamily: N_FONT,
-                    textAlign: "left",
-                    borderRadius: "0 4px 4px 0",
-                    fontWeight: activeTab === WEDDING_TABS.DASHBOARD ? 600 : 400,
-                  }}
-                  className="hover:bg-[rgba(190,24,93,0.06)]"
-                >
-                  <LayoutDashboard size={13} style={{ color: activeTab === WEDDING_TABS.DASHBOARD ? "#be185d" : N_SUBTLE, flexShrink: 0 }} />
-                  Dashboard
-                </button>
-              )}
+              {expanded && backend === "app" && nicheEntry?.topTabs.map((tab) => (
+                <NicheSidebarTabBtn
+                  key={tab.tabId}
+                  tab={tab}
+                  accent={nicheEntry.accent}
+                  activeTab={activeTab}
+                  databases={databases}
+                  onSelect={setActiveTab}
+                />
+              ))}
               {expanded &&
                 group.dbs.map((db) => {
                   const active = activeTab === db.notionId;
-                  const isPlanningTimetable = /planning\s*(timetable|timeline)/i.test(db.dbName);
+                  const isAnchor = nicheEntry?.afterDbNamePattern?.test(db.dbName) ?? false;
                   return (
                     <div key={db.notionId}>
-                      <button
-                        onClick={() => setActiveTab(db.notionId)}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "7px",
-                          width: "100%",
-                          padding: "5px 10px 5px 20px",
-                          background: active ? (group.nicheId === "wedding-planner" ? "rgba(190,24,93,0.10)" : N_ACTIVE) : "none",
-                          border: "none",
-                          borderLeft: group.nicheId === "wedding-planner" ? (active ? "2px solid #be185d" : "2px solid transparent") : "none",
-                          cursor: "pointer",
-                          fontSize: "13px",
-                          color: active && group.nicheId === "wedding-planner" ? "#9d174d" : N_FG,
-                          fontFamily: N_FONT,
-                          textAlign: "left",
-                          borderRadius: "0 4px 4px 0",
-                        }}
-                        className={group.nicheId === "wedding-planner" ? "hover:bg-[rgba(190,24,93,0.06)]" : "hover:bg-[rgba(55,53,47,0.06)]"}
-                      >
-                        <span style={{ fontSize: "14px", flexShrink: 0 }}>
-                          {db.icon ?? "📋"}
-                        </span>
-                        <span
-                          style={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            fontWeight: active ? 500 : 400,
-                          }}
-                        >
-                          {db.dbName}
-                        </span>
-                        <span
-                          style={{
-                            marginLeft: "auto",
-                            fontSize: "11px",
-                            color: N_SUBTLE,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {db.rows.length}
-                        </span>
-                      </button>
-
-                      {backend === "app" && group.nicheId === "wedding-planner" && isPlanningTimetable && (
-                        <>
-                          <button
-                            onClick={() => setActiveTab(WEDDING_TABS.SEATING)}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "7px",
-                              width: "100%",
-                              padding: "5px 10px 5px 20px",
-                              borderRadius: "0 4px 4px 0",
-                              border: "none",
-                              borderLeft: activeTab === WEDDING_TABS.SEATING ? "2px solid #be185d" : "2px solid transparent",
-                              fontSize: "13px",
-                              color: activeTab === WEDDING_TABS.SEATING ? "#9d174d" : N_FG,
-                              background: activeTab === WEDDING_TABS.SEATING ? "rgba(190,24,93,0.10)" : "none",
-                              fontFamily: N_FONT,
-                              cursor: "pointer",
-                              textAlign: "left",
-                            }}
-                            className="hover:bg-[rgba(190,24,93,0.06)]"
-                          >
-                            <span style={{ fontSize: "14px", flexShrink: 0 }}>🪑</span>
-                            Seating Planner
-                          </button>
-                          <button
-                            onClick={() => setActiveTab(WEDDING_TABS.DRAFT)}
-                            disabled={!documentsDb}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "7px",
-                              width: "100%",
-                              padding: "5px 10px 5px 20px",
-                              borderRadius: "0 4px 4px 0",
-                              border: "none",
-                              borderLeft: activeTab === WEDDING_TABS.DRAFT ? "2px solid #be185d" : "2px solid transparent",
-                              fontSize: "13px",
-                              color: activeTab === WEDDING_TABS.DRAFT ? "#9d174d" : N_FG,
-                              background: activeTab === WEDDING_TABS.DRAFT ? "rgba(190,24,93,0.10)" : "none",
-                              fontFamily: N_FONT,
-                              cursor: documentsDb ? "pointer" : "default",
-                              textAlign: "left",
-                              opacity: documentsDb ? 1 : 0.5,
-                            }}
-                            className="hover:bg-[rgba(190,24,93,0.06)]"
-                          >
-                            <span style={{ fontSize: "14px", flexShrink: 0 }}>✍️</span>
-                            Draft Letters
-                          </button>
-                          <button
-                            onClick={() => setActiveTab(WEDDING_TABS.INVITATION)}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "7px",
-                              width: "100%",
-                              padding: "5px 10px 5px 20px",
-                              borderRadius: "0 4px 4px 0",
-                              border: "none",
-                              borderLeft: activeTab === WEDDING_TABS.INVITATION ? "2px solid #be185d" : "2px solid transparent",
-                              fontSize: "13px",
-                              color: activeTab === WEDDING_TABS.INVITATION ? "#9d174d" : N_FG,
-                              background: activeTab === WEDDING_TABS.INVITATION ? "rgba(190,24,93,0.10)" : "none",
-                              fontFamily: N_FONT,
-                              cursor: "pointer",
-                              textAlign: "left",
-                            }}
-                            className="hover:bg-[rgba(190,24,93,0.06)]"
-                          >
-                            <span style={{ fontSize: "14px", flexShrink: 0 }}>🎨</span>
-                            Invitation Canvas
-                          </button>
-                          <button
-                            onClick={() => setActiveTab(WEDDING_TABS.SPEECH)}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "7px",
-                              width: "100%",
-                              padding: "5px 10px 5px 20px",
-                              borderRadius: "0 4px 4px 0",
-                              border: "none",
-                              borderLeft: activeTab === WEDDING_TABS.SPEECH ? "2px solid #be185d" : "2px solid transparent",
-                              fontSize: "13px",
-                              color: activeTab === WEDDING_TABS.SPEECH ? "#9d174d" : N_FG,
-                              background: activeTab === WEDDING_TABS.SPEECH ? "rgba(190,24,93,0.10)" : "none",
-                              fontFamily: N_FONT,
-                              cursor: "pointer",
-                              textAlign: "left",
-                            }}
-                            className="hover:bg-[rgba(190,24,93,0.06)]"
-                          >
-                            <span style={{ fontSize: "14px", flexShrink: 0 }}>🎤</span>
-                            AI Speech Writer
-                          </button>
-                            <button
-                              onClick={() => setActiveTab(WEDDING_TABS.HONEYMOON)}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "7px",
-                                width: "100%",
-                                padding: "5px 10px 5px 20px",
-                                borderRadius: "0 4px 4px 0",
-                                border: "none",
-                                borderLeft: activeTab === WEDDING_TABS.HONEYMOON ? "2px solid #be185d" : "2px solid transparent",
-                                fontSize: "13px",
-                                color: activeTab === WEDDING_TABS.HONEYMOON ? "#9d174d" : N_FG,
-                                background: activeTab === WEDDING_TABS.HONEYMOON ? "rgba(190,24,93,0.10)" : "none",
-                                fontFamily: N_FONT,
-                                cursor: "pointer",
-                                textAlign: "left",
-                              }}
-                              className="hover:bg-[rgba(190,24,93,0.06)]"
-                            >
-                              <span style={{ fontSize: "14px", flexShrink: 0 }}>🌴</span>
-                              Honeymoon Planner
-                            </button>
-                        </>
-                      )}
+                      <DbRowButton
+                        db={db}
+                        active={active}
+                        accent={nicheEntry?.accent ?? null}
+                        onSelect={setActiveTab}
+                      />
+                      {backend === "app" && isAnchor && nicheEntry?.afterDbTabs?.map((tab) => (
+                        <NicheSidebarTabBtn
+                          key={tab.tabId}
+                          tab={tab}
+                          accent={nicheEntry.accent}
+                          activeTab={activeTab}
+                          databases={databases}
+                          onSelect={setActiveTab}
+                        />
+                      ))}
                     </div>
                   );
                 })}
@@ -640,75 +631,7 @@ export default function WorkspacePage() {
               Browse niches
             </Link>
           </div>
-        ) : activeTab === WEDDING_TABS.DASHBOARD ? (
-          <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-            <WeddingWorkspaceDashboard
-              databases={databases}
-              weddingCriteria={weddingCriteria}
-              onWeddingCriteriaUpdated={(criteria) => setWeddingCriteria(criteria)}
-            />
-          </div>
-        ) : activeTab === WEDDING_TABS.SEATING ? (
-          <SeatingPlannerView guestsDb={guestsDb} embedded onSeatingChanged={setLiveSeatedIds} />
-        ) : activeTab === WEDDING_TABS.DRAFT ? (
-          <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-            {documentsDb ? (
-              <WeddingDraftStudio
-                db={documentsDb}
-                onRowAdded={(row) => handleRowAdded(documentsDb.notionId, row)}
-              />
-            ) : (
-              <div
-                style={{
-                  border: `1px solid ${N_BORDER}`,
-                  borderRadius: "8px",
-                  background: "#fff9f8",
-                  padding: "16px",
-                  color: N_MUTED,
-                  fontSize: "13px",
-                }}
-              >
-                Draft Letters needs the Documents database to be available.
-              </div>
-            )}
-          </div>
-        ) : activeTab === WEDDING_TABS.INVITATION ? (
-          <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-            <WeddingInvitationCanvas
-              weddingCriteria={weddingCriteria}
-              documentsDb={documentsDb}
-              onDocumentSaved={(row) => {
-                if (!documentsDb) return;
-                handleRowAdded(documentsDb.notionId, row);
-              }}
-            />
-          </div>
-        ) : activeTab === WEDDING_TABS.SPEECH ? (
-          <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-            <WeddingSpeechWriter
-              weddingCriteria={weddingCriteria}
-              onWeddingCriteriaUpdated={(criteria) => setWeddingCriteria(criteria)}
-            />
-          </div>
-        ) : activeTab === WEDDING_TABS.HONEYMOON ? (
-          <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-            <WeddingHoneymoonPlanner
-              honeymoonDb={honeymoonDb}
-              onRowAdded={(row) => {
-                if (!honeymoonDb) return;
-                handleRowAdded(honeymoonDb.notionId, row);
-              }}
-              onRowUpdated={(pageId, name, val) => {
-                if (!honeymoonDb) return;
-                handleRowUpdated(honeymoonDb.notionId, pageId, name, val);
-              }}
-              onRowDeleted={(pageId) => {
-                if (!honeymoonDb) return;
-                handleRowDeleted(honeymoonDb.notionId, pageId);
-              }}
-            />
-          </div>
-        ) : !activeDbDisplay ? null : (
+        ) : isVirtualTab(activeTab) ? renderNicheContent() : !activeDbDisplay ? null : (
           <>
             {/* Header */}
             <div
