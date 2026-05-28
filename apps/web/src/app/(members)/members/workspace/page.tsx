@@ -1,24 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Loader2, Plus, ExternalLink, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
-import { SeatingPlannerView } from "../seating/SeatingPlannerView";
-import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
 import type {
   WorkspaceDatabase,
   WorkspaceRow,
   WorkspaceResponse,
 } from "@/app/api/members/workspace/route";
-import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_BLUE, N_FONT } from "@/lib/workspace-tokens";
-import { WEDDING_TABS, isVirtualTab, getDefaultTabId, getHiddenDbIds, getNicheEntry, type NicheAccent, type NicheSidebarTab } from "@/lib/niche-registry";
+import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_FONT } from "@/lib/workspace-tokens";
+import { NICHE_REGISTRY, isVirtualTab, getDefaultTabId, getHiddenDbIds, getNicheEntry, type NicheAccent, type NicheSidebarTab } from "@/lib/niche-registry";
 import { DatabaseTable } from "@/components/workspace/database-table";
-import { WeddingWorkspaceDashboard } from "@/components/niches/wedding-planner/dashboard";
-import { WeddingDraftStudio } from "@/components/niches/wedding-planner/draft-studio";
-import { WeddingInvitationCanvas } from "@/components/niches/wedding-planner/invitation-canvas";
-import { WeddingSpeechWriter } from "@/components/niches/wedding-planner/speech-writer";
-import { WeddingHoneymoonPlanner } from "@/components/niches/wedding-planner/honeymoon-planner";
+import { WeddingNicheShell } from "@/components/niches/wedding-planner/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -129,9 +123,8 @@ export default function WorkspacePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
 
-  const [weddingCriteria, setWeddingCriteria] = useState<Record<string, unknown> | null>(null);
-  // Updated live when the user assigns seats – overrides the DB-derived value
-  const [liveSeatedIds, setLiveSeatedIds] = useState<Set<string> | null>(null);
+  const [apiWeddingCriteria, setApiWeddingCriteria] = useState<Record<string, unknown> | null>(null);
+  const [seatedGuestIds, setSeatedGuestIds] = useState<Set<string>>(new Set());
   const lastUrlSelectionKeyRef = useRef<string>("");
 
   function applyRequestedSelection(
@@ -191,7 +184,7 @@ export default function WorkspacePage() {
       const data = (await res.json()) as WorkspaceResponse;
       setDatabases(data.databases);
       setBackend(data.backend);
-      setWeddingCriteria(data.weddingCriteria ?? null);
+      setApiWeddingCriteria(data.weddingCriteria ?? null);
 
       // Auto-expand all niches and select first tab
       const nicheIds = [...new Set(data.databases.map((d) => d.nicheId))];
@@ -203,7 +196,7 @@ export default function WorkspacePage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
-      setWeddingCriteria(null);
+      setApiWeddingCriteria(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -276,89 +269,20 @@ export default function WorkspacePage() {
   }
 
   const activeDb = databases.find((d) => d.notionId === activeTab) ?? null;
-  const guestsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "guests") ?? null;
-  const documentsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "documents") ?? null;
-  const honeymoonDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "honeymoon") ?? null;
 
-  const seatedGuestIds = useMemo<Set<string>>(() => {
-    // Prefer live updates from the seating planner (avoids stale DB-loaded criteria)
-    if (liveSeatedIds !== null) return liveSeatedIds;
-    const layout = weddingCriteria?.["seating-layout-v1"] as { tables?: Array<{ guestIds?: Array<string | null> }> } | null | undefined;
-    const ids = new Set<string>();
-    for (const table of layout?.tables ?? []) {
-      for (const id of table.guestIds ?? []) {
-        if (id) ids.add(id);
-      }
-    }
-    return ids;
-  }, [liveSeatedIds, weddingCriteria]);
-  const activeDbDisplay: WorkspaceDatabase | null = activeDb && backend === "app" && activeDb.nicheId === "wedding-planner" && activeDb.dbId === "documents"
-    ? {
-        ...activeDb,
-        properties: activeDb.properties.some((p) => p.name === "Email")
-          ? activeDb.properties
-          : [...activeDb.properties, { id: "Email", name: "Email", type: "email" }],
-      }
-    : activeDb;
-
-  // ─── Virtual-tab content switch ───────────────────────────────────────────
-  // Add one `if` block here when you add a new niche's virtual tabs.
-  function renderNicheContent() {
-    if (activeTab === WEDDING_TABS.DASHBOARD) return (
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-        <WeddingWorkspaceDashboard
-          databases={databases}
-          weddingCriteria={weddingCriteria}
-          onWeddingCriteriaUpdated={(criteria) => setWeddingCriteria(criteria)}
-        />
-      </div>
-    );
-    if (activeTab === WEDDING_TABS.SEATING) return (
-      <SeatingPlannerView guestsDb={guestsDb} embedded onSeatingChanged={setLiveSeatedIds} />
-    );
-    if (activeTab === WEDDING_TABS.DRAFT) return (
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-        {documentsDb ? (
-          <WeddingDraftStudio
-            db={documentsDb}
-            onRowAdded={(row) => handleRowAdded(documentsDb.notionId, row)}
-          />
-        ) : (
-          <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "8px", background: "#fff9f8", padding: "16px", color: N_MUTED, fontSize: "13px" }}>
-            Draft Letters needs the Documents database to be available.
-          </div>
-        )}
-      </div>
-    );
-    if (activeTab === WEDDING_TABS.INVITATION) return (
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-        <WeddingInvitationCanvas
-          weddingCriteria={weddingCriteria}
-          documentsDb={documentsDb}
-          onDocumentSaved={(row) => { if (!documentsDb) return; handleRowAdded(documentsDb.notionId, row); }}
-        />
-      </div>
-    );
-    if (activeTab === WEDDING_TABS.SPEECH) return (
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-        <WeddingSpeechWriter
-          weddingCriteria={weddingCriteria}
-          onWeddingCriteriaUpdated={(criteria) => setWeddingCriteria(criteria)}
-        />
-      </div>
-    );
-    if (activeTab === WEDDING_TABS.HONEYMOON) return (
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-        <WeddingHoneymoonPlanner
-          honeymoonDb={honeymoonDb}
-          onRowAdded={(row) => { if (!honeymoonDb) return; handleRowAdded(honeymoonDb.notionId, row); }}
-          onRowUpdated={(pageId, name, val) => { if (!honeymoonDb) return; handleRowUpdated(honeymoonDb.notionId, pageId, name, val); }}
-          onRowDeleted={(pageId) => { if (!honeymoonDb) return; handleRowDeleted(honeymoonDb.notionId, pageId); }}
-        />
-      </div>
-    );
-    return null;
-  }
+  // Inject virtual properties for specific DBs as declared in the niche registry
+  const activeDbDisplay: WorkspaceDatabase | null = (() => {
+    if (!activeDb || backend !== "app") return activeDb;
+    const injections = getNicheEntry(activeDb.nicheId)?.dbPropertyInjections?.[activeDb.dbId] ?? [];
+    if (injections.length === 0) return activeDb;
+    return {
+      ...activeDb,
+      properties: injections.reduce(
+        (props, inj) => props.some((p) => p.name === inj.name) ? props : [...props, inj],
+        activeDb.properties,
+      ),
+    };
+  })();
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: N_FONT }}>
@@ -631,70 +555,94 @@ export default function WorkspacePage() {
               Browse niches
             </Link>
           </div>
-        ) : isVirtualTab(activeTab) ? renderNicheContent() : !activeDbDisplay ? null : (
+        ) : (
           <>
-            {/* Header */}
-            <div
-              style={{
-                padding: "16px 24px 12px",
-                borderBottom: `1px solid ${N_BORDER}`,
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                flexShrink: 0,
-                background: activeDbDisplay.nicheId === "wedding-planner"
-                  ? "linear-gradient(135deg, #fff9f8 0%, #fef0f3 100%)"
-                  : "white",
-              }}
-            >
-              <span style={{ fontSize: "20px" }}>{activeDbDisplay.icon ?? "📋"}</span>
-              <div style={{ flex: 1 }}>
-                <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: N_FG }}>
-                  {activeDbDisplay.dbName}
-                </h1>
-                <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
-                  {activeDbDisplay.nicheName} · {activeDbDisplay.rows.length} row{activeDbDisplay.rows.length !== 1 ? "s" : ""}
-                  {activeDbDisplay.hasMore ? "+" : ""}
-                </p>
-              </div>
-              {backend === "notion" && (
-                <a
-                  href={`https://notion.so/${activeDbDisplay.notionId.replace(/-/g, "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+            {/* Always-mounted niche shells. Each shell returns null when its
+                tabs are not active, but stays mounted to preserve state. */}
+            {NICHE_REGISTRY.map((entry) => {
+              if (!databases.some((d) => d.nicheId === entry.nicheId) || backend !== "app") return null;
+              if (entry.nicheId === "wedding-planner") return (
+                <WeddingNicheShell
+                  key="wedding-planner"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiWeddingCriteria={apiWeddingCriteria}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                  onSeatedIdsChanged={setSeatedGuestIds}
+                />
+              );
+              return null; // placeholder for future niches
+            })}
+            {/* DB table view — only when active tab is a real database row */}
+            {!isVirtualTab(activeTab) && activeDbDisplay && (
+              <>
+                {/* Header */}
+                <div
                   style={{
-                    display: "inline-flex",
+                    padding: "16px 24px 12px",
+                    borderBottom: `1px solid ${N_BORDER}`,
+                    display: "flex",
                     alignItems: "center",
-                    gap: "5px",
-                    padding: "5px 12px",
-                    borderRadius: "4px",
-                    fontSize: "13px",
-                    color: N_MUTED,
-                    textDecoration: "none",
-                    border: `1px solid ${N_BORDER_MED}`,
-                    background: "white",
+                    gap: "10px",
                     flexShrink: 0,
+                    background: (() => {
+                      const accent = getNicheEntry(activeDbDisplay.nicheId)?.accent;
+                      return accent ? `linear-gradient(135deg, white 0%, ${accent.bgHover} 100%)` : "white";
+                    })(),
                   }}
                 >
-                  Open in Notion
-                  <ExternalLink size={12} />
-                </a>
-              )}
-            </div>
+                  <span style={{ fontSize: "20px" }}>{activeDbDisplay.icon ?? "📋"}</span>
+                  <div style={{ flex: 1 }}>
+                    <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: N_FG }}>
+                      {activeDbDisplay.dbName}
+                    </h1>
+                    <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
+                      {activeDbDisplay.nicheName} · {activeDbDisplay.rows.length} row{activeDbDisplay.rows.length !== 1 ? "s" : ""}
+                      {activeDbDisplay.hasMore ? "+" : ""}
+                    </p>
+                  </div>
+                  {backend === "notion" && (
+                    <a
+                      href={`https://notion.so/${activeDbDisplay.notionId.replace(/-/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        padding: "5px 12px",
+                        borderRadius: "4px",
+                        fontSize: "13px",
+                        color: N_MUTED,
+                        textDecoration: "none",
+                        border: `1px solid ${N_BORDER_MED}`,
+                        background: "white",
+                        flexShrink: 0,
+                      }}
+                    >
+                      Open in Notion
+                      <ExternalLink size={12} />
+                    </a>
+                  )}
+                </div>
 
-            {/* Table */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-              <DatabaseTable
-                db={activeDbDisplay}
-                isAppBackend={backend === "app"}
-                {...(activeDbDisplay.dbId === "guests" ? { seatedGuestIds } : {})}
-                onRowUpdated={(pageId, name, val) =>
-                  handleRowUpdated(activeDbDisplay.notionId, pageId, name, val)
-                }
-                onRowDeleted={(pageId) => handleRowDeleted(activeDbDisplay.notionId, pageId)}
-                onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
-              />
-            </div>
+                {/* Table */}
+                <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+                  <DatabaseTable
+                    db={activeDbDisplay}
+                    isAppBackend={backend === "app"}
+                    {...(activeDbDisplay.dbId === "guests" ? { seatedGuestIds } : {})}
+                    onRowUpdated={(pageId, name, val) =>
+                      handleRowUpdated(activeDbDisplay.notionId, pageId, name, val)
+                    }
+                    onRowDeleted={(pageId) => handleRowDeleted(activeDbDisplay.notionId, pageId)}
+                    onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
+                  />
+                </div>
+              </>
+            )}
           </>
         )}
 

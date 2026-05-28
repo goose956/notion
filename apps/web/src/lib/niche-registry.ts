@@ -72,6 +72,11 @@ export interface NicheRegistryEntry {
   afterDbNamePattern?: RegExp;
   /** Tabs injected after the anchor DB row. */
   afterDbTabs?: NicheSidebarTab[];
+  /**
+   * Virtual properties to inject when displaying a specific DB in the table view.
+   * Keyed by dbId. Used for e.g. injecting an Email column into the documents table.
+   */
+  dbPropertyInjections?: Record<string, Array<{ id: string; name: string; type: string }>>;
 }
 
 // ─── Wedding Planner accent ───────────────────────────────────────────────────
@@ -106,6 +111,9 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: WEDDING_TABS.SPEECH,     label: "AI Speech Writer",  icon: "🎤" },
       { tabId: WEDDING_TABS.HONEYMOON,  label: "Honeymoon Planner", icon: "🌴" },
     ],
+    dbPropertyInjections: {
+      documents: [{ id: "Email", name: "Email", type: "email" }],
+    },
   },
 
   // ── Add your next niche here ──────────────────────────────────────────────
