@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { cookies } from "next/headers";
 import { upsertUserConnection } from "@niche-factory/db";
+import { resolvePublicAppUrl, resolveNotionRedirectUri } from "@/lib/notion-oauth-url";
 
 /**
  * GET /api/connect/notion/callback
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const baseUrl = process.env["AUTH_URL"] ?? process.env["NEXTAUTH_URL"] ?? "http://localhost:3000";
+  const baseUrl = resolvePublicAppUrl();
   const connectionsUrl = `${baseUrl}/members/connections`;
 
   const { searchParams } = new URL(req.url);
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
   // Exchange authorisation code for access token
   const clientId = process.env["NOTION_CLIENT_ID"] ?? "";
   const clientSecret = process.env["NOTION_CLIENT_SECRET"] ?? "";
-  const redirectUri = `${baseUrl}/api/connect/notion/callback`;
+  const redirectUri = resolveNotionRedirectUri();
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
   let tokenData: Record<string, unknown>;

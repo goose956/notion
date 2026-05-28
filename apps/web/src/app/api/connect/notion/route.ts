@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
+import { resolvePublicAppUrl, resolveNotionRedirectUri } from "@/lib/notion-oauth-url";
 
 /**
  * GET /api/connect/notion
@@ -26,11 +27,16 @@ export async function GET(req: NextRequest) {
     path: "/",
   });
 
-  const baseUrl = process.env["AUTH_URL"] ?? process.env["NEXTAUTH_URL"] ?? "http://localhost:3000";
-  const redirectUri = `${baseUrl}/api/connect/notion/callback`;
+  const clientId = process.env["NOTION_CLIENT_ID"] ?? "";
+  if (!clientId) {
+    const baseUrl = resolvePublicAppUrl();
+    return NextResponse.redirect(`${baseUrl}/members/connections?error=notion_config`);
+  }
+
+  const redirectUri = resolveNotionRedirectUri();
 
   const url = new URL("https://api.notion.com/v1/oauth/authorize");
-  url.searchParams.set("client_id", process.env["NOTION_CLIENT_ID"] ?? "");
+  url.searchParams.set("client_id", clientId);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("owner", "user");
   url.searchParams.set("redirect_uri", redirectUri);
