@@ -1029,6 +1029,12 @@ const DASHBOARD_THEMES = [
     shadow: "rgba(107,32,64,0.28)",
     innerBg: "rgba(30,8,20,0.85)",
     accent: "#c4597a",
+    cards: [
+      { icon: "#16a34a", iconBg: "#16a34a22", editBg: "#16a34a18", bg: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", border: "#bbf7d0", label: "#166534", muted: "#16a34a99" },
+      { icon: "#be185d", iconBg: "#be185d22", editBg: "#be185d18", bg: "linear-gradient(135deg, #fff0f5 0%, #ffe4ed 100%)", border: "#fecdd3", label: "#9d174d", muted: "#be185d99" },
+      { icon: "#7c3aed", iconBg: "#7c3aed22", editBg: "#7c3aed18", bg: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", border: "#c4b5fd", label: "#5b21b6", muted: "#7c3aed99" },
+      { icon: "#d97706", iconBg: "#d9770622", editBg: "#d9770618", bg: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)", border: "#fde68a", label: "#92400e", muted: "#d9770699" },
+    ],
   },
   {
     id: "ocean",
@@ -1038,6 +1044,12 @@ const DASHBOARD_THEMES = [
     shadow: "rgba(14,58,94,0.30)",
     innerBg: "rgba(6,16,32,0.85)",
     accent: "#38b2c8",
+    cards: [
+      { icon: "#0891b2", iconBg: "#0891b222", editBg: "#0891b218", bg: "linear-gradient(135deg, #ecfeff 0%, #cffafe 100%)", border: "#a5f3fc", label: "#164e63", muted: "#0891b299" },
+      { icon: "#1d4ed8", iconBg: "#1d4ed822", editBg: "#1d4ed818", bg: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", border: "#93c5fd", label: "#1e3a8a", muted: "#1d4ed899" },
+      { icon: "#0e7490", iconBg: "#0e749022", editBg: "#0e749018", bg: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)", border: "#7dd3fc", label: "#0c4a6e", muted: "#0e749099" },
+      { icon: "#4f46e5", iconBg: "#4f46e522", editBg: "#4f46e518", bg: "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)", border: "#a5b4fc", label: "#3730a3", muted: "#4f46e599" },
+    ],
   },
   {
     id: "forest",
@@ -1047,6 +1059,12 @@ const DASHBOARD_THEMES = [
     shadow: "rgba(26,77,42,0.30)",
     innerBg: "rgba(6,18,8,0.85)",
     accent: "#4aba72",
+    cards: [
+      { icon: "#16a34a", iconBg: "#16a34a22", editBg: "#16a34a18", bg: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", border: "#bbf7d0", label: "#166534", muted: "#16a34a99" },
+      { icon: "#059669", iconBg: "#05966922", editBg: "#05966918", bg: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)", border: "#a7f3d0", label: "#064e3b", muted: "#05966999" },
+      { icon: "#0d9488", iconBg: "#0d948822", editBg: "#0d948818", bg: "linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)", border: "#99f6e4", label: "#134e4a", muted: "#0d948899" },
+      { icon: "#65a30d", iconBg: "#65a30d22", editBg: "#65a30d18", bg: "linear-gradient(135deg, #f7fee7 0%, #ecfccb 100%)", border: "#d9f99d", label: "#365314", muted: "#65a30d99" },
+    ],
   },
   {
     id: "twilight",
@@ -1056,6 +1074,12 @@ const DASHBOARD_THEMES = [
     shadow: "rgba(59,26,122,0.30)",
     innerBg: "rgba(14,8,32,0.85)",
     accent: "#a78bfa",
+    cards: [
+      { icon: "#7c3aed", iconBg: "#7c3aed22", editBg: "#7c3aed18", bg: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", border: "#c4b5fd", label: "#5b21b6", muted: "#7c3aed99" },
+      { icon: "#9333ea", iconBg: "#9333ea22", editBg: "#9333ea18", bg: "linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)", border: "#d8b4fe", label: "#6b21a8", muted: "#9333ea99" },
+      { icon: "#a21caf", iconBg: "#a21caf22", editBg: "#a21caf18", bg: "linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)", border: "#f0abfc", label: "#701a75", muted: "#a21caf99" },
+      { icon: "#4f46e5", iconBg: "#4f46e522", editBg: "#4f46e518", bg: "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)", border: "#a5b4fc", label: "#312e81", muted: "#4f46e599" },
+    ],
   },
   {
     id: "sunset",
@@ -1065,6 +1089,12 @@ const DASHBOARD_THEMES = [
     shadow: "rgba(124,45,0,0.30)",
     innerBg: "rgba(20,8,0,0.85)",
     accent: "#f59e0b",
+    cards: [
+      { icon: "#ea580c", iconBg: "#ea580c22", editBg: "#ea580c18", bg: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)", border: "#fed7aa", label: "#7c2d12", muted: "#ea580c99" },
+      { icon: "#d97706", iconBg: "#d9770622", editBg: "#d9770618", bg: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)", border: "#fde68a", label: "#92400e", muted: "#d9770699" },
+      { icon: "#ca8a04", iconBg: "#ca8a0422", editBg: "#ca8a0418", bg: "linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)", border: "#fef08a", label: "#713f12", muted: "#ca8a0499" },
+      { icon: "#dc2626", iconBg: "#dc262622", editBg: "#dc262618", bg: "linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%)", border: "#fecaca", label: "#991b1b", muted: "#dc262699" },
+    ],
   },
   {
     id: "pride",
@@ -1074,6 +1104,12 @@ const DASHBOARD_THEMES = [
     shadow: "rgba(100,40,120,0.28)",
     innerBg: "rgba(20,0,30,0.88)",
     accent: "#ff8c00",
+    cards: [
+      { icon: "#e40303", iconBg: "#e4030322", editBg: "#e4030318", bg: "linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%)", border: "#fca5a5", label: "#991b1b", muted: "#e4030399" },
+      { icon: "#008026", iconBg: "#00802622", editBg: "#00802618", bg: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", border: "#86efac", label: "#166534", muted: "#00802699" },
+      { icon: "#004dff", iconBg: "#004dff22", editBg: "#004dff18", bg: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)", border: "#93c5fd", label: "#1e3a8a", muted: "#004dff99" },
+      { icon: "#ff8c00", iconBg: "#ff8c0022", editBg: "#ff8c0018", bg: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)", border: "#fed7aa", label: "#7c2d12", muted: "#ff8c0099" },
+    ],
   },
 ] as const;
 type ThemeId = (typeof DASHBOARD_THEMES)[number]["id"];
@@ -1558,50 +1594,50 @@ function WeddingWorkspaceDashboard({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: "10px" }}>
 
         {/* Location */}
-        <div style={{ borderRadius: "12px", background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", border: "1px solid #bbf7d0", padding: "14px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#16a34a22", marginBottom: "9px" }}>
-            <MapPin size={15} style={{ color: "#16a34a" }} />
+        <div style={{ borderRadius: "12px", background: theme.cards[0].bg, border: `1px solid ${theme.cards[0].border}`, padding: "14px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: theme.cards[0].iconBg, marginBottom: "9px" }}>
+            <MapPin size={15} style={{ color: theme.cards[0].icon }} />
           </div>
-          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#166534" }}>Location</p>
+          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: theme.cards[0].label }}>Location</p>
           <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>{venue ?? "Not set yet"}</p>
         </div>
 
         {/* Guest Plan */}
-        <div style={{ borderRadius: "12px", background: "linear-gradient(135deg, #fff0f5 0%, #ffe4ed 100%)", border: "1px solid #fecdd3", padding: "14px" }}>
+        <div style={{ borderRadius: "12px", background: theme.cards[1].bg, border: `1px solid ${theme.cards[1].border}`, padding: "14px" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#be185d22", marginBottom: "9px" }}>
-              <Users size={15} style={{ color: "#be185d" }} />
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: theme.cards[1].iconBg, marginBottom: "9px" }}>
+              <Users size={15} style={{ color: theme.cards[1].icon }} />
             </div>
             {editingField === "guest" ? (
               <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
                 <input type="number" min={0} value={guestCountInput} onChange={(e) => setGuestCountInput(e.target.value)} style={{ height: "24px", width: "68px", padding: "0 6px", borderRadius: "5px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }} />
-                <button type="button" onClick={() => void commitInlineEdit("guest")} disabled={savingDetails} style={{ border: "none", background: "#be185d22", borderRadius: "5px", cursor: "pointer", padding: "3px 5px", color: "#be185d" }}><Check size={11} /></button>
+                <button type="button" onClick={() => void commitInlineEdit("guest")} disabled={savingDetails} style={{ border: "none", background: theme.cards[1].iconBg, borderRadius: "5px", cursor: "pointer", padding: "3px 5px", color: theme.cards[1].icon }}><Check size={11} /></button>
                 <button type="button" onClick={() => cancelInlineEdit("guest")} disabled={savingDetails} style={{ border: "none", background: "transparent", borderRadius: "5px", cursor: "pointer", padding: "3px", color: N_SUBTLE }}><X size={11} /></button>
               </div>
             ) : (
-              <button type="button" onClick={() => setEditingField("guest")} style={{ border: "none", background: "#be185d18", borderRadius: "6px", cursor: "pointer", padding: "3px 7px", color: "#be185d", fontSize: "11px", display: "flex", alignItems: "center", gap: "3px" }}><Pencil size={10} /></button>
+              <button type="button" onClick={() => setEditingField("guest")} style={{ border: "none", background: theme.cards[1].editBg, borderRadius: "6px", cursor: "pointer", padding: "3px 7px", color: theme.cards[1].icon, fontSize: "11px", display: "flex", alignItems: "center", gap: "3px" }}><Pencil size={10} /></button>
             )}
           </div>
-          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#9d174d" }}>Guest Plan</p>
+          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: theme.cards[1].label }}>Guest Plan</p>
           <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>{targetGuests > 0 ? `${targetGuests} planned` : "No target set"}</p>
-          <p style={{ margin: "3px 0 0", fontSize: "12px", color: "#be185d99" }}>{trackedGuests} in guest list</p>
+          <p style={{ margin: "3px 0 0", fontSize: "12px", color: theme.cards[1].muted }}>{trackedGuests} in guest list</p>
         </div>
 
         {/* Planning Timeline */}
-        <div style={{ borderRadius: "12px", background: "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)", border: "1px solid #c4b5fd", padding: "14px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#7c3aed22", marginBottom: "9px" }}>
-            <CalendarDays size={15} style={{ color: "#7c3aed" }} />
+        <div style={{ borderRadius: "12px", background: theme.cards[2].bg, border: `1px solid ${theme.cards[2].border}`, padding: "14px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: theme.cards[2].iconBg, marginBottom: "9px" }}>
+            <CalendarDays size={15} style={{ color: theme.cards[2].icon }} />
           </div>
-          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#5b21b6" }}>Planning Timeline</p>
+          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: theme.cards[2].label }}>Planning Timeline</p>
           <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>{timelineDb?.rows.length ?? 0} milestones</p>
         </div>
 
         {/* Draft Letters */}
-        <div style={{ borderRadius: "12px", background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)", border: "1px solid #fde68a", padding: "14px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#d9770622", marginBottom: "9px" }}>
-            <FileText size={15} style={{ color: "#d97706" }} />
+        <div style={{ borderRadius: "12px", background: theme.cards[3].bg, border: `1px solid ${theme.cards[3].border}`, padding: "14px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: theme.cards[3].iconBg, marginBottom: "9px" }}>
+            <FileText size={15} style={{ color: theme.cards[3].icon }} />
           </div>
-          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#92400e" }}>Draft Letters</p>
+          <p style={{ margin: "0 0 3px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: theme.cards[3].label }}>Draft Letters</p>
           <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: N_FG }}>{documentsDb?.rows.length ?? 0} saved drafts</p>
         </div>
       </div>
@@ -1610,14 +1646,14 @@ function WeddingWorkspaceDashboard({
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
 
         {/* Budget overview */}
-        <div style={{ borderRadius: "12px", background: "linear-gradient(135deg, #fff7f9 0%, #ffe4ed 100%)", border: "1px solid #fecdd3", padding: "16px" }}>
+        <div style={{ borderRadius: "12px", background: theme.cards[1].bg, border: `1px solid ${theme.cards[1].border}`, padding: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: "#be185d22" }}>
-                <span style={{ fontSize: "15px", fontWeight: 800, color: "#be185d" }}>£</span>
+              <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: theme.cards[1].iconBg }}>
+                <span style={{ fontSize: "15px", fontWeight: 800, color: theme.cards[1].icon }}>£</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <span style={{ fontSize: "13px", fontWeight: 700, color: "#9d174d" }}>Budget Overview</span>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: theme.cards[1].label }}>Budget Overview</span>
                 <span style={{ fontSize: "10px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   Currency: {currencyCode}
                 </span>
@@ -1626,21 +1662,21 @@ function WeddingWorkspaceDashboard({
             {editingField === "budget" ? (
               <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
                 <input type="number" min={0} value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} style={{ height: "26px", width: "96px", padding: "0 7px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT }} />
-                <button type="button" onClick={() => void commitInlineEdit("budget")} disabled={savingDetails} style={{ border: "none", background: "#be185d22", borderRadius: "6px", cursor: "pointer", padding: "3px 5px", color: "#be185d" }}><Check size={12} /></button>
+                <button type="button" onClick={() => void commitInlineEdit("budget")} disabled={savingDetails} style={{ border: "none", background: theme.cards[1].iconBg, borderRadius: "6px", cursor: "pointer", padding: "3px 5px", color: theme.cards[1].icon }}><Check size={12} /></button>
                 <button type="button" onClick={() => cancelInlineEdit("budget")} disabled={savingDetails} style={{ border: "none", background: "transparent", borderRadius: "6px", cursor: "pointer", padding: "3px", color: N_SUBTLE }}><X size={12} /></button>
               </div>
             ) : (
-              <button type="button" onClick={() => setEditingField("budget")} style={{ border: "none", background: "#be185d18", borderRadius: "6px", cursor: "pointer", padding: "3px 9px", color: "#be185d", fontSize: "11px", display: "flex", alignItems: "center", gap: "3px" }}><Pencil size={10} /> Edit</button>
+              <button type="button" onClick={() => setEditingField("budget")} style={{ border: "none", background: theme.cards[1].editBg, borderRadius: "6px", cursor: "pointer", padding: "3px 9px", color: theme.cards[1].icon, fontSize: "11px", display: "flex", alignItems: "center", gap: "3px" }}><Pencil size={10} /> Edit</button>
             )}
           </div>
 
           <p style={{ margin: "0 0 1px", fontSize: "30px", fontWeight: 800, color: N_FG, letterSpacing: "-0.02em" }}>{formatCurrency(totalBudget, currencyCode)}</p>
-          <p style={{ margin: "0 0 12px", fontSize: "10px", color: "#9d174d88", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Total budget</p>
+          <p style={{ margin: "0 0 12px", fontSize: "10px", color: theme.cards[1].muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Total budget</p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "12px" }}>
             <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(190,24,93,0.1)" }}>
               <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Spent</p>
-              <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "#be185d" }}>{formatCurrency(totalSpent, currencyCode)}</p>
+              <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: theme.cards[1].icon }}>{formatCurrency(totalSpent, currencyCode)}</p>
               <div style={{ marginTop: "4px", display: "flex", flexDirection: "column", gap: "3px" }}>
                 <p style={{ margin: 0, fontSize: "10px", color: N_SUBTLE }}>
                   Guest plan: {formatCurrency(guestSpend, currencyCode)}
@@ -1671,10 +1707,10 @@ function WeddingWorkspaceDashboard({
 
           {totalBudget !== null && totalBudget > 0 && (
             <>
-              <div style={{ height: "9px", borderRadius: "999px", background: "rgba(190,24,93,0.1)", overflow: "hidden", marginBottom: "5px" }}>
-                <div style={{ height: "100%", width: `${budgetUsedPercent}%`, background: budgetUsedPercent >= 100 ? "rgb(220,38,38)" : "linear-gradient(90deg, #be185d, #e11d74)", borderRadius: "999px", transition: "width 0.4s ease" }} />
+              <div style={{ height: "9px", borderRadius: "999px", background: theme.cards[1].iconBg, overflow: "hidden", marginBottom: "5px" }}>
+                <div style={{ height: "100%", width: `${budgetUsedPercent}%`, background: budgetUsedPercent >= 100 ? "rgb(220,38,38)" : theme.cards[1].icon, borderRadius: "999px", transition: "width 0.4s ease" }} />
               </div>
-              <p style={{ margin: 0, fontSize: "11px", color: "#9d174d", fontWeight: 600 }}>{budgetUsedPercent}% of budget used</p>
+              <p style={{ margin: 0, fontSize: "11px", color: theme.cards[1].label, fontWeight: 600 }}>{budgetUsedPercent}% of budget used</p>
             </>
           )}
         </div>
