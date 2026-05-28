@@ -42,7 +42,7 @@ async function seed() {
       "generate high-quality, factual content using the provided context, and write the result " +
       "back to the appropriate Notion property. Be concise and accurate.",
     model: "claude-sonnet-4-5",
-    skillList: ["notion_query", "notion_write", "enrich_record"],
+    toolList: ["notion_query", "notion_write", "enrich_record"],
     defaultConfig: { maxTurns: 10, timeoutMs: 60000 },
     createdAt: now,
     updatedAt: now,

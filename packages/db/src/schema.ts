@@ -571,3 +571,34 @@ export const customerWorkflows = pgTable("customer_workflows", {
 }));
 
 export type CustomerWorkflowRow = typeof customerWorkflows.$inferSelect;
+
+// ─── User Connections ─────────────────────────────────────────────────────────
+
+/**
+ * user_connections — OAuth tokens for third-party integrations.
+ *
+ * Keyed by (userId, provider). Adding a new provider (Airtable, Google Sheets…)
+ * is just a new row — no schema change required.
+ */
+export const userConnections = pgTable("user_connections", {
+  id: text("id").primaryKey(),
+  /** Customer email — our stable user identifier. */
+  userId: text("user_id").notNull(),
+  /** Provider slug: "notion" | "airtable" | … */
+  provider: text("provider").notNull(),
+  /** Provider's own user / bot ID. */
+  providerUserId: text("provider_user_id"),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  /** Arbitrary provider metadata (workspace name, bot_id, etc.). */
+  metadata: jsonb("metadata").notNull().default({}),
+  connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  userProviderUniq: unique().on(t.userId, t.provider),
+  userIdIdx: index("user_connections_user_id_idx").on(t.userId),
+}));
+
+export type UserConnectionRow = typeof userConnections.$inferSelect;
+export type NewUserConnectionRow = typeof userConnections.$inferInsert;

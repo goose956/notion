@@ -56,6 +56,8 @@ import {
   type SupportMessageRow,
   customerWorkflows,
   type CustomerWorkflowRow,
+  userConnections,
+  type UserConnectionRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -1472,5 +1474,70 @@ export async function removeCustomerWorkflow(
         eq(customerWorkflows.nichePackId, nichePackId),
       ),
     );
+}
+
+// ─── User Connections queries ────────────────────────────────────────────────
+
+/** Upsert an OAuth connection for a user. On conflict, updates the token + metadata. */
+export async function upsertUserConnection(data: {
+  userId: string;
+  provider: string;
+  providerUserId?: string;
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt?: Date;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const { randomUUID } = await import("node:crypto");
+  await db
+    .insert(userConnections)
+    .values({
+      id: randomUUID(),
+      userId: data.userId,
+      provider: data.provider,
+      providerUserId: data.providerUserId ?? null,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken ?? null,
+      expiresAt: data.expiresAt ?? null,
+      metadata: (data.metadata ?? {}) as Record<string, unknown>,
+      connectedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [userConnections.userId, userConnections.provider],
+      set: {
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken ?? null,
+        expiresAt: data.expiresAt ?? null,
+        providerUserId: data.providerUserId ?? null,
+        metadata: (data.metadata ?? {}) as Record<string, unknown>,
+        updatedAt: new Date(),
+      },
+    });
+}
+
+/** Get a single connection for a user+provider. Returns undefined if not connected. */
+export async function getUserConnection(
+  userId: string,
+  provider: string,
+): Promise<UserConnectionRow | undefined> {
+  const rows = await db
+    .select()
+    .from(userConnections)
+    .where(and(eq(userConnections.userId, userId), eq(userConnections.provider, provider)))
+    .limit(1);
+  return rows[0];
+}
+
+/** List all connections for a user. */
+export async function listUserConnections(userId: string): Promise<UserConnectionRow[]> {
+  return db.select().from(userConnections).where(eq(userConnections.userId, userId));
+}
+
+/** Remove a connection. */
+export async function deleteUserConnection(userId: string, provider: string): Promise<void> {
+  await db
+    .delete(userConnections)
+    .where(and(eq(userConnections.userId, userId), eq(userConnections.provider, provider)));
 }
 

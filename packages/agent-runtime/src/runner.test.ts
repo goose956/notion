@@ -40,7 +40,7 @@ const MOCK_AGENT_DEF = {
   description: "",
   systemPrompt: "You are a test agent.",
   model: "claude-sonnet-4-5",
-  skillList: [] as string[],
+  toolList: [] as string[],
   defaultConfig: { maxTurns: 3, timeoutMs: 10_000 },
   nicheId: null,
   createdAt: new Date(),

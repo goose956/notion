@@ -203,6 +203,9 @@ export function MembersNav({
 
       {/* Browse Workflows — standalone link */}
       {navItem(TOP_ITEMS[2].href, TOP_ITEMS[2].emoji, TOP_ITEMS[2].label, topMaxScore >= 0 && topItemScores[2] === topMaxScore)}
+
+      {/* Connections */}
+      {navItem("/members/connections", "🔗", "Connections", isActive("/members/connections"))}
     </nav>
   );
 }

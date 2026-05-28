@@ -14,6 +14,7 @@ import {
 } from "@niche-factory/db";
 import { randomUUID } from "node:crypto";
 import { auth } from "@/auth";
+import { resolveNotionToken } from "@/lib/resolve-notion-token";
 
 const DeployRequestSchema = z.object({
   pack: NichePackSchema,
@@ -25,11 +26,9 @@ const DeployRequestSchema = z.object({
 // POST /api/deploy — push a niche pack to a Notion workspace OR an in-app workspace
 export async function POST(request: NextRequest) {
   const session = await auth();
-  const notionToken =
-    (session as unknown as Record<string, unknown> | null)?.["notionToken"] as string | undefined ??
-    process.env["NOTION_TOKEN"];
-
   const userEmail = session?.user?.email;
+  const sessionNotionToken = (session as unknown as Record<string, unknown> | null)?.["notionToken"] as string | undefined;
+  const notionToken = await resolveNotionToken(userEmail, sessionNotionToken);
 
   // Must be authenticated by either Notion OAuth or email credentials
   if (!notionToken && !userEmail) {

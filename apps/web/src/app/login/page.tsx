@@ -1,5 +1,4 @@
 import { signIn } from "@/auth";
-import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 
 function resolveSafeCallbackUrl(callbackUrl: string | undefined): string {
@@ -25,34 +24,44 @@ export default function LoginPage({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/s-logo.png" alt="Stridivo" className="h-16 w-auto" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Welcome to Stridivo</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Sign in to Stridivo</h1>
           <p className="text-sm text-muted-foreground">
-            Connect your Notion workspace and build niche systems with AI
+            Enter the email address you signed up with
           </p>
         </div>
 
         <form
-          action={async () => {
+          action={async (formData: FormData) => {
             "use server";
-            await signIn("notion", {
-              redirectTo: callbackUrl,
-            });
+            const email = (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
+            if (!email || !email.includes("@")) return;
+            await signIn("email", { email, redirectTo: callbackUrl });
           }}
+          className="space-y-3"
         >
-          <Button type="submit" className="w-full gap-2">
-            <NotionIcon />
-            Continue with Notion
-          </Button>
+          <input
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <button
+            type="submit"
+            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Continue with email
+          </button>
         </form>
 
         <p className="text-center text-xs text-muted-foreground">
-          By signing in you grant read/write access to your Notion workspace so
-          Stridivo.com can deploy databases on your behalf.
+          You can connect Notion, Airtable and other integrations from your account after signing in.
         </p>
 
         <ul className="space-y-2 border-t pt-4">
           {[
-            "Deploy a full Notion database schema in seconds",
+            "AI niche workspaces built in seconds",
             "AI assistant pre-loaded with your niche context",
             "25 free research credits included on signup",
           ].map((feat) => (

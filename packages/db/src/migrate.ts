@@ -53,7 +53,7 @@ await client.unsafe(`
 const appWorkspaceRegclass = await client.unsafe(
   "select to_regclass('public.app_workspaces') as regclass",
 );
-const hasAppWorkspaceTable = appWorkspaceRegclass?.[0]?.regclass !== null;
+const hasAppWorkspaceTable = appWorkspaceRegclass?.[0]?.["regclass"] !== null;
 if (!hasAppWorkspaceTable) {
   const appWorkspaceSqlPath = join(__dirname, "../drizzle/0013_app_workspace.sql");
   const appWorkspaceSql = fs.readFileSync(appWorkspaceSqlPath, "utf-8");
@@ -65,7 +65,7 @@ if (!hasAppWorkspaceTable) {
 const activationLinksRegclass = await client.unsafe(
   "select to_regclass('public.activation_links') as regclass",
 );
-const hasActivationLinksTable = activationLinksRegclass?.[0]?.regclass !== null;
+const hasActivationLinksTable = activationLinksRegclass?.[0]?.["regclass"] !== null;
 if (!hasActivationLinksTable) {
   const activationLinksSqlPath = join(__dirname, "../drizzle/0015_activation_links.sql");
   const activationLinksSql = fs.readFileSync(activationLinksSqlPath, "utf-8");

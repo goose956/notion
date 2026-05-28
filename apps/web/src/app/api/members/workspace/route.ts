@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { resolveNotionToken } from "@/lib/resolve-notion-token";
 import {
   listNichePacks,
   getNichePack,
@@ -191,9 +192,8 @@ export async function GET(_req: NextRequest) {
   }
 
   const userEmail = session.user.email;
-  const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
-    | string
-    | undefined;
+  const sessionNotionToken = (session as unknown as Record<string, unknown>)["notionToken"] as string | undefined;
+  const notionToken = await resolveNotionToken(userEmail, sessionNotionToken);
   const hasAnyAppWorkspaces =
     typeof userEmail === "string" && userEmail.length > 0
       ? (await listAppWorkspacesByUser(userEmail).catch(() => [])).length > 0
@@ -529,9 +529,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
-    | string
-    | undefined;
+  const notionToken = await resolveNotionToken(
+    session.user.email,
+    (session as unknown as Record<string, unknown>)["notionToken"] as string | undefined,
+  );
 
   let body: unknown;
   try {
