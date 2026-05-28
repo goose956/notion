@@ -7,8 +7,18 @@ function trimTrailingSlash(value: string): string {
 /**
  * Resolve the canonical public app URL for OAuth redirects.
  */
-export function resolvePublicAppUrl(): string {
+export function resolvePublicAppUrl(requestUrl?: string): string {
+  const reqOrigin = (() => {
+    if (!requestUrl) return undefined;
+    try {
+      return new URL(requestUrl).origin;
+    } catch {
+      return undefined;
+    }
+  })();
+
   const raw =
+    reqOrigin ??
     process.env["AUTH_URL"] ??
     process.env["NEXTAUTH_URL"] ??
     process.env["RAILWAY_PUBLIC_DOMAIN"] ??
@@ -26,10 +36,10 @@ export function resolvePublicAppUrl(): string {
  * Exact redirect URI used for Notion OAuth authorize + token exchange.
  * Can be overridden for strict environments via NOTION_OAUTH_REDIRECT_URI.
  */
-export function resolveNotionRedirectUri(): string {
+export function resolveNotionRedirectUri(requestUrl?: string): string {
   const explicit = process.env["NOTION_OAUTH_REDIRECT_URI"];
   if (explicit && explicit.trim().length > 0) {
     return trimTrailingSlash(explicit.trim());
   }
-  return `${resolvePublicAppUrl()}/api/connect/notion/callback`;
+  return `${resolvePublicAppUrl(requestUrl)}/api/connect/notion/callback`;
 }

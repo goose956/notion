@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const baseUrl = resolvePublicAppUrl();
+  const baseUrl = resolvePublicAppUrl(req.url);
   const connectionsUrl = `${baseUrl}/members/connections`;
 
   const { searchParams } = new URL(req.url);
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
   // Exchange authorisation code for access token
   const clientId = process.env["NOTION_CLIENT_ID"] ?? "";
   const clientSecret = process.env["NOTION_CLIENT_SECRET"] ?? "";
-  const redirectUri = resolveNotionRedirectUri();
+  const redirectUri = resolveNotionRedirectUri(req.url);
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
   let tokenData: Record<string, unknown>;

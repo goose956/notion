@@ -29,11 +29,11 @@ export async function GET(req: NextRequest) {
 
   const clientId = process.env["NOTION_CLIENT_ID"] ?? "";
   if (!clientId) {
-    const baseUrl = resolvePublicAppUrl();
+    const baseUrl = resolvePublicAppUrl(req.url);
     return NextResponse.redirect(`${baseUrl}/members/connections?error=notion_config`);
   }
 
-  const redirectUri = resolveNotionRedirectUri();
+  const redirectUri = resolveNotionRedirectUri(req.url);
 
   const url = new URL("https://api.notion.com/v1/oauth/authorize");
   url.searchParams.set("client_id", clientId);
