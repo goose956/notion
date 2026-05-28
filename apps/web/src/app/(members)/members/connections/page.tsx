@@ -1,5 +1,4 @@
 import { auth } from "@/auth";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { deleteUserConnection, listUserConnections } from "@niche-factory/db";
 import type { UserConnectionRow } from "@niche-factory/db";
@@ -227,6 +226,11 @@ export default async function ConnectionsPage({
   const connections = await listUserConnections(userEmail).catch(() => [] as UserConnectionRow[]);
   const connectionsByProvider = Object.fromEntries(connections.map((c) => [c.provider, c]));
   const notionConnected = connections.some((c) => c.provider === "notion");
+  const notionMeta = (connectionsByProvider["notion"]?.metadata ?? {}) as Record<string, unknown>;
+  const notionWorkspaceId = typeof notionMeta["workspaceId"] === "string" ? notionMeta["workspaceId"] : undefined;
+  const notionOpenUrl = notionWorkspaceId
+    ? `https://www.notion.so/${notionWorkspaceId.replace(/-/g, "")}`
+    : "https://www.notion.so/";
 
   // Determine flash state from query params
   const connectedFlash = searchParams.connected ?? null;
@@ -262,9 +266,14 @@ export default async function ConnectionsPage({
             Notion is connected. This only authorises access.
             You choose the exact Notion page during workflow setup when deploying databases.
           </p>
-          <Link href={"/members/setup/wedding-planner" as never} style={{ fontSize: "13px", color: "rgb(35,131,226)", textDecoration: "none", fontWeight: 500 }}>
-            Open setup and choose your Notion page
-          </Link>
+          <a
+            href={notionOpenUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: "13px", color: "rgb(35,131,226)", textDecoration: "none", fontWeight: 500 }}
+          >
+            Open Notion
+          </a>
         </div>
       )}
 
