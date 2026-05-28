@@ -171,6 +171,26 @@ await client.unsafe(`
   ON CONFLICT (email, niche_pack_id) DO NOTHING;
 `);
 
+// Recovery fix: ensure user_connections exists for provider OAuth persistence.
+await client.unsafe(`
+  CREATE TABLE IF NOT EXISTS user_connections (
+    id               text        PRIMARY KEY,
+    user_id          text        NOT NULL,
+    provider         text        NOT NULL,
+    provider_user_id text,
+    access_token     text        NOT NULL,
+    refresh_token    text,
+    expires_at       timestamptz,
+    metadata         jsonb       NOT NULL DEFAULT '{}',
+    connected_at     timestamptz NOT NULL DEFAULT now(),
+    updated_at       timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT user_connections_user_provider_uniq UNIQUE (user_id, provider)
+  );
+
+  CREATE INDEX IF NOT EXISTS user_connections_user_id_idx
+    ON user_connections (user_id);
+`);
+
 console.log("Schema fixups complete.");
 
 await client.end();
