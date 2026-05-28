@@ -91,19 +91,47 @@ export function MembersNav({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: "6px",
-        padding: "3px 8px 3px 28px",
-        borderRadius: "3px",
+        gap: "8px",
+        padding: "5px 8px 5px 24px",
+        borderRadius: "4px",
         fontSize: "13px",
         color: active ? "#37352F" : "rgba(55,53,47,0.75)",
-        background: active ? "rgba(55,53,47,0.08)" : "transparent",
+        background: active ? "rgba(35,131,226,0.08)" : "transparent",
         textDecoration: "none",
         userSelect: "none",
+        border: active ? "1px solid rgba(35,131,226,0.2)" : "1px solid transparent",
       }}
       className="hover:bg-[rgba(55,53,47,0.06)]"
     >
-      <span style={{ fontSize: "13px", lineHeight: 1, flexShrink: 0 }}>{emoji}</span>
-      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+      {/* Radio indicator */}
+      <span
+        style={{
+          width: "14px",
+          height: "14px",
+          borderRadius: "50%",
+          border: active ? "2px solid rgb(35,131,226)" : "2px solid rgba(55,53,47,0.25)",
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "transparent",
+          transition: "border-color 0.15s",
+        }}
+      >
+        {active && (
+          <span
+            style={{
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              background: "rgb(35,131,226)",
+              display: "block",
+            }}
+          />
+        )}
+      </span>
+      <span style={{ fontSize: "14px", lineHeight: 1, flexShrink: 0 }}>{emoji}</span>
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, fontWeight: active ? 500 : 400 }}>
         {label}
       </span>
     </Link>
@@ -161,14 +189,14 @@ export function MembersNav({
       </button>
 
       {/* Workflow sub-items — only active workflows, no Browse link */}
-      {!collapsed && workspaceOpen && extraWorkflows.map((w) =>
-        subItem(
-          `/members/workspace?niche=${w.id}`,
-          w.emoji,
-          w.name,
-          isActive("/members/workspace") && searchParams.get("niche") === w.id,
-        ),
-      )}
+      {!collapsed && workspaceOpen && extraWorkflows.map((w, i) => {
+        const nicheParam = searchParams.get("niche");
+        // Active if URL has this niche, OR if on /members/workspace with no niche param and this is the first workflow
+        const active = isActive("/members/workspace") && (
+          nicheParam === w.id || (nicheParam === null && i === 0)
+        );
+        return subItem(`/members/workspace?niche=${w.id}`, w.emoji, w.name, active);
+      })}
 
       {/* Research Assistant */}
       {navItem(TOP_ITEMS[1].href, TOP_ITEMS[1].emoji, TOP_ITEMS[1].label, topMaxScore >= 0 && topItemScores[1] === topMaxScore)}
