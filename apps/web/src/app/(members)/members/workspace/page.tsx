@@ -1019,6 +1019,65 @@ function parseWeddingDate(value: unknown): Date | null {
   return parsed;
 }
 
+// ─── Dashboard colour themes ───────────────────────────────────────────────
+const DASHBOARD_THEMES = [
+  {
+    id: "rose",
+    label: "Rose",
+    emoji: "🌹",
+    gradient: "linear-gradient(135deg, #2a0f1e 0%, #6b2040 42%, #a85470 72%, #d4957a 100%)",
+    shadow: "rgba(107,32,64,0.28)",
+    innerBg: "rgba(30,8,20,0.85)",
+    accent: "#c4597a",
+  },
+  {
+    id: "ocean",
+    label: "Ocean",
+    emoji: "🌊",
+    gradient: "linear-gradient(135deg, #0a1628 0%, #0e3a5e 42%, #1a6a8a 72%, #38b2c8 100%)",
+    shadow: "rgba(14,58,94,0.30)",
+    innerBg: "rgba(6,16,32,0.85)",
+    accent: "#38b2c8",
+  },
+  {
+    id: "forest",
+    label: "Forest",
+    emoji: "🌿",
+    gradient: "linear-gradient(135deg, #071a0a 0%, #1a4d2a 42%, #2d7a4a 72%, #68c88a 100%)",
+    shadow: "rgba(26,77,42,0.30)",
+    innerBg: "rgba(6,18,8,0.85)",
+    accent: "#4aba72",
+  },
+  {
+    id: "twilight",
+    label: "Twilight",
+    emoji: "💜",
+    gradient: "linear-gradient(135deg, #120a2e 0%, #3b1a7a 42%, #7c3aed 72%, #c4b5fd 100%)",
+    shadow: "rgba(59,26,122,0.30)",
+    innerBg: "rgba(14,8,32,0.85)",
+    accent: "#a78bfa",
+  },
+  {
+    id: "sunset",
+    label: "Sunset",
+    emoji: "🌅",
+    gradient: "linear-gradient(135deg, #1e0900 0%, #7c2d00 42%, #c96400 72%, #f5c542 100%)",
+    shadow: "rgba(124,45,0,0.30)",
+    innerBg: "rgba(20,8,0,0.85)",
+    accent: "#f59e0b",
+  },
+  {
+    id: "pride",
+    label: "Pride",
+    emoji: "🌈",
+    gradient: "linear-gradient(135deg, #e40303 0%, #ff8c00 20%, #ffed00 37%, #008026 55%, #004dff 73%, #750787 100%)",
+    shadow: "rgba(100,40,120,0.28)",
+    innerBg: "rgba(20,0,30,0.88)",
+    accent: "#ff8c00",
+  },
+] as const;
+type ThemeId = (typeof DASHBOARD_THEMES)[number]["id"];
+
 function WeddingWorkspaceDashboard({
   databases,
   weddingCriteria,
@@ -1028,6 +1087,18 @@ function WeddingWorkspaceDashboard({
   weddingCriteria: Record<string, unknown> | null;
   onWeddingCriteriaUpdated: (criteria: Record<string, unknown>) => void;
 }) {
+  const [themeId, setThemeId] = useState<ThemeId>(() => {
+    if (typeof window === "undefined") return "rose";
+    return (localStorage.getItem("wsDashboardTheme") as ThemeId | null) ?? "rose";
+  });
+  const [showThemePicker, setShowThemePicker] = useState(false);
+  const theme = DASHBOARD_THEMES.find((t) => t.id === themeId) ?? DASHBOARD_THEMES[0];
+
+  function selectTheme(id: ThemeId) {
+    setThemeId(id);
+    localStorage.setItem("wsDashboardTheme", id);
+    setShowThemePicker(false);
+  }
   const [coupleNamesInput, setCoupleNamesInput] = useState(asText(weddingCriteria?.["couple-names"]) ?? "");
   const [venueInput, setVenueInput] = useState(asText(weddingCriteria?.["wedding-location"]) ?? "");
   const [guestCountInput, setGuestCountInput] = useState(String(asNumber(weddingCriteria?.["guest-count"]) ?? ""));
@@ -1265,9 +1336,9 @@ function WeddingWorkspaceDashboard({
       <section
         style={{
           borderRadius: "16px",
-          background: "linear-gradient(135deg, #2a0f1e 0%, #6b2040 42%, #a85470 72%, #d4957a 100%)",
+          background: theme.gradient,
           overflow: "hidden",
-          boxShadow: "0 12px 40px rgba(107,32,64,0.28), 0 2px 8px rgba(0,0,0,0.10)",
+          boxShadow: `0 12px 40px ${theme.shadow}, 0 2px 8px rgba(0,0,0,0.10)`,
           display: "grid",
           gridTemplateColumns: "1fr auto auto",
         }}
@@ -1277,6 +1348,44 @@ function WeddingWorkspaceDashboard({
           <p style={{ margin: "0 0 10px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
             ✦ Wedding Dashboard
           </p>
+          {/* Theme picker */}
+          <div style={{ position: "relative", marginBottom: "10px" }}>
+            <button
+              type="button"
+              onClick={() => setShowThemePicker((s) => !s)}
+              title="Change theme"
+              style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 9px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.28)", background: "rgba(255,255,255,0.12)", cursor: "pointer", fontSize: "11px", color: "rgba(255,255,255,0.85)", fontFamily: N_FONT }}
+            >
+              <Palette size={11} /> {theme.emoji} {theme.label}
+            </button>
+            {showThemePicker && (
+              <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 50, background: "white", borderRadius: "10px", boxShadow: "0 8px 28px rgba(0,0,0,0.18)", padding: "10px 12px", display: "flex", gap: "8px", flexWrap: "wrap", minWidth: "220px", border: "1px solid rgba(0,0,0,0.08)" }}>
+                {DASHBOARD_THEMES.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => selectTheme(t.id)}
+                    title={t.label}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "6px 8px",
+                      borderRadius: "8px",
+                      border: t.id === themeId ? "2px solid #37352F" : "2px solid transparent",
+                      background: t.id === themeId ? "rgba(55,53,47,0.07)" : "transparent",
+                      cursor: "pointer",
+                      fontFamily: N_FONT,
+                    }}
+                  >
+                    <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: t.gradient, flexShrink: 0, boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }} />
+                    <span style={{ fontSize: "10px", color: "#37352F", fontWeight: t.id === themeId ? 700 : 400 }}>{t.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
             {editingField === "couple" ? (
               <input
@@ -1401,7 +1510,7 @@ function WeddingWorkspaceDashboard({
                 width: "80px",
                 height: "80px",
                 borderRadius: "999px",
-                background: "rgba(30,8,20,0.85)",
+                background: theme.innerBg,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
