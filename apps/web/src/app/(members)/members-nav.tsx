@@ -9,6 +9,7 @@ import { WORKFLOW_CATALOG } from "@/lib/workflow-catalog";
 const TOP_ITEMS = [
   { emoji: "🚀", label: "Get Started", href: "/members/get-started?view=1" },
   { emoji: "🔍", label: "Research Assistant", href: "/members/chat" },
+  { emoji: "🔖", label: "Browse Workflows", href: "/members/workflows" },
 ] as const;
 
 export function MembersNav({
@@ -119,7 +120,7 @@ export function MembersNav({
       {/* Get Started */}
       {navItem(TOP_ITEMS[0].href, TOP_ITEMS[0].emoji, TOP_ITEMS[0].label, topMaxScore >= 0 && topItemScores[0] === topMaxScore)}
 
-      {/* My Workspace — toggleable dropdown */}
+      {/* My Workspace — toggleable dropdown containing active workflows */}
       <button
         type="button"
         onClick={() => !collapsed && setWorkspaceOpen((o) => !o)}
@@ -159,28 +160,21 @@ export function MembersNav({
         )}
       </button>
 
-      {/* Sub-items — only shown when expanded and sidebar not icon-only */}
-      {!collapsed && workspaceOpen && (
-        <>
-          {extraWorkflows.map((w) =>
-            subItem(
-              `/members/workspace?niche=${w.id}`,
-              w.emoji,
-              w.name,
-              isActive("/members/workspace") && searchParams.get("niche") === w.id,
-            ),
-          )}
-          {subItem(
-            "/members/workflows",
-            "＋",
-            "Browse workflows",
-            isActive("/members/workflows"),
-          )}
-        </>
+      {/* Workflow sub-items — only active workflows, no Browse link */}
+      {!collapsed && workspaceOpen && extraWorkflows.map((w) =>
+        subItem(
+          `/members/workspace?niche=${w.id}`,
+          w.emoji,
+          w.name,
+          isActive("/members/workspace") && searchParams.get("niche") === w.id,
+        ),
       )}
 
       {/* Research Assistant */}
       {navItem(TOP_ITEMS[1].href, TOP_ITEMS[1].emoji, TOP_ITEMS[1].label, topMaxScore >= 0 && topItemScores[1] === topMaxScore)}
+
+      {/* Browse Workflows — standalone link */}
+      {navItem(TOP_ITEMS[2].href, TOP_ITEMS[2].emoji, TOP_ITEMS[2].label, topMaxScore >= 0 && topItemScores[2] === topMaxScore)}
     </nav>
   );
 }
