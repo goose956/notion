@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 const N_BLUE = "rgb(35,131,226)";
 const N_FONT =
   'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
 
 export function AddWorkflowButton({ slug }: { slug: string }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -21,7 +19,8 @@ export function AddWorkflowButton({ slug }: { slug: string }) {
         body: JSON.stringify({ slug }),
       });
       setDone(true);
-      router.refresh();
+      // Full reload so the sidebar layout re-fetches activeWorkflows from the server
+      window.location.reload();
     } finally {
       setLoading(false);
     }
@@ -34,16 +33,16 @@ export function AddWorkflowButton({ slug }: { slug: string }) {
           fontFamily: N_FONT,
           display: "inline-flex",
           alignItems: "center",
-          gap: 6,
-          padding: "10px 20px",
-          borderRadius: 8,
+          gap: 5,
+          padding: "6px 12px",
+          borderRadius: 6,
           background: "rgb(15,123,108)",
           color: "#fff",
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: 600,
         }}
       >
-        ✓ Added to your workspace
+        ✓ Added
       </div>
     );
   }
@@ -56,19 +55,19 @@ export function AddWorkflowButton({ slug }: { slug: string }) {
         fontFamily: N_FONT,
         display: "inline-flex",
         alignItems: "center",
-        gap: 8,
-        padding: "10px 24px",
-        borderRadius: 8,
+        gap: 6,
+        padding: "6px 14px",
+        borderRadius: 6,
         background: loading ? "rgba(35,131,226,0.6)" : N_BLUE,
         color: "#fff",
-        fontSize: 15,
+        fontSize: 12,
         fontWeight: 600,
         border: "none",
         cursor: loading ? "not-allowed" : "pointer",
         transition: "background 0.15s",
       }}
     >
-      {loading ? "Adding…" : "＋ Add to my workspace"}
+      {loading ? "Adding…" : "＋ Add to workspace"}
     </button>
   );
 }

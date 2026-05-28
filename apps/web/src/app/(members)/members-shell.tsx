@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Coins, LogOut, Menu, User, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Coins, LogOut, Menu, MessageCircle, User, X } from "lucide-react";
 import { MembersNav } from "./members-nav";
 
 const N_FONT =
@@ -351,6 +351,41 @@ export function MembersShell({
           >
             <Coins style={{ width: "14px", height: "14px", flexShrink: 0 }} />
             {!sidebarCollapsed && "Credits"}
+          </Link>
+          <Link
+            href={"/members/support" as never}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: sidebarCollapsed ? "center" : "flex-start",
+              gap: "6px",
+              padding: "4px 8px",
+              borderRadius: "3px",
+              fontSize: "14px",
+              color: "rgba(55,53,47,0.65)",
+              textDecoration: "none",
+              position: "relative",
+            }}
+            className="hover:bg-[rgba(55,53,47,0.06)]"
+            title={sidebarCollapsed ? "Support" : undefined}
+          >
+            <MessageCircle style={{ width: "14px", height: "14px", flexShrink: 0 }} />
+            {!sidebarCollapsed && "Support"}
+            {supportUnread > 0 && (
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "7px",
+                  height: "7px",
+                  borderRadius: "50%",
+                  background: "rgb(235,87,87)",
+                  flexShrink: 0,
+                  ...(sidebarCollapsed
+                    ? { position: "absolute", top: "4px", right: "4px" }
+                    : {}),
+                }}
+              />
+            )}
           </Link>
           <Link
             href={"/members/profile" as never}

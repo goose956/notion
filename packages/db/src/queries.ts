@@ -1459,3 +1459,18 @@ export async function addCustomerWorkflow(
     .onConflictDoNothing();
 }
 
+/** Remove a workflow from the customer's account. */
+export async function removeCustomerWorkflow(
+  email: string,
+  nichePackId: string,
+): Promise<void> {
+  await db
+    .delete(customerWorkflows)
+    .where(
+      and(
+        eq(customerWorkflows.email, email),
+        eq(customerWorkflows.nichePackId, nichePackId),
+      ),
+    );
+}
+
