@@ -11,6 +11,7 @@ interface ActivateClientProps {
 // Wedding-specific onboarding questions shown after activation
 const WEDDING_QUESTIONS = [
   { id: "wedding-country", label: "Country", type: "select", required: true, options: ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)"] },
+  { id: "couple-names", label: "Couple's names", type: "text", required: true, placeholder: "e.g. Sarah & James" },
   { id: "wedding-date", label: "Wedding date or approximate timeframe", type: "text", required: true, placeholder: "e.g. 14 June 2026 or Summer 2026" },
   { id: "wedding-location", label: "Wedding location", type: "text", required: true, placeholder: "e.g. Cotswolds, Edinburgh, Bristol" },
   { id: "guest-count", label: "Guest count", type: "number", required: true, placeholder: "e.g. 80" },
@@ -39,6 +40,7 @@ export default function ActivateClient({ token }: ActivateClientProps) {
   const [credits, setCredits] = useState<number>(0);
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<WeddingQId, string>>({
     "wedding-country": "United Kingdom",
+    "couple-names": "",
     "wedding-date": "",
     "wedding-location": "",
     "guest-count": "",
