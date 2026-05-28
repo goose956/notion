@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Coins, LogOut, Menu, Settings2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Coins, LogOut, Menu, User, X } from "lucide-react";
 import { MembersNav } from "./members-nav";
 
 const N_FONT =
@@ -222,118 +222,117 @@ export function MembersShell({
 
         <div style={{ flex: 1 }} />
 
-        {!sidebarCollapsed && (
-          <div
-            style={{
-              margin: "0 8px 4px",
-              padding: "8px 10px",
-              borderRadius: "6px",
-              background:
-                credits === 0
-                  ? "rgba(239,68,68,0.08)"
-                  : credits <= 5
-                    ? "rgba(245,158,11,0.08)"
-                    : "rgba(55,53,47,0.04)",
-              border: `1px solid ${
-                credits === 0
-                  ? "rgba(239,68,68,0.2)"
-                  : credits <= 5
-                    ? "rgba(245,158,11,0.2)"
-                    : "rgba(55,53,47,0.09)"
-              }`,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-              <Coins
-                style={{
-                  width: "13px",
-                  height: "13px",
-                  flexShrink: 0,
-                  color: credits === 0 ? "#ef4444" : credits <= 5 ? "#f59e0b" : "#37352F",
-                }}
-              />
-              <span
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: credits === 0 ? "#ef4444" : credits <= 5 ? "#d97706" : "#37352F",
-                }}
-              >
-                {credits} credit{credits !== 1 ? "s" : ""} remaining
-              </span>
-            </div>
-            <div
-              style={{
-                height: "4px",
-                borderRadius: "2px",
-                background: "rgba(55,53,47,0.1)",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  height: "100%",
-                  borderRadius: "2px",
-                  width: `${Math.min(100, (credits / 25) * 100)}%`,
-                  background:
-                    credits === 0 ? "#ef4444" : credits <= 5 ? "#f59e0b" : "rgb(35,131,226)",
-                  transition: "width 0.3s ease",
-                }}
-              />
-            </div>
-            {credits === 0 && (
-              <Link
-                href={"/members/credits" as never}
-                style={{
-                  marginTop: "6px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#991b1b",
-                  textDecoration: "none",
-                  borderRadius: "4px",
-                  padding: "5px 8px",
-                  border: "1px solid rgba(239,68,68,0.35)",
-                  background: "rgba(239,68,68,0.12)",
-                }}
-              >
-                Top up credits now
-              </Link>
-            )}
-            {credits > 0 && credits <= 5 && (
-              <Link
-                href={"/members/credits" as never}
-                style={{
-                  marginTop: "6px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#92400e",
-                  textDecoration: "none",
-                  borderRadius: "4px",
-                  padding: "5px 8px",
-                  border: "1px solid rgba(245,158,11,0.35)",
-                  background: "rgba(245,158,11,0.12)",
-                }}
-              >
-                Refill before you run out
-              </Link>
-            )}
-          </div>
-        )}
-
         <div
           style={{
             borderTop: "1px solid rgba(55,53,47,0.09)",
             padding: "4px 8px",
           }}
         >
+          {!sidebarCollapsed && (
+            <div
+              style={{
+                margin: "4px 0 4px",
+                padding: "8px 10px",
+                borderRadius: "6px",
+                background:
+                  credits === 0
+                    ? "rgba(239,68,68,0.08)"
+                    : credits <= 5
+                      ? "rgba(245,158,11,0.08)"
+                      : "rgba(55,53,47,0.04)",
+                border: `1px solid ${
+                  credits === 0
+                    ? "rgba(239,68,68,0.2)"
+                    : credits <= 5
+                      ? "rgba(245,158,11,0.2)"
+                      : "rgba(55,53,47,0.09)"
+                }`,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                <Coins
+                  style={{
+                    width: "13px",
+                    height: "13px",
+                    flexShrink: 0,
+                    color: credits === 0 ? "#ef4444" : credits <= 5 ? "#f59e0b" : "#37352F",
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: credits === 0 ? "#ef4444" : credits <= 5 ? "#d97706" : "#37352F",
+                  }}
+                >
+                  {credits} credit{credits !== 1 ? "s" : ""} remaining
+                </span>
+              </div>
+              <div
+                style={{
+                  height: "4px",
+                  borderRadius: "2px",
+                  background: "rgba(55,53,47,0.1)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    borderRadius: "2px",
+                    width: `${Math.min(100, (credits / 25) * 100)}%`,
+                    background:
+                      credits === 0 ? "#ef4444" : credits <= 5 ? "#f59e0b" : "rgb(35,131,226)",
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+              {credits === 0 && (
+                <Link
+                  href={"/members/credits" as never}
+                  style={{
+                    marginTop: "6px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: "#991b1b",
+                    textDecoration: "none",
+                    borderRadius: "4px",
+                    padding: "5px 8px",
+                    border: "1px solid rgba(239,68,68,0.35)",
+                    background: "rgba(239,68,68,0.12)",
+                  }}
+                >
+                  Top up credits now
+                </Link>
+              )}
+              {credits > 0 && credits <= 5 && (
+                <Link
+                  href={"/members/credits" as never}
+                  style={{
+                    marginTop: "6px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: "#92400e",
+                    textDecoration: "none",
+                    borderRadius: "4px",
+                    padding: "5px 8px",
+                    border: "1px solid rgba(245,158,11,0.35)",
+                    background: "rgba(245,158,11,0.12)",
+                  }}
+                >
+                  Refill before you run out
+                </Link>
+              )}
+            </div>
+          )}
           <Link
-            href="/admin"
+            href={"/members/credits" as never}
             style={{
               display: "flex",
               alignItems: "center",
@@ -346,10 +345,29 @@ export function MembersShell({
               textDecoration: "none",
             }}
             className="hover:bg-[rgba(55,53,47,0.06)]"
-            title={sidebarCollapsed ? "Admin panel" : undefined}
+            title={sidebarCollapsed ? "Credits" : undefined}
           >
-            <Settings2 style={{ width: "14px", height: "14px", flexShrink: 0 }} />
-            {!sidebarCollapsed && "Admin panel"}
+            <Coins style={{ width: "14px", height: "14px", flexShrink: 0 }} />
+            {!sidebarCollapsed && "Credits"}
+          </Link>
+          <Link
+            href={"/members/profile" as never}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: sidebarCollapsed ? "center" : "flex-start",
+              gap: "6px",
+              padding: "4px 8px",
+              borderRadius: "3px",
+              fontSize: "14px",
+              color: "rgba(55,53,47,0.65)",
+              textDecoration: "none",
+            }}
+            className="hover:bg-[rgba(55,53,47,0.06)]"
+            title={sidebarCollapsed ? "Profile" : undefined}
+          >
+            <User style={{ width: "14px", height: "14px", flexShrink: 0 }} />
+            {!sidebarCollapsed && "Profile"}
           </Link>
           <form action={signOutAction}>
             <button

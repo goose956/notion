@@ -7,8 +7,6 @@ const ITEMS = [
   { emoji: "🚀", label: "Get Started", href: "/members/get-started?view=1" },
   { emoji: "🗂️", label: "My Workspace", href: "/members/workspace" },
   { emoji: "🔍", label: "Research Assistant", href: "/members/chat" },
-  { emoji: "💳", label: "Credits", href: "/members/credits" },
-  { emoji: "👤", label: "Profile", href: "/members/profile" },
   { emoji: "🎫", label: "Support", href: "/members/support" },
 ] as const;
 
