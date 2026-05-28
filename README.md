@@ -99,6 +99,39 @@ Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to 
 3. Add enrichment prompts in `niches/[niche-id]/prompts/`
 4. Or: use the AI Draft flow at `/niches/new` to generate all of the above automatically
 
+## Adding a new members workspace niche (UI)
+
+The workspace UI is fully registry-driven — `WorkspacePage` has zero niche-specific code. Adding a new niche is three steps:
+
+**1. Register it** — add an entry to `apps/web/src/lib/niche-registry.ts`:
+```ts
+{
+  nicheId: "my-niche",
+  virtualTabIds: new Set([MY_TABS.DASHBOARD, MY_TABS.TOOL]),
+  defaultTabId: MY_TABS.DASHBOARD,
+  hiddenDbIds: [],
+  accent: { hex: "#...", fgActive: "...", /* ... */ },
+  sidebarEmoji: "🏠",
+  topTabs: [{ tabId: MY_TABS.DASHBOARD, label: "Dashboard", icon: "📊" }],
+  afterDbNamePattern: /main database name/i,
+  afterDbTabs: [{ tabId: MY_TABS.TOOL, label: "My Tool", icon: "🔧" }],
+  dbPropertyInjections: { /* optional virtual columns */ },
+}
+```
+
+**2. Create a shell** — `apps/web/src/components/niches/[niche-id]/shell.tsx`:
+- Receives `activeTab`, `databases`, and any API data it needs
+- Owns all niche-specific state (criteria, live derived values)
+- Returns `null` when `activeTab` is not one of its tabs (stays mounted → state persists across tab switches)
+- See `apps/web/src/components/niches/wedding-planner/shell.tsx` as the reference
+
+**3. Mount the shell** — add one `if` branch to the `NICHE_REGISTRY.map()` block in `page.tsx`:
+```tsx
+if (entry.nicheId === "my-niche") return <MyNicheShell key="my-niche" activeTab={activeTab} ... />;
+```
+
+The view components inside the shell are entirely niche-specific — no conventions needed there.
+
 ## Architecture decisions
 
 - `schema.json` is the contract. Validated by Zod at every boundary.
