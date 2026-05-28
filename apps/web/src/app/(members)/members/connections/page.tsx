@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { deleteUserConnection, listUserConnections } from "@niche-factory/db";
 import type { UserConnectionRow } from "@niche-factory/db";
@@ -225,6 +226,7 @@ export default async function ConnectionsPage({
 
   const connections = await listUserConnections(userEmail).catch(() => [] as UserConnectionRow[]);
   const connectionsByProvider = Object.fromEntries(connections.map((c) => [c.provider, c]));
+  const notionConnected = connections.some((c) => c.provider === "notion");
 
   // Determine flash state from query params
   const connectedFlash = searchParams.connected ?? null;
@@ -251,6 +253,18 @@ export default async function ConnectionsPage({
       {errorMsg && (
         <div style={{ border: "1px solid rgba(220,38,38,0.3)", borderRadius: "6px", background: "rgba(220,38,38,0.05)", padding: "12px 16px", marginBottom: "20px", fontSize: "13px", color: "rgb(185,28,28)" }}>
           {errorMsg}
+        </div>
+      )}
+
+      {notionConnected && (
+        <div style={{ border: "1px solid rgba(35,131,226,0.25)", borderRadius: "6px", background: "rgba(35,131,226,0.06)", padding: "12px 16px", marginBottom: "20px" }}>
+          <p style={{ margin: "0 0 6px", fontSize: "13px", color: N_FG, lineHeight: 1.5 }}>
+            Notion is connected. This only authorises access.
+            You choose the exact Notion page during workflow setup when deploying databases.
+          </p>
+          <Link href="/members/get-started?view=1" style={{ fontSize: "13px", color: "rgb(35,131,226)", textDecoration: "none", fontWeight: 500 }}>
+            Go to setup and deploy to a page
+          </Link>
         </div>
       )}
 
