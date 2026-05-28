@@ -1,8 +1,9 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { listUserConnections } from "@niche-factory/db";
+import { deleteUserConnection, listUserConnections } from "@niche-factory/db";
 import type { UserConnectionRow } from "@niche-factory/db";
-import { ExternalLink, CheckCircle2, Circle } from "lucide-react";
+import { revalidatePath } from "next/cache";
+import { ExternalLink, CheckCircle2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Connections — Stridivo" };
@@ -55,16 +56,15 @@ const PROVIDERS: ProviderDef[] = [
 
 // ─── Disconnect form action ───────────────────────────────────────────────────
 
-async function DisconnectButton({ provider }: { provider: string }) {
+function DisconnectButton({ provider, userEmail }: { provider: string; userEmail: string }) {
   return (
     <form
       action={async () => {
         "use server";
-        const res = await fetch(
-          `${process.env["AUTH_URL"] ?? process.env["NEXTAUTH_URL"] ?? "http://localhost:3000"}/api/connect/${provider}/disconnect`,
-          { method: "POST" },
-        ).catch(() => null);
-        if (!res?.ok) console.error("Disconnect failed");
+        await deleteUserConnection(userEmail, provider).catch((err) => {
+          console.error("Disconnect failed", err);
+        });
+        revalidatePath("/members/connections");
       }}
     >
       <button
@@ -92,10 +92,12 @@ function ProviderCard({
   def,
   connection,
   flash,
+  userEmail,
 }: {
   def: ProviderDef;
   connection: UserConnectionRow | undefined;
   flash: string | null;
+  userEmail: string;
 }) {
   const connected = !!connection;
   const meta = (connection?.metadata ?? {}) as Record<string, unknown>;
@@ -171,7 +173,7 @@ function ProviderCard({
         {def.available && (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {connected ? (
-              <DisconnectButton provider={def.id} />
+              <DisconnectButton provider={def.id} userEmail={userEmail} />
             ) : (
               <a
                 href={`/api/connect/${def.id}`}
@@ -219,8 +221,9 @@ export default async function ConnectionsPage({
 }) {
   const session = await auth();
   if (!session?.user?.email) redirect("/login");
+  const userEmail = session.user.email;
 
-  const connections = await listUserConnections(session.user.email).catch(() => [] as UserConnectionRow[]);
+  const connections = await listUserConnections(userEmail).catch(() => [] as UserConnectionRow[]);
   const connectionsByProvider = Object.fromEntries(connections.map((c) => [c.provider, c]));
 
   // Determine flash state from query params
@@ -255,6 +258,7 @@ export default async function ConnectionsPage({
             def={def}
             connection={connectionsByProvider[def.id]}
             flash={connectedFlash}
+            userEmail={userEmail}
           />
         ))}
       </div>
