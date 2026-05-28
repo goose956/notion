@@ -189,17 +189,17 @@ function InAppGetStarted({
             Welcome
           </p>
           <h1 style={{ margin: "0 0 10px", fontSize: "28px", fontWeight: 700, color: N_FG, lineHeight: 1.2 }}>
-            {isAuthenticated ? `Let's get started, ${userName} ðŸ‘‹` : "You're almost ready ðŸ‘‹"}
+            {isAuthenticated ? `Let's get started, ${userName} 👋` : "You're almost ready 👋"}
           </h1>
           <p style={{ margin: 0, fontSize: "15px", color: N_MUTED, lineHeight: 1.6 }}>
-            Your research workspace lives right here in the app â€” no Notion account needed.
+            Your research workspace lives right here in the app — no Notion account needed.
           </p>
         </div>
 
         {/* Steps */}
         <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
 
-          {/* Step 1 â€” done */}
+          {/* Step 1 — done */}
           <div style={{ display: "flex", gap: "0" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "40px", flexShrink: 0 }}>
               <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: N_GREEN, border: `2px solid ${N_GREEN}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -218,11 +218,11 @@ function InAppGetStarted({
             </div>
           </div>
 
-          {/* Step 2 â€” set up workspace */}
+          {/* Step 2 — set up workspace */}
           <div style={{ display: "flex", gap: "0" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "40px", flexShrink: 0 }}>
               <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: N_BLUE_BG, border: `2px solid ${N_BLUE}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "15px" }}>
-                <span>ðŸš€</span>
+                <span>🚀</span>
               </div>
             </div>
             <div style={{ flex: 1, paddingLeft: "16px", paddingTop: "4px" }}>
@@ -231,7 +231,7 @@ function InAppGetStarted({
               </h2>
               <p style={{ margin: "0 0 14px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
                 {nicheName
-                  ? <>Answer a few quick questions about your <strong style={{ color: N_FG }}>{nicheName}</strong> setup â€” things like your target location or budget. Your workspace will be created instantly and you can start researching right away.</>
+                  ? <>Answer a few quick questions about your <strong style={{ color: N_FG }}>{nicheName}</strong> setup — things like your target location or budget. Your workspace will be created instantly and you can start researching right away.</>
                   : <>Pick a niche, answer a few quick questions about your setup, and your workspace will be created instantly. Results from the research assistant can be saved directly to your workspace.</>
                 }
               </p>
@@ -258,7 +258,7 @@ function InAppGetStarted({
           </div>
         </div>
 
-        {/* Notion upsell â€” subtle callout */}
+        {/* Notion upsell — subtle callout */}
         <div style={{ marginTop: "48px", padding: "16px 18px", borderRadius: "6px", background: "#F7F6F3", border: `1px solid ${N_BORDER}` }}>
           <p style={{ margin: "0 0 4px", fontSize: "13px", fontWeight: 600, color: N_FG }}>
             Want to sync with Notion?
@@ -270,7 +270,7 @@ function InAppGetStarted({
             href={`/login?callbackUrl=${encodeURIComponent("/members/get-started")}`}
             style={{ fontSize: "13px", color: N_BLUE, textDecoration: "none", fontWeight: 500 }}
           >
-            Connect Notion â†’
+            Connect Notion →
           </Link>
         </div>
       </div>
@@ -427,7 +427,7 @@ export default async function GetStartedPage({
 
   // â”€â”€ Notion path: original 3-step flow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  // Step 3 "Connect" link â€” preserve next param through OAuth
+  // Step 3 "Connect" link — preserve next param through OAuth
   const connectCallbackUrl = nextUrl
     ? `/members/get-started?next=${encodeURIComponent(nextUrl)}`
     : "/members/get-started";
@@ -436,13 +436,13 @@ export default async function GetStartedPage({
   const STEPS = [
     {
       number: 1,
-      emoji: "ðŸ“„",
+      emoji: "🔄",
       title: "Create a new page in Notion",
       done: false,
       body: (
         <>
           <p style={{ margin: "0 0 10px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
-            First, create a blank page in Notion â€” this will become your niche
+            First, create a blank page in Notion — this will become your niche
             research workspace. If you don&apos;t have a Notion account yet,{" "}
             <a href="https://www.notion.so/signup" target="_blank" rel="noopener noreferrer" style={{ color: N_BLUE, textDecoration: "underline" }}>
               sign up for free
@@ -460,14 +460,14 @@ export default async function GetStartedPage({
             rel="noopener noreferrer"
             style={{ display: "inline-flex", alignItems: "center", gap: "5px", marginTop: "12px", padding: "5px 12px", borderRadius: "4px", fontSize: "13px", fontWeight: 500, background: N_BLUE_BG, color: N_BLUE, textDecoration: "none", border: `1px solid rgba(35,131,226,0.25)` }}
           >
-            Open Notion â†’
+            Open Notion →
           </a>
         </>
       ),
     },
     {
       number: 2,
-      emoji: "ðŸ”—",
+      emoji: "🔗",
       title: isLoggedIn ? "You're connected with Notion" : "Connect with Notion",
       done: isLoggedIn,
       body: isLoggedIn ? (
@@ -480,27 +480,27 @@ export default async function GetStartedPage({
             href={connectHref}
             style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "7px 16px", borderRadius: "4px", fontSize: "14px", fontWeight: 500, background: N_BLUE_BG, color: N_BLUE, textDecoration: "none", border: `1px solid rgba(35,131,226,0.25)` }}
           >
-            Add a Notion page â†’
+            Add a Notion page →
           </a>
         </>
       ) : (
         <>
           <p style={{ margin: "0 0 12px", fontSize: "14px", color: N_MUTED, lineHeight: 1.6 }}>
             Once your Notion page is ready, click below to connect your account.
-            Notion will ask which pages to share â€” select the page you just created.
+            Notion will ask which pages to share — select the page you just created.
           </p>
           <a
             href={connectHref}
             style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "7px 16px", borderRadius: "4px", fontSize: "14px", fontWeight: 600, background: N_FG, color: "white", textDecoration: "none" }}
           >
-            Continue with Notion â†’
+            Continue with Notion →
           </a>
         </>
       ),
     },
     {
       number: 3,
-      emoji: nicheName ? "ðŸš€" : "ðŸ”",
+      emoji: nicheName ? "🚀" : "🔍",
       title: nicheName ? `Set up your ${nicheName} workspace` : "Run your first niche research",
       done: false,
       body: (
@@ -516,7 +516,7 @@ export default async function GetStartedPage({
               <>
                 Open the Research Assistant and select your niche. The{" "}
                 <strong style={{ color: N_FG }}>first time</strong> you use a niche, a short setup form
-                will ask a few questions â€” then your Notion databases are created automatically.
+                will ask a few questions — then your Notion databases are created automatically.
               </>
             )}
           </p>
@@ -556,7 +556,7 @@ export default async function GetStartedPage({
             Welcome
           </p>
           <h1 style={{ margin: "0 0 10px", fontSize: "28px", fontWeight: 700, color: N_FG, lineHeight: 1.2 }}>
-            {isLoggedIn ? `Let's get you set up, ${userName} ðŸ‘‹` : "You're almost ready ðŸ‘‹"}
+            {isLoggedIn ? `Let's get you set up, ${userName} 👋` : "You're almost ready 👋"}
           </h1>
           <p style={{ margin: 0, fontSize: "15px", color: N_MUTED, lineHeight: 1.6 }}>
             Niche Factory connects to your Notion workspace to deliver research results straight to your pages.
@@ -567,10 +567,10 @@ export default async function GetStartedPage({
         {/* "You're almost there" banner */}
         {nextUrl && (
           <div style={{ marginBottom: "28px", padding: "14px 18px", borderRadius: "6px", background: "rgba(35,131,226,0.06)", border: "1px solid rgba(35,131,226,0.2)", display: "flex", alignItems: "flex-start", gap: "12px" }}>
-            <span style={{ fontSize: "20px", lineHeight: 1 }}>ðŸŽ‰</span>
+            <span style={{ fontSize: "20px", lineHeight: 1 }}>🎉</span>
             <div>
               <p style={{ margin: "0 0 4px", fontSize: "14px", fontWeight: 600, color: N_FG }}>
-                {nicheName ? `You're getting: ${nicheName}` : "Account created â€” you're almost there!"}
+                {nicheName ? `You're getting: ${nicheName}` : "Account created — you're almost there!"}
               </p>
               <p style={{ margin: "0 0 10px", fontSize: "13px", color: N_MUTED, lineHeight: 1.5 }}>
                 {isLoggedIn
@@ -586,7 +586,7 @@ export default async function GetStartedPage({
                   href={nextUrl}
                   style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "5px 12px", borderRadius: "4px", fontSize: "13px", fontWeight: 500, background: N_BLUE_BG, color: N_BLUE, textDecoration: "none", border: "1px solid rgba(35,131,226,0.25)" }}
                 >
-                  Skip to Research Assistant â†’
+                  Skip to Research Assistant →
                 </a>
               )}
             </div>
@@ -597,7 +597,7 @@ export default async function GetStartedPage({
         {deploys.length > 0 && (
           <div style={{ marginBottom: "36px", padding: "16px 18px", borderRadius: "6px", background: "rgba(15,123,108,0.06)", border: "1px solid rgba(15,123,108,0.2)" }}>
             <p style={{ margin: "0 0 12px", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: N_GREEN }}>
-              âœ“ Connected Workspaces
+              ✓ Connected Workspaces
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {deploys.map((d) => (
@@ -646,7 +646,7 @@ export default async function GetStartedPage({
         {/* Footer help */}
         <div style={{ marginTop: "40px", padding: "14px 16px", borderRadius: "6px", background: "#F7F6F3", border: `1px solid ${N_BORDER}`, fontSize: "13px", color: N_MUTED, lineHeight: 1.5 }}>
           <strong style={{ color: N_FG }}>Need help?</strong> If you run into trouble connecting Notion,
-          click the &quot;Continue with Notion&quot; button in step 2 again â€” Notion will let you add more pages.
+          click the &quot;Continue with Notion&quot; button in step 2 again — Notion will let you add more pages.
         </div>
       </div>
     </div>
