@@ -2,10 +2,10 @@ import { signIn } from "@/auth";
 import { CheckCircle2 } from "lucide-react";
 
 function resolveSafeCallbackUrl(callbackUrl: string | undefined): string {
-  if (!callbackUrl) return "/members/get-started";
-  if (callbackUrl === "undefined" || callbackUrl.endsWith("/undefined")) return "/members/get-started";
+  if (!callbackUrl) return "/members/chat";
+  if (callbackUrl === "undefined" || callbackUrl.endsWith("/undefined")) return "/members/chat";
   // Only allow same-origin relative paths to avoid open redirects.
-  if (!callbackUrl.startsWith("/")) return "/members/get-started";
+  if (!callbackUrl.startsWith("/")) return "/members/chat";
   return callbackUrl;
 }
 

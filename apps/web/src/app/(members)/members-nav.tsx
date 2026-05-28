@@ -7,7 +7,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { WORKFLOW_CATALOG } from "@/lib/workflow-catalog";
 
 const TOP_ITEMS = [
-  { emoji: "🚀", label: "Get Started", href: "/members/get-started?view=1" },
+  { emoji: "🚀", label: "Home", href: "/members/chat" },
   { emoji: "🔍", label: "Research Assistant", href: "/members/chat" },
   { emoji: "🔖", label: "Browse Workflows", href: "/members/workflows" },
 ] as const;

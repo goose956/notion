@@ -262,8 +262,8 @@ export default async function ConnectionsPage({
             Notion is connected. This only authorises access.
             You choose the exact Notion page during workflow setup when deploying databases.
           </p>
-          <Link href="/members/get-started?view=1" style={{ fontSize: "13px", color: "rgb(35,131,226)", textDecoration: "none", fontWeight: 500 }}>
-            Go to setup and deploy to a page
+          <Link href={"/members/workflows" as never} style={{ fontSize: "13px", color: "rgb(35,131,226)", textDecoration: "none", fontWeight: 500 }}>
+            Go to workflows and deploy to a page
           </Link>
         </div>
       )}
