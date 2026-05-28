@@ -190,12 +190,12 @@ export function MembersNav({
 
       {/* Workflow sub-items — only active workflows, no Browse link */}
       {!collapsed && workspaceOpen && extraWorkflows.map((w, i) => {
-        const nicheParam = searchParams.get("niche");
+        const nicheParam = searchParams.get("nicheId");
         // Active if URL has this niche, OR if on /members/workspace with no niche param and this is the first workflow
         const active = isActive("/members/workspace") && (
           nicheParam === w.id || (nicheParam === null && i === 0)
         );
-        return subItem(`/members/workspace?niche=${w.id}`, w.emoji, w.name, active);
+        return subItem(`/members/workspace?nicheId=${w.id}`, w.emoji, w.name, active);
       })}
 
       {/* Research Assistant */}
