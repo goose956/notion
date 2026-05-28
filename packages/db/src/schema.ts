@@ -531,3 +531,25 @@ export const appRows = pgTable("app_rows", {
 
 export type AppRowRow = typeof appRows.$inferSelect;
 export type NewAppRowRow = typeof appRows.$inferInsert;
+
+// ─── Support ──────────────────────────────────────────────────────────────────
+
+export const supportTickets = pgTable("support_tickets", {
+  id: text("id").primaryKey(),
+  customerEmail: text("customer_email").notNull(),
+  subject: text("subject").notNull(),
+  status: text("status").notNull().default("open"), // 'open' | 'closed'
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const supportMessages = pgTable("support_messages", {
+  id: text("id").primaryKey(),
+  ticketId: text("ticket_id").notNull(),
+  senderType: text("sender_type").notNull(), // 'user' | 'admin'
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type SupportTicketRow = typeof supportTickets.$inferSelect;
+export type SupportMessageRow = typeof supportMessages.$inferSelect;

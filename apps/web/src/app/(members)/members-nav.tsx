@@ -9,6 +9,7 @@ const ITEMS = [
   { emoji: "🔍", label: "Research Assistant", href: "/members/chat" },
   { emoji: "💳", label: "Credits", href: "/members/credits" },
   { emoji: "👤", label: "Profile", href: "/members/profile" },
+  { emoji: "🎫", label: "Support", href: "/members/support" },
 ] as const;
 
 export function MembersNav({ collapsed = false }: { collapsed?: boolean }) {

@@ -50,6 +50,10 @@ import {
   type NewAppRowRow,
   type ActivationLinkRow,
   type FunnelEventRow,
+  supportTickets,
+  supportMessages,
+  type SupportTicketRow,
+  type SupportMessageRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -1171,6 +1175,123 @@ export async function trackLinkClick(token: string): Promise<void> {
   } catch {
     // never break the page load
   }
+}
+
+// ─── Support tickets ───────────────────────────────────────────────────────
+
+export type { SupportTicketRow, SupportMessageRow };
+
+/** Create a new ticket with its first message. */
+export async function createSupportTicket(
+  email: string,
+  subject: string,
+  firstMessage: string,
+): Promise<SupportTicketRow> {
+  const { randomUUID } = await import("crypto");
+  const ticketId = randomUUID();
+  await db.insert(supportTickets).values({
+    id: ticketId,
+    customerEmail: email,
+    subject,
+  });
+  await db.insert(supportMessages).values({
+    id: randomUUID(),
+    ticketId,
+    senderType: "user",
+    message: firstMessage,
+  });
+  const rows = await db
+    .select()
+    .from(supportTickets)
+    .where(eq(supportTickets.id, ticketId))
+    .limit(1);
+  if (!rows[0]) throw new Error("Failed to create support ticket");
+  return rows[0];
+}
+
+/** Add a message to an existing ticket. */
+export async function addSupportMessage(
+  ticketId: string,
+  senderType: "user" | "admin",
+  message: string,
+): Promise<void> {
+  const { randomUUID } = await import("crypto");
+  await db.insert(supportMessages).values({
+    id: randomUUID(),
+    ticketId,
+    senderType,
+    message,
+  });
+  await db
+    .update(supportTickets)
+    .set({ updatedAt: new Date() })
+    .where(eq(supportTickets.id, ticketId));
+}
+
+/** Get all tickets (admin). Most recently updated first. */
+export async function getSupportTickets(): Promise<SupportTicketRow[]> {
+  return db
+    .select()
+    .from(supportTickets)
+    .orderBy(desc(supportTickets.updatedAt));
+}
+
+/** Get tickets filtered by status. */
+export async function getSupportTicketsByStatus(
+  status: "open" | "closed",
+): Promise<SupportTicketRow[]> {
+  return db
+    .select()
+    .from(supportTickets)
+    .where(eq(supportTickets.status, status))
+    .orderBy(desc(supportTickets.updatedAt));
+}
+
+/** Get a ticket with all its messages. */
+export async function getTicketWithMessages(
+  ticketId: string,
+): Promise<{ ticket: SupportTicketRow; messages: SupportMessageRow[] } | null> {
+  const tickets = await db
+    .select()
+    .from(supportTickets)
+    .where(eq(supportTickets.id, ticketId))
+    .limit(1);
+  if (!tickets[0]) return null;
+  const messages = await db
+    .select()
+    .from(supportMessages)
+    .where(eq(supportMessages.ticketId, ticketId))
+    .orderBy(supportMessages.createdAt);
+  return { ticket: tickets[0], messages };
+}
+
+/** Get tickets belonging to a specific user (by email). */
+export async function getUserTickets(email: string): Promise<SupportTicketRow[]> {
+  return db
+    .select()
+    .from(supportTickets)
+    .where(eq(supportTickets.customerEmail, email))
+    .orderBy(desc(supportTickets.updatedAt));
+}
+
+/** Close or reopen a ticket. */
+export async function setTicketStatus(
+  ticketId: string,
+  status: "open" | "closed",
+): Promise<void> {
+  await db
+    .update(supportTickets)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(supportTickets.id, ticketId));
+}
+
+/** Count open tickets (for admin badge). */
+export async function getOpenTicketCount(): Promise<number> {
+  const rows = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(supportTickets)
+    .where(eq(supportTickets.status, "open"));
+  return rows[0]?.count ?? 0;
 }
 
 /** Log a funnel event. Fire-and-forget safe — never throws. */

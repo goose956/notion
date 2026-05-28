@@ -110,6 +110,34 @@ await client.unsafe(`
     created_at timestamp with time zone NOT NULL DEFAULT now()
   );
 `);
+// Fallback fixups for 0018_support — safe to repeat (IF NOT EXISTS throughout).
+await client.unsafe(`
+  CREATE TABLE IF NOT EXISTS support_tickets (
+    id text PRIMARY KEY NOT NULL,
+    customer_email text NOT NULL,
+    subject text NOT NULL,
+    status text NOT NULL DEFAULT 'open',
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at timestamp with time zone NOT NULL DEFAULT now()
+  );
+`);
+await client.unsafe(`
+  CREATE TABLE IF NOT EXISTS support_messages (
+    id text PRIMARY KEY NOT NULL,
+    ticket_id text NOT NULL,
+    sender_type text NOT NULL,
+    message text NOT NULL,
+    created_at timestamp with time zone NOT NULL DEFAULT now()
+  );
+`);
+await client.unsafe(`
+  CREATE INDEX IF NOT EXISTS support_messages_ticket_idx
+    ON support_messages (ticket_id, created_at);
+`);
+await client.unsafe(`
+  CREATE INDEX IF NOT EXISTS support_tickets_email_idx
+    ON support_tickets (customer_email);
+`);
 await client.unsafe(`
   CREATE INDEX IF NOT EXISTS funnel_events_channel_created_idx
     ON funnel_events (source_channel, created_at);
