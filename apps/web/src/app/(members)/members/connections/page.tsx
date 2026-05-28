@@ -221,7 +221,7 @@ export default async function ConnectionsPage({
   searchParams: { connected?: string; error?: string };
 }) {
   const session = await auth();
-  if (!session?.user?.email) redirect("/login");
+  if (!session?.user?.email) redirect("/login?callbackUrl=%2Fmembers%2Fconnections");
   const userEmail = session.user.email;
 
   const connections = await listUserConnections(userEmail).catch(() => [] as UserConnectionRow[]);
@@ -262,8 +262,8 @@ export default async function ConnectionsPage({
             Notion is connected. This only authorises access.
             You choose the exact Notion page during workflow setup when deploying databases.
           </p>
-          <Link href={"/members/workflows" as never} style={{ fontSize: "13px", color: "rgb(35,131,226)", textDecoration: "none", fontWeight: 500 }}>
-            Go to workflows and deploy to a page
+          <Link href={"/members/setup/wedding-planner" as never} style={{ fontSize: "13px", color: "rgb(35,131,226)", textDecoration: "none", fontWeight: 500 }}>
+            Open setup and choose your Notion page
           </Link>
         </div>
       )}

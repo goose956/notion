@@ -15,7 +15,7 @@ export default async function MembersLayout({
   // get-started lives in (onboarding) group — not protected here.
   // All other /members/* routes require a Notion session.
   if (!session) {
-    redirect("/login?callbackUrl=%2Fmembers%2Fchat");
+    redirect("/login?callbackUrl=%2Fmembers%2Fconnections");
   }
 
   const userName = session.user?.name ?? session.user?.email ?? "Account";

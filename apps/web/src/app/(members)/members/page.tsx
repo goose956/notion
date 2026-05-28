@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function MembersIndexPage() {
-  redirect("/members/chat");
+  redirect("/members/connections");
 }
