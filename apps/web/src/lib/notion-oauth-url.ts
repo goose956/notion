@@ -18,9 +18,9 @@ export function resolvePublicAppUrl(requestUrl?: string): string {
   })();
 
   const raw =
-    reqOrigin ??
     process.env["AUTH_URL"] ??
     process.env["NEXTAUTH_URL"] ??
+    reqOrigin ??
     process.env["RAILWAY_PUBLIC_DOMAIN"] ??
     DEFAULT_APP_URL;
 
