@@ -117,13 +117,13 @@ export default async function ProfilePage() {
           {name}
         </h1>
         <p style={{ fontSize: "14px", color: N_SUBTLE, marginBottom: "32px" }}>
-          Your account details and Notion workspaces.
+          Your account details{notionUserId ? " and Notion workspaces" : ""}.
         </p>
 
         {/* Properties */}
         <div style={{ marginBottom: "48px" }}>
           {email && <PropRow label="Email" value={email} />}
-          <PropRow label="Connected via" value="Notion OAuth" />
+          <PropRow label="Connected via" value={notionUserId ? "Notion OAuth" : "Email"} />
           {notionUserId && (
             <PropRow label="Notion user ID" value={notionUserId} mono />
           )}
