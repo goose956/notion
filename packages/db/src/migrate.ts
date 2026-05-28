@@ -147,6 +147,30 @@ await client.unsafe(`
     ON funnel_events (customer_id, created_at);
 `);
 
+// Recovery fix: ensure customer_workflows table exists.
+await client.unsafe(`
+  CREATE TABLE IF NOT EXISTS customer_workflows (
+    id              text        PRIMARY KEY,
+    email           text        NOT NULL,
+    niche_pack_id   text        NOT NULL,
+    added_at        timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT customer_workflows_email_niche_uniq UNIQUE (email, niche_pack_id)
+  );
+  CREATE INDEX IF NOT EXISTS customer_workflows_email_idx ON customer_workflows (email);
+
+  -- Seed from activation links if not yet done
+  INSERT INTO customer_workflows (id, email, niche_pack_id, added_at)
+  SELECT
+    gen_random_uuid()::text,
+    c.email,
+    al.niche_pack_id,
+    COALESCE(c.created_at, now())
+  FROM customers c
+  JOIN activation_links al ON al.token = c.source_token
+  WHERE c.source_token IS NOT NULL
+  ON CONFLICT (email, niche_pack_id) DO NOTHING;
+`);
+
 console.log("Schema fixups complete.");
 
 await client.end();

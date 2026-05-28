@@ -553,3 +553,21 @@ export const supportMessages = pgTable("support_messages", {
 
 export type SupportTicketRow = typeof supportTickets.$inferSelect;
 export type SupportMessageRow = typeof supportMessages.$inferSelect;
+
+// ─── Customer Workflows ───────────────────────────────────────────────────────
+
+/**
+ * customer_workflows — tracks which workflow packs each customer has enabled.
+ * Seeded from their activation link on signup; more can be added later.
+ */
+export const customerWorkflows = pgTable("customer_workflows", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  nichePackId: text("niche_pack_id").notNull(),
+  addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  emailNicheUniq: unique().on(t.email, t.nichePackId),
+  emailIdx: index("customer_workflows_email_idx").on(t.email),
+}));
+
+export type CustomerWorkflowRow = typeof customerWorkflows.$inferSelect;

@@ -16,6 +16,7 @@ type MembersShellProps = {
   credits: number;
   signOutAction: () => Promise<void>;
   supportUnread?: number;
+  activeWorkflows?: string[];
 };
 
 export function MembersShell({
@@ -26,6 +27,7 @@ export function MembersShell({
   credits,
   signOutAction,
   supportUnread = 0,
+  activeWorkflows = [],
 }: MembersShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -218,7 +220,7 @@ export function MembersShell({
 
         <div style={{ height: "1px", background: "rgba(55,53,47,0.09)" }} />
 
-        <MembersNav collapsed={sidebarCollapsed} supportUnread={supportUnread} />
+        <MembersNav collapsed={sidebarCollapsed} supportUnread={supportUnread} activeWorkflows={activeWorkflows} />
 
         <div style={{ flex: 1 }} />
 

@@ -54,6 +54,8 @@ import {
   supportMessages,
   type SupportTicketRow,
   type SupportMessageRow,
+  customerWorkflows,
+  type CustomerWorkflowRow,
 } from "./schema.js";
 import type { NichePack } from "@niche-factory/schema";
 
@@ -1423,5 +1425,37 @@ export async function deleteActivationLink(token: string): Promise<void> {
   await db
     .delete(activationLinks)
     .where(eq(activationLinks.token, token));
+}
+
+// ─── Customer Workflows ───────────────────────────────────────────────────────
+
+export type { CustomerWorkflowRow };
+
+/**
+ * Returns the list of niche_pack_id slugs the customer has enabled.
+ * E.g. ["wedding-planner", "real-estate-investor"]
+ */
+export async function getCustomerWorkflows(email: string): Promise<string[]> {
+  const rows = await db
+    .select({ nichePackId: customerWorkflows.nichePackId })
+    .from(customerWorkflows)
+    .where(eq(customerWorkflows.email, email))
+    .orderBy(customerWorkflows.addedAt);
+  return rows.map((r) => r.nichePackId);
+}
+
+/**
+ * Add a workflow to the customer's account.
+ * Idempotent — does nothing if already present.
+ */
+export async function addCustomerWorkflow(
+  email: string,
+  nichePackId: string,
+): Promise<void> {
+  const { randomUUID } = await import("node:crypto");
+  await db
+    .insert(customerWorkflows)
+    .values({ id: randomUUID(), email, nichePackId })
+    .onConflictDoNothing();
 }
 
