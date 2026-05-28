@@ -36,7 +36,7 @@ export default async function TicketThreadPage({
     <div style={{ fontFamily: N_FONT, maxWidth: 720, margin: "0 auto", padding: "40px 24px" }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <Link href="/members/support" style={{ fontSize: 13, color: N_SUBTLE, textDecoration: "none" }}>
+        <Link href={"/members/support" as never} style={{ fontSize: 13, color: N_SUBTLE, textDecoration: "none" }}>
           ← Back to support
         </Link>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginTop: 12 }}>

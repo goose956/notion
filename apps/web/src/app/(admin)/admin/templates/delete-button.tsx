@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Loader2 } from "lucide-react";
+import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
 
 export function DeleteTemplateButton({ id, title }: { id: string; title: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
 
-  async function handleDelete() {
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  async function doDelete() {
+    setPendingConfirm(null);
     setLoading(true);
     try {
       await fetch(`/api/templates/${id}`, { method: "DELETE" });
@@ -20,13 +22,28 @@ export function DeleteTemplateButton({ id, title }: { id: string; title: string 
   }
 
   return (
-    <button
-      onClick={() => void handleDelete()}
-      disabled={loading}
-      title="Delete template"
-      className="inline-flex items-center justify-center rounded-md border border-destructive/40 text-destructive text-xs font-medium h-7 w-7 hover:bg-destructive/10 transition-colors disabled:opacity-50"
-    >
-      {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-    </button>
+    <>
+      {pendingConfirm && (
+        <ConfirmModal
+          {...pendingConfirm}
+          onCancel={() => setPendingConfirm(null)}
+        />
+      )}
+      <button
+        onClick={() =>
+          setPendingConfirm({
+            title: "Delete template",
+            message: `Delete "${title}"? This cannot be undone.`,
+            confirmLabel: "Delete",
+            onConfirm: () => void doDelete(),
+          })
+        }
+        disabled={loading}
+        title="Delete template"
+        className="inline-flex items-center justify-center rounded-md border border-destructive/40 text-destructive text-xs font-medium h-7 w-7 hover:bg-destructive/10 transition-colors disabled:opacity-50"
+      >
+        {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+      </button>
+    </>
   );
 }

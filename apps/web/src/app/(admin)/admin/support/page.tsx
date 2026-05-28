@@ -52,7 +52,7 @@ export default async function AdminSupportPage() {
             {openTickets.map((ticket) => (
               <Link
                 key={ticket.id}
-                href={`/admin/support/${ticket.id}`}
+                href={`/admin/support/${ticket.id}` as never}
                 className="block rounded-xl border bg-card p-4 hover:bg-accent transition-colors"
               >
                 <div className="flex items-center justify-between gap-3">
@@ -90,7 +90,7 @@ export default async function AdminSupportPage() {
             {closedTickets.map((ticket) => (
               <Link
                 key={ticket.id}
-                href={`/admin/support/${ticket.id}`}
+                href={`/admin/support/${ticket.id}` as never}
                 className="block rounded-xl border bg-card p-4 hover:bg-accent transition-colors opacity-70"
               >
                 <div className="flex items-center justify-between gap-3">

@@ -12,7 +12,7 @@ const ITEMS = [
   { emoji: "🎫", label: "Support", href: "/members/support" },
 ] as const;
 
-export function MembersNav({ collapsed = false }: { collapsed?: boolean }) {
+export function MembersNav({ collapsed = false, supportUnread = 0 }: { collapsed?: boolean; supportUnread?: number }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -94,6 +94,18 @@ export function MembersNav({ collapsed = false }: { collapsed?: boolean }) {
               >
                 {item.label}
               </span>
+            )}
+            {item.href === "/members/support" && supportUnread > 0 && (
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "rgb(235,87,87)",
+                  flexShrink: 0,
+                }}
+              />
             )}
           </Link>
         );

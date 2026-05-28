@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus, Trash2, Download, Printer, ArrowLeft } from "lucide-react";
 import type { WorkspaceDatabase } from "@/app/api/members/workspace/route";
+import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
 
 const N_FG = "#37352F";
 const N_MUTED = "rgba(55,53,47,0.65)";
@@ -236,6 +237,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
   const [zoom, setZoom] = useState(100);
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
 
   const roomRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<{ tableId: string; offsetX: number; offsetY: number } | null>(null);
@@ -530,9 +532,16 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
   }
 
   function deleteTable(tableId: string) {
-    if (!confirm("Delete this table and unassign its guests?")) return;
-    setTables((prev) => prev.filter((t) => t.id !== tableId));
-    setSelectedSeat((prev) => (prev?.tableId === tableId ? null : prev));
+    setPendingConfirm({
+      title: "Delete table",
+      message: "Delete this table and unassign its guests?",
+      confirmLabel: "Delete",
+      onConfirm: () => {
+        setPendingConfirm(null);
+        setTables((prev) => prev.filter((t) => t.id !== tableId));
+        setSelectedSeat((prev) => (prev?.tableId === tableId ? null : prev));
+      },
+    });
   }
 
   function assignGuestToTable(guestId: string, targetTableId: string | null) {
@@ -715,7 +724,14 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
   }
 
   return (
-    <div
+    <>
+      {pendingConfirm && (
+        <ConfirmModal
+          {...pendingConfirm}
+          onCancel={() => setPendingConfirm(null)}
+        />
+      )}
+      <div
       style={{
         padding: "18px 20px",
         fontFamily: N_FONT,
@@ -1251,5 +1267,6 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         )}
       </div>
     </div>
+    </>
   );
 }

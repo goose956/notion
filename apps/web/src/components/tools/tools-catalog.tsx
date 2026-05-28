@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { AiToolBuilder } from "./ai-tool-builder";
+import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -444,6 +445,7 @@ export function ToolsCatalog() {
   const [settings, setSettings] = useState<SettingsState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -489,10 +491,18 @@ export function ToolsCatalog() {
     setCustoms((prev) => prev.map((s) => (s.id === id ? { ...s, enabled } : s)));
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm(`Delete custom tool "${id}"? This cannot be undone.`)) return;
-    await fetch(`/api/tools/custom/${id}`, { method: "DELETE" });
-    setCustoms((prev) => prev.filter((s) => s.id !== id));
+  function handleDelete(id: string) {
+    setPendingConfirm({
+      title: "Delete custom tool",
+      message: `Delete "${id}"? This cannot be undone.`,
+      confirmLabel: "Delete",
+      onConfirm: () => {
+        setPendingConfirm(null);
+        void fetch(`/api/tools/custom/${id}`, { method: "DELETE" }).then(() => {
+          setCustoms((prev) => prev.filter((s) => s.id !== id));
+        });
+      },
+    });
   }
 
   if (loading) return <div className="text-sm text-muted-foreground">Loading tools...</div>;
@@ -505,7 +515,14 @@ export function ToolsCatalog() {
   }).length;
 
   return (
-    <div className="space-y-6">
+    <>
+      {pendingConfirm && (
+        <ConfirmModal
+          {...pendingConfirm}
+          onCancel={() => setPendingConfirm(null)}
+        />
+      )}
+      <div className="space-y-6">
       {/* Summary bar */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
         <span>{builtins.length} built-in tools</span>
@@ -560,5 +577,6 @@ export function ToolsCatalog() {
         ))}
       </section>
     </div>
+    </>
   );
 }

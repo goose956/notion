@@ -1294,6 +1294,28 @@ export async function getOpenTicketCount(): Promise<number> {
   return rows[0]?.count ?? 0;
 }
 
+/**
+ * Count tickets where the latest message is from admin and the ticket is open.
+ * Used to show a notification dot on the user's Support nav item.
+ */
+export async function getPendingAdminRepliesCount(email: string): Promise<number> {
+  const rows = await db.execute(sql`
+    SELECT COUNT(DISTINCT sm.ticket_id)::int AS count
+    FROM support_messages sm
+    INNER JOIN support_tickets st ON st.id = sm.ticket_id
+    WHERE st.customer_email = ${email}
+      AND st.status = 'open'
+      AND sm.sender_type = 'admin'
+      AND sm.created_at = (
+        SELECT MAX(sm2.created_at)
+        FROM support_messages sm2
+        WHERE sm2.ticket_id = sm.ticket_id
+      )
+  `);
+  const row = rows[0] as { count?: number } | undefined;
+  return row?.count ?? 0;
+}
+
 /** Log a funnel event. Fire-and-forget safe — never throws. */
 export async function logFunnelEvent(data: {
   customerId: string;

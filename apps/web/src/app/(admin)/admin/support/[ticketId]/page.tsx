@@ -37,7 +37,7 @@ export default async function AdminTicketPage({
       {/* Header */}
       <div>
         <Link
-          href="/admin/support"
+          href={"/admin/support" as never}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Support inbox

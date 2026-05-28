@@ -30,7 +30,7 @@ export default async function SupportPage() {
           </p>
         </div>
         <Link
-          href="/members/support/new"
+          href={"/members/support/new" as never}
           style={{
             display: "inline-block",
             padding: "8px 18px",
@@ -66,7 +66,7 @@ export default async function SupportPage() {
           {tickets.map((ticket) => (
             <Link
               key={ticket.id}
-              href={`/members/support/${ticket.id}`}
+              href={`/members/support/${ticket.id}` as never}
               style={{
                 display: "block",
                 padding: "14px 18px",

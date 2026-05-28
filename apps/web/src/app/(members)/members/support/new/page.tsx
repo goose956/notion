@@ -35,9 +35,9 @@ export default function NewTicketPage() {
         return;
       }
       if (body.ticket?.id) {
-        router.push(`/members/support/${body.ticket.id}`);
+        router.push(`/members/support/${body.ticket.id}` as never);
       } else {
-        router.push("/members/support");
+        router.push("/members/support" as never);
       }
     } catch {
       setError("Network error — please try again");
@@ -61,7 +61,7 @@ export default function NewTicketPage() {
   return (
     <div style={{ fontFamily: N_FONT, maxWidth: 620, margin: "0 auto", padding: "40px 24px" }}>
       <div style={{ marginBottom: 24 }}>
-        <Link href="/members/support" style={{ fontSize: 13, color: N_SUBTLE, textDecoration: "none" }}>
+        <Link href={"/members/support" as never} style={{ fontSize: 13, color: N_SUBTLE, textDecoration: "none" }}>
           ← Back to support
         </Link>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: N_FG, margin: "12px 0 4px" }}>New ticket</h1>
@@ -121,7 +121,7 @@ export default function NewTicketPage() {
             {loading ? "Sending…" : "Submit ticket"}
           </button>
           <Link
-            href="/members/support"
+            href={"/members/support" as never}
             style={{ fontSize: 14, color: N_MUTED, textDecoration: "none" }}
           >
             Cancel

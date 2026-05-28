@@ -15,6 +15,7 @@ type MembersShellProps = {
   initials: string;
   credits: number;
   signOutAction: () => Promise<void>;
+  supportUnread?: number;
 };
 
 export function MembersShell({
@@ -24,6 +25,7 @@ export function MembersShell({
   initials,
   credits,
   signOutAction,
+  supportUnread = 0,
 }: MembersShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -216,7 +218,7 @@ export function MembersShell({
 
         <div style={{ height: "1px", background: "rgba(55,53,47,0.09)" }} />
 
-        <MembersNav collapsed={sidebarCollapsed} />
+        <MembersNav collapsed={sidebarCollapsed} supportUnread={supportUnread} />
 
         <div style={{ flex: 1 }} />
 

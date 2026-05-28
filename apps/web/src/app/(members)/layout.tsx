@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
-import { getCustomerCredits, findOrCreateCustomer } from "@niche-factory/db";
+import { getCustomerCredits, findOrCreateCustomer, getPendingAdminRepliesCount } from "@niche-factory/db";
 import { MembersShell } from "./members-shell";
 
 export default async function MembersLayout({
@@ -23,6 +23,7 @@ export default async function MembersLayout({
   // Ensure customer row exists (creates with 25 credits if new)
   if (userEmail) await findOrCreateCustomer(userEmail).catch(() => null);
   const credits = userEmail ? await getCustomerCredits(userEmail).catch(() => 0) : 0;
+  const supportUnread = userEmail ? await getPendingAdminRepliesCount(userEmail).catch(() => 0) : 0;
 
   const signOutAction = async () => {
     "use server";
@@ -35,6 +36,7 @@ export default async function MembersLayout({
       userImage={userImage}
       initials={initials}
       credits={credits}
+      supportUnread={supportUnread}
       signOutAction={signOutAction}
     >
       {children}

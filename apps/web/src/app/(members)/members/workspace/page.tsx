@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowUp, Loader2, Plus, Trash2, ExternalLink, RefreshCw, ChevronDown, ChevronRight, WandSparkles, SlidersHorizontal, Mail, LayoutDashboard, CalendarDays, MapPin, Users, CheckCircle2, ListChecks, FileText, Pencil, Check, X, Download, Palette, Globe, Link2, DatabaseZap } from "lucide-react";
 import { SeatingPlannerView } from "../seating/SeatingPlannerView";
+import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
 import type {
   WorkspaceDatabase,
   WorkspaceProperty,
@@ -212,6 +213,7 @@ function DatabaseTable({
   const [columnsMenuOpen, setColumnsMenuOpen] = useState(false);
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
 
   const settingsKey = `workspace.sheet.${db.notionId}.columns`;
 
@@ -375,15 +377,21 @@ function DatabaseTable({
     }
   }
 
-  async function handleDelete(pageId: string) {
-    if (!confirm("Archive this row?")) return;
-    setDeletingId(pageId);
-    try {
-      await fetch(`/api/members/workspace/${pageId}`, { method: "DELETE" });
-      onRowDeleted(pageId);
-    } finally {
-      setDeletingId(null);
-    }
+  function handleDelete(pageId: string) {
+    setPendingConfirm({
+      title: "Archive row",
+      message: "Archive this row? It will be removed from this view.",
+      confirmLabel: "Archive",
+      onConfirm: () => {
+        setPendingConfirm(null);
+        setDeletingId(pageId);
+        void fetch(`/api/members/workspace/${pageId}`, { method: "DELETE" }).then(() => {
+          onRowDeleted(pageId);
+        }).finally(() => {
+          setDeletingId(null);
+        });
+      },
+    });
   }
 
   async function handleAddRow() {
@@ -432,7 +440,14 @@ function DatabaseTable({
   }
 
   return (
-    <div style={{ overflowX: "auto", position: "relative" }}>
+    <>
+      {pendingConfirm && (
+        <ConfirmModal
+          {...pendingConfirm}
+          onCancel={() => setPendingConfirm(null)}
+        />
+      )}
+      <div style={{ overflowX: "auto", position: "relative" }}>
       {isAppBackend && allCols.length > 0 && (
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px", position: "relative" }}>
           <button
@@ -788,6 +803,7 @@ function DatabaseTable({
         </p>
       )}
     </div>
+    </>
   );
 }
 

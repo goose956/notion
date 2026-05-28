@@ -18,17 +18,18 @@ const navItems = [
   { href: "/admin/support", label: "Support", icon: MessageSquare, exact: false as boolean },
 ] as const;
 
-export function AdminNav() {
+export function AdminNav({ openTickets = 0 }: { openTickets?: number }) {
   const pathname = usePathname();
 
   return (
     <nav className="order-3 w-full md:order-none md:w-auto flex gap-1 text-sm text-muted-foreground border rounded-xl p-1.5 bg-card/80 overflow-x-auto whitespace-nowrap">
       {navItems.map(({ href, label, icon: Icon, exact }) => {
         const isActive = exact ? pathname === href : pathname.startsWith(href);
+        const showBadge = href === "/admin/support" && openTickets > 0;
         return (
           <Link
             key={href}
-            href={href}
+            href={href as never}
             className={cn(
               "rounded-lg px-3 py-1.5 transition-colors inline-flex items-center gap-1.5",
               isActive
@@ -38,6 +39,11 @@ export function AdminNav() {
           >
             <Icon className="h-3.5 w-3.5" />
             {label}
+            {showBadge && (
+              <span className="ml-0.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold leading-none inline-flex items-center justify-center px-1">
+                {openTickets > 99 ? "99+" : openTickets}
+              </span>
+            )}
           </Link>
         );
       })}

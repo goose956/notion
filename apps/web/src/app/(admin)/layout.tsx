@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { LogOut } from "lucide-react";
 import { AdminNav } from "./admin-nav";
+import { getOpenTicketCount } from "@niche-factory/db";
 
 function isAdminEmail(email: string | null | undefined): boolean {
   const raw = process.env["ADMIN_EMAIL"] ?? "";
@@ -22,6 +23,8 @@ export default async function AdminLayout({
     redirect("/members/get-started");
   }
 
+  const openTickets = await getOpenTicketCount().catch(() => 0);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur px-4 py-3 md:px-6 flex flex-wrap items-center gap-3 md:gap-6">
@@ -30,7 +33,7 @@ export default async function AdminLayout({
           <img src="/s-logo.png" alt="Stridivo" className="h-7 w-auto" />
           Stridivo.com
         </Link>
-        <AdminNav />
+        <AdminNav openTickets={openTickets} />
         <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground max-w-full">
           <span className="truncate max-w-[160px]">{userName}</span>
           <form

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Ban } from "lucide-react";
+import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
 
 interface Props {
   token: string;
@@ -12,9 +13,10 @@ interface Props {
 export function LinkActions({ token, revoked }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState<"revoke" | "delete" | null>(null);
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
 
-  async function handleRevoke() {
-    if (!confirm("Revoke this link? It will no longer be redeemable.")) return;
+  async function doRevoke() {
+    setPendingConfirm(null);
     setLoading("revoke");
     try {
       await fetch("/api/admin/activation-links", {
@@ -28,8 +30,8 @@ export function LinkActions({ token, revoked }: Props) {
     }
   }
 
-  async function handleDelete() {
-    if (!confirm("Permanently delete this link? This cannot be undone.")) return;
+  async function doDelete() {
+    setPendingConfirm(null);
     setLoading("delete");
     try {
       await fetch(`/api/admin/activation-links?token=${encodeURIComponent(token)}`, {
@@ -42,27 +44,49 @@ export function LinkActions({ token, revoked }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-1">
-      {!revoked && (
+    <>
+      {pendingConfirm && (
+        <ConfirmModal
+          {...pendingConfirm}
+          onCancel={() => setPendingConfirm(null)}
+        />
+      )}
+      <div className="flex items-center gap-1">
+        {!revoked && (
+          <button
+            type="button"
+            onClick={() =>
+              setPendingConfirm({
+                title: "Revoke link",
+                message: "Revoke this link? It will no longer be redeemable.",
+                confirmLabel: "Revoke",
+                onConfirm: () => void doRevoke(),
+              })
+            }
+            disabled={loading != null}
+            title="Revoke link"
+            className="p-1.5 rounded hover:bg-amber-100 text-amber-600 transition-colors disabled:opacity-40"
+          >
+            <Ban className="h-3.5 w-3.5" />
+          </button>
+        )}
         <button
           type="button"
-          onClick={handleRevoke}
+          onClick={() =>
+            setPendingConfirm({
+              title: "Delete link",
+              message: "Permanently delete this link? This cannot be undone.",
+              confirmLabel: "Delete",
+              onConfirm: () => void doDelete(),
+            })
+          }
           disabled={loading != null}
-          title="Revoke link"
-          className="p-1.5 rounded hover:bg-amber-100 text-amber-600 transition-colors disabled:opacity-40"
+          title="Delete link"
+          className="p-1.5 rounded hover:bg-red-100 text-red-600 transition-colors disabled:opacity-40"
         >
-          <Ban className="h-3.5 w-3.5" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
-      )}
-      <button
-        type="button"
-        onClick={handleDelete}
-        disabled={loading != null}
-        title="Delete link"
-        className="p-1.5 rounded hover:bg-red-100 text-red-600 transition-colors disabled:opacity-40"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
-    </div>
+      </div>
+    </>
   );
 }
