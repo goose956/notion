@@ -480,4 +480,38 @@ Key helper functions added to the page:
 
 ---
 
-*Last updated: 13 May 2026*
+## Recent commits (May 2026)
+
+| Commit | Description |
+|--------|-------------|
+| `573276a` | fix: radio selector in My Workspace dropdown, defaults to first workflow; `?nicheId=` param fix |
+| `5d3165b` | fix: replace black square logos with `s-logo.png` on get-started page |
+| `41b7219` | fix: show original workspace in nav dropdown, correct `nicheId` query param |
+| `0048332` | fix: decode mojibake emojis and dashes on get-started page |
+| `30b15a4` | feat: 6 dashboard colour themes with picker (hero banner + countdown ring) — rose, ocean, forest, twilight, sunset, pride |
+| `99677fb` | feat: extend dashboard themes to stat cards and budget panel |
+| `ed57ea1` | refactor: extract wedding components + niche registry for scalable workflow creation |
+
+### Refactor — `ed57ea1`
+
+`page.tsx` was a 4 329-line monolith. All wedding-planner UI code has been extracted into purpose-built files, and a niche registry drives tab/navigation logic so **adding a new niche requires only one entry in the registry**.
+
+**New files**
+
+| File | Contents |
+|------|----------|
+| `apps/web/src/lib/workspace-tokens.ts` | Single source of truth for all Notion design tokens (`N_FG`, `N_MUTED`, `N_BORDER`, `N_BLUE`, `N_FONT`, …) |
+| `apps/web/src/lib/niche-registry.ts` | `NICHE_REGISTRY` array + helpers: `isVirtualTab()`, `getDefaultTabId()`, `getHiddenDbIds()`, `getNicheEntry()`. Add one entry here to onboard a new niche. |
+| `apps/web/src/components/workspace/database-table.tsx` | Generic `<DatabaseTable>` component (shared between the main workspace view and the Honeymoon Planner) |
+| `apps/web/src/components/niches/wedding-planner/utils.ts` | Shared utilities: `asText`, `asNumber`, `asCurrencyNumber`, `getCurrencyCode`, `formatCurrency`, `parseWeddingDate`, `findPropertyName`, `DraftPayload` type |
+| `apps/web/src/components/niches/wedding-planner/dashboard.tsx` | `<WeddingWorkspaceDashboard>` — stats, budget panel, theme picker |
+| `apps/web/src/components/niches/wedding-planner/draft-studio.tsx` | `<WeddingDraftStudio>` — AI letter drafting |
+| `apps/web/src/components/niches/wedding-planner/invitation-canvas.tsx` | `<WeddingInvitationCanvas>` — canvas-based invitation designer |
+| `apps/web/src/components/niches/wedding-planner/speech-writer.tsx` | `<WeddingSpeechWriter>` — AI speech writer with password lock |
+| `apps/web/src/components/niches/wedding-planner/honeymoon-planner.tsx` | `<WeddingHoneymoonPlanner>` — AI chat + saved results table |
+
+**`page.tsx` after refactor**: ~760 lines (down from 4 329). Contains only `WorkspacePage` — the shell, sidebar, and tab routing. Tab selection logic uses `isVirtualTab()` instead of 12 hard-coded string comparisons.
+
+---
+
+*Last updated: 28 May 2026*
