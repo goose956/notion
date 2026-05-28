@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
       NEXTAUTH_URL: process.env["NEXTAUTH_URL"] ?? null,
       RAILWAY_PUBLIC_DOMAIN: process.env["RAILWAY_PUBLIC_DOMAIN"] ?? null,
       NOTION_OAUTH_REDIRECT_URI: process.env["NOTION_OAUTH_REDIRECT_URI"] ?? null,
+      NOTION_CLIENT_ID: process.env["NOTION_CLIENT_ID"] ?? null,
       hasNotionClientId: clientId.length > 0,
     },
     expectedNotionRedirectUris: [
