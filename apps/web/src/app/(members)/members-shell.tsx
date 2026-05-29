@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Coins, LogOut, Menu, MessageCircle, User, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Coins, HelpCircle, LogOut, Menu, MessageCircle, User, X } from "lucide-react";
 import { MembersNav } from "./members-nav";
 
 const N_FONT =
@@ -361,6 +361,26 @@ export function MembersShell({
             >
               <Coins style={{ width: "13px", height: "13px", flexShrink: 0, color: "#b45309" }} />
               {!sidebarCollapsed && "Credits"}
+            </Link>
+            <Link
+              href={"/members/faq" as never}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: sidebarCollapsed ? "center" : "flex-start",
+                gap: "6px",
+                padding: "5px 8px",
+                borderRadius: "4px",
+                fontSize: "13px",
+                color: "rgba(55,53,47,0.7)",
+                textDecoration: "none",
+                background: "rgba(55,53,47,0.05)",
+              }}
+              className="hover:bg-[rgba(55,53,47,0.1)]"
+              title={sidebarCollapsed ? "FAQ" : undefined}
+            >
+              <HelpCircle style={{ width: "13px", height: "13px", flexShrink: 0, color: "rgba(55,53,47,0.5)" }} />
+              {!sidebarCollapsed && "FAQ"}
             </Link>
             <Link
               href={"/members/support" as never}
