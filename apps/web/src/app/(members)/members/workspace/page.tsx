@@ -366,9 +366,11 @@ export default function WorkspacePage() {
           display: "flex",
           flexDirection: "column",
           background: "white",
-          overflowY: "auto",
+          overflow: "hidden",
         }}
       >
+        {/* Scrollable nav area */}
+        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
         <div
           style={{
             padding: "14px 14px 10px",
@@ -496,64 +498,6 @@ export default function WorkspacePage() {
                 {nicheEntry?.sidebarEmoji ? `${nicheEntry.sidebarEmoji} ` : ""}{group.nicheName}
               </button>
 
-              {/* Notion sync controls — shown when on app backend */}
-              {expanded && backend === "app" && (
-                <div style={{ padding: "6px 10px 8px", borderBottom: `1px solid ${N_BORDER}` }}>
-                  <button
-                    onClick={() => void pushToNotion(group.nicheId)}
-                    disabled={syncingNiches.has(group.nicheId)}
-                    style={{
-                      width: "100%",
-                      padding: "5px 8px",
-                      borderRadius: "4px",
-                      border: `1px solid ${N_BORDER_MED}`,
-                      background: "white",
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      color: N_FG,
-                      cursor: syncingNiches.has(group.nicheId) ? "default" : "pointer",
-                      fontFamily: N_FONT,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "5px",
-                      opacity: syncingNiches.has(group.nicheId) ? 0.6 : 1,
-                    }}
-                  >
-                    {syncingNiches.has(group.nicheId) ? (
-                      <><Loader2 size={10} style={{ animation: "spin 1s linear infinite" }} /> Syncing…</>
-                    ) : (
-                      <><RefreshCw size={10} /> Push to Notion</>
-                    )}
-                  </button>
-                  {syncResults[group.nicheId] && (
-                    <p style={{ margin: "4px 0 0", fontSize: "10px", color: syncResults[group.nicheId]?.startsWith("✓") ? "rgb(15,123,108)" : "rgb(220,38,38)", textAlign: "center" }}>
-                      {syncResults[group.nicheId]}
-                    </p>
-                  )}
-                  <select
-                    value={schedules[group.nicheId] ?? "off"}
-                    onChange={(e) => void saveSchedule(group.nicheId, e.target.value)}
-                    style={{
-                      width: "100%",
-                      marginTop: "5px",
-                      padding: "4px 6px",
-                      borderRadius: "4px",
-                      border: `1px solid ${N_BORDER_MED}`,
-                      fontSize: "11px",
-                      color: N_MUTED,
-                      background: "white",
-                      fontFamily: N_FONT,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <option value="off">Auto-sync: Off</option>
-                    <option value="daily">Auto-sync: Daily</option>
-                    <option value="weekly">Auto-sync: Weekly</option>
-                  </select>
-                </div>
-              )}
-
               {expanded && backend === "app" && nicheEntry?.topTabs.map((tab) => (
                 <NicheSidebarTabBtn
                   key={tab.tabId}
@@ -592,6 +536,75 @@ export default function WorkspacePage() {
             </div>
           );
         })}
+        </div>{/* end scrollable nav area */}
+
+        {/* ── Notion sync footer — quiet, out of the way ─────────────────── */}
+        {backend === "app" && nicheGroups.length > 0 && (
+          <div style={{ borderTop: `1px solid ${N_BORDER}`, padding: "8px 10px", flexShrink: 0 }}>
+            {nicheGroups.map((group) => (
+              <div key={group.nicheId} style={{ marginBottom: nicheGroups.length > 1 ? "6px" : 0 }}>
+                {nicheGroups.length > 1 && (
+                  <p style={{ fontSize: "10px", fontWeight: 600, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 4px" }}>
+                    {group.nicheName}
+                  </p>
+                )}
+                <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+                  <button
+                    onClick={() => void pushToNotion(group.nicheId)}
+                    disabled={syncingNiches.has(group.nicheId)}
+                    title="Copy workspace data to Notion"
+                    style={{
+                      flex: 1,
+                      padding: "4px 6px",
+                      borderRadius: "4px",
+                      border: `1px solid ${N_BORDER_MED}`,
+                      background: "transparent",
+                      fontSize: "11px",
+                      color: N_SUBTLE,
+                      cursor: syncingNiches.has(group.nicheId) ? "default" : "pointer",
+                      fontFamily: N_FONT,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "4px",
+                      opacity: syncingNiches.has(group.nicheId) ? 0.6 : 1,
+                    }}
+                  >
+                    {syncingNiches.has(group.nicheId)
+                      ? <><Loader2 size={9} style={{ animation: "spin 1s linear infinite" }} /> Syncing…</>
+                      : <><RefreshCw size={9} /> Push to Notion</>
+                    }
+                  </button>
+                  <select
+                    value={schedules[group.nicheId] ?? "off"}
+                    onChange={(e) => void saveSchedule(group.nicheId, e.target.value)}
+                    title="Auto-sync schedule"
+                    style={{
+                      padding: "4px 4px",
+                      borderRadius: "4px",
+                      border: `1px solid ${N_BORDER_MED}`,
+                      fontSize: "10px",
+                      color: N_SUBTLE,
+                      background: "transparent",
+                      fontFamily: N_FONT,
+                      cursor: "pointer",
+                      maxWidth: "74px",
+                    }}
+                  >
+                    <option value="off">Off</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                  </select>
+                </div>
+                {syncResults[group.nicheId] && (
+                  <p style={{ margin: "3px 0 0", fontSize: "10px", color: syncResults[group.nicheId]?.startsWith("✓") ? "rgb(15,123,108)" : "rgb(220,38,38)" }}>
+                    {syncResults[group.nicheId]}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
