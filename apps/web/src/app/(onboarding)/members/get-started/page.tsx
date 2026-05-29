@@ -1,4 +1,4 @@
-﻿import { auth } from "@/auth";
+import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";

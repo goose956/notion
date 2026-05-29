@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useRef, useMemo, type ChangeEvent } from "react";
 import { CalendarDays, MapPin, Users, CheckCircle2, ListChecks, FileText, Pencil, Check, X, Palette } from "lucide-react";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_FONT } from "@/lib/workspace-tokens";

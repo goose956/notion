@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { listTemplates } from "@niche-factory/db";
 import type { TemplateRow } from "@niche-factory/db";
 import { slugifyTemplateCategory } from "@/lib/template-categories";
