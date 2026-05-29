@@ -29,6 +29,16 @@ export async function GET(req: NextRequest) {
     path: "/",
   });
 
+  // Persist where to send the user after a successful connection
+  const returnTo = req.nextUrl.searchParams.get("return_to") ?? "/members/workspace";
+  cookieStore.set("notion_oauth_return_to", returnTo, {
+    httpOnly: true,
+    secure: process.env["NODE_ENV"] === "production",
+    sameSite: "lax",
+    maxAge: 600,
+    path: "/",
+  });
+
   const clientId = process.env["NOTION_CLIENT_ID"] ?? "";
   if (!clientId) {
     const baseUrl = resolvePublicAppUrl(req.url);

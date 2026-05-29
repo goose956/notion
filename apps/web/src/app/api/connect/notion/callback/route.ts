@@ -116,7 +116,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${connectionsUrl}?error=connection_save`);
     }
 
-    return NextResponse.redirect(`${connectionsUrl}?connected=notion`);
+    const returnTo = cookieStore.get("notion_oauth_return_to")?.value ?? "/members/workspace";
+    cookieStore.delete("notion_oauth_return_to");
+    const returnUrl = new URL(returnTo, baseUrl);
+    // Safety: only redirect to same-origin paths
+    const safeReturnUrl = returnUrl.origin === baseUrl ? returnUrl.toString() : connectionsUrl;
+    return NextResponse.redirect(`${safeReturnUrl}${safeReturnUrl.includes("?") ? "&" : "?"}connected=notion`);
   } catch (err) {
     console.error("[notion callback] unexpected error:", err);
     return NextResponse.redirect(`${connectionsUrl}?error=notion_callback`);

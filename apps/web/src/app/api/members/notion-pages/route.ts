@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { NotionApiClient } from "@niche-factory/notion-client";
+import { resolveNotionToken } from "@/lib/resolve-notion-token";
 
 export interface NotionPageResult {
   id: string;
@@ -38,9 +39,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
-    | string
-    | undefined;
+  const userEmail = session.user.email;
+  const sessionNotionToken = (session as unknown as Record<string, unknown>)["notionToken"] as string | undefined;
+  const notionToken = await resolveNotionToken(userEmail, sessionNotionToken);
   if (!notionToken) {
     return NextResponse.json({ error: "No Notion token" }, { status: 401 });
   }

@@ -176,7 +176,7 @@ function ProviderCard({
               <DisconnectButton provider={def.id} userEmail={userEmail} />
             ) : (
               <a
-                href={`/api/connect/${def.id}`}
+                href={`/api/connect/${def.id}?return_to=${encodeURIComponent("/members/setup/wedding-planner")}`}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",

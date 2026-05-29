@@ -199,7 +199,7 @@ export async function GET(_req: NextRequest) {
       ? (await listAppWorkspacesByUser(userEmail).catch(() => [])).length > 0
       : false;
 
-  const useAppBackend = !notionToken || hasAnyAppWorkspaces;
+  const useAppBackend = !notionToken;
   const weddingCriteriaRow =
     typeof userEmail === "string" && userEmail.length > 0
       ? await getUserCriteria(userEmail, "wedding-planner").catch(() => undefined)
