@@ -98,7 +98,7 @@ async function runNotionSyncForSchedule(schedule: "daily" | "weekly") {
     // key format: notion_sync_schedule:{userEmail}:{nicheId}
     const parts = row.key.split(":");
     if (parts.length < 3) continue;
-    const userEmail = parts[1];
+    const userEmail = parts[1]!;
     const nicheId = parts.slice(2).join(":");
 
     try {
