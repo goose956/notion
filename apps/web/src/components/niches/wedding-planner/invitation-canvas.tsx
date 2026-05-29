@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Loader2, WandSparkles, Download, Palette } from "lucide-react";
+import { Loader2, WandSparkles, Download, Palette, BookmarkPlus } from "lucide-react";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 import { asText, findPropertyName } from "./utils";
@@ -19,6 +19,7 @@ export function WeddingInvitationCanvas({
   const [mode, setMode] = useState<"invitation" | "thank-you">("invitation");
   const [canvasSize, setCanvasSize] = useState<"a5-portrait" | "five-by-seven" | "square-social">("a5-portrait");
   const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [invitationText, setInvitationText] = useState("");
@@ -193,20 +194,32 @@ export function WeddingInvitationCanvas({
       setSvgMarkup(nextSvg);
       setCreditsLeft(typeof data.credits === "number" ? data.credits : null);
 
-      await saveGeneratedDesignToDocuments(nextInvitation, nextThankYou, nextSvg, prompt);
-      setSuccess("Design generated and saved to Documents.");
-
       setChatLog((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "Design generated and saved. You can now export the canvas as an image.",
+          content: "Design generated. Use “Save to Documents” to save it, or export as PNG.",
         },
       ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleSaveToDocuments() {
+    if (!svgMarkup) return;
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await saveGeneratedDesignToDocuments(invitationText, thankYouText, svgMarkup, userPrompt);
+      setSuccess("Saved to Documents.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -349,7 +362,7 @@ export function WeddingInvitationCanvas({
           )}
           {error && <p style={{ margin: 0, color: "rgb(220,38,38)", fontSize: "12px" }}>{error}</p>}
           {success && <p style={{ margin: 0, color: "rgb(21,128,61)", fontSize: "12px" }}>{success}</p>}
-          {!documentsDb && <p style={{ margin: 0, color: N_MUTED, fontSize: "12px" }}>Documents database not available, so auto-save is disabled.</p>}
+          {!documentsDb && <p style={{ margin: 0, color: N_MUTED, fontSize: "12px" }}>Documents database not available — saving is disabled.</p>}
         </div>
       </section>
 
@@ -357,29 +370,57 @@ export function WeddingInvitationCanvas({
         <div style={{ padding: "10px 12px", borderBottom: `1px solid ${N_BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", background: "#fffdfc" }}>
           <div>
             <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: N_FG }}>Invitation Canvas</h3>
-            <p style={{ margin: "3px 0 0", fontSize: "12px", color: N_MUTED }}>{namesField || "Couple Names"} ┬À {dateField || "Wedding Date"} ┬À {venueField || "Wedding Venue"}</p>
+            <p style={{ margin: "3px 0 0", fontSize: "12px", color: N_MUTED }}>{namesField || "Couple Names"} &middot; {dateField || "Wedding Date"} &middot; {venueField || "Wedding Venue"}</p>
           </div>
-          <button
-            type="button"
-            onClick={exportCanvasPng}
-            disabled={!svgMarkup}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "7px 10px",
-              borderRadius: "7px",
-              border: `1px solid ${N_BORDER_MED}`,
-              background: svgMarkup ? "white" : "#f8fafc",
-              color: svgMarkup ? N_FG : N_SUBTLE,
-              fontSize: "12px",
-              fontWeight: 600,
-              fontFamily: N_FONT,
-              cursor: svgMarkup ? "pointer" : "default",
-            }}
-          >
-            <Download size={13} /> Export PNG
-          </button>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {success && <span style={{ fontSize: "12px", color: "rgb(21,128,61)" }}>{success}</span>}
+            {error && <span style={{ fontSize: "12px", color: "rgb(220,38,38)" }}>{error}</span>}
+            {documentsDb && (
+              <button
+                type="button"
+                onClick={() => void handleSaveToDocuments()}
+                disabled={!svgMarkup || saving}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "7px 10px",
+                  borderRadius: "7px",
+                  border: "none",
+                  background: svgMarkup && !saving ? "linear-gradient(135deg, #6b2040, #be185d)" : "rgba(190,24,93,0.2)",
+                  color: "white",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  fontFamily: N_FONT,
+                  cursor: svgMarkup && !saving ? "pointer" : "default",
+                }}
+              >
+                {saving ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <BookmarkPlus size={13} />}
+                {saving ? "Saving…" : "Save to Documents"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={exportCanvasPng}
+              disabled={!svgMarkup}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "7px 10px",
+                borderRadius: "7px",
+                border: `1px solid ${N_BORDER_MED}`,
+                background: svgMarkup ? "white" : "#f8fafc",
+                color: svgMarkup ? N_FG : N_SUBTLE,
+                fontSize: "12px",
+                fontWeight: 600,
+                fontFamily: N_FONT,
+                cursor: svgMarkup ? "pointer" : "default",
+              }}
+            >
+              <Download size={13} /> Export PNG
+            </button>
+          </div>
         </div>
 
         <div style={{ padding: "12px", display: "grid", gap: "10px", overflowY: "auto" }}>

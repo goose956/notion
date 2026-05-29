@@ -268,7 +268,7 @@ export function WeddingDraftStudio({
               }}
             >
               {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
-              {saving ? "Saving..." : "Save to Workspace"}
+              {saving ? "Saving..." : "Save to Documents"}
             </button>
           </div>
         </div>
