@@ -8,8 +8,10 @@
  *      sent. Useful for queuing long runs out of band.
  */
 import { inngest } from "./client.js";
-import { listDueSchedules, updateScheduleAfterRun } from "@niche-factory/db";
+import { listDueSchedules, updateScheduleAfterRun, listAppWorkspacesByUser, getSettingValue } from "@niche-factory/db";
 import { runAgent } from "@niche-factory/agent-runtime";
+import { syncAppToNotion, syncScheduleKey } from "@/app/api/members/sync-to-notion/route";
+import { resolveNotionToken } from "@/lib/resolve-notion-token";
 import type { JsonValue } from "@niche-factory/agent-runtime";
 
 /**
@@ -67,7 +69,64 @@ export const runScheduledAgents = inngest.createFunction(
   },
 );
 
-// ─── 2. Event-driven agent trigger ───────────────────────────────────────────
+// ─── 2. Scheduled Notion sync ────────────────────────────────────────────────
+// Runs daily at 08:00 UTC and weekly on Monday at 08:00 UTC.
+// Reads each user's schedule preference and syncs if it matches.
+
+async function runNotionSyncForSchedule(schedule: "daily" | "weekly") {
+  // Get all app workspaces, group by userId
+  // We can't easily query all users so we use a known list from the DB via
+  // a side-effect: get all distinct userIds from listAppWorkspacesByUser.
+  // Instead, we scan app_settings for keys matching notion_sync_schedule:*
+  // that equal this schedule value.
+  const { db } = await import("@niche-factory/db");
+  const { appSettings } = await import("@niche-factory/db");
+  const { like, eq, and } = await import("drizzle-orm");
+
+  const rows = await db
+    .select()
+    .from(appSettings)
+    .where(
+      and(
+        like(appSettings.key, "notion_sync_schedule:%"),
+        eq(appSettings.value, schedule),
+      ),
+    );
+
+  let synced = 0;
+  for (const row of rows) {
+    // key format: notion_sync_schedule:{userEmail}:{nicheId}
+    const parts = row.key.split(":");
+    if (parts.length < 3) continue;
+    const userEmail = parts[1];
+    const nicheId = parts.slice(2).join(":");
+
+    try {
+      const notionToken = await resolveNotionToken(userEmail, undefined);
+      if (!notionToken) continue;
+      await syncAppToNotion(userEmail, notionToken, nicheId);
+      synced++;
+    } catch {
+      // Non-fatal — log and continue
+    }
+  }
+
+  return { schedule, synced };
+}
+
+export const syncNotionDaily = inngest.createFunction(
+  { id: "sync-notion-daily", name: "Sync App → Notion (Daily)" },
+  { cron: "0 8 * * *" }, // 08:00 UTC every day
+  async ({ step }) => step.run("sync", () => runNotionSyncForSchedule("daily")),
+);
+
+export const syncNotionWeekly = inngest.createFunction(
+  { id: "sync-notion-weekly", name: "Sync App → Notion (Weekly)" },
+  { cron: "0 8 * * 1" }, // 08:00 UTC every Monday
+  async ({ step }) => step.run("sync", () => runNotionSyncForSchedule("weekly")),
+);
+
+// ─── 3. Event-driven agent trigger ───────────────────────────────────────────
 
 interface RunAgentRequestedEvent {
   name: "agent/run.requested";

@@ -127,6 +127,60 @@ export default function WorkspacePage() {
   const [seatedGuestIds, setSeatedGuestIds] = useState<Set<string>>(new Set());
   const lastUrlSelectionKeyRef = useRef<string>("");
 
+  // ── Notion sync state ──────────────────────────────────────────────────────
+  const [syncingNiches, setSyncingNiches] = useState<Set<string>>(new Set());
+  const [syncResults, setSyncResults] = useState<Record<string, string>>({});
+  const [schedules, setSchedules] = useState<Record<string, string>>({});
+
+  async function pushToNotion(nicheId: string) {
+    setSyncingNiches((prev) => new Set([...prev, nicheId]));
+    setSyncResults((prev) => ({ ...prev, [nicheId]: "" }));
+    try {
+      const res = await fetch("/api/members/sync-to-notion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nicheId }),
+      });
+      const data = await res.json() as { ok?: boolean; created?: number; updated?: number; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Sync failed");
+      setSyncResults((prev) => ({
+        ...prev,
+        [nicheId]: `✓ ${data.created ?? 0} created, ${data.updated ?? 0} updated`,
+      }));
+    } catch (err) {
+      setSyncResults((prev) => ({
+        ...prev,
+        [nicheId]: err instanceof Error ? err.message : "Sync failed",
+      }));
+    } finally {
+      setSyncingNiches((prev) => { const s = new Set(prev); s.delete(nicheId); return s; });
+    }
+  }
+
+  async function saveSchedule(nicheId: string, schedule: string) {
+    setSchedules((prev) => ({ ...prev, [nicheId]: schedule }));
+    await fetch("/api/members/sync-to-notion", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nicheId, schedule }),
+    }).catch(() => undefined);
+  }
+
+  // Load schedules when niches are known
+  useEffect(() => {
+    const nicheIds = [...new Set(databases.map((d) => d.nicheId))];
+    for (const nicheId of nicheIds) {
+      if (schedules[nicheId] !== undefined) continue;
+      fetch(`/api/members/sync-to-notion?nicheId=${encodeURIComponent(nicheId)}`)
+        .then((r) => r.json())
+        .then((d: { schedule?: string }) => {
+          if (d.schedule) setSchedules((prev) => ({ ...prev, [nicheId]: d.schedule! }));
+        })
+        .catch(() => undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [databases]);
+
   function applyRequestedSelection(
     nextDatabases: WorkspaceDatabase[],
     nextBackend: "app" | "notion" = backend,
@@ -437,6 +491,64 @@ export default function WorkspacePage() {
                 {expanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
                 {nicheEntry?.sidebarEmoji ? `${nicheEntry.sidebarEmoji} ` : ""}{group.nicheName}
               </button>
+
+              {/* Notion sync controls — shown when on app backend */}
+              {expanded && backend === "app" && (
+                <div style={{ padding: "6px 10px 8px", borderBottom: `1px solid ${N_BORDER}` }}>
+                  <button
+                    onClick={() => void pushToNotion(group.nicheId)}
+                    disabled={syncingNiches.has(group.nicheId)}
+                    style={{
+                      width: "100%",
+                      padding: "5px 8px",
+                      borderRadius: "4px",
+                      border: `1px solid ${N_BORDER_MED}`,
+                      background: "white",
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      color: N_FG,
+                      cursor: syncingNiches.has(group.nicheId) ? "default" : "pointer",
+                      fontFamily: N_FONT,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "5px",
+                      opacity: syncingNiches.has(group.nicheId) ? 0.6 : 1,
+                    }}
+                  >
+                    {syncingNiches.has(group.nicheId) ? (
+                      <><Loader2 size={10} style={{ animation: "spin 1s linear infinite" }} /> Syncing…</>
+                    ) : (
+                      <><RefreshCw size={10} /> Push to Notion</>
+                    )}
+                  </button>
+                  {syncResults[group.nicheId] && (
+                    <p style={{ margin: "4px 0 0", fontSize: "10px", color: syncResults[group.nicheId]?.startsWith("✓") ? "rgb(15,123,108)" : "rgb(220,38,38)", textAlign: "center" }}>
+                      {syncResults[group.nicheId]}
+                    </p>
+                  )}
+                  <select
+                    value={schedules[group.nicheId] ?? "off"}
+                    onChange={(e) => void saveSchedule(group.nicheId, e.target.value)}
+                    style={{
+                      width: "100%",
+                      marginTop: "5px",
+                      padding: "4px 6px",
+                      borderRadius: "4px",
+                      border: `1px solid ${N_BORDER_MED}`,
+                      fontSize: "11px",
+                      color: N_MUTED,
+                      background: "white",
+                      fontFamily: N_FONT,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="off">Auto-sync: Off</option>
+                    <option value="daily">Auto-sync: Daily</option>
+                    <option value="weekly">Auto-sync: Weekly</option>
+                  </select>
+                </div>
+              )}
 
               {expanded && backend === "app" && nicheEntry?.topTabs.map((tab) => (
                 <NicheSidebarTabBtn

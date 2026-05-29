@@ -8,9 +8,9 @@
  */
 import { serve } from "inngest/next";
 import { inngest } from "@/lib/inngest/client";
-import { runScheduledAgents, runAgentManually } from "@/lib/inngest/functions";
+import { runScheduledAgents, runAgentManually, syncNotionDaily, syncNotionWeekly } from "@/lib/inngest/functions";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [runScheduledAgents, runAgentManually],
+  functions: [runScheduledAgents, runAgentManually, syncNotionDaily, syncNotionWeekly],
 });
