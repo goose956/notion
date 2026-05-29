@@ -339,7 +339,11 @@ export function WeddingSpeechWriter({
       setPasswordHash(nextHash);
       setNewPassword("");
       setConfirmPassword("");
-      setSuccess("Progress saved.");
+      setDraft(null);
+      setLocked(false);
+      setPasswordHash(null);
+      setUnlocked(true);
+      setSuccess("Progress saved. Editor cleared.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save speech draft");
     } finally {
@@ -385,7 +389,11 @@ export function WeddingSpeechWriter({
       const body = (await res.json().catch(() => ({}))) as { pageId?: string; error?: string };
       if (!res.ok || !body.pageId) throw new Error(body.error ?? "Failed to save to Documents");
       onDocumentSaved({ pageId: body.pageId, properties });
-      setSuccess("Speech saved to documents.");
+      setDraft(null);
+      setLocked(false);
+      setPasswordHash(null);
+      setUnlocked(true);
+      setSuccess("Saved to documents. Editor cleared.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save to Documents");
     } finally {
@@ -568,7 +576,15 @@ export function WeddingSpeechWriter({
             </button>
           )}
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              type="button"
+              onClick={() => { setDraft(null); setLocked(false); setPasswordHash(null); setUnlocked(true); setNewPassword(""); setConfirmPassword(""); setError(null); setSuccess(null); }}
+              disabled={!draft}
+              style={{ padding: "8px 12px", borderRadius: "7px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: N_MUTED, fontSize: "13px", fontFamily: N_FONT, cursor: draft ? "pointer" : "default", opacity: draft ? 1 : 0.4 }}
+            >
+              Clear
+            </button>
             {documentsDb && (
               <button
                 type="button"
