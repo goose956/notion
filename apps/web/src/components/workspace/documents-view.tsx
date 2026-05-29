@@ -476,14 +476,15 @@ export function DocumentsView({
   );
   const [addingRow, setAddingRow] = useState(false);
 
-  // If the selected row no longer exists (e.g. was deleted) or nothing is selected,
-  // fall back to the first available row.
-  const selectedExists = db.rows.some((r) => r.pageId === selectedId);
-  const effectiveSelectedId = selectedExists ? selectedId : (db.rows[0]?.pageId ?? null);
   const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
 
-  const groups = groupByType(db.rows);
-  const selectedRow = db.rows.find((r) => r.pageId === effectiveSelectedId) ?? null;
+  // Speech Drafts live in the Speech Writer tab — exclude from Documents view
+  const visibleRows = db.rows.filter((r) => prop(r, "Type") !== "Speech Draft");
+  const groups = groupByType(visibleRows);
+  // Fall back to first visible row if selection is gone
+  const selectedExists = visibleRows.some((r) => r.pageId === selectedId);
+  const effectiveSelectedId = selectedExists ? selectedId : (visibleRows[0]?.pageId ?? null);
+  const selectedRow = visibleRows.find((r) => r.pageId === effectiveSelectedId) ?? null;
 
   async function handleAddRow() {
     setAddingRow(true);

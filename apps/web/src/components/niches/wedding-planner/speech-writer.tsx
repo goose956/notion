@@ -1,10 +1,143 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Loader2, WandSparkles } from "lucide-react";
+import { Loader2, WandSparkles, Lock, Eye, FileText } from "lucide-react";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import type { DraftPayload } from "./utils";
 import { asText, findPropertyName } from "./utils";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
+
+// ─── Password helper ──────────────────────────────────────────────────────────
+
+async function hashPassword(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function isSpeechLocked(row: WorkspaceRow): boolean {
+  const locked = row.properties["Locked"];
+  const hash = String(row.properties["PasswordHash"] ?? "").trim();
+  return (locked === true || locked === "true" || locked === 1) && hash.length > 0;
+}
+
+// ─── Saved Speech Card ────────────────────────────────────────────────────────
+
+function SpeechCard({
+  row,
+  selected,
+  onSelect,
+}: {
+  row: WorkspaceRow;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const title = String(row.properties["Title"] ?? "Untitled speech");
+  const locked = isSpeechLocked(row);
+
+  return (
+    <button
+      onClick={onSelect}
+      style={{
+        width: "100%",
+        textAlign: "left",
+        padding: "9px 11px",
+        borderRadius: "7px",
+        border: `1px solid ${selected ? "#c2410c" : N_BORDER}`,
+        background: selected ? "#fff7ed" : "white",
+        cursor: "pointer",
+        fontFamily: N_FONT,
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "8px",
+      }}
+    >
+      <span style={{ marginTop: "1px", color: locked ? "#c2410c" : N_SUBTLE, flexShrink: 0 }}>
+        {locked ? <Lock size={12} /> : <FileText size={12} />}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: "12px", fontWeight: 600, color: N_FG, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {title}
+        </p>
+        <p style={{ margin: "2px 0 0", fontSize: "11px", color: N_MUTED }}>
+          {locked ? "Password protected" : "Click to load"}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+// ─── Password gate for loading a saved speech ─────────────────────────────────
+
+function SpeechPasswordGate({
+  storedHash,
+  onUnlock,
+  onCancel,
+}: {
+  storedHash: string;
+  onUnlock: (body: string, title: string) => void;
+  onCancel: () => void;
+  row: WorkspaceRow;
+}) {
+  const [input, setInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setChecking(true);
+    setError(null);
+    const hash = await hashPassword(input.trim());
+    if (hash === storedHash) {
+      // caller will handle loading
+      onUnlock(input.trim(), "");
+    } else {
+      setError("Incorrect password.");
+    }
+    setChecking(false);
+  }
+
+  return (
+    <div style={{ padding: "16px", border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "#fafafa", display: "grid", gap: "10px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <Lock size={14} color="#c2410c" />
+        <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: N_FG }}>Password required</p>
+      </div>
+      <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>This speech is password protected. Enter the password to load it into the editor.</p>
+      <form onSubmit={(e) => void handleSubmit(e)} style={{ display: "grid", gap: "6px" }}>
+        <input
+          type="password"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Enter password"
+          autoFocus
+          style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${error ? "rgb(220,38,38)" : N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, outline: "none" }}
+        />
+        {error && <p style={{ margin: 0, fontSize: "12px", color: "rgb(220,38,38)" }}>{error}</p>}
+        <div style={{ display: "flex", gap: "6px" }}>
+          <button
+            type="submit"
+            disabled={checking || !input.trim()}
+            style={{ flex: 1, padding: "8px", borderRadius: "6px", border: "none", background: "#c2410c", color: "white", fontSize: "12px", fontWeight: 600, fontFamily: N_FONT, cursor: checking ? "default" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "5px" }}
+          >
+            {checking ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Eye size={12} />}
+            Unlock
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{ padding: "8px 12px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: N_FG, fontSize: "12px", fontFamily: N_FONT, cursor: "pointer" }}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export function WeddingSpeechWriter({
   weddingCriteria,
   onWeddingCriteriaUpdated,
@@ -39,6 +172,12 @@ export function WeddingSpeechWriter({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [creditsLeft, setCreditsLeft] = useState<number | null>(null);
+
+  // Saved speeches panel
+  const savedSpeeches = (documentsDb?.rows ?? []).filter(
+    (r) => String(r.properties["Type"] ?? "") === "Speech Draft",
+  );
+  const [pendingUnlockRow, setPendingUnlockRow] = useState<WorkspaceRow | null>(null);
 
   useEffect(() => {
     const saved = weddingCriteria?.[SPEECH_STATE_KEY];
@@ -76,12 +215,6 @@ export function WeddingSpeechWriter({
     setUnlocked(!(lockedValue && Boolean(hashValue)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weddingCriteria?.[SPEECH_STATE_KEY]]);
-
-  async function hashPassword(value: string): Promise<string> {
-    const data = new TextEncoder().encode(value);
-    const digest = await crypto.subtle.digest("SHA-256", data);
-    return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-  }
 
   async function handleUnlock() {
     if (!passwordHash) return;
@@ -199,14 +332,14 @@ export function WeddingSpeechWriter({
         error?: string;
       };
       if (!res.ok) {
-        throw new Error(body.error ?? "Failed to save speech section");
+        throw new Error(body.error ?? "Failed to save speech");
       }
 
       onWeddingCriteriaUpdated((body.criteria as Record<string, unknown>) ?? payload);
       setPasswordHash(nextHash);
       setNewPassword("");
       setConfirmPassword("");
-      setSuccess("Speech saved in the Speech section.");
+      setSuccess("Progress saved.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save speech draft");
     } finally {
@@ -236,7 +369,6 @@ export function WeddingSpeechWriter({
     if (bodyName) { properties[bodyName] = draft.body; propertyTypes[bodyName] = "rich_text"; }
     if (summaryName) { properties[summaryName] = draft.summary?.trim() || draft.body.slice(0, 240); propertyTypes[summaryName] = "rich_text"; }
     if (subjectName) { properties[subjectName] = draft.subject; propertyTypes[subjectName] = "rich_text"; }
-    // Persist lock state so Documents view can enforce password protection
     if (locked && passwordHash) {
       properties["PasswordHash"] = passwordHash;
       properties["Locked"] = true;
@@ -253,12 +385,28 @@ export function WeddingSpeechWriter({
       const body = (await res.json().catch(() => ({}))) as { pageId?: string; error?: string };
       if (!res.ok || !body.pageId) throw new Error(body.error ?? "Failed to save to Documents");
       onDocumentSaved({ pageId: body.pageId, properties });
-      setSuccess("Speech saved to Documents.");
+      setSuccess("Speech saved to documents.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save to Documents");
     } finally {
       setSaving(false);
     }
+  }
+
+  function loadSavedSpeech(row: WorkspaceRow) {
+    const body = String(row.properties["Body"] ?? row.properties["Content"] ?? row.properties["Draft"] ?? "");
+    const title = String(row.properties["Title"] ?? "Wedding Speech Draft");
+    const subject = String(row.properties["Subject"] ?? `Wedding speech for ${coupleNames}`);
+    const summary = String(row.properties["Summary"] ?? "");
+    setDraft({ title, subject, body, summary, type: "Speech Draft" });
+    // Inherit lock state from the saved speech
+    const hash = String(row.properties["PasswordHash"] ?? "").trim();
+    const isLocked = isSpeechLocked(row);
+    setLocked(isLocked);
+    setPasswordHash(hash || null);
+    setUnlocked(true); // already unlocked (password was verified before calling this)
+    setSuccess(`Loaded "${title}" into the editor.`);
+    setError(null);
   }
 
   return (
@@ -274,98 +422,118 @@ export function WeddingSpeechWriter({
       <div style={{ padding: "12px 14px", borderBottom: `1px solid ${N_BORDER}`, background: "#fff8f1" }}>
         <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#7c2d12" }}>AI Speech Writer</h3>
         <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>
-          Answer a few prompts, generate a first draft, then edit and save progress so you can come back later.
+          Answer a few prompts, generate a first draft, then edit and save. Cost: 2 credits.
         </p>
       </div>
 
-      <div style={{ padding: "12px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "12px" }}>
+      <div style={{ padding: "12px", display: "grid", gridTemplateColumns: "minmax(280px,1fr) minmax(180px,220px) minmax(300px,1fr)", gap: "12px" }}>
+
+        {/* ── Col 1: Speech Planner ─────────────────────────────────── */}
         <section style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "#fffcf9", padding: "12px", display: "grid", gap: "8px", alignContent: "start" }}>
           <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: "#9a3412", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Speech Planner
           </p>
-          <textarea
-            value={whoToThank}
-            onChange={(e) => setWhoToThank(e.target.value)}
-            rows={2}
-            placeholder="Who would you like to thank?"
-            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
-          />
-          <textarea
-            value={howTheyMet}
-            onChange={(e) => setHowTheyMet(e.target.value)}
-            rows={2}
-            placeholder="Story about the bride/couple and how they met"
-            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
-          />
-          <textarea
-            value={whatBrideMeans}
-            onChange={(e) => setWhatBrideMeans(e.target.value)}
-            rows={2}
-            placeholder="What does the bride mean to you?"
-            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
-          />
-          <textarea
-            value={specialMemory}
-            onChange={(e) => setSpecialMemory(e.target.value)}
-            rows={2}
-            placeholder="A funny or emotional memory to include"
-            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
-          />
-          <textarea
-            value={closingToast}
-            onChange={(e) => setClosingToast(e.target.value)}
-            rows={2}
-            placeholder="How do you want to close the speech?"
-            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
-          />
+          <textarea value={whoToThank} onChange={(e) => setWhoToThank(e.target.value)} rows={2} placeholder="Who would you like to thank?" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }} />
+          <textarea value={howTheyMet} onChange={(e) => setHowTheyMet(e.target.value)} rows={2} placeholder="Story about the bride/couple and how they met" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }} />
+          <textarea value={whatBrideMeans} onChange={(e) => setWhatBrideMeans(e.target.value)} rows={2} placeholder="What does the bride mean to you?" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }} />
+          <textarea value={specialMemory} onChange={(e) => setSpecialMemory(e.target.value)} rows={2} placeholder="A funny or emotional memory to include" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }} />
+          <textarea value={closingToast} onChange={(e) => setClosingToast(e.target.value)} rows={2} placeholder="How do you want to close the speech?" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }} />
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-            <input
-              value={tone}
-              onChange={(e) => setTone(e.target.value)}
-              placeholder="Tone"
-              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
-            />
-            <input
-              value={speechLength}
-              onChange={(e) => setSpeechLength(e.target.value)}
-              placeholder="Length"
-              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
-            />
+            <input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="Tone" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }} />
+            <input value={speechLength} onChange={(e) => setSpeechLength(e.target.value)} placeholder="Length" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }} />
           </div>
-
-          <textarea
-            value={extraInstructions}
-            onChange={(e) => setExtraInstructions(e.target.value)}
-            rows={2}
-            placeholder="Anything else to include or avoid"
-            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
-          />
+          <textarea value={extraInstructions} onChange={(e) => setExtraInstructions(e.target.value)} rows={2} placeholder="Anything else to include or avoid" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }} />
 
           <button
             type="button"
             onClick={() => void generateSpeech()}
             disabled={generating}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              height: "36px",
-              borderRadius: "8px",
-              border: "none",
-              background: generating ? "rgba(124,45,18,0.25)" : "linear-gradient(135deg, #7c2d12, #c2410c)",
-              color: "white",
-              fontSize: "13px",
-              fontWeight: 700,
-              fontFamily: N_FONT,
-              cursor: generating ? "default" : "pointer",
-            }}
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px", height: "36px", borderRadius: "8px", border: "none", background: generating ? "rgba(124,45,18,0.25)" : "linear-gradient(135deg, #7c2d12, #c2410c)", color: "white", fontSize: "13px", fontWeight: 700, fontFamily: N_FONT, cursor: generating ? "default" : "pointer" }}
           >
             {generating ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <WandSparkles size={14} />}
             {generating ? "Generating" : "Generate speech"}
           </button>
 
+          {creditsLeft !== null && <p style={{ margin: 0, color: "#166534", fontSize: "12px", fontWeight: 600 }}>Credits remaining: {creditsLeft}</p>}
+          {error && <p style={{ margin: 0, color: "rgb(220,38,38)", fontSize: "12px" }}>{error}</p>}
+          {success && <p style={{ margin: 0, color: "rgb(21,128,61)", fontSize: "12px" }}>{success}</p>}
+        </section>
+
+        {/* ── Col 2: Saved Speeches ─────────────────────────────────── */}
+        <section style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "#fafafa", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+          <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Saved Speeches
+          </p>
+
+          {pendingUnlockRow && (
+            <SpeechPasswordGate
+              storedHash={String(pendingUnlockRow.properties["PasswordHash"] ?? "")}
+              row={pendingUnlockRow}
+              onUnlock={() => {
+                loadSavedSpeech(pendingUnlockRow);
+                setPendingUnlockRow(null);
+              }}
+              onCancel={() => setPendingUnlockRow(null)}
+            />
+          )}
+
+          {!pendingUnlockRow && savedSpeeches.length === 0 && (
+            <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
+              No saved speeches yet. Generate and save one to see it here.
+            </p>
+          )}
+
+          {!pendingUnlockRow && savedSpeeches.map((row) => (
+            <SpeechCard
+              key={row.pageId}
+              row={row}
+              selected={false}
+              onSelect={() => {
+                if (isSpeechLocked(row)) {
+                  setPendingUnlockRow(row);
+                } else {
+                  loadSavedSpeech(row);
+                }
+              }}
+            />
+          ))}
+        </section>
+
+        {/* ── Col 3: Draft Editor ───────────────────────────────────── */}
+        <section style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "#ffffff", padding: "12px", display: "grid", gap: "8px", alignContent: "start" }}>
+          <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Draft Editor
+          </p>
+
+          <input
+            value={draft?.title ?? ""}
+            onChange={(e) => setDraft((prev) => ({ title: e.target.value, subject: prev?.subject ?? `Wedding speech for ${coupleNames}`, body: prev?.body ?? "", summary: prev?.summary ?? "", type: "Speech Draft" }))}
+            placeholder="Title"
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+          />
+          <input
+            value={draft?.subject ?? ""}
+            onChange={(e) => setDraft((prev) => ({ title: prev?.title ?? "Wedding Speech Draft", subject: e.target.value, body: prev?.body ?? "", summary: prev?.summary ?? "", type: "Speech Draft" }))}
+            placeholder="Subject"
+            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
+          />
+
+          {locked && !unlocked ? (
+            <div style={{ padding: "14px", borderRadius: "8px", border: `1px dashed ${N_BORDER_MED}`, background: "#fafafa", fontSize: "13px", color: N_MUTED }}>
+              Speech content is locked. Enter password below to view or edit.
+            </div>
+          ) : (
+            <textarea
+              value={draft?.body ?? ""}
+              onChange={(e) => setDraft((prev) => ({ title: prev?.title ?? "Wedding Speech Draft", subject: prev?.subject ?? `Wedding speech for ${coupleNames}`, body: e.target.value, summary: prev?.summary ?? "", type: "Speech Draft" }))}
+              placeholder="Your speech draft"
+              rows={14}
+              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, lineHeight: 1.5, resize: "vertical" }}
+            />
+          )}
+
+          {/* Password protect controls */}
           <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: N_FG }}>
             <input
               type="checkbox"
@@ -373,163 +541,32 @@ export function WeddingSpeechWriter({
               onChange={(e) => {
                 const next = e.target.checked;
                 setLocked(next);
-                if (!next) {
-                  setUnlocked(true);
-                  setPasswordHash(null);
-                  setNewPassword("");
-                  setConfirmPassword("");
-                  setUnlockPassword("");
-                } else {
-                  setUnlocked(false);
-                }
+                if (!next) { setUnlocked(true); setPasswordHash(null); setNewPassword(""); setConfirmPassword(""); setUnlockPassword(""); }
+                else { setUnlocked(false); }
               }}
             />
-            Password protect speech text
+            Password protect this speech
           </label>
 
           {locked && !passwordHash && (
             <div style={{ display: "grid", gap: "6px" }}>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Set password"
-                style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
-              />
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm password"
-                style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
-              />
-              <p style={{ margin: 0, color: N_MUTED, fontSize: "12px" }}>Password will be required to view/edit speech words in this section.</p>
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Set password" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }} />
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm password" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }} />
             </div>
           )}
-
           {locked && passwordHash && !unlocked && (
             <div style={{ display: "grid", gap: "6px" }}>
-              <input
-                type="password"
-                value={unlockPassword}
-                onChange={(e) => setUnlockPassword(e.target.value)}
-                placeholder="Enter password to view speech"
-                style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
-              />
-              <button
-                type="button"
-                onClick={() => void handleUnlock()}
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  border: `1px solid ${N_BORDER_MED}`,
-                  background: "white",
-                  color: N_FG,
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  fontFamily: N_FONT,
-                  cursor: "pointer",
-                }}
-              >
+              <input type="password" value={unlockPassword} onChange={(e) => setUnlockPassword(e.target.value)} placeholder="Enter password to view" style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }} />
+              <button type="button" onClick={() => void handleUnlock()} style={{ padding: "8px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: N_FG, fontSize: "12px", fontWeight: 600, fontFamily: N_FONT, cursor: "pointer" }}>
                 Unlock speech
               </button>
             </div>
           )}
-
           {locked && passwordHash && unlocked && (
-            <button
-              type="button"
-              onClick={() => {
-                setUnlocked(false);
-                setUnlockPassword("");
-              }}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "6px",
-                border: `1px solid ${N_BORDER_MED}`,
-                background: "white",
-                color: N_FG,
-                fontSize: "12px",
-                fontWeight: 600,
-                fontFamily: N_FONT,
-                cursor: "pointer",
-              }}
-            >
+            <button type="button" onClick={() => { setUnlocked(false); setUnlockPassword(""); }} style={{ padding: "8px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: N_FG, fontSize: "12px", fontWeight: 600, fontFamily: N_FONT, cursor: "pointer" }}>
               Lock speech now
             </button>
           )}
-
-          {creditsLeft !== null && <p style={{ margin: 0, color: "#166534", fontSize: "12px", fontWeight: 600 }}>Credits remaining: {creditsLeft}</p>}
-          {error && <p style={{ margin: 0, color: "rgb(220,38,38)", fontSize: "12px" }}>{error}</p>}
-          {success && <p style={{ margin: 0, color: "rgb(21,128,61)", fontSize: "12px" }}>{success}</p>}
-        </section>
-
-        <section style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "#ffffff", padding: "12px", display: "grid", gap: "8px", alignContent: "start" }}>
-          <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Draft Editor
-          </p>
-
-          <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>This draft is stored only in the Speech section (not Documents).</p>
-
-          <input
-            value={draft?.title ?? ""}
-            onChange={(e) => setDraft((prev) => ({
-              title: e.target.value,
-              subject: prev?.subject ?? `Wedding speech for ${coupleNames}`,
-              body: prev?.body ?? "",
-              summary: prev?.summary ?? "",
-              type: prev?.type ?? "Speech Draft",
-            }))}
-            placeholder="Title"
-            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
-          />
-
-          <input
-            value={draft?.subject ?? ""}
-            onChange={(e) => setDraft((prev) => ({
-              title: prev?.title ?? "Wedding Speech Draft",
-              subject: e.target.value,
-              body: prev?.body ?? "",
-              summary: prev?.summary ?? "",
-              type: prev?.type ?? "Speech Draft",
-            }))}
-            placeholder="Subject"
-            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT }}
-          />
-
-          {locked && !unlocked ? (
-            <div style={{ padding: "14px", borderRadius: "8px", border: `1px dashed ${N_BORDER_MED}`, background: "#fafafa", fontSize: "13px", color: N_MUTED }}>
-              Speech content is locked. Enter password in the left panel to view or edit.
-            </div>
-          ) : (
-            <textarea
-              value={draft?.body ?? ""}
-              onChange={(e) => setDraft((prev) => ({
-                title: prev?.title ?? "Wedding Speech Draft",
-                subject: prev?.subject ?? `Wedding speech for ${coupleNames}`,
-                body: e.target.value,
-                summary: prev?.summary ?? "",
-                type: prev?.type ?? "Speech Draft",
-              }))}
-              placeholder="Your speech draft"
-              rows={14}
-              style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, lineHeight: 1.5, resize: "vertical" }}
-            />
-          )}
-
-          <textarea
-            value={draft?.summary ?? ""}
-            onChange={(e) => setDraft((prev) => ({
-              title: prev?.title ?? "Wedding Speech Draft",
-              subject: prev?.subject ?? `Wedding speech for ${coupleNames}`,
-              body: prev?.body ?? "",
-              summary: e.target.value,
-              type: prev?.type ?? "Speech Draft",
-            }))}
-            placeholder="Short summary"
-            rows={2}
-            style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
-          />
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
             {documentsDb && (
@@ -537,20 +574,7 @@ export function WeddingSpeechWriter({
                 type="button"
                 onClick={() => void saveToDocuments()}
                 disabled={saving || !draft?.body?.trim()}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 12px",
-                  borderRadius: "7px",
-                  border: "none",
-                  background: saving ? "rgba(124,45,18,0.2)" : "linear-gradient(135deg, #7c2d12, #c2410c)",
-                  color: "white",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  fontFamily: N_FONT,
-                  cursor: saving ? "default" : "pointer",
-                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 12px", borderRadius: "7px", border: "none", background: saving ? "rgba(124,45,18,0.2)" : "linear-gradient(135deg, #7c2d12, #c2410c)", color: "white", fontSize: "13px", fontWeight: 700, fontFamily: N_FONT, cursor: saving ? "default" : "pointer" }}
               >
                 {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
                 {saving ? "Saving..." : "Save to Documents"}
@@ -560,28 +584,15 @@ export function WeddingSpeechWriter({
               type="button"
               onClick={() => void saveSpeechDraft()}
               disabled={saving || !draft?.body?.trim()}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 12px",
-                borderRadius: "7px",
-                border: `1px solid ${N_BORDER_MED}`,
-                background: "white",
-                color: "#7c2d12",
-                fontSize: "13px",
-                fontWeight: 700,
-                fontFamily: N_FONT,
-                cursor: saving ? "default" : "pointer",
-              }}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 12px", borderRadius: "7px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: "#7c2d12", fontSize: "13px", fontWeight: 700, fontFamily: N_FONT, cursor: saving ? "default" : "pointer" }}
             >
               {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
               {saving ? "Saving..." : "Save Progress"}
             </button>
           </div>
         </section>
+
       </div>
     </div>
   );
 }
-
