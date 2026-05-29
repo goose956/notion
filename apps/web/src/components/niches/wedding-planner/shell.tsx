@@ -76,6 +76,7 @@ export function WeddingNicheShell({
         databases={databases}
         weddingCriteria={weddingCriteria}
         onWeddingCriteriaUpdated={setWeddingCriteria}
+        liveSeatedCount={seatedGuestIds.size}
       />
     </div>
   );

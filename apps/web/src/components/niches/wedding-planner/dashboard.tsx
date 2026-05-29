@@ -103,10 +103,12 @@ export function WeddingWorkspaceDashboard({
   databases,
   weddingCriteria,
   onWeddingCriteriaUpdated,
+  liveSeatedCount,
 }: {
   databases: WorkspaceDatabase[];
   weddingCriteria: Record<string, unknown> | null;
   onWeddingCriteriaUpdated: (criteria: Record<string, unknown>) => void;
+  liveSeatedCount: number;
 }) {
   const [themeId, setThemeId] = useState<ThemeId>(() => {
     if (typeof window === "undefined") return "rose";
@@ -207,9 +209,7 @@ export function WeddingWorkspaceDashboard({
     totalBudget && totalBudget > 0
       ? Math.max(0, Math.min(100, Math.round((totalSpent / totalBudget) * 100)))
       : 0;
-  const tableFieldName = guestsDb
-    ? findPropertyName(guestsDb.properties, ["Table", "Table Number", "Table Assignment"])
-    : null;
+
 
   useEffect(() => {
     setGuestScenarioCount(targetGuests > 0 ? targetGuests : 100);
@@ -218,18 +218,8 @@ export function WeddingWorkspaceDashboard({
   const scenarioSpend = guestScenarioCount * costPerGuest;
   const scenarioDelta = scenarioSpend - guestSpend;
 
-  const seatedGuests =
-    guestsDb && tableFieldName
-      ? guestsDb.rows.filter((row) => {
-          const value = row.properties[tableFieldName];
-          if (typeof value === "number") return value > 0;
-          if (typeof value === "string") return value.trim().length > 0;
-          return false;
-        }).length
-      : 0;
-
-  const seatingStarted = seatedGuests > 0;
-  const seatingProgress = trackedGuests > 0 ? Math.round((seatedGuests / trackedGuests) * 100) : 0;
+  const seatingStarted = liveSeatedCount > 0;
+  const seatingProgress = trackedGuests > 0 ? Math.round((liveSeatedCount / trackedGuests) * 100) : 0;
 
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -781,7 +771,7 @@ export function WeddingWorkspaceDashboard({
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <p style={{ margin: 0, fontSize: "12px", color: seatingStarted ? "#166534" : N_MUTED }}>
-            {seatedGuests} of {trackedGuests} guests assigned to tables
+            {liveSeatedCount} of {trackedGuests} guests assigned to tables
           </p>
           {trackedGuests > 0 && (
             <span style={{ fontSize: "13px", fontWeight: 800, color: seatingStarted ? "#16a34a" : N_SUBTLE }}>{seatingProgress}%</span>
