@@ -199,7 +199,10 @@ export async function GET(_req: NextRequest) {
       ? (await listAppWorkspacesByUser(userEmail).catch(() => [])).length > 0
       : false;
 
-  const useAppBackend = !notionToken;
+  // Use app backend if: no Notion token, OR the user already has in-app workspaces.
+  // In-app workspaces are the full experience (seating chart, draft letters, etc.).
+  // Notion is a sync target, not a replacement for the in-app workspace.
+  const useAppBackend = !notionToken || hasAnyAppWorkspaces;
   const weddingCriteriaRow =
     typeof userEmail === "string" && userEmail.length > 0
       ? await getUserCriteria(userEmail, "wedding-planner").catch(() => undefined)

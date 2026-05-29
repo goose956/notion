@@ -208,10 +208,13 @@ export default function WorkspacePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Poll Notion every 30 s so changes made directly in Notion appear in the app
+  // Poll every 30 s — refreshes from Notion when on the Notion backend,
+  // or keeps app data fresh when on the app backend.
   useEffect(() => {
     const id = setInterval(() => {
-      void loadDatabases({ isRefresh: true, selectionMode: "preserve" });
+      if (document.visibilityState === "visible") {
+        void loadDatabases({ isRefresh: true, selectionMode: "preserve" });
+      }
     }, 30_000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
