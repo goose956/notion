@@ -71,7 +71,7 @@ function DocCard({
   const cfg = getTypeConfig(type);
   const { textOnly, svgs } = extractSvgs(body);
   const hasSvg = svgs.length > 0;
-  const isDocLocked = row.properties["Locked"] === true && String(row.properties["PasswordHash"] ?? "").length > 0;
+  const isDocLocked = isRowLocked(row);
   const textPreview = summary || textOnly.replace(/SVG asset\s*\d*:\s*\n?/gi, "").trim().slice(0, 80);
   const svgDataUri = hasSvg ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgs[0]!)}` : null;
 
@@ -121,6 +121,12 @@ function DocCard({
 }
 
 // ─── Password helpers ─────────────────────────────────────────────────────────
+
+function isRowLocked(row: WorkspaceRow): boolean {
+  const locked = row.properties["Locked"];
+  const hash = String(row.properties["PasswordHash"] ?? "").trim();
+  return (locked === true || locked === "true" || locked === 1) && hash.length > 0;
+}
 
 async function hashPassword(value: string): Promise<string> {
   const data = new TextEncoder().encode(value);
@@ -189,8 +195,8 @@ function extractSvgs(text: string): { textOnly: string; svgs: string[] } {
 }
 
 function BodyEditor({ body, onChange, row }: { body: string; onChange: (v: string) => void; row: WorkspaceRow }) {
-  const storedHash = String(row.properties["PasswordHash"] ?? "");
-  const isLocked = row.properties["Locked"] === true && storedHash.length > 0;
+  const storedHash = String(row.properties["PasswordHash"] ?? "").trim();
+  const isLocked = isRowLocked(row);
   const [unlocked, setUnlocked] = useState(!isLocked);
 
   if (!unlocked) {
@@ -278,7 +284,7 @@ function DocEditor({
   const [body, setBody] = useState(prop(row, "Body", "Content", "Draft"));
   const [type, setType] = useState(prop(row, "Type") || "Other");
   const isImageDoc = extractSvgs(body).svgs.length > 0;
-  const isLockedDoc = row.properties["Locked"] === true && String(row.properties["PasswordHash"] ?? "").length > 0;
+  const isLockedDoc = isRowLocked(row);
   const [recipient, setRecipient] = useState(prop(row, "Recipient"));
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
