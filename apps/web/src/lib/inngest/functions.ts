@@ -10,7 +10,7 @@
 import { inngest } from "./client.js";
 import { listDueSchedules, updateScheduleAfterRun, listAppWorkspacesByUser, getSettingValue } from "@niche-factory/db";
 import { runAgent } from "@niche-factory/agent-runtime";
-import { syncAppToNotion, syncScheduleKey } from "@/app/api/members/sync-to-notion/route";
+import { syncAppToNotion, syncScheduleKey } from "@/lib/notion-sync";
 import { resolveNotionToken } from "@/lib/resolve-notion-token";
 import type { JsonValue } from "@niche-factory/agent-runtime";
 
