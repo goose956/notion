@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { ArrowUp, Loader2, Check, Globe, Link2, DatabaseZap } from "lucide-react";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_BLUE, N_FONT } from "@/lib/workspace-tokens";
 import type { WorkspaceDatabase, WorkspaceRow, WorkspaceProperty } from "@/app/api/members/workspace/route";
@@ -124,6 +124,43 @@ function getSummaryText(text: string): string {
   return idx === -1 ? text : text.slice(0, idx).trim();
 }
 
+function renderMarkdown(text: string): React.ReactNode[] {
+  // Strip JSON code blocks entirely (results are shown as cards)
+  const clean = text.replace(/```json[\s\S]*?```/g, "").replace(/```[\s\S]*?```/g, "").trim();
+  const lines = clean.split("\n");
+  const nodes: React.ReactNode[] = [];
+  let key = 0;
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (!line) { nodes.push(<br key={key++} />); continue; }
+
+    // Bullet point
+    const isBullet = /^[-*•]\s+/.test(line);
+    const content = isBullet ? line.replace(/^[-*•]\s+/, "") : line;
+
+    // Inline bold: **text**
+    const parts = content.split(/(\*\*[^*]+\*\*)/g).map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+
+    if (isBullet) {
+      nodes.push(
+        <div key={key++} style={{ display: "flex", gap: "6px", alignItems: "flex-start", marginBottom: "2px" }}>
+          <span style={{ marginTop: "6px", width: "4px", height: "4px", borderRadius: "50%", background: "currentColor", flexShrink: 0, opacity: 0.5 }} />
+          <span style={{ lineHeight: 1.6 }}>{parts}</span>
+        </div>
+      );
+    } else {
+      nodes.push(<p key={key++} style={{ margin: "0 0 4px", lineHeight: 1.6 }}>{parts}</p>);
+    }
+  }
+  return nodes;
+}
+
 function getItemTitle(item: Record<string, unknown>): string {
   for (const [key, value] of Object.entries(item)) {
     if (typeof value === "string" && value.trim() && /name|title|place|hotel|restaurant|transfer|business|venue/i.test(key)) {
@@ -226,7 +263,7 @@ export function WeddingHoneymoonPlanner({
       const res = await fetch("/api/members/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...nextMessages, { role: "user", content: contextLines.join("\n") }] }),
+        body: JSON.stringify({ messages: [...nextMessages, { role: "user", content: contextLines.join("\n") }], upfrontCredits: 3 }),
         signal: abort.signal,
       });
 
@@ -399,7 +436,7 @@ export function WeddingHoneymoonPlanner({
       <div style={{ padding: "12px 14px", borderBottom: `1px solid ${N_BORDER}`, background: "#f0fff7" }}>
         <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 700, color: "#166534" }}>Honeymoon Planner</h3>
         <p style={{ margin: "4px 0 0", fontSize: "12px", color: N_MUTED }}>
-          Use web research to collect hotels, transfers, restaurants, and activities, then save everything into one searchable planner.
+          Use web research to collect hotels, transfers, restaurants, and activities, then save everything into one searchable planner. Cost: 3 credits per search.
         </p>
       </div>
 
@@ -508,7 +545,7 @@ export function WeddingHoneymoonPlanner({
                           Thinking...
                         </div>
                       ) : (
-                        <p style={{ margin: 0, fontSize: "13px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{message.content}</p>
+                        <div style={{ margin: 0, fontSize: "13px", lineHeight: 1.6 }}>{renderMarkdown(message.content)}</div>
                       )}
                     </div>
                   </div>
@@ -606,7 +643,7 @@ export function WeddingHoneymoonPlanner({
               <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 Research Results
               </p>
-              {summaryText && <p style={{ margin: 0, fontSize: "13px", color: N_FG, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{summaryText}</p>}
+              {summaryText && <div style={{ fontSize: "13px", color: N_FG }}>{renderMarkdown(summaryText)}</div>}
               {error && <p style={{ margin: 0, color: "rgb(220,38,38)", fontSize: "12px" }}>{error}</p>}
               {success && <p style={{ margin: 0, color: "rgb(21,128,61)", fontSize: "12px" }}>{success}</p>}
 

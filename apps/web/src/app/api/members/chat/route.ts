@@ -101,6 +101,11 @@ export async function POST(req: NextRequest) {
     ? (body as Record<string, unknown>)["nicheId"] as string
     : undefined;
 
+  // Optional upfront credit cost (e.g. honeymoon search = 3 credits flat)
+  const upfrontCredits = typeof (body as Record<string, unknown>)["upfrontCredits"] === "number"
+    ? (body as Record<string, unknown>)["upfrontCredits"] as number
+    : 0;
+
   const rawMessages = (body as { messages: unknown[] }).messages;
   const messages: Anthropic.MessageParam[] = rawMessages.filter(
     (m): m is { role: "user" | "assistant"; content: string } =>
@@ -121,11 +126,17 @@ export async function POST(req: NextRequest) {
   // Ensure customer row exists (so credits column is populated), then gate.
   await findOrCreateCustomer(userEmail).catch(() => null);
   const currentCredits = await getCustomerCredits(userEmail).catch(() => 0);
-  if (currentCredits <= 0) {
+  const requiredCredits = upfrontCredits > 0 ? upfrontCredits : 1;
+  if (currentCredits < requiredCredits) {
     return new Response(
       JSON.stringify({ error: "no_credits", message: "You have no credits left. Top up to continue." }),
       { status: 402, headers: { "Content-Type": "application/json" } },
     );
+  }
+
+  // Deduct upfront credits immediately (flat-rate requests like honeymoon search)
+  if (upfrontCredits > 0) {
+    await deductCredits(userEmail, upfrontCredits).catch(() => null);
   }
 
   const [apiKey, model, serperKey] = await Promise.all([resolveApiKey(userEmail), resolveModel(), resolveSerperKey(userEmail)]);
@@ -350,10 +361,12 @@ export async function POST(req: NextRequest) {
                 }
               }
 
-              // Deduct 1 credit per tool invocation
-              const newBalance = await deductCredits(userEmail, 1).catch(() => null);
-              if (newBalance !== null) {
-                enqueue({ type: "credits_updated", credits: newBalance });
+              // Deduct 1 credit per tool invocation (skip if upfront credits already charged)
+              if (upfrontCredits === 0) {
+                const newBalance = await deductCredits(userEmail, 1).catch(() => null);
+                if (newBalance !== null) {
+                  enqueue({ type: "credits_updated", credits: newBalance });
+                }
               }
 
               enqueue({ type: "tool_end", name: block.name });
