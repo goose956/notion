@@ -15,9 +15,9 @@ async function hashPassword(value: string): Promise<string> {
 }
 
 function isSpeechLocked(row: WorkspaceRow): boolean {
-  const locked = row.properties["Locked"];
+  // Presence of a non-empty PasswordHash is the lock — don't rely on the Locked boolean
   const hash = String(row.properties["PasswordHash"] ?? "").trim();
-  return (locked === true || locked === "true" || locked === 1) && hash.length > 0;
+  return hash.length > 0;
 }
 
 // ─── Saved Speech Card ────────────────────────────────────────────────────────
