@@ -784,13 +784,6 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            onClick={() => setRightPanelCollapsed((prev) => !prev)}
-            style={{ padding: "7px 10px", borderRadius: "4px", border: "1px solid rgba(55,53,47,0.18)", background: "#fff", color: N_FG, fontSize: "12px", fontWeight: 600, cursor: "pointer" }}
-          >
-            {rightPanelCollapsed ? "Show Guest List" : "Hide Guest List"}
-          </button>
           <button type="button" onClick={() => createTable("rectangle")}
             style={{ padding: "7px 10px", borderRadius: "4px", border: "none", background: "linear-gradient(135deg, #6b2040, #be185d)", color: "white", fontSize: "12px", fontWeight: 700, cursor: "pointer", boxShadow: "0 6px 16px rgba(190,24,93,0.18)" }}>
             + Top Table
