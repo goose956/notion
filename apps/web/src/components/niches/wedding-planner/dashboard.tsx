@@ -367,7 +367,7 @@ export function WeddingWorkspaceDashboard({
         {/* Names + Venue */}
         <div style={{ padding: "22px 26px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <p style={{ margin: "0 0 10px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
-            ðŸŒ¸ 🌸 Wedding Dashboard
+            🌸 Wedding Dashboard
           </p>
           {/* Theme picker */}
           <div style={{ position: "relative", marginBottom: "10px" }}>

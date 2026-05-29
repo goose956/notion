@@ -6,7 +6,7 @@ import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_BLUE, N_FO
 import type { WorkspaceDatabase, WorkspaceRow, WorkspaceProperty } from "@/app/api/members/workspace/route";
 const READONLY_TYPES = new Set(["formula", "rollup", "relation", "created_time", "last_edited_time", "created_by", "last_edited_by"]);
 
-// ÔöÇÔöÇÔöÇ Format a cell value for display ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ─── Format a cell value for display ───────────────────────────────────────
 function statusRowBg(status: string | null | undefined): string {
   const s = (status ?? "").toLowerCase();
   if (s === "booked") return "rgba(209,250,229,0.6)";
@@ -17,15 +17,15 @@ function statusRowBg(status: string | null | undefined): string {
 
 function formatCell(value: string | number | boolean | null, type: string, format?: string): string {
   if (value === null || value === undefined) return "";
-  if (type === "checkbox") return value ? "Ô£ô" : "Ô£ù";
+  if (type === "checkbox") return value ? "✔" : "✗";
   if (type === "number" && typeof value === "number") {
-    const prefix = format === "pound" ? "┬ú" : format === "dollar" ? "$" : format === "euro" ? "Ôé¼" : format === "yen" ? "┬Ñ" : "";
+    const prefix = format === "pound" ? "£" : format === "dollar" ? "$" : format === "euro" ? "€" : format === "yen" ? "¥" : "";
     return prefix + value.toLocaleString();
   }
   return String(value);
 }
 
-// ÔöÇÔöÇÔöÇ Cell editor ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ─── Cell editor ───────────────────────────────────────────────────────────
 function CellEditor({
   value,
   type,
@@ -104,7 +104,7 @@ function CellEditor({
         onKeyDown={handleKey}
         style={{ ...inputStyle, appearance: "auto" }}
       >
-        <option value="">ÔÇö</option>
+        <option value="">—</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
     );
@@ -139,7 +139,7 @@ function CellEditor({
   }
 
   const currencyPrefix = type === "number" && format
-    ? (format === "pound" ? "┬ú" : format === "dollar" ? "$" : format === "euro" ? "Ôé¼" : format === "yen" ? "┬Ñ" : "")
+    ? (format === "pound" ? "£" : format === "dollar" ? "$" : format === "euro" ? "€" : format === "yen" ? "¥" : "")
     : "";
 
   return (
@@ -162,7 +162,7 @@ function CellEditor({
   );
 }
 
-// ÔöÇÔöÇÔöÇ Single database table ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// ─── Single database table ─────────────────────────────────────────────────
 export function DatabaseTable({
   db,
   isAppBackend,
@@ -302,7 +302,7 @@ export function DatabaseTable({
   const typeMap: Record<string, string> = {};
   for (const p of db.properties) typeMap[p.name] = p.type;
 
-  // Options map (select/status) ÔÇö prefer schema-defined options, fall back to row values
+  // Options map (select/status) — prefer schema-defined options, fall back to row values
   const optionsMap: Record<string, string[]> = {};
   // 1. Seed from schema options (always has the full list)
   for (const col of db.properties) {
@@ -591,7 +591,7 @@ export function DatabaseTable({
                   border: `1px solid ${N_BORDER}`,
                 }}
               >
-                No rows yet ÔÇö click &quot;Add row&quot; to get started.
+                No rows yet — click &quot;Add row&quot; to get started.
               </td>
             </tr>
           )}
@@ -672,7 +672,7 @@ export function DatabaseTable({
                         ) : (
                           formatCell(val, col.type, col.format) || (
                             <span style={{ color: N_SUBTLE, fontStyle: "italic" }}>
-                              {readonly ? "ÔÇö" : "Empty"}
+                              {readonly ? "—" : "Empty"}
                             </span>
                           )
                         )}
