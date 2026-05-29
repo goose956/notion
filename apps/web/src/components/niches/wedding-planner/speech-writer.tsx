@@ -367,6 +367,27 @@ export function WeddingSpeechWriter({
     setError(null);
     setSuccess(null);
 
+    // Resolve hash — may need to compute it now if user hasn't hit Save Progress yet
+    let resolvedHash = passwordHash;
+    if (locked && !resolvedHash) {
+      const password = newPassword.trim();
+      const confirm = confirmPassword.trim();
+      if (!password || password.length < 4) {
+        setError("Set a password with at least 4 characters.");
+        setSaving(false);
+        return;
+      }
+      if (password !== confirm) {
+        setError("Password and confirmation do not match.");
+        setSaving(false);
+        return;
+      }
+      resolvedHash = await hashPassword(password);
+      setPasswordHash(resolvedHash);
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+
     const properties: Record<string, string | number | boolean | null> = {};
     const propertyTypes: Record<string, string> = {};
 
@@ -383,8 +404,8 @@ export function WeddingSpeechWriter({
     if (bodyName) { properties[bodyName] = draft.body; propertyTypes[bodyName] = "rich_text"; }
     if (summaryName) { properties[summaryName] = draft.summary?.trim() || draft.body.slice(0, 240); propertyTypes[summaryName] = "rich_text"; }
     if (subjectName) { properties[subjectName] = draft.subject; propertyTypes[subjectName] = "rich_text"; }
-    if (locked && passwordHash) {
-      properties["PasswordHash"] = passwordHash;
+    if (locked && resolvedHash) {
+      properties["PasswordHash"] = resolvedHash;
       properties["Locked"] = true;
       propertyTypes["PasswordHash"] = "rich_text";
       propertyTypes["Locked"] = "checkbox";
