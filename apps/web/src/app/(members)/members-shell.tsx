@@ -333,104 +333,117 @@ export function MembersShell({
               )}
             </div>
           )}
-          <Link
-            href={"/members/credits" as never}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: sidebarCollapsed ? "center" : "flex-start",
-              gap: "6px",
-              padding: "4px 8px",
-              borderRadius: "3px",
-              fontSize: "14px",
-              color: "rgba(55,53,47,0.65)",
-              textDecoration: "none",
-            }}
-            className="hover:bg-[rgba(55,53,47,0.06)]"
-            title={sidebarCollapsed ? "Credits" : undefined}
-          >
-            <Coins style={{ width: "14px", height: "14px", flexShrink: 0 }} />
-            {!sidebarCollapsed && "Credits"}
-          </Link>
-          <Link
-            href={"/members/support" as never}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: sidebarCollapsed ? "center" : "flex-start",
-              gap: "6px",
-              padding: "4px 8px",
-              borderRadius: "3px",
-              fontSize: "14px",
-              color: "rgba(55,53,47,0.65)",
-              textDecoration: "none",
-              position: "relative",
-            }}
-            className="hover:bg-[rgba(55,53,47,0.06)]"
-            title={sidebarCollapsed ? "Support" : undefined}
-          >
-            <MessageCircle style={{ width: "14px", height: "14px", flexShrink: 0 }} />
-            {!sidebarCollapsed && "Support"}
-            {supportUnread > 0 && (
-              <span
-                style={{
-                  display: "inline-block",
-                  width: "7px",
-                  height: "7px",
-                  borderRadius: "50%",
-                  background: "rgb(235,87,87)",
-                  flexShrink: 0,
-                  ...(sidebarCollapsed
-                    ? { position: "absolute", top: "4px", right: "4px" }
-                    : {}),
-                }}
-              />
-            )}
-          </Link>
-          <Link
-            href={"/members/profile" as never}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: sidebarCollapsed ? "center" : "flex-start",
-              gap: "6px",
-              padding: "4px 8px",
-              borderRadius: "3px",
-              fontSize: "14px",
-              color: "rgba(55,53,47,0.65)",
-              textDecoration: "none",
-            }}
-            className="hover:bg-[rgba(55,53,47,0.06)]"
-            title={sidebarCollapsed ? "Profile" : undefined}
-          >
-            <User style={{ width: "14px", height: "14px", flexShrink: 0 }} />
-            {!sidebarCollapsed && "Profile"}
-          </Link>
-          <form action={signOutAction}>
-            <button
-              type="submit"
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "2px",
+            padding: "6px",
+            borderRadius: "6px",
+            background: "rgba(55,53,47,0.04)",
+            border: "1px solid rgba(55,53,47,0.07)",
+          }}>
+            <Link
+              href={"/members/credits" as never}
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: sidebarCollapsed ? "center" : "flex-start",
                 gap: "6px",
-                padding: "4px 8px",
-                borderRadius: "3px",
-                fontSize: "14px",
-                color: "rgba(55,53,47,0.65)",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                width: "100%",
-                fontFamily: N_FONT,
+                padding: "5px 8px",
+                borderRadius: "4px",
+                fontSize: "13px",
+                color: "rgba(55,53,47,0.7)",
+                textDecoration: "none",
+                background: "rgba(234,196,88,0.12)",
               }}
-              className="hover:bg-[rgba(55,53,47,0.06)]"
-              title={sidebarCollapsed ? "Sign out" : undefined}
+              className="hover:bg-[rgba(234,196,88,0.2)]"
+              title={sidebarCollapsed ? "Credits" : undefined}
             >
-              <LogOut style={{ width: "14px", height: "14px", flexShrink: 0 }} />
-              {!sidebarCollapsed && "Sign out"}
-            </button>
-          </form>
+              <Coins style={{ width: "13px", height: "13px", flexShrink: 0, color: "#b45309" }} />
+              {!sidebarCollapsed && "Credits"}
+            </Link>
+            <Link
+              href={"/members/support" as never}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: sidebarCollapsed ? "center" : "flex-start",
+                gap: "6px",
+                padding: "5px 8px",
+                borderRadius: "4px",
+                fontSize: "13px",
+                color: "rgba(55,53,47,0.7)",
+                textDecoration: "none",
+                position: "relative",
+                background: "rgba(35,131,226,0.08)",
+              }}
+              className="hover:bg-[rgba(35,131,226,0.14)]"
+              title={sidebarCollapsed ? "Support" : undefined}
+            >
+              <MessageCircle style={{ width: "13px", height: "13px", flexShrink: 0, color: "rgb(35,131,226)" }} />
+              {!sidebarCollapsed && "Support"}
+              {supportUnread > 0 && (
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: "7px",
+                    height: "7px",
+                    borderRadius: "50%",
+                    background: "rgb(235,87,87)",
+                    flexShrink: 0,
+                    ...(sidebarCollapsed
+                      ? { position: "absolute", top: "4px", right: "4px" }
+                      : {}),
+                  }}
+                />
+              )}
+            </Link>
+            <Link
+              href={"/members/profile" as never}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: sidebarCollapsed ? "center" : "flex-start",
+                gap: "6px",
+                padding: "5px 8px",
+                borderRadius: "4px",
+                fontSize: "13px",
+                color: "rgba(55,53,47,0.7)",
+                textDecoration: "none",
+                background: "rgba(55,53,47,0.05)",
+              }}
+              className="hover:bg-[rgba(55,53,47,0.1)]"
+              title={sidebarCollapsed ? "Profile" : undefined}
+            >
+              <User style={{ width: "13px", height: "13px", flexShrink: 0 }} />
+              {!sidebarCollapsed && "Profile"}
+            </Link>
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: sidebarCollapsed ? "center" : "flex-start",
+                  gap: "6px",
+                  padding: "5px 8px",
+                  borderRadius: "4px",
+                  fontSize: "13px",
+                  color: "rgba(185,28,28,0.8)",
+                  background: "rgba(239,68,68,0.07)",
+                  border: "none",
+                  cursor: "pointer",
+                  width: "100%",
+                  fontFamily: N_FONT,
+                }}
+                className="hover:bg-[rgba(239,68,68,0.13)]"
+                title={sidebarCollapsed ? "Sign out" : undefined}
+              >
+                <LogOut style={{ width: "13px", height: "13px", flexShrink: 0 }} />
+                {!sidebarCollapsed && "Sign out"}
+              </button>
+            </form>
+          </div>
         </div>
       </aside>
 
