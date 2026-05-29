@@ -114,6 +114,8 @@ export function WeddingNicheShell({
       <WeddingSpeechWriter
         weddingCriteria={weddingCriteria}
         onWeddingCriteriaUpdated={setWeddingCriteria}
+        documentsDb={documentsDb}
+        onDocumentSaved={(row) => { if (!documentsDb) return; onRowAdded(documentsDb.notionId, row); }}
       />
     </div>
   );

@@ -22,7 +22,7 @@ const BodySchema = z.object({
   extraInstructions: z.string().trim().optional(),
 });
 
-const CREDITS_PER_SPEECH = 1;
+const CREDITS_PER_SPEECH = 2;
 
 interface SpeechDraft {
   title: string;

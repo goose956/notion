@@ -88,9 +88,9 @@ export async function POST(req: NextRequest) {
 
   await findOrCreateCustomer(userEmail).catch(() => null);
   const credits = await getCustomerCredits(userEmail).catch(() => 0);
-  if (credits <= 0) {
+  if (credits < 2) {
     return NextResponse.json(
-      { error: "You have no credits left. Top up to continue." },
+      { error: "You need at least 2 credits to generate a draft." },
       { status: 402 },
     );
   }
@@ -151,7 +151,7 @@ ${setupLines || "(none yet)"}`;
         type: "Vendor Enquiry",
       };
 
-    const newCredits = await deductCredits(userEmail, 1).catch(() => null);
+    const newCredits = await deductCredits(userEmail, 2).catch(() => null);
 
     return NextResponse.json({ draft, credits: newCredits });
   } catch (err) {

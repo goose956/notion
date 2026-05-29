@@ -3,13 +3,18 @@ import { useState, useEffect } from "react";
 import { Loader2, WandSparkles } from "lucide-react";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import type { DraftPayload } from "./utils";
-import { asText } from "./utils";
+import { asText, findPropertyName } from "./utils";
+import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 export function WeddingSpeechWriter({
   weddingCriteria,
   onWeddingCriteriaUpdated,
+  documentsDb,
+  onDocumentSaved,
 }: {
   weddingCriteria: Record<string, unknown> | null;
   onWeddingCriteriaUpdated: (criteria: Record<string, unknown>) => void;
+  documentsDb: WorkspaceDatabase | null;
+  onDocumentSaved: (row: WorkspaceRow) => void;
 }) {
   const SPEECH_STATE_KEY = "speech-writer-state-v1";
   const coupleNames = asText(weddingCriteria?.["couple-names"]) ?? "the couple";
@@ -204,6 +209,46 @@ export function WeddingSpeechWriter({
       setSuccess("Speech saved in the Speech section.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save speech draft");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveToDocuments() {
+    if (!draft || !documentsDb) return;
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    const properties: Record<string, string | number | boolean | null> = {};
+    const propertyTypes: Record<string, string> = {};
+
+    const titleName = findPropertyName(documentsDb.properties, ["Title"]);
+    const typeName = findPropertyName(documentsDb.properties, ["Type"]);
+    const createdName = findPropertyName(documentsDb.properties, ["Created"]);
+    const bodyName = findPropertyName(documentsDb.properties, ["Body", "Content", "Draft"]);
+    const summaryName = findPropertyName(documentsDb.properties, ["Summary"]);
+    const subjectName = findPropertyName(documentsDb.properties, ["Subject"]);
+
+    if (titleName) { properties[titleName] = draft.title.trim() || "Wedding Speech Draft"; propertyTypes[titleName] = "title"; }
+    if (typeName) { properties[typeName] = "Speech Draft"; propertyTypes[typeName] = "select"; }
+    if (createdName) { properties[createdName] = new Date().toISOString().slice(0, 10); propertyTypes[createdName] = "date"; }
+    if (bodyName) { properties[bodyName] = draft.body; propertyTypes[bodyName] = "rich_text"; }
+    if (summaryName) { properties[summaryName] = draft.summary?.trim() || draft.body.slice(0, 240); propertyTypes[summaryName] = "rich_text"; }
+    if (subjectName) { properties[subjectName] = draft.subject; propertyTypes[subjectName] = "rich_text"; }
+
+    try {
+      const res = await fetch("/api/members/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ databaseId: documentsDb.notionId, properties, propertyTypes }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { pageId?: string; error?: string };
+      if (!res.ok || !body.pageId) throw new Error(body.error ?? "Failed to save to Documents");
+      onDocumentSaved({ pageId: body.pageId, properties });
+      setSuccess("Speech saved to Documents.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save to Documents");
     } finally {
       setSaving(false);
     }
@@ -479,7 +524,31 @@ export function WeddingSpeechWriter({
             style={{ padding: "8px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, resize: "vertical" }}
           />
 
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
+            {documentsDb && (
+              <button
+                type="button"
+                onClick={() => void saveToDocuments()}
+                disabled={saving || !draft?.body?.trim()}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 12px",
+                  borderRadius: "7px",
+                  border: "none",
+                  background: saving ? "rgba(124,45,18,0.2)" : "linear-gradient(135deg, #7c2d12, #c2410c)",
+                  color: "white",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  fontFamily: N_FONT,
+                  cursor: saving ? "default" : "pointer",
+                }}
+              >
+                {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                {saving ? "Saving..." : "Save to Documents"}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => void saveSpeechDraft()}
@@ -500,7 +569,7 @@ export function WeddingSpeechWriter({
               }}
             >
               {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
-              {saving ? "Saving..." : "Save Speech Section"}
+              {saving ? "Saving..." : "Save Progress"}
             </button>
           </div>
         </section>
