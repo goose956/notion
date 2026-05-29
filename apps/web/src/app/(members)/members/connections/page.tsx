@@ -169,6 +169,52 @@ function ProviderCard({
           </p>
         )}
 
+        {/* Pre-connect instructions — shown only for Notion before connecting */}
+        {def.available && !connected && def.id === "notion" && (
+          <div
+            style={{
+              marginBottom: "14px",
+              padding: "12px 14px",
+              borderRadius: "6px",
+              background: "rgba(55,53,47,0.04)",
+              border: `1px solid ${N_BORDER_MED}`,
+              fontSize: "13px",
+              color: N_MUTED,
+              lineHeight: 1.6,
+              fontFamily: N_FONT,
+            }}
+          >
+            <p style={{ margin: "0 0 8px", fontWeight: 600, color: N_FG }}>Before you connect:</p>
+            <ol style={{ margin: 0, paddingLeft: "18px", display: "flex", flexDirection: "column", gap: "6px" }}>
+              <li>
+                Don&apos;t have a Notion account?{" "}
+                <a
+                  href="https://www.notion.so/signup"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "rgb(35,131,226)", textDecoration: "none", fontWeight: 500 }}
+                >
+                  Sign up for free
+                  <ExternalLink size={10} style={{ marginLeft: "3px", verticalAlign: "middle" }} />
+                </a>
+              </li>
+              <li>
+                Create a blank page in Notion — your databases will be added inside it.{" "}
+                <a
+                  href="https://www.notion.so/new"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "rgb(35,131,226)", textDecoration: "none", fontWeight: 500 }}
+                >
+                  Create a page
+                  <ExternalLink size={10} style={{ marginLeft: "3px", verticalAlign: "middle" }} />
+                </a>
+              </li>
+              <li>Then click <strong style={{ color: N_FG }}>Connect Notion</strong> below and select that page when prompted.</li>
+            </ol>
+          </div>
+        )}
+
         {/* Actions */}
         {def.available && (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
