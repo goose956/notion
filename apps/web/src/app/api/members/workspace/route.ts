@@ -7,6 +7,7 @@ import {
   getNichePack,
   getUserCriteria,
   getLatestDeployByNiche,
+  getLatestAppWorkspaceByNiche,
   listAppWorkspacesByUser,
   listAppDatabasesByWorkspace,
   listAppRowsByDatabase,
@@ -103,6 +104,11 @@ async function provisionAppWorkspace(userId: string, pack: NichePack, schemaVers
 
 async function maybeProvisionDefaultAppWorkspace(userId: string): Promise<void> {
   const defaultNicheId = "wedding-planner";
+
+  // Guard: never create a second workspace if one already exists for this niche.
+  const existing = await getLatestAppWorkspaceByNiche(userId, defaultNicheId).catch(() => undefined);
+  if (existing) return;
+
   const defaultPackRow = await getNichePack(defaultNicheId).catch(() => undefined);
   if (!defaultPackRow) return;
 
@@ -327,8 +333,8 @@ export async function GET(_req: NextRequest) {
         }
       }
 
-      // If everything was empty due drift, retry a default provision once.
-      if (databases.length === 0) {
+      // If everything was empty and no workspaces exist at all, provision once.
+      if (databases.length === 0 && workspaces.length === 0) {
         await maybeProvisionDefaultAppWorkspace(userId);
         const retriedWorkspaces = await listAppWorkspacesByUser(userId).catch(() => []);
         for (const workspace of retriedWorkspaces) {
