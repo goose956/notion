@@ -11,6 +11,7 @@ import {
   listAppDatabasesByWorkspace,
   listAppRowsByDatabase,
   createAppRow,
+  getAppDatabase,
   getAppWorkspaceForDatabase,
   createAppWorkspace,
   createAppDatabase,
@@ -520,6 +521,19 @@ function buildNotionProperty(
   }
 }
 
+// ─── Helper: resolve the Notion database ID for an app database ──────────────
+// Returns undefined if no Notion deploy exists for this database.
+async function resolveNotionDbId(appDatabaseId: string): Promise<string | undefined> {
+  const appDb = await getAppDatabase(appDatabaseId).catch(() => undefined);
+  if (!appDb) return undefined;
+  const workspace = await getAppWorkspaceForDatabase(appDatabaseId).catch(() => undefined);
+  if (!workspace) return undefined;
+  const deploy = await getLatestDeployByNiche(workspace.nichePackId).catch(() => undefined);
+  if (!deploy) return undefined;
+  const dbMap = deploy.databaseIdMap as Record<string, string> | null | undefined;
+  return dbMap?.[appDb.packDbId];
+}
+
 const CreateBodySchema = z.object({
   databaseId: z.string().min(1),
   properties: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])),
@@ -532,10 +546,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const notionToken = await resolveNotionToken(
-    session.user.email,
-    (session as unknown as Record<string, unknown>)["notionToken"] as string | undefined,
-  );
+  const userEmail = session.user.email;
+  if (!userEmail) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   let body: unknown;
   try {
@@ -549,51 +563,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Validation failed" }, { status: 422 });
   }
 
-  // ── In-app flow ──────────────────────────────────────────────────────────
-  if (!notionToken) {
-    const userEmail = session.user.email;
-    if (!userEmail) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const workspace = await getAppWorkspaceForDatabase(parsed.data.databaseId).catch(() => undefined);
-    if (!workspace || workspace.userId !== userEmail) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    try {
-      const row = await createAppRow({
-        id: crypto.randomUUID(),
-        databaseId: parsed.data.databaseId,
-        properties: parsed.data.properties,
-      });
-      return NextResponse.json({ pageId: row.id });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Create failed";
-      return NextResponse.json({ error: msg }, { status: 500 });
-    }
+  const workspace = await getAppWorkspaceForDatabase(parsed.data.databaseId).catch(() => undefined);
+  if (!workspace || workspace.userId !== userEmail) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-
-  // ── Notion flow ──────────────────────────────────────────────────────────
-  const notionProperties: Record<string, unknown> = {};
-  for (const [name, value] of Object.entries(parsed.data.properties)) {
-    const type = parsed.data.propertyTypes[name];
-    if (!type) continue;
-    const built = buildNotionProperty(type, value);
-    if (built !== null) notionProperties[name] = built;
-  }
-
-  const notion = new NotionApiClient({ auth: notionToken });
 
   try {
-    const page = await notion.call((c) =>
-      c.pages.create({
-        parent: { database_id: parsed.data.databaseId },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        properties: notionProperties as any,
-      }),
-    );
-    return NextResponse.json({ pageId: page.id });
+    const row = await createAppRow({
+      id: crypto.randomUUID(),
+      databaseId: parsed.data.databaseId,
+      properties: parsed.data.properties,
+    });
+    return NextResponse.json({ pageId: row.id });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Create failed";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
