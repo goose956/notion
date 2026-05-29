@@ -97,6 +97,10 @@ export async function POST(req: NextRequest) {
     return new Response("messages array required", { status: 400 });
   }
 
+  const activeNicheId = typeof (body as Record<string, unknown>)["nicheId"] === "string"
+    ? (body as Record<string, unknown>)["nicheId"] as string
+    : undefined;
+
   const rawMessages = (body as { messages: unknown[] }).messages;
   const messages: Anthropic.MessageParam[] = rawMessages.filter(
     (m): m is { role: "user" | "assistant"; content: string } =>
@@ -159,10 +163,27 @@ export async function POST(req: NextRequest) {
   let systemPrompt = BASE_SYSTEM_PROMPT;
   try {
     const packs = await listNichePacks();
+    const criteriaKey = notionUserId ?? userEmail;
+
+    // Sort packs so the active niche always comes first
+    const sortedPacks = activeNicheId
+      ? [...packs].sort((a, b) => (a.id === activeNicheId ? -1 : b.id === activeNicheId ? 1 : 0))
+      : packs;
+
+    // Inject active niche banner
+    if (activeNicheId) {
+      const activePack = packs.find((p) => p.id === activeNicheId);
+      if (activePack) {
+        const activePackName = (activePack.schemaSnapshot as unknown as NichePack).name;
+        systemPrompt += `\n\n## Active Niche\nThe user is currently working on the **${activePackName}** template. Tailor all searches and suggestions to this niche unless the user says otherwise.`;
+      }
+    }
+
     const deployedSections: string[] = [];
 
-    for (const packRow of packs) {
+    for (const packRow of sortedPacks) {
       const pack = packRow.schemaSnapshot as unknown as NichePack;
+      const isActive = packRow.id === activeNicheId;
 
       if (isInApp) {
         // In-app: load from app_workspaces / app_databases
@@ -170,7 +191,7 @@ export async function POST(req: NextRequest) {
         if (!workspace) continue;
         const dbMap = workspace.databaseIdMap as Record<string, string> | null | undefined;
         if (!dbMap || Object.keys(dbMap).length === 0) continue;
-        const lines: string[] = [`**${pack.name}**`];
+        const lines: string[] = [isActive ? `**${pack.name}** ← ACTIVE` : `**${pack.name}**`];
         for (const db of pack.databases) {
           const appDbId = dbMap[db.id];
           if (typeof appDbId === "string") {
@@ -186,7 +207,7 @@ export async function POST(req: NextRequest) {
         if (deploy === undefined) continue;
         const dbMap = deploy.databaseIdMap as Record<string, string> | null | undefined;
         if (dbMap === null || dbMap === undefined || Object.keys(dbMap).length === 0) continue;
-        const lines: string[] = [`**${pack.name}**`];
+        const lines: string[] = [isActive ? `**${pack.name}** ← ACTIVE` : `**${pack.name}**`];
         for (const db of pack.databases) {
           const notionDbId = dbMap[db.id];
           if (typeof notionDbId === "string") {
@@ -206,25 +227,42 @@ export async function POST(req: NextRequest) {
       systemPrompt += sectionHeader + deployedSections.join("\n\n");
     }
 
-    // Add user's setup criteria
-    const criteriaKey = notionUserId ?? userEmail;
+    // Add user's setup criteria — active niche first, clearly separated
     if (criteriaKey) {
-      const criteriaLines: string[] = [];
-      for (const packRow of packs) {
+      const activeCritLines: string[] = [];
+      const otherCritLines: string[] = [];
+
+      for (const packRow of sortedPacks) {
         const crit = await getUserCriteria(criteriaKey, packRow.id).catch(() => undefined);
         if (!crit) continue;
         const pack = packRow.schemaSnapshot as unknown as NichePack;
         const entries = Object.entries(crit.criteria as Record<string, unknown>)
           .filter(([, v]) => v !== null && v !== undefined && v !== "")
           .map(([k, v]) => `- ${k}: ${Array.isArray(v) ? (v as unknown[]).join(", ") : String(v)}`);
-        if (entries.length > 0) {
-          criteriaLines.push(`**${pack.name}**\n${entries.join("\n")}`);
+        if (entries.length === 0) continue;
+        const block = `**${pack.name}**\n${entries.join("\n")}`;
+        if (packRow.id === activeNicheId) {
+          activeCritLines.push(block);
+        } else {
+          otherCritLines.push(block);
         }
       }
-      if (criteriaLines.length > 0) {
+
+      if (activeCritLines.length > 0) {
+        systemPrompt +=
+          "\n\n## Current Niche Setup\nUse this location and preferences for all searches:\n\n" +
+          activeCritLines.join("\n\n");
+      }
+      if (otherCritLines.length > 0) {
+        systemPrompt +=
+          "\n\n## Other Niche Setups (for reference only)\n\n" +
+          otherCritLines.join("\n\n");
+      }
+      // Fallback when no active niche specified
+      if (activeCritLines.length === 0 && otherCritLines.length > 0) {
         systemPrompt +=
           "\n\n## User's Setup\nUnless the user explicitly specifies otherwise, use this location and preferences for all searches:\n\n" +
-          criteriaLines.join("\n\n");
+          otherCritLines.join("\n\n");
       }
     }
   } catch {

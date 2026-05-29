@@ -286,6 +286,11 @@ function buildSuggestedPrompts(
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 function ChatPageInner() {
   const searchParams = useSearchParams();
   const nicheIdFromUrl = searchParams.get("nicheId");
@@ -297,6 +302,8 @@ function ChatPageInner() {
   const [deployedDbs, setDeployedDbs] = useState<DeployedDatabase[]>([]);
   const [nicheCriteria, setNicheCriteria] = useState<NicheCriteriaEntry[]>([]);
   const [selectedNotionId, setSelectedNotionId] = useState<string>("");
+  // activeNicheId tracks which niche the user is working in — sent to the API
+  const [activeNicheId, setActiveNicheId] = useState<string>("");
   const [addedIndices, setAddedIndices] = useState<Set<number>>(new Set());
   const [addingIndex, setAddingIndex] = useState<number | null>(null);
   const [addAllInProgress, setAddAllInProgress] = useState(false);
@@ -305,6 +312,8 @@ function ChatPageInner() {
   const [credits, setCredits] = useState<number | null>(null);
   const [backend, setBackend] = useState<"notion" | "app">("notion");
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+  // Conversation history — persisted across sends so the model has memory
+  const [history, setHistory] = useState<ChatMessage[]>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -322,11 +331,20 @@ function ChatPageInner() {
           const match = nicheIdFromUrl
             ? databases.find((d) => d.nicheId === nicheIdFromUrl)
             : undefined;
-          setSelectedNotionId((match ?? databases[0]!).notionId);
+          const selected = match ?? databases[0]!;
+          setSelectedNotionId(selected.notionId);
+          setActiveNicheId(selected.nicheId);
         }
       })
       .catch(() => undefined);
   }, [nicheIdFromUrl]);
+
+  // When the user switches the save-target database, sync activeNicheId too
+  const handleDatabaseChange = useCallback((notionId: string) => {
+    setSelectedNotionId(notionId);
+    const db = deployedDbs.find((d) => d.notionId === notionId);
+    if (db) setActiveNicheId(db.nicheId);
+  }, [deployedDbs]);
 
   const sendMessage = useCallback(
     async (userText: string) => {
@@ -345,11 +363,18 @@ function ChatPageInner() {
       const abort = new AbortController();
       abortRef.current = abort;
 
+      // Append user turn to history
+      const updatedHistory: ChatMessage[] = [...history, { role: "user", content: trimmed }];
+      setHistory(updatedHistory);
+
       try {
         const res = await fetch("/api/members/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: [{ role: "user", content: trimmed }] }),
+          body: JSON.stringify({
+            messages: updatedHistory,
+            nicheId: activeNicheId || undefined,
+          }),
           signal: abort.signal,
         });
 
@@ -397,6 +422,10 @@ function ChatPageInner() {
               setResultItems(items);
               setSummaryText(getSummaryText(fullText));
               setHasResult(true);
+              // Append assistant reply to history so next turn has context
+              if (fullText) {
+                setHistory((prev) => [...prev, { role: "assistant", content: fullText }]);
+              }
             } else if (event.type === "error") {
               setSummaryText(`Error: ${event.message}`);
               setHasResult(true);
@@ -415,7 +444,7 @@ function ChatPageInner() {
         textareaRef.current?.focus();
       }
     },
-    [isLoading],
+    [isLoading, history, activeNicheId],
   );
 
   async function addToNotion(index: number, item: ResultItem) {
@@ -635,7 +664,7 @@ function ChatPageInner() {
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <select
                   value={selectedNotionId}
-                  onChange={(e) => setSelectedNotionId(e.target.value)}
+                  onChange={(e) => handleDatabaseChange(e.target.value)}
                   style={{
                     fontSize: "13px",
                     border: `1px solid ${N_BORDER_MED}`,
