@@ -468,6 +468,7 @@ export function DocumentsView({
           style={{
             width: "260px",
             flexShrink: 0,
+            minHeight: 0,
             borderRight: `1px solid ${N_BORDER}`,
             display: "flex",
             flexDirection: "column",
