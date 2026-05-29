@@ -79,6 +79,10 @@ export interface NicheRegistryEntry {
    * Keyed by dbId. Used for e.g. injecting an Email column into the documents table.
    */
   dbPropertyInjections?: Record<string, Array<{ id: string; name: string; type: string }>>;
+  /**
+   * DB IDs where saved research notes should be shown as a section below the table.
+   */
+  savedResearchDbIds?: string[];
 }
 
 // ─── Wedding Planner accent ───────────────────────────────────────────────────
@@ -116,6 +120,7 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
     dbPropertyInjections: {
       documents: [{ id: "Email", name: "Email", type: "email" }],
     },
+    savedResearchDbIds: ["documents"],
   },
 
   // ── Add your next niche here ──────────────────────────────────────────────
@@ -178,4 +183,9 @@ export function getDefaultTabId(
  */
 export function getHiddenDbIds(nicheId: string): string[] {
   return getNicheEntry(nicheId)?.hiddenDbIds ?? [];
+}
+
+/** True if the given DB should show saved research notes below its table. */
+export function showsSavedResearch(nicheId: string, dbId: string): boolean {
+  return getNicheEntry(nicheId)?.savedResearchDbIds?.includes(dbId) ?? false;
 }

@@ -10,7 +10,8 @@ import type {
   WorkspaceResponse,
 } from "@/app/api/members/workspace/route";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_FONT } from "@/lib/workspace-tokens";
-import { NICHE_REGISTRY, isVirtualTab, getDefaultTabId, getHiddenDbIds, getNicheEntry, type NicheAccent, type NicheSidebarTab } from "@/lib/niche-registry";
+import { NICHE_REGISTRY, isVirtualTab, getDefaultTabId, getHiddenDbIds, getNicheEntry, showsSavedResearch, type NicheAccent, type NicheSidebarTab } from "@/lib/niche-registry";
+import type { ResearchNote } from "@/app/api/members/notes/route";
 import { DatabaseTable } from "@/components/workspace/database-table";
 import { WeddingNicheShell } from "@/components/niches/wedding-planner/shell";
 
@@ -110,6 +111,95 @@ function DbRowButton({
   );
 }
 
+// ─── Saved research panel (rendered inside Documents DB) ──────────────────────
+
+function SavedResearchPanel({
+  notes,
+  loaded,
+  onDelete,
+}: {
+  notes: ResearchNote[];
+  loaded: boolean;
+  onDelete: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  function formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  return (
+    <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: `1px solid ${N_BORDER}` }}>
+      <h2 style={{ fontSize: "14px", fontWeight: 700, color: N_FG, margin: "0 0 12px", letterSpacing: "0.01em" }}>
+        📄 Saved Research
+      </h2>
+
+      {!loaded ? (
+        <p style={{ fontSize: "13px", color: N_MUTED }}>Loading…</p>
+      ) : notes.length === 0 ? (
+        <p style={{ fontSize: "13px", color: N_MUTED, lineHeight: 1.6 }}>
+          No saved research yet. Use the Research Assistant to find information, then save it as a note.
+        </p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {notes.map((note) => (
+            <div
+              key={note.id}
+              style={{
+                border: `1px solid ${N_BORDER_MED}`,
+                borderRadius: "4px",
+                background: "white",
+                overflow: "hidden",
+              }}
+            >
+              {/* Header row */}
+              <div
+                style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}
+                onClick={() => setExpanded((prev) => (prev === note.id ? null : note.id))}
+              >
+                <span style={{ fontSize: "14px", flexShrink: 0 }}>📄</span>
+                <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: N_FG, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {note.title}
+                </span>
+                <span style={{ fontSize: "11px", color: N_SUBTLE, flexShrink: 0 }}>{formatDate(note.savedAt)}</span>
+                <span style={{ fontSize: "11px", color: N_SUBTLE, flexShrink: 0 }}>{expanded === note.id ? "▲" : "▼"}</span>
+              </div>
+
+              {/* Expanded content */}
+              {expanded === note.id && (
+                <div style={{ borderTop: `1px solid ${N_BORDER}`, padding: "14px 16px" }}>
+                  <div style={{ fontSize: "13px", color: N_FG, lineHeight: 1.7, whiteSpace: "pre-wrap", marginBottom: "12px" }}>
+                    {note.content}
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      onClick={() => {
+                        void navigator.clipboard.writeText(note.content);
+                        setCopied(note.id);
+                        setTimeout(() => setCopied(null), 1500);
+                      }}
+                      style={{ fontSize: "12px", color: N_MUTED, background: "transparent", border: `1px solid ${N_BORDER_MED}`, borderRadius: "3px", padding: "3px 10px", cursor: "pointer", fontFamily: N_FONT }}
+                    >
+                      {copied === note.id ? "Copied!" : "Copy"}
+                    </button>
+                    <button
+                      onClick={() => onDelete(note.id)}
+                      style={{ fontSize: "12px", color: "#ef4444", background: "transparent", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "3px", padding: "3px 10px", cursor: "pointer", fontFamily: N_FONT }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WorkspacePage() {
   const searchParams = useSearchParams();
   const nicheIdParam = searchParams.get("nicheId");
@@ -126,6 +216,22 @@ export default function WorkspacePage() {
   const [apiWeddingCriteria, setApiWeddingCriteria] = useState<Record<string, unknown> | null>(null);
   const [seatedGuestIds, setSeatedGuestIds] = useState<Set<string>>(new Set());
   const lastUrlSelectionKeyRef = useRef<string>("");
+
+  // ── Saved research notes ───────────────────────────────────────────────────
+  const [notes, setNotes] = useState<ResearchNote[]>([]);
+  const [notesLoaded, setNotesLoaded] = useState(false);
+
+  useEffect(() => {
+    void fetch("/api/members/notes")
+      .then((r) => r.json() as Promise<{ notes: ResearchNote[] }>)
+      .then(({ notes: n }) => { setNotes(n ?? []); setNotesLoaded(true); })
+      .catch(() => setNotesLoaded(true));
+  }, []);
+
+  function handleNoteDelete(id: string) {
+    void fetch(`/api/members/notes?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+  }
 
   // ── Notion sync state ──────────────────────────────────────────────────────
   const [syncingNiches, setSyncingNiches] = useState<Set<string>>(new Set());
@@ -761,6 +867,15 @@ export default function WorkspacePage() {
                     onRowDeleted={(pageId) => handleRowDeleted(activeDbDisplay.notionId, pageId)}
                     onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
                   />
+
+                  {/* Saved research notes — shown inside the Documents DB */}
+                  {showsSavedResearch(activeDbDisplay.nicheId, activeDbDisplay.dbId) && (
+                    <SavedResearchPanel
+                      notes={notes.filter((n) => n.nicheId === activeDbDisplay.nicheId)}
+                      loaded={notesLoaded}
+                      onDelete={handleNoteDelete}
+                    />
+                  )}
                 </div>
               </>
             )}

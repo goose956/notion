@@ -201,9 +201,6 @@ export function MembersNav({
       {/* Research Assistant */}
       {navItem(TOP_ITEMS[1].href, TOP_ITEMS[1].emoji, TOP_ITEMS[1].label, topMaxScore >= 0 && topItemScores[1] === topMaxScore)}
 
-      {/* Saved Research Notes */}
-      {navItem("/members/notes", "📄", "Saved Research", isActive("/members/notes"))}
-
       {/* Browse Workflows — standalone link */}
       {navItem(TOP_ITEMS[2].href, TOP_ITEMS[2].emoji, TOP_ITEMS[2].label, topMaxScore >= 0 && topItemScores[2] === topMaxScore)}
 
