@@ -13,6 +13,7 @@ import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_FONT } fro
 import { NICHE_REGISTRY, isVirtualTab, getDefaultTabId, getHiddenDbIds, getNicheEntry, showsSavedResearch, type NicheAccent, type NicheSidebarTab } from "@/lib/niche-registry";
 import type { ResearchNote } from "@/app/api/members/notes/route";
 import { DatabaseTable } from "@/components/workspace/database-table";
+import { DocumentsView } from "@/components/workspace/documents-view";
 import { WeddingNicheShell } from "@/components/niches/wedding-planner/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
@@ -858,28 +859,41 @@ export default function WorkspacePage() {
                   )}
                 </div>
 
-                {/* Table */}
-                <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-                  <DatabaseTable
-                    db={activeDbDisplay}
-                    isAppBackend={backend === "app"}
-                    {...(activeDbDisplay.dbId === "guests" ? { seatedGuestIds } : {})}
-                    onRowUpdated={(pageId, name, val) =>
-                      handleRowUpdated(activeDbDisplay.notionId, pageId, name, val)
-                    }
-                    onRowDeleted={(pageId) => handleRowDeleted(activeDbDisplay.notionId, pageId)}
-                    onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
-                  />
-
-                  {/* Saved research notes — shown inside the Documents DB */}
-                  {showsSavedResearch(activeDbDisplay.nicheId, activeDbDisplay.dbId) && (
-                    <SavedResearchPanel
-                      notes={notes.filter((n) => n.nicheId === activeDbDisplay.nicheId)}
-                      loaded={notesLoaded}
-                      onDelete={handleNoteDelete}
+                {/* Table / Documents view */}
+                {backend === "app" && activeDbDisplay.dbId === "documents" ? (
+                  <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                    <DocumentsView
+                      db={activeDbDisplay}
+                      onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
+                      onRowUpdated={(pageId, name, val) =>
+                        handleRowUpdated(activeDbDisplay.notionId, pageId, name, val)
+                      }
+                      onRowDeleted={(pageId) => handleRowDeleted(activeDbDisplay.notionId, pageId)}
                     />
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+                    <DatabaseTable
+                      db={activeDbDisplay}
+                      isAppBackend={backend === "app"}
+                      {...(activeDbDisplay.dbId === "guests" ? { seatedGuestIds } : {})}
+                      onRowUpdated={(pageId, name, val) =>
+                        handleRowUpdated(activeDbDisplay.notionId, pageId, name, val)
+                      }
+                      onRowDeleted={(pageId) => handleRowDeleted(activeDbDisplay.notionId, pageId)}
+                      onRowAdded={(row) => handleRowAdded(activeDbDisplay.notionId, row)}
+                    />
+
+                    {/* Saved research notes — shown inside the Documents DB */}
+                    {showsSavedResearch(activeDbDisplay.nicheId, activeDbDisplay.dbId) && (
+                      <SavedResearchPanel
+                        notes={notes.filter((n) => n.nicheId === activeDbDisplay.nicheId)}
+                        loaded={notesLoaded}
+                        onDelete={handleNoteDelete}
+                      />
+                    )}
+                  </div>
+                )}
               </>
             )}
           </>

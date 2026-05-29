@@ -235,19 +235,20 @@ export async function upsertUserCriteria(
 ): Promise<UserCriteriaRow> {
   const { randomUUID } = await import("node:crypto");
   const now = new Date();
+  const criteriaJson = sql`${JSON.stringify(criteria)}::jsonb`;
   const result = await db
     .insert(userCriteria)
     .values({
       id: randomUUID(),
       notionUserId,
       nichePackId,
-      criteria,
+      criteria: criteriaJson,
       createdAt: now,
       updatedAt: now,
     })
     .onConflictDoUpdate({
       target: [userCriteria.notionUserId, userCriteria.nichePackId],
-      set: { criteria, updatedAt: now },
+      set: { criteria: criteriaJson, updatedAt: now },
     })
     .returning();
   const row = result[0];
@@ -987,7 +988,13 @@ export async function getAppDatabase(id: string): Promise<AppDatabaseRow | undef
 }
 
 export async function createAppRow(row: NewAppRowRow): Promise<AppRowRow> {
-  const result = await db.insert(appRows).values(row).returning();
+  // Explicitly cast properties to jsonb — the postgres.js driver sends plain
+  // objects as text strings, which PostgreSQL stores as a jsonb string value
+  // (double-serialised) rather than a jsonb object.
+  const result = await db.insert(appRows).values({
+    ...row,
+    properties: sql`${JSON.stringify(row.properties)}::jsonb`,
+  }).returning();
   const created = result[0];
   if (created === undefined) throw new Error("createAppRow: no row returned");
   return created;
