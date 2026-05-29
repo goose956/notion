@@ -622,25 +622,14 @@ export function WeddingSpeechWriter({
             >
               Clear
             </button>
-            {documentsDb && (
-              <button
-                type="button"
-                onClick={() => void saveToDocuments()}
-                disabled={saving || !draft?.body?.trim()}
-                style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 12px", borderRadius: "7px", border: "none", background: saving ? "rgba(124,45,18,0.2)" : "linear-gradient(135deg, #7c2d12, #c2410c)", color: "white", fontSize: "13px", fontWeight: 700, fontFamily: N_FONT, cursor: saving ? "default" : "pointer" }}
-              >
-                {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
-                {saving ? "Saving..." : "Save to Documents"}
-              </button>
-            )}
             <button
               type="button"
-              onClick={() => void saveSpeechDraft()}
-              disabled={saving || !draft?.body?.trim()}
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 12px", borderRadius: "7px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: "#7c2d12", fontSize: "13px", fontWeight: 700, fontFamily: N_FONT, cursor: saving ? "default" : "pointer" }}
+              onClick={() => void saveToDocuments()}
+              disabled={saving || !draft?.body?.trim() || !documentsDb}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 12px", borderRadius: "7px", border: "none", background: saving ? "rgba(124,45,18,0.2)" : "linear-gradient(135deg, #7c2d12, #c2410c)", color: "white", fontSize: "13px", fontWeight: 700, fontFamily: N_FONT, cursor: saving ? "default" : "pointer" }}
             >
               {saving && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
-              {saving ? "Saving..." : "Save Progress"}
+              {saving ? "Saving..." : "Save"}
             </button>
           </div>
         </section>
