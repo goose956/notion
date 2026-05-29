@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { updateAppRow, deleteAppRow } from "@niche-factory/db";
 import { NotionApiClient } from "@niche-factory/notion-client";
+import { resolveNotionToken } from "@/lib/resolve-notion-token";
 
 const BodySchema = z.object({
   /** Property name → new value */
@@ -60,9 +61,10 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
-    | string
-    | undefined;
+  const notionToken = await resolveNotionToken(
+    session.user.email,
+    (session as unknown as Record<string, unknown>)["notionToken"] as string | undefined,
+  );
 
   const { pageId } = await params;
 
@@ -130,9 +132,10 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const notionToken = (session as unknown as Record<string, unknown>)["notionToken"] as
-    | string
-    | undefined;
+  const notionToken = await resolveNotionToken(
+    session.user.email,
+    (session as unknown as Record<string, unknown>)["notionToken"] as string | undefined,
+  );
 
   const { pageId } = await params;
 
