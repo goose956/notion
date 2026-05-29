@@ -118,10 +118,11 @@ export async function GET(req: NextRequest) {
 
     const returnTo = cookieStore.get("notion_oauth_return_to")?.value ?? "/members/workspace";
     cookieStore.delete("notion_oauth_return_to");
-    const returnUrl = new URL(returnTo, baseUrl);
-    // Safety: only redirect to same-origin paths
-    const safeReturnUrl = returnUrl.origin === baseUrl ? returnUrl.toString() : connectionsUrl;
-    return NextResponse.redirect(`${safeReturnUrl}${safeReturnUrl.includes("?") ? "&" : "?"}connected=notion`);
+    // Only allow relative paths — strip anything that isn't a leading slash
+    const safePath = returnTo.startsWith("/") ? returnTo : "/members/workspace";
+    const origin = new URL(baseUrl).origin;
+    const separator = safePath.includes("?") ? "&" : "?";
+    return NextResponse.redirect(`${origin}${safePath}${separator}connected=notion`);
   } catch (err) {
     console.error("[notion callback] unexpected error:", err);
     return NextResponse.redirect(`${connectionsUrl}?error=notion_callback`);
