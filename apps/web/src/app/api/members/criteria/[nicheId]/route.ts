@@ -26,7 +26,9 @@ export async function GET(
   const { nicheId } = await params;
   try {
     const row = await getUserCriteria(userId, nicheId);
-    return NextResponse.json({ criteria: row?.criteria ?? null });
+    const raw = row?.criteria;
+    const criteria = typeof raw === "string" ? (JSON.parse(raw) as Record<string, unknown>) : (raw ?? null);
+    return NextResponse.json({ criteria });
   } catch {
     return NextResponse.json({ criteria: null });
   }

@@ -227,8 +227,11 @@ export async function GET(_req: NextRequest) {
     typeof userEmail === "string" && userEmail.length > 0
       ? await getUserCriteria(userEmail, "wedding-planner").catch(() => undefined)
       : undefined;
-  const weddingCriteria =
-    (weddingCriteriaRow?.criteria as Record<string, unknown> | null | undefined) ?? null;
+  const rawCriteria = weddingCriteriaRow?.criteria;
+  const weddingCriteria: Record<string, unknown> | null =
+    typeof rawCriteria === "string"
+      ? (JSON.parse(rawCriteria) as Record<string, unknown>)
+      : (rawCriteria as Record<string, unknown> | null | undefined) ?? null;
 
   // ── In-app (no Notion) flow ──────────────────────────────────────────────
   if (useAppBackend) {
