@@ -607,8 +607,19 @@ function ChatPageInner() {
         <div style={{ padding: "10px 8px 6px", borderBottom: `1px solid ${N_BORDER}`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: leftPanelCollapsed ? "center" : "space-between", gap: "8px" }}>
           {!leftPanelCollapsed && (
             <div>
-              <p style={{ fontSize: "14px", fontWeight: 600, color: N_FG, marginBottom: "2px" }}>Research Assistant</p>
-              <p style={{ fontSize: "12px", color: N_MUTED }}>Search the web · save to {backend === "app" ? "workspace" : "Notion"}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px", flexWrap: "wrap" }}>
+                <p style={{ fontSize: "14px", fontWeight: 600, color: N_FG, margin: 0 }}>Research Assistant</p>
+                {activeNicheName && (
+                  <span style={{
+                    fontSize: "11px", fontWeight: 500, padding: "1px 7px",
+                    borderRadius: "10px", background: "rgba(35,131,226,0.1)",
+                    color: "rgb(35,131,226)", whiteSpace: "nowrap",
+                  }}>
+                    {activeNicheName}
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: "12px", color: N_MUTED, margin: 0 }}>Search the web · save to {backend === "app" ? "workspace" : "Notion"}</p>
             </div>
           )}
           <button
