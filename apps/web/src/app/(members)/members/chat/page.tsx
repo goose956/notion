@@ -53,6 +53,64 @@ type SseEvent =
   | { type: "error"; message: string }
   | { type: "credits_updated"; credits: number };
 
+// ─── Markdown renderer (lightweight, no deps) ─────────────────────────────────
+
+function renderMarkdown(text: string): React.ReactNode[] {
+  const lines = text.split("\n");
+  const nodes: React.ReactNode[] = [];
+  let key = 0;
+
+  function inlineFormat(line: string): React.ReactNode {
+    // Bold **text** and *italic*
+    const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith("*") && part.endsWith("*")) {
+        return <em key={i}>{part.slice(1, -1)}</em>;
+      }
+      return part;
+    });
+  }
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i]!;
+
+    if (/^### /.test(line)) {
+      nodes.push(<p key={key++} style={{ fontSize: "13px", fontWeight: 700, color: N_FG, margin: "14px 0 4px", textTransform: "uppercase", letterSpacing: "0.04em" }}>{line.slice(4)}</p>);
+    } else if (/^## /.test(line)) {
+      nodes.push(<p key={key++} style={{ fontSize: "15px", fontWeight: 700, color: N_FG, margin: "18px 0 6px" }}>{line.slice(3)}</p>);
+    } else if (/^# /.test(line)) {
+      nodes.push(<p key={key++} style={{ fontSize: "17px", fontWeight: 700, color: N_FG, margin: "20px 0 8px" }}>{line.slice(2)}</p>);
+    } else if (/^[-*] /.test(line)) {
+      // Collect consecutive bullet lines into a list
+      const items: React.ReactNode[] = [];
+      while (i < lines.length && /^[-*] /.test(lines[i]!)) {
+        items.push(<li key={i} style={{ marginBottom: "3px" }}>{inlineFormat(lines[i]!.slice(2))}</li>);
+        i++;
+      }
+      nodes.push(<ul key={key++} style={{ margin: "6px 0", paddingLeft: "20px", fontSize: "14px", color: N_FG, lineHeight: 1.6 }}>{items}</ul>);
+      continue;
+    } else if (/^\d+\. /.test(line)) {
+      const items: React.ReactNode[] = [];
+      while (i < lines.length && /^\d+\. /.test(lines[i]!)) {
+        items.push(<li key={i} style={{ marginBottom: "3px" }}>{inlineFormat(lines[i]!.replace(/^\d+\. /, ""))}</li>);
+        i++;
+      }
+      nodes.push(<ol key={key++} style={{ margin: "6px 0", paddingLeft: "20px", fontSize: "14px", color: N_FG, lineHeight: 1.6 }}>{items}</ol>);
+      continue;
+    } else if (line.trim() === "") {
+      nodes.push(<div key={key++} style={{ height: "8px" }} />);
+    } else {
+      nodes.push(<p key={key++} style={{ fontSize: "14px", color: N_FG, margin: "0 0 6px", lineHeight: 1.7 }}>{inlineFormat(line)}</p>);
+    }
+    i++;
+  }
+  return nodes;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function parseResultItems(text: string): ResultItem[] | null {
@@ -252,20 +310,25 @@ interface NicheCriteriaEntry {
   criteria: Record<string, unknown>;
 }
 
+interface SuggestedPrompt {
+  text: string;
+  type: "list" | "research";
+}
+
 function buildSuggestedPrompts(
   databases: DeployedDatabase[],
   criteria: NicheCriteriaEntry[],
-): string[] {
+): SuggestedPrompt[] {
   if (databases.length === 0) {
     return [
-      "Find wedding venues with a capacity of 100+",
-      "Search for photographers specialising in weddings",
-      "What are the top florists for wedding receptions?",
-      "Find catering companies near me",
+      { text: "Find wedding venues with a capacity of 100+", type: "list" },
+      { text: "Search for photographers specialising in weddings", type: "list" },
+      { text: "What's the average cost of a wedding photographer in London?", type: "research" },
+      { text: "What should I look for when hiring a wedding caterer?", type: "research" },
     ];
   }
 
-  const prompts: string[] = [];
+  const prompts: SuggestedPrompt[] = [];
   const seenNiches = new Set<string>();
 
   for (const db of databases) {
@@ -276,12 +339,15 @@ function buildSuggestedPrompts(
     const location = crit ? extractLocation(crit.criteria) : null;
     const locSuffix = location ? ` in ${location}` : "";
     const nicheLower = db.nicheName.toLowerCase();
+    const dbLower = db.dbName.toLowerCase();
 
-    prompts.push(`Find ${nicheLower} vendors${locSuffix}`);
-    prompts.push(`Search for ${db.dbName.toLowerCase()}${locSuffix}`);
+    prompts.push({ text: `Find ${nicheLower} vendors${locSuffix}`, type: "list" });
+    prompts.push({ text: `Search for ${dbLower}${locSuffix}`, type: "list" });
+    prompts.push({ text: `What's the typical cost of ${dbLower}${locSuffix}?`, type: "research" });
+    prompts.push({ text: `What should I ask when hiring ${dbLower}?`, type: "research" });
   }
 
-  return prompts.slice(0, 6);
+  return prompts.slice(0, 8);
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
@@ -565,10 +631,12 @@ function ChatPageInner() {
                 </p>
                 {buildSuggestedPrompts(deployedDbs, nicheCriteria).map((p) => (
                   <button
-                    key={p}
-                    onClick={() => void sendMessage(p)}
+                    key={p.text}
+                    onClick={() => void sendMessage(p.text)}
                     style={{
-                      display: "block",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "6px",
                       width: "100%",
                       textAlign: "left",
                       fontSize: "13px",
@@ -583,7 +651,19 @@ function ChatPageInner() {
                     }}
                     className="hover:bg-[rgba(55,53,47,0.06)]"
                   >
-                    {p}
+                    <span style={{
+                      fontSize: "10px",
+                      fontWeight: 600,
+                      padding: "1px 5px",
+                      borderRadius: "3px",
+                      flexShrink: 0,
+                      marginTop: "2px",
+                      background: p.type === "list" ? "rgba(35,131,226,0.1)" : "rgba(55,53,47,0.07)",
+                      color: p.type === "list" ? N_BLUE : N_SUBTLE,
+                    }}>
+                      {p.type === "list" ? "list" : "research"}
+                    </span>
+                    {p.text}
                   </button>
                 ))}
               </div>
@@ -752,9 +832,24 @@ function ChatPageInner() {
             <div style={{ maxWidth: "900px" }}>
               {summaryText && (
                 <div style={{ marginBottom: "20px" }}>
-                  <p style={{ fontSize: "14px", color: N_MUTED, margin: "0 0 10px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                    {summaryText}
-                  </p>
+                  {/* Research answer (no card list) — render as formatted markdown */}
+                  {resultItems === null ? (
+                    <div style={{ background: "rgba(55,53,47,0.03)", border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "20px 24px", marginBottom: "12px" }}>
+                      {renderMarkdown(summaryText)}
+                      <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: `1px solid ${N_BORDER}`, display: "flex", gap: "8px" }}>
+                        <button
+                          onClick={() => void navigator.clipboard.writeText(summaryText)}
+                          style={{ fontSize: "12px", color: N_MUTED, background: "transparent", border: `1px solid ${N_BORDER_MED}`, borderRadius: "3px", padding: "3px 10px", cursor: "pointer", fontFamily: N_FONT }}
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: "14px", color: N_MUTED, margin: "0 0 10px", lineHeight: 1.6 }}>
+                      {summaryText}
+                    </p>
+                  )}
                   {credits === 0 && (
                     <Link
                       href={"/members/credits" as never}
