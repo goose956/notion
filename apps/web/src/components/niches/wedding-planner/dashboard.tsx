@@ -435,7 +435,7 @@ export function WeddingWorkspaceDashboard({
               </>
             ) : (
               <>
-                <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.82)", fontWeight: 500 }}>{venue ?? "Add venue â†’"}</span>
+                <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.82)", fontWeight: 500 }}>{venue ?? "Add venue →"}</span>
                 <button type="button" onClick={() => setEditingField("venue")} style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", borderRadius: "6px", cursor: "pointer", padding: "3px 6px", color: "rgba(255,255,255,0.6)" }}><Pencil size={11} /></button>
               </>
             )}
@@ -528,7 +528,7 @@ export function WeddingWorkspaceDashboard({
                 justifyContent: "center",
               }}
             >
-              <span style={{ fontSize: "26px", fontWeight: 800, color: urgencyColor, lineHeight: 1 }}>{countdownDays ?? "â€”"}</span>
+              <span style={{ fontSize: "26px", fontWeight: 800, color: urgencyColor, lineHeight: 1 }}>{countdownDays ?? "—"}</span>
               <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>days</span>
             </div>
           </div>
@@ -625,7 +625,7 @@ export function WeddingWorkspaceDashboard({
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: theme.cards[1].iconBg }}>
-                <span style={{ fontSize: "15px", fontWeight: 800, color: theme.cards[1].icon }}>â”¬Ãº</span>
+                <span style={{ fontSize: "15px", fontWeight: 800, color: theme.cards[1].icon }}>💰</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                 <span style={{ fontSize: "13px", fontWeight: 700, color: theme.cards[1].label }}>Budget Overview</span>
@@ -675,7 +675,7 @@ export function WeddingWorkspaceDashboard({
             <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(21,128,61,0.12)" }}>
               <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Remaining</p>
               <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: remainingBudget !== null && remainingBudget < 0 ? "rgb(220,38,38)" : "#15803d" }}>
-                {remainingBudget === null ? "â€”" : formatCurrency(remainingBudget, currencyCode)}
+                {remainingBudget === null ? "—" : formatCurrency(remainingBudget, currencyCode)}
               </p>
             </div>
           </div>
@@ -711,7 +711,7 @@ export function WeddingWorkspaceDashboard({
               <span style={{ fontSize: "22px", fontWeight: 800, color: N_FG, letterSpacing: "-0.02em" }}>{formatCurrency(costPerGuest, currencyCode)}</span>
             </div>
             <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
-              {targetGuests} guests Ã— {formatCurrency(costPerGuest, currencyCode)} = <strong style={{ color: N_FG }}>{formatCurrency(guestSpend, currencyCode)}</strong>
+              {targetGuests} guests × {formatCurrency(costPerGuest, currencyCode)} = <strong style={{ color: N_FG }}>{formatCurrency(guestSpend, currencyCode)}</strong>
             </p>
           </div>
 
@@ -736,7 +736,7 @@ export function WeddingWorkspaceDashboard({
               </div>
               {scenarioDelta !== 0 && (
                 <p style={{ margin: "3px 0 0", fontSize: "11px", fontWeight: 700, color: scenarioDelta > 0 ? "#be185d" : "#15803d" }}>
-                  {scenarioDelta > 0 ? "â†‘" : "â†“"} {formatCurrency(Math.abs(scenarioDelta), currencyCode)} {scenarioDelta > 0 ? "more" : "less"} than current plan
+                  {scenarioDelta > 0 ? "↑" : "↓"} {formatCurrency(Math.abs(scenarioDelta), currencyCode)} {scenarioDelta > 0 ? "more" : "less"} than current plan
                 </p>
               )}
             </div>
