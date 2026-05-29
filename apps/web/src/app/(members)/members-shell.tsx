@@ -518,7 +518,42 @@ export function MembersShell({
             </span>
           </div>
         )}
-        {children}
+        <div style={{ minHeight: "calc(100% - 52px)", display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1 }}>{children}</div>
+          <footer
+            style={{
+              borderTop: "1px solid rgba(55,53,47,0.07)",
+              padding: "10px 24px",
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+              flexWrap: "wrap",
+            }}
+          >
+            <span style={{ fontSize: "12px", color: "rgba(55,53,47,0.35)", marginRight: "4px" }}>
+              &copy; {new Date().getFullYear()} Stridivo
+            </span>
+            {[
+              { label: "Terms of Service", href: "/legal/terms" },
+              { label: "Privacy Policy", href: "/legal/privacy" },
+              { label: "support@stridivo.com", href: "mailto:support@stridivo.com" },
+            ].map(({ label, href }) => (
+              <a
+                key={href}
+                href={href}
+                target={href.startsWith("/") ? "_blank" : undefined}
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: "12px",
+                  color: "rgba(55,53,47,0.4)",
+                  textDecoration: "none",
+                }}
+              >
+                {label}
+              </a>
+            ))}
+          </footer>
+        </div>
       </main>
     </div>
   );
