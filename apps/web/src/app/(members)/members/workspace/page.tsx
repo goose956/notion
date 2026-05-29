@@ -372,9 +372,12 @@ export default function WorkspacePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Poll every 30 s — refreshes from Notion when on the Notion backend,
-  // or keeps app data fresh when on the app backend.
+  // Poll every 30 s on the Notion backend only — Notion data can change
+  // externally so we need to keep it fresh. For the app backend, all writes
+  // go through this session, so polling would just race with optimistic state
+  // and cause rows to appear to vanish.
   useEffect(() => {
+    if (backend !== "notion") return;
     const id = setInterval(() => {
       if (document.visibilityState === "visible") {
         void loadDatabases({ isRefresh: true, selectionMode: "preserve" });
@@ -382,7 +385,7 @@ export default function WorkspacePage() {
     }, 30_000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [backend]);
 
   useEffect(() => {
     if (databases.length === 0) return;
