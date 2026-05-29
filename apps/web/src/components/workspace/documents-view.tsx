@@ -69,38 +69,123 @@ function DocCard({
   const body = prop(row, "Body", "Content", "Draft");
   const type = prop(row, "Type");
   const cfg = getTypeConfig(type);
-  const preview = summary || body.slice(0, 100);
+  const { textOnly, svgs } = extractSvgs(body);
+  const hasSvg = svgs.length > 0;
+  const textPreview = summary || textOnly.replace(/SVG asset\s*\d*:\s*\n?/gi, "").trim().slice(0, 80);
+  const svgDataUri = hasSvg ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgs[0]!)}` : null;
 
   return (
     <div
       onClick={onSelect}
       style={{
-        padding: "10px 12px",
         borderRadius: "6px",
         border: `1px solid ${selected ? cfg.color : N_BORDER}`,
         background: selected ? cfg.bg : "white",
         cursor: "pointer",
-        position: "relative",
+        overflow: "hidden",
         transition: "border-color 0.1s",
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: "4px" }}>
-        <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: N_FG, lineHeight: 1.3, flex: 1, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-          {title}
-        </p>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: "1px", color: "rgba(55,53,47,0.3)", flexShrink: 0, lineHeight: 1 }}
-        >
-          <Trash2 size={11} />
-        </button>
-      </div>
-      {preview && (
-        <p style={{ margin: 0, fontSize: "11px", color: N_MUTED, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-          {preview}
-        </p>
+      {/* SVG thumbnail */}
+      {svgDataUri && (
+        <div style={{ width: "100%", aspectRatio: "2/1", overflow: "hidden", background: "#f5f5f4", borderBottom: `1px solid ${N_BORDER}` }}>
+          <img src={svgDataUri} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
+        </div>
       )}
+      <div style={{ padding: "8px 10px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "6px", marginBottom: hasSvg || !textPreview ? 0 : "3px" }}>
+          <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: N_FG, lineHeight: 1.3, flex: 1, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+            {title}
+          </p>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: "1px", color: "rgba(55,53,47,0.3)", flexShrink: 0, lineHeight: 1 }}
+          >
+            <Trash2 size={11} />
+          </button>
+        </div>
+        {!hasSvg && textPreview && (
+          <p style={{ margin: 0, fontSize: "11px", color: N_MUTED, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+            {textPreview}
+          </p>
+        )}
+      </div>
     </div>
+  );
+}
+
+// ─── Body editor (handles text + embedded SVG assets) ────────────────────────
+
+function extractSvgs(text: string): { textOnly: string; svgs: string[] } {
+  const svgs: string[] = [];
+  const textOnly = text.replace(/<svg[\s\S]*?<\/svg>/gi, (match) => {
+    svgs.push(match);
+    return "";
+  });
+  return { textOnly, svgs };
+}
+
+function BodyEditor({ body, onChange }: { body: string; onChange: (v: string) => void }) {
+  const { textOnly, svgs } = extractSvgs(body);
+  const hasSvgs = svgs.length > 0;
+
+  // Clean readable text (strip "SVG asset:" labels)
+  const displayText = textOnly.replace(/SVG asset\s*\d*:\s*\n?/gi, "").trimEnd();
+
+  // When user edits the textarea, splice SVG blocks back in at the end
+  function handleTextChange(newText: string) {
+    if (!hasSvgs) { onChange(newText); return; }
+    const rebuilt = newText.trimEnd() +
+      (newText.trimEnd() ? "\n\n" : "") +
+      svgs.map((s, i) => `SVG asset${svgs.length > 1 ? ` ${i + 1}` : ""}:\n${s}`).join("\n\n");
+    onChange(rebuilt);
+  }
+
+  // SVG-only view: image canvas document — show large viewer, no textarea
+  if (hasSvgs) {
+    return (
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", background: "#f5f5f4", display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 16px", gap: "20px" }}>
+        {svgs.map((svg, i) => {
+          const dataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+          return (
+            <div key={i} style={{ width: "100%", maxWidth: "500px", background: "white", borderRadius: "8px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.10)" }}>
+              <img src={dataUri} alt={`Asset ${i + 1}`} style={{ width: "100%", display: "block" }} />
+              <div style={{ padding: "10px 14px", borderTop: `1px solid ${N_BORDER}`, display: "flex", justifyContent: "flex-end" }}>
+                <a
+                  href={dataUri}
+                  download={`asset-${i + 1}.svg`}
+                  style={{ fontSize: "12px", color: N_MUTED, textDecoration: "none", fontFamily: N_FONT }}
+                >
+                  Download SVG
+                </a>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Plain text document
+  return (
+    <textarea
+      value={displayText}
+      onChange={(e) => handleTextChange(e.target.value)}
+      placeholder="Document content…"
+      style={{
+        flex: 1,
+        padding: "20px",
+        border: "none",
+        outline: "none",
+        resize: "none",
+        fontSize: "14px",
+        color: N_FG,
+        fontFamily: N_FONT,
+        lineHeight: 1.7,
+        background: "#fafafa",
+        minWidth: 0,
+      }}
+    />
   );
 }
 
@@ -121,6 +206,7 @@ function DocEditor({
   const [subject, setSubject] = useState(prop(row, "Subject"));
   const [body, setBody] = useState(prop(row, "Body", "Content", "Draft"));
   const [type, setType] = useState(prop(row, "Type") || "Other");
+  const isImageDoc = extractSvgs(body).svgs.length > 0;
   const [recipient, setRecipient] = useState(prop(row, "Recipient"));
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -128,11 +214,13 @@ function DocEditor({
   const [saved, setSaved] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
 
-  const hasTitleProp   = db.properties.some((p) => p.name === "Title");
-  const hasSubjectProp = db.properties.some((p) => p.name === "Subject");
-  const hasRecipProp   = db.properties.some((p) => p.name === "Recipient");
-  const hasTypeProp    = db.properties.some((p) => p.name === "Type");
-  const bodyProp       = db.properties.find((p) => ["Body","Content","Draft"].includes(p.name));
+  const hasTitleProp   = db.properties.some((p) => p.name === "Title")   || "Title"   in row.properties;
+  const hasSubjectProp = db.properties.some((p) => p.name === "Subject") || "Subject" in row.properties;
+  const hasRecipProp   = db.properties.some((p) => p.name === "Recipient") || "Recipient" in row.properties;
+  const hasTypeProp    = db.properties.some((p) => p.name === "Type")    || "Type"    in row.properties;
+  // Detect body field from schema OR from row properties directly
+  const bodyProp       = db.properties.find((p) => ["Body","Content","Draft"].includes(p.name))
+    ?? (["Body","Content","Draft"].find((k) => k in row.properties) ? { name: ["Body","Content","Draft"].find((k) => k in row.properties)! } : { name: "Body" });
   const typeOptions    = (db.properties.find((p) => p.name === "Type")?.options ?? Object.keys(TYPE_CONFIG)) as string[];
 
   async function handleSave() {
@@ -187,7 +275,7 @@ function DocEditor({
   return (
     <>
       {pendingConfirm && <ConfirmModal {...pendingConfirm} onCancel={() => setPendingConfirm(null)} />}
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", fontFamily: N_FONT }}>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, fontFamily: N_FONT }}>
         {/* Header */}
         <div style={{ padding: "14px 20px 12px", borderBottom: `1px solid ${N_BORDER}`, background: "white", flexShrink: 0 }}>
           {/* Type badge + actions */}
@@ -228,7 +316,7 @@ function DocEditor({
               >
                 {deleting ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={13} />}
               </button>
-              <button
+              {!isImageDoc && <button
                 onClick={() => void handleSave()}
                 disabled={saving}
                 style={{
@@ -248,7 +336,7 @@ function DocEditor({
               >
                 {saving && <Loader2 size={11} style={{ animation: "spin 1s linear infinite" }} />}
                 {saving ? "Saving…" : "Save"}
-              </button>
+              </button>}
             </div>
           </div>
 
@@ -285,24 +373,8 @@ function DocEditor({
           )}
         </div>
 
-        {/* Body */}
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="Document content…"
-          style={{
-            flex: 1,
-            padding: "20px",
-            border: "none",
-            outline: "none",
-            resize: "none",
-            fontSize: "14px",
-            color: N_FG,
-            fontFamily: N_FONT,
-            lineHeight: 1.7,
-            background: "#fafafa",
-          }}
-        />
+        {/* Body — split into text + SVG preview if SVG is present */}
+        <BodyEditor body={body} onChange={setBody} />
       </div>
     </>
   );
@@ -325,10 +397,15 @@ export function DocumentsView({
     db.rows.length > 0 ? db.rows[0]!.pageId : null,
   );
   const [addingRow, setAddingRow] = useState(false);
+
+  // If the selected row no longer exists (e.g. was deleted) or nothing is selected,
+  // fall back to the first available row.
+  const selectedExists = db.rows.some((r) => r.pageId === selectedId);
+  const effectiveSelectedId = selectedExists ? selectedId : (db.rows[0]?.pageId ?? null);
   const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
 
   const groups = groupByType(db.rows);
-  const selectedRow = db.rows.find((r) => r.pageId === selectedId) ?? null;
+  const selectedRow = db.rows.find((r) => r.pageId === effectiveSelectedId) ?? null;
 
   async function handleAddRow() {
     setAddingRow(true);
@@ -384,7 +461,7 @@ export function DocumentsView({
   return (
     <>
       {pendingConfirm && <ConfirmModal {...pendingConfirm} onCancel={() => setPendingConfirm(null)} />}
-      <div style={{ display: "flex", height: "100%", overflow: "hidden", fontFamily: N_FONT }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden", fontFamily: N_FONT }}>
 
         {/* ── Left: document list ──────────────────────────────────────── */}
         <div
@@ -455,7 +532,7 @@ export function DocumentsView({
                         <DocCard
                           key={row.pageId}
                           row={row}
-                          selected={selectedId === row.pageId}
+                          selected={effectiveSelectedId === row.pageId}
                           onSelect={() => setSelectedId(row.pageId)}
                           onDelete={() => handleDeleteCard(row.pageId)}
                         />
@@ -473,7 +550,7 @@ export function DocumentsView({
           {selectedRow ? (
             // Key forces remount (and state reset) when switching documents
             <DocEditor
-              key={selectedRow.pageId}
+              key={effectiveSelectedId}
               row={selectedRow}
               db={db}
               onSaved={handleSaved}
