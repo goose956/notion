@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { WORKFLOW_CATALOG } from "@/lib/workflow-catalog";
@@ -24,6 +24,25 @@ export function MembersNav({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [workspaceOpen, setWorkspaceOpen] = useState(true);
+  const [lastNicheId, setLastNicheId] = useState<string | null>(null);
+
+  // Persist the last selected niche so the radio stays highlighted when
+  // the user navigates away from /members/workspace
+  const nicheParam = searchParams.get("nicheId");
+  useEffect(() => {
+    if (isActive("/members/workspace") && nicheParam) {
+      setLastNicheId(nicheParam);
+      try { localStorage.setItem("lastNicheId", nicheParam); } catch { /* ignore */ }
+    }
+  }, [nicheParam, pathname]);
+
+  // On first render, hydrate from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("lastNicheId");
+      if (stored) setLastNicheId(stored);
+    } catch { /* ignore */ }
+  }, []);
 
   function isActive(path: string) {
     return pathname === path || pathname.startsWith(path + "/");
@@ -190,11 +209,13 @@ export function MembersNav({
 
       {/* Workflow sub-items — only active workflows, no Browse link */}
       {!collapsed && workspaceOpen && extraWorkflows.map((w, i) => {
-        const nicheParam = searchParams.get("nicheId");
-        // Active if URL has this niche, OR if on /members/workspace with no niche param and this is the first workflow
-        const active = isActive("/members/workspace") && (
-          nicheParam === w.id || (nicheParam === null && i === 0)
-        );
+        // Which niche to treat as selected:
+        // - On workspace page: use URL param, or first niche if no param
+        // - Elsewhere: use the last niche the user was on (from localStorage)
+        const effectiveNiche = isActive("/members/workspace")
+          ? (nicheParam ?? extraWorkflows[0]?.id ?? null)
+          : (lastNicheId ?? extraWorkflows[0]?.id ?? null);
+        const active = effectiveNiche === w.id || (effectiveNiche === null && i === 0);
         return subItem(`/members/workspace?nicheId=${w.id}`, w.emoji, w.name, active);
       })}
 
