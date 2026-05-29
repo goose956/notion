@@ -592,6 +592,15 @@ export async function upsertSettings(values: Record<string, string>): Promise<vo
   }
 }
 
+export async function deleteSetting(key: string): Promise<void> {
+  await db.delete(appSettings).where(eq(appSettings.key, key));
+}
+
+export async function listSettingsByPrefix(prefix: string): Promise<AppSettingRow[]> {
+  const { like } = await import("drizzle-orm");
+  return db.select().from(appSettings).where(like(appSettings.key, `${prefix}%`));
+}
+
 // ─── Agent definition queries ────────────────────────────────────────────────
 
 export async function listAgentDefinitions(): Promise<AgentDefinitionRow[]> {

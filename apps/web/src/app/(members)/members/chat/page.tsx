@@ -370,6 +370,12 @@ function ChatPageInner() {
   const [selectedNotionId, setSelectedNotionId] = useState<string>("");
   // activeNicheId tracks which niche the user is working in — sent to the API
   const [activeNicheId, setActiveNicheId] = useState<string>("");
+  const [activeNicheName, setActiveNicheName] = useState<string>("");
+  // Note saving
+  const [savingNote, setSavingNote] = useState(false);
+  const [noteSaved, setNoteSaved] = useState(false);
+  const [noteTitle, setNoteTitle] = useState("");
+  const [showNoteTitleInput, setShowNoteTitleInput] = useState(false);
   const [addedIndices, setAddedIndices] = useState<Set<number>>(new Set());
   const [addingIndex, setAddingIndex] = useState<number | null>(null);
   const [addAllInProgress, setAddAllInProgress] = useState(false);
@@ -400,6 +406,7 @@ function ChatPageInner() {
           const selected = match ?? databases[0]!;
           setSelectedNotionId(selected.notionId);
           setActiveNicheId(selected.nicheId);
+          setActiveNicheName(selected.nicheName);
         }
       })
       .catch(() => undefined);
@@ -409,8 +416,37 @@ function ChatPageInner() {
   const handleDatabaseChange = useCallback((notionId: string) => {
     setSelectedNotionId(notionId);
     const db = deployedDbs.find((d) => d.notionId === notionId);
-    if (db) setActiveNicheId(db.nicheId);
+    if (db) { setActiveNicheId(db.nicheId); setActiveNicheName(db.nicheName); }
   }, [deployedDbs]);
+
+  // Reset note state when a new search starts
+  const resetNoteState = useCallback(() => {
+    setNoteSaved(false);
+    setSavingNote(false);
+    setShowNoteTitleInput(false);
+    setNoteTitle("");
+  }, []);
+
+  async function saveNote(title: string) {
+    if (!title.trim() || !summaryText) return;
+    setSavingNote(true);
+    try {
+      await fetch("/api/members/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          content: summaryText,
+          nicheId: activeNicheId || undefined,
+          nicheName: activeNicheName || undefined,
+        }),
+      });
+      setNoteSaved(true);
+      setShowNoteTitleInput(false);
+    } finally {
+      setSavingNote(false);
+    }
+  }
 
   const sendMessage = useCallback(
     async (userText: string) => {
@@ -425,6 +461,7 @@ function ChatPageInner() {
       setAddedIndices(new Set());
       setAddError(null);
       setHasResult(false);
+      resetNoteState();
 
       const abort = new AbortController();
       abortRef.current = abort;
@@ -510,7 +547,7 @@ function ChatPageInner() {
         textareaRef.current?.focus();
       }
     },
-    [isLoading, history, activeNicheId],
+    [isLoading, history, activeNicheId, resetNoteState],
   );
 
   async function addToNotion(index: number, item: ResultItem) {
@@ -836,13 +873,59 @@ function ChatPageInner() {
                   {resultItems === null ? (
                     <div style={{ background: "rgba(55,53,47,0.03)", border: `1px solid ${N_BORDER}`, borderRadius: "4px", padding: "20px 24px", marginBottom: "12px" }}>
                       {renderMarkdown(summaryText)}
-                      <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: `1px solid ${N_BORDER}`, display: "flex", gap: "8px" }}>
+                      <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: `1px solid ${N_BORDER}`, display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
                         <button
                           onClick={() => void navigator.clipboard.writeText(summaryText)}
                           style={{ fontSize: "12px", color: N_MUTED, background: "transparent", border: `1px solid ${N_BORDER_MED}`, borderRadius: "3px", padding: "3px 10px", cursor: "pointer", fontFamily: N_FONT }}
                         >
                           Copy
                         </button>
+                        {noteSaved ? (
+                          <span style={{ fontSize: "12px", color: "rgb(15,123,108)", fontWeight: 500 }}>
+                            ✓ Saved to notes
+                          </span>
+                        ) : showNoteTitleInput ? (
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center", flex: 1 }}>
+                            <input
+                              autoFocus
+                              type="text"
+                              value={noteTitle}
+                              onChange={(e) => setNoteTitle(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") void saveNote(noteTitle); if (e.key === "Escape") setShowNoteTitleInput(false); }}
+                              placeholder="Note title…"
+                              style={{
+                                flex: 1, fontSize: "12px", padding: "3px 8px",
+                                border: `1px solid ${N_BORDER_MED}`, borderRadius: "3px",
+                                fontFamily: N_FONT, outline: "none", color: N_FG,
+                              }}
+                            />
+                            <button
+                              onClick={() => void saveNote(noteTitle)}
+                              disabled={savingNote || !noteTitle.trim()}
+                              style={{
+                                fontSize: "12px", padding: "3px 10px", borderRadius: "3px",
+                                border: "none", background: N_FG, color: "white",
+                                cursor: savingNote || !noteTitle.trim() ? "default" : "pointer",
+                                fontFamily: N_FONT,
+                              }}
+                            >
+                              {savingNote ? "Saving…" : "Save"}
+                            </button>
+                            <button
+                              onClick={() => setShowNoteTitleInput(false)}
+                              style={{ fontSize: "12px", color: N_MUTED, background: "transparent", border: "none", cursor: "pointer", fontFamily: N_FONT }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setShowNoteTitleInput(true)}
+                            style={{ fontSize: "12px", color: N_MUTED, background: "transparent", border: `1px solid ${N_BORDER_MED}`, borderRadius: "3px", padding: "3px 10px", cursor: "pointer", fontFamily: N_FONT }}
+                          >
+                            Save as note
+                          </button>
+                        )}
                       </div>
                     </div>
                   ) : (
