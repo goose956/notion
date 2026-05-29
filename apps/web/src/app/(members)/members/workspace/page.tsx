@@ -382,26 +382,6 @@ export default function WorkspacePage() {
         >
           <span style={{ fontSize: "13px", fontWeight: 700, color: N_FG, letterSpacing: "0.01em" }}>🗂️ My Workspace</span>
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <Link
-              href="/templates"
-              title="Browse niches"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                padding: "3px 7px",
-                borderRadius: "3px",
-                fontSize: "12px",
-                color: N_MUTED,
-                background: "none",
-                border: `1px solid ${N_BORDER_MED}`,
-                textDecoration: "none",
-                gap: "3px",
-                fontFamily: N_FONT,
-              }}
-            >
-              <Plus size={11} />
-              Add niche
-            </Link>
             <button
               onClick={() => void loadDatabases({ isRefresh: true, selectionMode: "preserve" })}
               disabled={refreshing}
@@ -557,10 +537,10 @@ export default function WorkspacePage() {
                       flex: 1,
                       padding: "4px 6px",
                       borderRadius: "4px",
-                      border: `1px solid ${N_BORDER_MED}`,
-                      background: "transparent",
+                      border: "1px solid rgba(35,131,226,0.4)",
+                      background: "rgba(35,131,226,0.08)",
                       fontSize: "11px",
-                      color: N_SUBTLE,
+                      color: "rgb(35,131,226)",
                       cursor: syncingNiches.has(group.nicheId) ? "default" : "pointer",
                       fontFamily: N_FONT,
                       display: "flex",
