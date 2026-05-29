@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
     id,
     title: body.title.trim(),
     content: body.content.trim(),
-    nicheId: body.nicheId,
-    nicheName: body.nicheName,
+    ...(body.nicheId ? { nicheId: body.nicheId } : {}),
+    ...(body.nicheName ? { nicheName: body.nicheName } : {}),
     savedAt: new Date().toISOString(),
   };
 
