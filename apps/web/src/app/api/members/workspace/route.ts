@@ -188,6 +188,19 @@ function extractValue(prop: Record<string, unknown>): string | number | boolean 
   }
 }
 
+// ─── Normalise a raw DB properties value ────────────────────────────────────
+// The postgres driver returns jsonb-string rows as a JS string (double-serialised).
+// Parse it back to an object so callers always receive a Record.
+function normaliseProperties(raw: unknown): Record<string, string | number | boolean | null> {
+  if (typeof raw === "string") {
+    try { return JSON.parse(raw) as Record<string, string | number | boolean | null>; } catch { return {}; }
+  }
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Record<string, string | number | boolean | null>;
+  }
+  return {};
+}
+
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 // GET /api/members/workspace
@@ -322,7 +335,7 @@ export async function GET(_req: NextRequest) {
               }),
               rows: appRows.map((r) => ({
                 pageId: r.id,
-                properties: r.properties as Record<string, string | number | boolean | null>,
+                properties: normaliseProperties(r.properties),
               })),
               hasMore,
             });
@@ -372,7 +385,7 @@ export async function GET(_req: NextRequest) {
               }),
               rows: appRows.map((r) => ({
                 pageId: r.id,
-                properties: r.properties as Record<string, string | number | boolean | null>,
+                properties: normaliseProperties(r.properties),
               })),
               hasMore,
             });

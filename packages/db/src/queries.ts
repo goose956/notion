@@ -1048,10 +1048,17 @@ export async function updateAppRow(
   id: string,
   partialProperties: Record<string, string | number | boolean | null>,
 ): Promise<void> {
+  const partial = JSON.stringify(partialProperties);
   await db
     .update(appRows)
     .set({
-      properties: sql`${appRows.properties} || ${JSON.stringify(partialProperties)}::jsonb`,
+      // Use CASE to guard against non-object jsonb values (e.g. legacy string rows).
+      // If properties is an object, merge; otherwise replace with the partial update.
+      properties: sql`CASE
+        WHEN jsonb_typeof(${appRows.properties}) = 'object'
+        THEN ${appRows.properties} || ${partial}::jsonb
+        ELSE ${partial}::jsonb
+      END`,
       updatedAt: new Date(),
     })
     .where(eq(appRows.id, id));
