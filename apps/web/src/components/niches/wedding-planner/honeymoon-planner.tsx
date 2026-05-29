@@ -594,7 +594,7 @@ export function WeddingHoneymoonPlanner({
                     }}
                   >
                     {isLoading ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <ArrowUp size={14} />}
-                    {isLoading ? "ResearchingÔÇª" : "Send"}
+                    {isLoading ? "Researching…" : "Send"}
                   </button>
                 </div>
               </form>

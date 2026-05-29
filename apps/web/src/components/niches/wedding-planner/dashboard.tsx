@@ -1,15 +1,15 @@
-"use client";
+﻿"use client";
 import { useState, useEffect, useRef, useMemo, type ChangeEvent } from "react";
 import { CalendarDays, MapPin, Users, CheckCircle2, ListChecks, FileText, Pencil, Check, X, Palette } from "lucide-react";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_FONT } from "@/lib/workspace-tokens";
 import type { WorkspaceDatabase } from "@/app/api/members/workspace/route";
 import { asText, asNumber, asCurrencyNumber, getCurrencyCode, formatCurrency, parseWeddingDate, findPropertyName } from "./utils";
-// ÔöÇÔöÇÔöÇ Dashboard colour themes ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+// â”€â”€â”€ Dashboard colour themes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const DASHBOARD_THEMES = [
   {
     id: "rose",
     label: "Rose",
-    emoji: "­ƒî╣",
+    emoji: "🌹",
     gradient: "linear-gradient(135deg, #2a0f1e 0%, #6b2040 42%, #a85470 72%, #d4957a 100%)",
     shadow: "rgba(107,32,64,0.28)",
     innerBg: "rgba(30,8,20,0.85)",
@@ -24,7 +24,7 @@ const DASHBOARD_THEMES = [
   {
     id: "ocean",
     label: "Ocean",
-    emoji: "­ƒîè",
+    emoji: "🌊",
     gradient: "linear-gradient(135deg, #0a1628 0%, #0e3a5e 42%, #1a6a8a 72%, #38b2c8 100%)",
     shadow: "rgba(14,58,94,0.30)",
     innerBg: "rgba(6,16,32,0.85)",
@@ -39,7 +39,7 @@ const DASHBOARD_THEMES = [
   {
     id: "forest",
     label: "Forest",
-    emoji: "­ƒî┐",
+    emoji: "🌿",
     gradient: "linear-gradient(135deg, #071a0a 0%, #1a4d2a 42%, #2d7a4a 72%, #68c88a 100%)",
     shadow: "rgba(26,77,42,0.30)",
     innerBg: "rgba(6,18,8,0.85)",
@@ -54,7 +54,7 @@ const DASHBOARD_THEMES = [
   {
     id: "twilight",
     label: "Twilight",
-    emoji: "­ƒÆ£",
+    emoji: "🌙",
     gradient: "linear-gradient(135deg, #120a2e 0%, #3b1a7a 42%, #7c3aed 72%, #c4b5fd 100%)",
     shadow: "rgba(59,26,122,0.30)",
     innerBg: "rgba(14,8,32,0.85)",
@@ -69,7 +69,7 @@ const DASHBOARD_THEMES = [
   {
     id: "sunset",
     label: "Sunset",
-    emoji: "­ƒîà",
+    emoji: "🌅",
     gradient: "linear-gradient(135deg, #1e0900 0%, #7c2d00 42%, #c96400 72%, #f5c542 100%)",
     shadow: "rgba(124,45,0,0.30)",
     innerBg: "rgba(20,8,0,0.85)",
@@ -84,7 +84,7 @@ const DASHBOARD_THEMES = [
   {
     id: "pride",
     label: "Pride",
-    emoji: "­ƒîê",
+    emoji: "🏳️‍🌈",
     gradient: "linear-gradient(135deg, #e40303 0%, #ff8c00 20%, #ffed00 37%, #008026 55%, #004dff 73%, #750787 100%)",
     shadow: "rgba(100,40,120,0.28)",
     innerBg: "rgba(20,0,30,0.88)",
@@ -353,7 +353,7 @@ export function WeddingWorkspaceDashboard({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
 
-      {/* ÔöÇÔöÇ HERO BANNER ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */}
+      {/* Ã”Ã¶Ã‡Ã”Ã¶Ã‡ HERO BANNER Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡ */}
       <section
         style={{
           borderRadius: "16px",
@@ -367,7 +367,7 @@ export function WeddingWorkspaceDashboard({
         {/* Names + Venue */}
         <div style={{ padding: "22px 26px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <p style={{ margin: "0 0 10px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
-            Ô£ª Wedding Dashboard
+            ðŸŒ¸ 🌸 Wedding Dashboard
           </p>
           {/* Theme picker */}
           <div style={{ position: "relative", marginBottom: "10px" }}>
@@ -445,7 +445,7 @@ export function WeddingWorkspaceDashboard({
               </>
             ) : (
               <>
-                <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.82)", fontWeight: 500 }}>{venue ?? "Add venue ÔåÆ"}</span>
+                <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.82)", fontWeight: 500 }}>{venue ?? "Add venue â†’"}</span>
                 <button type="button" onClick={() => setEditingField("venue")} style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", borderRadius: "6px", cursor: "pointer", padding: "3px 6px", color: "rgba(255,255,255,0.6)" }}><Pencil size={11} /></button>
               </>
             )}
@@ -538,7 +538,7 @@ export function WeddingWorkspaceDashboard({
                 justifyContent: "center",
               }}
             >
-              <span style={{ fontSize: "26px", fontWeight: 800, color: urgencyColor, lineHeight: 1 }}>{countdownDays ?? "ÔÇö"}</span>
+              <span style={{ fontSize: "26px", fontWeight: 800, color: urgencyColor, lineHeight: 1 }}>{countdownDays ?? "â€”"}</span>
               <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>days</span>
             </div>
           </div>
@@ -575,7 +575,7 @@ export function WeddingWorkspaceDashboard({
         </div>
       </section>
 
-      {/* ÔöÇÔöÇ STAT CARDS ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */}
+      {/* Ã”Ã¶Ã‡Ã”Ã¶Ã‡ STAT CARDS Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡ */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: "10px" }}>
 
         {/* Location */}
@@ -627,7 +627,7 @@ export function WeddingWorkspaceDashboard({
         </div>
       </div>
 
-      {/* ÔöÇÔöÇ BUDGET PANEL ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */}
+      {/* Ã”Ã¶Ã‡Ã”Ã¶Ã‡ BUDGET PANEL Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡ */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
 
         {/* Budget overview */}
@@ -635,7 +635,7 @@ export function WeddingWorkspaceDashboard({
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "34px", height: "34px", borderRadius: "10px", background: theme.cards[1].iconBg }}>
-                <span style={{ fontSize: "15px", fontWeight: 800, color: theme.cards[1].icon }}>┬ú</span>
+                <span style={{ fontSize: "15px", fontWeight: 800, color: theme.cards[1].icon }}>â”¬Ãº</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                 <span style={{ fontSize: "13px", fontWeight: 700, color: theme.cards[1].label }}>Budget Overview</span>
@@ -685,7 +685,7 @@ export function WeddingWorkspaceDashboard({
             <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "9px 11px", border: "1px solid rgba(21,128,61,0.12)" }}>
               <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: N_SUBTLE }}>Remaining</p>
               <p style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: remainingBudget !== null && remainingBudget < 0 ? "rgb(220,38,38)" : "#15803d" }}>
-                {remainingBudget === null ? "ÔÇö" : formatCurrency(remainingBudget, currencyCode)}
+                {remainingBudget === null ? "â€”" : formatCurrency(remainingBudget, currencyCode)}
               </p>
             </div>
           </div>
@@ -721,7 +721,7 @@ export function WeddingWorkspaceDashboard({
               <span style={{ fontSize: "22px", fontWeight: 800, color: N_FG, letterSpacing: "-0.02em" }}>{formatCurrency(costPerGuest, currencyCode)}</span>
             </div>
             <p style={{ margin: 0, fontSize: "12px", color: N_MUTED }}>
-              {targetGuests} guests ├ù {formatCurrency(costPerGuest, currencyCode)} = <strong style={{ color: N_FG }}>{formatCurrency(guestSpend, currencyCode)}</strong>
+              {targetGuests} guests Ã— {formatCurrency(costPerGuest, currencyCode)} = <strong style={{ color: N_FG }}>{formatCurrency(guestSpend, currencyCode)}</strong>
             </p>
           </div>
 
@@ -746,7 +746,7 @@ export function WeddingWorkspaceDashboard({
               </div>
               {scenarioDelta !== 0 && (
                 <p style={{ margin: "3px 0 0", fontSize: "11px", fontWeight: 700, color: scenarioDelta > 0 ? "#be185d" : "#15803d" }}>
-                  {scenarioDelta > 0 ? "Ôû▓" : "Ôû╝"} {formatCurrency(Math.abs(scenarioDelta), currencyCode)} {scenarioDelta > 0 ? "more" : "less"} than current plan
+                  {scenarioDelta > 0 ? "â†‘" : "â†“"} {formatCurrency(Math.abs(scenarioDelta), currencyCode)} {scenarioDelta > 0 ? "more" : "less"} than current plan
                 </p>
               )}
             </div>
@@ -754,7 +754,7 @@ export function WeddingWorkspaceDashboard({
         </div>
       </div>
 
-      {/* ÔöÇÔöÇ TABLE PLAN ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */}
+      {/* Ã”Ã¶Ã‡Ã”Ã¶Ã‡ TABLE PLAN Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡Ã”Ã¶Ã‡ */}
       <section
         style={{
           borderRadius: "12px",
@@ -791,4 +791,5 @@ export function WeddingWorkspaceDashboard({
     </div>
   );
 }
+
 

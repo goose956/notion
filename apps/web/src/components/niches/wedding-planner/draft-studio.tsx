@@ -144,7 +144,7 @@ export function WeddingDraftStudio({
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <WandSparkles size={16} color="#be185d" />
             <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#6b2040" }}>
-              Ô£ì´©Å AI Draft Studio
+              Ô£ì´©Å ✍️ AI Draft Studio
             </h3>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
