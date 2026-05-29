@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Loader2, WandSparkles, Lock, Eye, FileText } from "lucide-react";
+import { Loader2, WandSparkles, Lock, Eye, FileText, Trash2 } from "lucide-react";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import type { DraftPayload } from "./utils";
 import { asText, findPropertyName } from "./utils";
@@ -26,43 +26,51 @@ function SpeechCard({
   row,
   selected,
   onSelect,
+  onDelete,
 }: {
   row: WorkspaceRow;
   selected: boolean;
   onSelect: () => void;
+  onDelete: () => void;
 }) {
   const title = String(row.properties["Title"] ?? "Untitled speech");
   const locked = isSpeechLocked(row);
 
   return (
-    <button
-      onClick={onSelect}
+    <div
       style={{
-        width: "100%",
-        textAlign: "left",
-        padding: "9px 11px",
         borderRadius: "7px",
         border: `1px solid ${selected ? "#c2410c" : N_BORDER}`,
         background: selected ? "#fff7ed" : "white",
-        cursor: "pointer",
         fontFamily: N_FONT,
         display: "flex",
         alignItems: "flex-start",
-        gap: "8px",
+        gap: "6px",
+        padding: "9px 8px 9px 11px",
       }}
     >
       <span style={{ marginTop: "1px", color: locked ? "#c2410c" : N_SUBTLE, flexShrink: 0 }}>
         {locked ? <Lock size={12} /> : <FileText size={12} />}
       </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <button
+        onClick={onSelect}
+        style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer", fontFamily: N_FONT }}
+      >
         <p style={{ margin: 0, fontSize: "12px", fontWeight: 600, color: N_FG, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {title}
         </p>
         <p style={{ margin: "2px 0 0", fontSize: "11px", color: N_MUTED }}>
           {locked ? "Password protected" : "Click to load"}
         </p>
-      </div>
-    </button>
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", color: "rgba(55,53,47,0.3)", flexShrink: 0, lineHeight: 1 }}
+        title="Delete speech"
+      >
+        <Trash2 size={11} />
+      </button>
+    </div>
   );
 }
 
@@ -143,11 +151,13 @@ export function WeddingSpeechWriter({
   onWeddingCriteriaUpdated,
   documentsDb,
   onDocumentSaved,
+  onDocumentDeleted,
 }: {
   weddingCriteria: Record<string, unknown> | null;
   onWeddingCriteriaUpdated: (criteria: Record<string, unknown>) => void;
   documentsDb: WorkspaceDatabase | null;
   onDocumentSaved: (row: WorkspaceRow) => void;
+  onDocumentDeleted: (pageId: string) => void;
 }) {
   const SPEECH_STATE_KEY = "speech-writer-state-v1";
   const coupleNames = asText(weddingCriteria?.["couple-names"]) ?? "the couple";
@@ -401,6 +411,11 @@ export function WeddingSpeechWriter({
     }
   }
 
+  async function deleteSpeech(pageId: string) {
+    await fetch(`/api/members/workspace/${pageId}`, { method: "DELETE" });
+    onDocumentDeleted(pageId);
+  }
+
   function loadSavedSpeech(row: WorkspaceRow) {
     const body = String(row.properties["Body"] ?? row.properties["Content"] ?? row.properties["Draft"] ?? "");
     const title = String(row.properties["Title"] ?? "Wedding Speech Draft");
@@ -504,6 +519,7 @@ export function WeddingSpeechWriter({
                   loadSavedSpeech(row);
                 }
               }}
+              onDelete={() => void deleteSpeech(row.pageId)}
             />
           ))}
         </section>

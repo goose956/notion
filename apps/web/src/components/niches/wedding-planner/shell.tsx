@@ -116,6 +116,7 @@ export function WeddingNicheShell({
         onWeddingCriteriaUpdated={setWeddingCriteria}
         documentsDb={documentsDb}
         onDocumentSaved={(row) => { if (!documentsDb) return; onRowAdded(documentsDb.notionId, row); }}
+        onDocumentDeleted={(pageId) => { if (!documentsDb) return; onRowDeleted(documentsDb.notionId, pageId); }}
       />
     </div>
   );
