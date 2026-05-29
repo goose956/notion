@@ -457,7 +457,7 @@ export function WeddingWorkspaceDashboard({
         {/* Header image slot */}
         <div style={{ padding: "18px 20px", borderLeft: "1px solid rgba(255,255,255,0.10)", display: "flex", flexDirection: "column", justifyContent: "center", gap: "8px", minWidth: "180px" }}>
           <p style={{ margin: 0, fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
-            Header Image
+            Happy couple
           </p>
           <input
             ref={headerImageInputRef}
