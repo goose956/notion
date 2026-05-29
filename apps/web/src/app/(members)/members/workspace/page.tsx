@@ -208,6 +208,15 @@ export default function WorkspacePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Poll Notion every 30 s so changes made directly in Notion appear in the app
+  useEffect(() => {
+    const id = setInterval(() => {
+      void loadDatabases({ isRefresh: true, selectionMode: "preserve" });
+    }, 30_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (databases.length === 0) return;
     const key = `${nicheIdParam ?? ""}::${dbIdParam ?? ""}`;
