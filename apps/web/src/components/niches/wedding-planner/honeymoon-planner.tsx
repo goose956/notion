@@ -648,7 +648,7 @@ export function WeddingHoneymoonPlanner({
               {success && <p style={{ margin: 0, color: "rgb(21,128,61)", fontSize: "12px" }}>{success}</p>}
 
               {results.length > 0 && (
-                <div style={{ display: "grid", gap: "8px" }}>
+                <div style={{ display: "grid", gap: "8px", maxHeight: "520px", overflowY: "auto", paddingRight: "4px" }}>
                   {results.map((item, index) => (
                     <div key={`${item.title}-${index}`} style={{ border: `1px solid ${N_BORDER}`, borderRadius: "8px", background: "white", padding: "10px", display: "grid", gap: "8px" }}>
                       <input
