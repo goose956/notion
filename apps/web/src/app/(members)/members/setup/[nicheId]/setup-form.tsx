@@ -631,8 +631,8 @@ export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?
             )}
           </div>}
 
-          {/* Onboarding questions */}
-          {questions.length > 0 && (
+          {/* Onboarding questions — shown for in-app flow only; Notion deploy skips them */}
+          {isInApp && questions.length > 0 && (
             <>
               <div
                 style={{
