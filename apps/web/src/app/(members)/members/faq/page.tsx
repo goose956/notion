@@ -17,11 +17,11 @@ const FAQS: { section: string; items: { q: string; a: string }[] }[] = [
     items: [
       {
         q: "What is Stridivo?",
-        a: "Stridivo is an AI-powered research and workflow platform. It gives you a live AI research agent that searches the web, finds and scores results, drafts outreach emails, and saves everything directly into your Notion workspace — so you spend less time on grunt work and more time on decisions.",
+        a: "Stridivo is an AI-powered research and workflow platform. It gives you a live AI agent that searches the web, calls third-party APIs, finds and scores results, drafts outreach emails, and saves everything to your workspace — so you spend less time on grunt work and more time on decisions.",
       },
       {
         q: "What do I get on the free plan?",
-        a: "Every new account starts with 25 free credits. You can use them across any feature — research queries, email drafts, seating calculations, and more. When you run out, you can top up via Etsy.",
+        a: "Every new account starts with 25 free credits. You can use them across any feature — research queries, email drafts, seating calculations, and more. When you run out, you can purchase more from the Credits page.",
       },
       {
         q: "How do I connect my Notion workspace?",
@@ -38,7 +38,7 @@ const FAQS: { section: string; items: { q: string; a: string }[] }[] = [
       },
       {
         q: "How do I get more credits?",
-        a: "Purchase a credit top-up through our Etsy shop. After your order is confirmed, credits are added to your account automatically within a few minutes. You can check your balance at any time in the Credits page (bottom of the sidebar).",
+        a: "Head to the Credits page (bottom of the sidebar) to purchase more. Once your order is confirmed, credits are added to your account automatically within a few minutes.",
       },
       {
         q: "Do credits expire?",
@@ -101,7 +101,7 @@ const FAQS: { section: string; items: { q: string; a: string }[] }[] = [
       },
       {
         q: "How do I get a new niche pack?",
-        a: "Purchase additional packs from our Etsy shop. Once your order is confirmed the pack is unlocked in your account automatically.",
+        a: "Additional packs can be purchased from the Credits page. Once your order is confirmed the pack is unlocked in your account automatically.",
       },
     ],
   },
