@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Loader2, Plus, Trash2, FileText } from "lucide-react";
+import { Loader2, Plus, Trash2, FileText, Lock, Eye } from "lucide-react";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
@@ -71,6 +71,7 @@ function DocCard({
   const cfg = getTypeConfig(type);
   const { textOnly, svgs } = extractSvgs(body);
   const hasSvg = svgs.length > 0;
+  const isDocLocked = row.properties["Locked"] === true && String(row.properties["PasswordHash"] ?? "").length > 0;
   const textPreview = summary || textOnly.replace(/SVG asset\s*\d*:\s*\n?/gi, "").trim().slice(0, 80);
   const svgDataUri = hasSvg ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgs[0]!)}` : null;
 
@@ -104,12 +105,74 @@ function DocCard({
             <Trash2 size={11} />
           </button>
         </div>
-        {!hasSvg && textPreview && (
+        {!hasSvg && isDocLocked && (
+          <p style={{ margin: 0, fontSize: "11px", color: N_MUTED, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <Lock size={10} /> Password protected
+          </p>
+        )}
+        {!hasSvg && !isDocLocked && textPreview && (
           <p style={{ margin: 0, fontSize: "11px", color: N_MUTED, lineHeight: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
             {textPreview}
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Password helpers ─────────────────────────────────────────────────────────
+
+async function hashPassword(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function PasswordGate({ storedHash, onUnlock }: { storedHash: string; onUnlock: () => void }) {
+  const [input, setInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setChecking(true);
+    setError(null);
+    const hash = await hashPassword(input.trim());
+    if (hash === storedHash) {
+      onUnlock();
+    } else {
+      setError("Incorrect password.");
+    }
+    setChecking(false);
+  }
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", background: "#fafafa", padding: "32px" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", color: N_MUTED }}>
+        <Lock size={28} strokeWidth={1.5} />
+        <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: N_FG }}>This speech is password protected</p>
+        <p style={{ margin: 0, fontSize: "12px", color: N_MUTED, textAlign: "center" }}>Enter the password set by the author to view the content.</p>
+      </div>
+      <form onSubmit={(e) => void handleSubmit(e)} style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%", maxWidth: "280px" }}>
+        <input
+          type="password"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Enter password"
+          autoFocus
+          style={{ padding: "9px 12px", borderRadius: "6px", border: `1px solid ${error ? "rgb(220,38,38)" : N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, outline: "none" }}
+        />
+        {error && <p style={{ margin: 0, fontSize: "12px", color: "rgb(220,38,38)" }}>{error}</p>}
+        <button
+          type="submit"
+          disabled={checking || !input.trim()}
+          style={{ padding: "9px", borderRadius: "6px", border: "none", background: checking ? "rgba(55,53,47,0.15)" : N_FG, color: "white", fontSize: "13px", fontWeight: 600, fontFamily: N_FONT, cursor: checking ? "default" : "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+        >
+          {checking ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Eye size={13} />}
+          {checking ? "Checking…" : "View speech"}
+        </button>
+      </form>
     </div>
   );
 }
@@ -125,7 +188,15 @@ function extractSvgs(text: string): { textOnly: string; svgs: string[] } {
   return { textOnly, svgs };
 }
 
-function BodyEditor({ body, onChange }: { body: string; onChange: (v: string) => void }) {
+function BodyEditor({ body, onChange, row }: { body: string; onChange: (v: string) => void; row: WorkspaceRow }) {
+  const storedHash = String(row.properties["PasswordHash"] ?? "");
+  const isLocked = row.properties["Locked"] === true && storedHash.length > 0;
+  const [unlocked, setUnlocked] = useState(!isLocked);
+
+  if (!unlocked) {
+    return <PasswordGate storedHash={storedHash} onUnlock={() => setUnlocked(true)} />;
+  }
+
   const { textOnly, svgs } = extractSvgs(body);
   const hasSvgs = svgs.length > 0;
 
@@ -207,6 +278,7 @@ function DocEditor({
   const [body, setBody] = useState(prop(row, "Body", "Content", "Draft"));
   const [type, setType] = useState(prop(row, "Type") || "Other");
   const isImageDoc = extractSvgs(body).svgs.length > 0;
+  const isLockedDoc = row.properties["Locked"] === true && String(row.properties["PasswordHash"] ?? "").length > 0;
   const [recipient, setRecipient] = useState(prop(row, "Recipient"));
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -316,7 +388,7 @@ function DocEditor({
               >
                 {deleting ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={13} />}
               </button>
-              {!isImageDoc && <button
+              {!isImageDoc && !isLockedDoc && <button
                 onClick={() => void handleSave()}
                 disabled={saving}
                 style={{
@@ -373,8 +445,8 @@ function DocEditor({
           )}
         </div>
 
-        {/* Body — split into text + SVG preview if SVG is present */}
-        <BodyEditor body={body} onChange={setBody} />
+        {/* Body — split into text + SVG preview if SVG is present; password-gated if locked */}
+        <BodyEditor body={body} onChange={setBody} row={row} />
       </div>
     </>
   );

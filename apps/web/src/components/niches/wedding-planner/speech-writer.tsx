@@ -236,6 +236,13 @@ export function WeddingSpeechWriter({
     if (bodyName) { properties[bodyName] = draft.body; propertyTypes[bodyName] = "rich_text"; }
     if (summaryName) { properties[summaryName] = draft.summary?.trim() || draft.body.slice(0, 240); propertyTypes[summaryName] = "rich_text"; }
     if (subjectName) { properties[subjectName] = draft.subject; propertyTypes[subjectName] = "rich_text"; }
+    // Persist lock state so Documents view can enforce password protection
+    if (locked && passwordHash) {
+      properties["PasswordHash"] = passwordHash;
+      properties["Locked"] = true;
+      propertyTypes["PasswordHash"] = "rich_text";
+      propertyTypes["Locked"] = "checkbox";
+    }
 
     try {
       const res = await fetch("/api/members/workspace", {
