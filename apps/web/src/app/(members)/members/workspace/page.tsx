@@ -185,17 +185,20 @@ export default function WorkspacePage() {
     nextDatabases: WorkspaceDatabase[],
     nextBackend: "app" | "notion" = backend,
   ) {
-    const requestedDb = nextDatabases.find((d) =>
-      (nicheIdParam ? d.nicheId === nicheIdParam : true) &&
-      (dbIdParam ? d.dbId === dbIdParam : true),
-    );
-
-    if (requestedDb) {
-      setActiveTab(requestedDb.notionId);
-      return;
+    // If a specific database was requested via URL params, jump straight to it
+    if (nicheIdParam || dbIdParam) {
+      const requestedDb = nextDatabases.find((d) =>
+        (nicheIdParam ? d.nicheId === nicheIdParam : true) &&
+        (dbIdParam ? d.dbId === dbIdParam : true),
+      );
+      if (requestedDb) {
+        setActiveTab(requestedDb.notionId);
+        return;
+      }
     }
 
-    if (!nicheIdParam && !dbIdParam && nextBackend === "app") {
+    // No specific URL request — use the niche registry default tab (e.g. dashboard)
+    if (nextBackend === "app") {
       const defaultTab = getDefaultTabId(nextDatabases);
       if (defaultTab) {
         setActiveTab((prev) => (prev ? prev : defaultTab));
@@ -203,6 +206,7 @@ export default function WorkspacePage() {
       }
     }
 
+    // Final fallback — select first database
     if (nextDatabases.length > 0) {
       setActiveTab((prev) => {
         if (isVirtualTab(prev) && nextBackend === "app") return prev;
