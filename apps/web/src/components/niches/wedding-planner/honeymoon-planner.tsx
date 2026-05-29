@@ -640,9 +640,18 @@ export function WeddingHoneymoonPlanner({
 
           {(summaryText || results.length > 0 || error || success) && (
             <section style={{ border: `1px solid ${N_BORDER}`, borderRadius: "10px", background: "#fff", padding: "12px", display: "grid", gap: "10px" }}>
-              <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                Research Results
-              </p>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <p style={{ margin: 0, fontSize: "12px", fontWeight: 700, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Research Results
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setResults([]); setSummaryText(""); setSuccess(null); setError(null); }}
+                  style={{ padding: "3px 10px", borderRadius: "5px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: N_MUTED, fontSize: "12px", fontFamily: N_FONT, cursor: "pointer" }}
+                >
+                  Clear
+                </button>
+              </div>
               {summaryText && <div style={{ fontSize: "13px", color: N_FG }}>{renderMarkdown(summaryText)}</div>}
               {error && <p style={{ margin: 0, color: "rgb(220,38,38)", fontSize: "12px" }}>{error}</p>}
               {success && <p style={{ margin: 0, color: "rgb(21,128,61)", fontSize: "12px" }}>{success}</p>}
