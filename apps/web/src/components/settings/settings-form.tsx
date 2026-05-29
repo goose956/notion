@@ -16,6 +16,7 @@ type SettingsResponse = {
   anthropicModel: string;
   serperApiKeyConfigured: boolean;
   resendApiKeyConfigured: boolean;
+  resendFromAddress: string;
   apifyTokenConfigured: boolean;
 };
 
@@ -42,6 +43,7 @@ export function SettingsForm() {
   const [anthropicModel, setAnthropicModel] = useState("claude-sonnet-4-5");
   const [serperApiKey, setSerperApiKey] = useState("");
   const [resendApiKey, setResendApiKey] = useState("");
+  const [resendFromAddress, setResendFromAddress] = useState("");
   const [apifyToken, setApifyToken] = useState("");
 
   const [stripeSecretConfigured, setStripeSecretConfigured] = useState(false);
@@ -83,6 +85,7 @@ export function SettingsForm() {
         setAnthropicModel(data.anthropicModel || "claude-sonnet-4-5");
         setSerperConfigured(data.serperApiKeyConfigured);
         setResendConfigured(data.resendApiKeyConfigured);
+        setResendFromAddress(data.resendFromAddress || "");
         setApifyConfigured(data.apifyTokenConfigured);
 
         const pricingRes = await fetch("/api/admin/credit-pricing", { cache: "no-store" });
@@ -127,6 +130,7 @@ export function SettingsForm() {
           anthropicModel,
           serperApiKey,
           resendApiKey,
+          resendFromAddress,
           apifyToken,
           customerApiKeyId: customerKeyId.trim() || undefined,
           customerApiKey: customerApiKey.trim() || undefined,
@@ -408,10 +412,10 @@ export function SettingsForm() {
         <section className="surface-card p-5 space-y-3">
           <h2 className="font-semibold">Email (Resend)</h2>
           <p className="text-xs text-muted-foreground">
-            Powers the <code>send_email</code> agent skill. Get a free API key at{" "}
+            Sends magic-link sign-in emails and powers the <code>send_email</code> agent skill. Get a free API key at{" "}
             <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="underline">
               resend.com
-            </a>.
+            </a>. Your domain must be verified in Resend before emails will send.
           </p>
           <label className="block text-sm space-y-1">
             <span className="font-medium">API Key</span>
@@ -428,6 +432,20 @@ export function SettingsForm() {
                 <span>✓</span> Configured
               </span>
             )}
+          </label>
+          <label className="block text-sm space-y-1">
+            <span className="font-medium">From Address</span>
+            <input
+              type="email"
+              value={resendFromAddress}
+              onChange={(e) => setResendFromAddress(e.target.value)}
+              className={inputCls}
+              placeholder="hello@stridivo.com"
+              autoComplete="off"
+            />
+            <span className="text-xs text-muted-foreground">
+              The address sign-in emails are sent from. Must match your verified domain in Resend.
+            </span>
           </label>
         </section>
 

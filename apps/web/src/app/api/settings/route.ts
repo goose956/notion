@@ -9,6 +9,7 @@ const SETTINGS_KEYS = {
   anthropicModel: "anthropic.model",
   serperApiKey: "serper.apiKey",
   resendApiKey: "resend.apiKey",
+  resendFromAddress: "resend.fromAddress",
   apifyToken: "apify.token",
 } as const;
 
@@ -19,6 +20,7 @@ const SettingsSchema = z.object({
   anthropicModel: z.string().optional(),
   serperApiKey: z.string().optional(),
   resendApiKey: z.string().optional(),
+  resendFromAddress: z.string().optional(),
   apifyToken: z.string().optional(),
   /** Per-customer key fields — if both are present, skip global settings update */
   customerApiKeyId: z.string().optional(),
@@ -35,6 +37,7 @@ export async function GET() {
     anthropicModel: settings[SETTINGS_KEYS.anthropicModel] || "claude-sonnet-4-5",
     serperApiKeyConfigured: Boolean(settings[SETTINGS_KEYS.serperApiKey]),
     resendApiKeyConfigured: Boolean(settings[SETTINGS_KEYS.resendApiKey]),
+    resendFromAddress: settings[SETTINGS_KEYS.resendFromAddress] || "",
     apifyTokenConfigured: Boolean(settings[SETTINGS_KEYS.apifyToken]),
   });
 }
@@ -74,6 +77,7 @@ export async function POST(req: NextRequest) {
     [SETTINGS_KEYS.anthropicModel]: data.anthropicModel ?? "",
     [SETTINGS_KEYS.serperApiKey]: data.serperApiKey ?? "",
     [SETTINGS_KEYS.resendApiKey]: data.resendApiKey ?? "",
+    [SETTINGS_KEYS.resendFromAddress]: data.resendFromAddress ?? "",
     [SETTINGS_KEYS.apifyToken]: data.apifyToken ?? "",
   });
 

@@ -1,10 +1,11 @@
-import { signIn } from "@/auth";
-import { CheckCircle2 } from "lucide-react";
+import { redirect } from "next/navigation";
+import { CheckCircle2, Mail } from "lucide-react";
+import { getSettingValue } from "@niche-factory/db";
+import { buildMagicLink } from "@/lib/magic-link";
 
 function resolveSafeCallbackUrl(callbackUrl: string | undefined): string {
   if (!callbackUrl) return "/members/connections";
   if (callbackUrl === "undefined" || callbackUrl.endsWith("/undefined")) return "/members/connections";
-  // Only allow same-origin relative paths to avoid open redirects.
   if (!callbackUrl.startsWith("/")) return "/members/connections";
   return callbackUrl;
 }
@@ -12,9 +13,18 @@ function resolveSafeCallbackUrl(callbackUrl: string | undefined): string {
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: { callbackUrl?: string };
+  searchParams: { callbackUrl?: string; error?: string };
 }) {
   const callbackUrl = resolveSafeCallbackUrl(searchParams.callbackUrl);
+  const errorCode = searchParams.error;
+
+  const errorMessages: Record<string, string> = {
+    "email-not-configured": "Email sending is not configured yet. Please contact support.",
+    "send-failed": "Failed to send the sign-in email. Please try again.",
+    "invalid-link": "That sign-in link is invalid. Please request a new one.",
+    "expired-link": "That sign-in link has expired. Links are valid for 15 minutes — please request a new one.",
+  };
+  const errorMessage = errorCode ? (errorMessages[errorCode] ?? "Something went wrong. Please try again.") : null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -26,16 +36,118 @@ export default function LoginPage({
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Sign in to Stridivo</h1>
           <p className="text-sm text-muted-foreground">
-            Enter the email address you signed up with
+            Enter your email and we&apos;ll send you a sign-in link
           </p>
         </div>
+
+        {errorMessage && (
+          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorMessage}
+          </div>
+        )}
 
         <form
           action={async (formData: FormData) => {
             "use server";
             const email = (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
             if (!email || !email.includes("@")) return;
-            await signIn("email", { email, redirectTo: callbackUrl });
+
+            const [apiKey, fromAddress] = await Promise.all([
+              getSettingValue("resend.apiKey"),
+              getSettingValue("resend.fromAddress"),
+            ]);
+
+            if (!apiKey?.trim()) {
+              redirect(`/login?error=email-not-configured&callbackUrl=${encodeURIComponent(callbackUrl)}`);
+            }
+
+            const secret = process.env["AUTH_SECRET"] ?? "";
+            const baseUrl =
+              process.env["AUTH_URL"] ??
+              process.env["NEXTAUTH_URL"] ??
+              "http://localhost:3000";
+
+            const magicLink = buildMagicLink(email, secret, baseUrl, callbackUrl);
+            const from = fromAddress?.trim() || "noreply@stridivo.com";
+
+            const emailHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in to Stridivo</title>
+</head>
+<body style="margin:0;padding:0;background:#f9f9f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;border:1px solid #e8e8e8;overflow:hidden;">
+          <!-- Header -->
+          <tr>
+            <td style="background:#E83D00;padding:28px 40px;text-align:center;">
+              <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Stridivo</span>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px 40px 32px;">
+              <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111;">Your sign-in link</p>
+              <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.5;">
+                Click the button below to sign in to your Stridivo account. This link is valid for <strong>15 minutes</strong> and can only be used once.
+              </p>
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;">
+                <tr>
+                  <td style="background:#E83D00;border-radius:6px;">
+                    <a href="${magicLink}" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;letter-spacing:0.2px;">
+                      Sign in to Stridivo
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 6px;font-size:13px;color:#888;">If the button doesn&apos;t work, copy and paste this link:</p>
+              <p style="margin:0;font-size:12px;color:#E83D00;word-break:break-all;">${magicLink}</p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 40px 28px;border-top:1px solid #f0f0f0;">
+              <p style="margin:0;font-size:12px;color:#aaa;line-height:1.6;">
+                If you didn&apos;t request this email you can safely ignore it &mdash; your account won&apos;t be affected.<br />
+                &copy; ${new Date().getFullYear()} Stridivo
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+            try {
+              const res = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${apiKey.trim()}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  from,
+                  to: [email],
+                  subject: "Sign in to Stridivo",
+                  html: emailHtml,
+                }),
+              });
+
+              if (!res.ok) {
+                redirect(`/login?error=send-failed&callbackUrl=${encodeURIComponent(callbackUrl)}`);
+              }
+            } catch {
+              redirect(`/login?error=send-failed&callbackUrl=${encodeURIComponent(callbackUrl)}`);
+            }
+
+            redirect(`/login/check-email?email=${encodeURIComponent(email)}`);
           }}
           className="space-y-3"
         >
@@ -51,7 +163,10 @@ export default function LoginPage({
             type="submit"
             className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
-            Continue with email
+            <span className="inline-flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Send sign-in link
+            </span>
           </button>
         </form>
 
@@ -73,13 +188,5 @@ export default function LoginPage({
         </ul>
       </div>
     </div>
-  );
-}
-
-function NotionIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-      <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.281-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z" />
-    </svg>
   );
 }
