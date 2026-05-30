@@ -320,7 +320,6 @@ interface NicheCriteriaEntry {
 
 interface SuggestedPrompt {
   text: string;
-  type: "list" | "research";
 }
 
 function buildSuggestedPrompts(
@@ -329,10 +328,14 @@ function buildSuggestedPrompts(
 ): SuggestedPrompt[] {
   if (databases.length === 0) {
     return [
-      { text: "Find wedding venues with a capacity of 100+", type: "list" },
-      { text: "Search for photographers specialising in weddings", type: "list" },
-      { text: "What's the average cost of a wedding photographer in London?", type: "research" },
-      { text: "What should I look for when hiring a wedding caterer?", type: "research" },
+      { text: "Find wedding venues with a capacity of 100+" },
+      { text: "Search for wedding photographers" },
+      { text: "Find florists specialising in wedding flowers" },
+      { text: "Search for wedding catering companies" },
+      { text: "Find hair and makeup artists for weddings" },
+      { text: "What's the average cost of a wedding photographer?" },
+      { text: "What should I look for when hiring a wedding caterer?" },
+      { text: "What questions should I ask a florist before booking?" },
     ];
   }
 
@@ -346,16 +349,18 @@ function buildSuggestedPrompts(
     const crit = criteria.find((c) => c.nicheId === db.nicheId);
     const location = crit ? extractLocation(crit.criteria) : null;
     const locSuffix = location ? ` in ${location}` : "";
-    const nicheLower = db.nicheName.toLowerCase();
-    const dbLower = db.dbName.toLowerCase();
 
-    prompts.push({ text: `Find ${nicheLower} vendors${locSuffix}`, type: "list" });
-    prompts.push({ text: `Search for ${dbLower}${locSuffix}`, type: "list" });
-    prompts.push({ text: `What's the typical cost of ${dbLower}${locSuffix}?`, type: "research" });
-    prompts.push({ text: `What should I ask when hiring ${dbLower}?`, type: "research" });
+    prompts.push({ text: `Find wedding venues${locSuffix}` });
+    prompts.push({ text: `Search for wedding photographers${locSuffix}` });
+    prompts.push({ text: `Find florists specialising in wedding flowers${locSuffix}` });
+    prompts.push({ text: `Search for wedding catering companies${locSuffix}` });
+    prompts.push({ text: `Find hair and makeup artists for weddings${locSuffix}` });
+    prompts.push({ text: `What's the average cost of a wedding photographer${locSuffix}?` });
+    prompts.push({ text: `What should I look for when hiring a wedding caterer?` });
+    prompts.push({ text: `What questions should I ask a florist before booking?` });
   }
 
-  return prompts.slice(0, 8);
+  return prompts.slice(0, 10);
 }
 
 // ─── Main component ────────────────────────────────────────────────────────────
@@ -724,18 +729,6 @@ function ChatPageInner() {
                     }}
                     className="hover:bg-[rgba(55,53,47,0.06)]"
                   >
-                    <span style={{
-                      fontSize: "10px",
-                      fontWeight: 600,
-                      padding: "1px 5px",
-                      borderRadius: "3px",
-                      flexShrink: 0,
-                      marginTop: "2px",
-                      background: p.type === "list" ? "rgba(35,131,226,0.1)" : "rgba(55,53,47,0.07)",
-                      color: p.type === "list" ? N_BLUE : N_SUBTLE,
-                    }}>
-                      {p.type === "list" ? "list" : "research"}
-                    </span>
                     {p.text}
                   </button>
                 ))}
