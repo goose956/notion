@@ -138,10 +138,11 @@ export default function OnboardingQuestionsPage() {
       setError("Question text and ID are required.");
       return;
     }
+    const hasOptions = draft.type === "select" || draft.type === "multi_select";
     const q: OnboardingQuestion = {
       ...draft,
       id,
-      options: (draft.type === "select" || draft.type === "multi_select") ? (draft.options ?? []) : undefined,
+      ...(hasOptions ? { options: draft.options ?? [] } : {}),
     };
     let next: OnboardingQuestion[];
     if (addingNew) {
