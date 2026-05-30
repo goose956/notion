@@ -548,7 +548,7 @@ export function WeddingWorkspaceDashboard({
                 justifyContent: "center",
               }}
             >
-              <span style={{ fontSize: "26px", fontWeight: 800, color: urgencyColor, lineHeight: 1 }}>{countdownDays ?? "—"}</span>
+              <span style={{ fontSize: "26px", fontWeight: 800, color: "white", lineHeight: 1 }}>{countdownDays ?? "—"}</span>
               <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>days</span>
             </div>
           </div>
