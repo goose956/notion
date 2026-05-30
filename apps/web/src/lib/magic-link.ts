@@ -1,6 +1,6 @@
 import { createHmac } from "crypto";
 
-const TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 export function createMagicToken(email: string, secret: string): string {
   const exp = Date.now() + TOKEN_TTL_MS;

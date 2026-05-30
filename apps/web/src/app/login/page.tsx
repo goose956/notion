@@ -94,7 +94,7 @@ export default function LoginPage({
             <td style="padding:40px 40px 32px;">
               <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111;">Your sign-in link</p>
               <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.5;">
-                Click the button below to sign in to your Stridivo account. This link is valid for <strong>15 minutes</strong> and can only be used once.
+                Click the button below to sign in to your Stridivo account. This link is valid for <strong>30 minutes</strong> and can only be used once.
               </p>
               <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;">
                 <tr>

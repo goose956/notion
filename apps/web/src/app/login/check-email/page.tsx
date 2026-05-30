@@ -35,7 +35,7 @@ export default function CheckEmailPage({
           <p className="text-xs font-medium text-foreground">Didn&apos;t get the email?</p>
           <ul className="text-xs text-muted-foreground space-y-0.5 list-disc list-inside">
             <li>Check your spam or junk folder</li>
-            <li>The link expires after 15 minutes</li>
+            <li>The link expires after 30 minutes</li>
             <li>Make sure you used the right email address</li>
           </ul>
         </div>
