@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const nicheId = body.data.nicheId ?? "wedding-planner";
+  const nicheId = parsed.data.nicheId ?? "wedding-planner";
   const [apiKey, model, criteria] = await Promise.all([
     resolveApiKey(userEmail),
     resolveModel(),
