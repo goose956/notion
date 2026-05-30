@@ -93,11 +93,13 @@ function ProviderCard({
   connection,
   flash,
   userEmail,
+  returnNicheId,
 }: {
   def: ProviderDef;
   connection: UserConnectionRow | undefined;
   flash: string | null;
   userEmail: string;
+  returnNicheId?: string;
 }) {
   const connected = !!connection;
   const meta = (connection?.metadata ?? {}) as Record<string, unknown>;
@@ -222,7 +224,7 @@ function ProviderCard({
               <DisconnectButton provider={def.id} userEmail={userEmail} />
             ) : (
               <a
-                href={`/api/connect/${def.id}?return_to=${encodeURIComponent("/members/setup/wedding-planner")}`}
+                href={`/api/connect/${def.id}?return_to=${encodeURIComponent(returnNicheId ? `/members/setup/${returnNicheId}` : "/members/workspace")}`}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -263,7 +265,7 @@ function ProviderCard({
 export default async function ConnectionsPage({
   searchParams,
 }: {
-  searchParams: { connected?: string; error?: string };
+  searchParams: { connected?: string; error?: string; nicheId?: string };
 }) {
   const session = await auth();
   if (!session?.user?.email) redirect("/login?callbackUrl=%2Fmembers%2Fconnections");
@@ -331,6 +333,7 @@ export default async function ConnectionsPage({
             connection={connectionsByProvider[def.id]}
             flash={connectedFlash}
             userEmail={userEmail}
+            returnNicheId={searchParams.nicheId}
           />
         ))}
       </div>

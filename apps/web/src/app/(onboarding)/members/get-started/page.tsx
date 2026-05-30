@@ -296,12 +296,8 @@ export default async function GetStartedPage({
     ? await getNichePack(nicheIdFromNext).catch(() => undefined)
     : undefined;
   const nicheName = nichePackRow?.name ?? null;
-  const defaultInAppNicheId = "wedding-planner";
-  const autoNicheId = nicheIdFromNext ?? defaultInAppNicheId;
-  const autoNichePackRow =
-    nicheIdFromNext !== null
-      ? nichePackRow
-      : await getNichePack(autoNicheId).catch(() => undefined);
+  const autoNicheId = nicheIdFromNext;
+  const autoNichePackRow = nicheIdFromNext !== null ? nichePackRow : undefined;
 
   // â”€â”€ In-App path: much simpler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (isInApp) {

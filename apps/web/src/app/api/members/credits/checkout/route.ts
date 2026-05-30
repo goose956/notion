@@ -51,18 +51,28 @@ function toSupportedCurrency(value: unknown): string | undefined {
   return SUPPORTED_CHECKOUT_CURRENCIES.has(code) ? code : undefined;
 }
 
+const CRITERIA_NICHES = ["wedding-planner", "rainbow"] as const;
+
 async function resolveCheckoutCurrency(req: NextRequest, userEmail: string): Promise<string> {
-  const saved = await getUserCriteria(userEmail, "wedding-planner").catch(() => undefined);
-  const criteria = (saved?.criteria ?? {}) as Record<string, unknown>;
-
-  const fromSavedCode = toSupportedCurrency(criteria["currency-code"]);
-  if (fromSavedCode) return fromSavedCode;
-
-  const countryLabel = typeof criteria["wedding-country"] === "string"
-    ? criteria["wedding-country"].trim().toLowerCase()
-    : "";
-  const fromCountryLabel = countryLabel ? COUNTRY_LABEL_TO_CURRENCY[countryLabel] : undefined;
-  if (fromCountryLabel) return fromCountryLabel;
+  // Search all niche criteria for a saved currency-code or country field
+  const allCriteria = await Promise.all(
+    CRITERIA_NICHES.map((id) => getUserCriteria(userEmail, id).catch(() => undefined)),
+  );
+  for (const saved of allCriteria) {
+    const criteria = (saved?.criteria ?? {}) as Record<string, unknown>;
+    const fromSavedCode = toSupportedCurrency(criteria["currency-code"]);
+    if (fromSavedCode) return fromSavedCode;
+  }
+  for (const saved of allCriteria) {
+    const criteria = (saved?.criteria ?? {}) as Record<string, unknown>;
+    // Look for any key ending in "-country" or exactly "country"
+    const countryVal = Object.entries(criteria).find(
+      ([k]) => k === "country" || k.endsWith("-country"),
+    )?.[1];
+    const countryLabel = typeof countryVal === "string" ? countryVal.trim().toLowerCase() : "";
+    const fromCountryLabel = countryLabel ? COUNTRY_LABEL_TO_CURRENCY[countryLabel] : undefined;
+    if (fromCountryLabel) return fromCountryLabel;
+  }
 
   const ipCountry = (req.headers.get("cf-ipcountry") ?? req.headers.get("x-vercel-ip-country") ?? "")
     .trim()
