@@ -333,7 +333,7 @@ export default async function ConnectionsPage({
             connection={connectionsByProvider[def.id]}
             flash={connectedFlash}
             userEmail={userEmail}
-            returnNicheId={searchParams.nicheId}
+            {...(searchParams.nicheId ? { returnNicheId: searchParams.nicheId } : {})}
           />
         ))}
       </div>
