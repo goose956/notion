@@ -140,6 +140,14 @@ function getItemTitle(item: ResultItem): string {
   return typeof first === "string" ? first : "Unnamed";
 }
 
+function formatCardAsDocument(item: ResultItem): Record<string, string> {
+  const title = getItemTitle(item);
+  const lines = Object.entries(item)
+    .filter(([, v]) => v !== null && v !== "" && v !== undefined)
+    .map(([k, v]) => `${k}: ${Array.isArray(v) ? (v as unknown[]).join(", ") : String(v)}`);
+  return { Title: title, Body: lines.join("\n"), Type: "Research" };
+}
+
 const TOOL_LABELS: Record<string, string> = {
   web_search: "Searching the web",
   fetch_url: "Reading URL",
@@ -390,20 +398,24 @@ function ChatPageInner() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load deployed databases on mount
+  // Load deployed databases on mount — only keep documents DBs as save targets
   useEffect(() => {
     void fetch("/api/members/databases")
       .then((r) => r.json() as Promise<{ databases: DeployedDatabase[]; criteria: NicheCriteriaEntry[]; backend?: "notion" | "app" }>)
       .then(({ databases, criteria, backend: b }) => {
-        setDeployedDbs(databases ?? []);
+        const allDbs = databases ?? [];
+        // For the save target, only expose documents databases
+        const docsDbs = allDbs.filter((d) => d.dbId === "documents");
+        setDeployedDbs(docsDbs);
         setNicheCriteria(criteria ?? []);
         if (b) setBackend(b);
         // Pre-select niche from URL param if present, otherwise pick first
-        if (databases && databases.length > 0) {
+        const pickFrom = docsDbs.length > 0 ? docsDbs : allDbs;
+        if (pickFrom.length > 0) {
           const match = nicheIdFromUrl
-            ? databases.find((d) => d.nicheId === nicheIdFromUrl)
+            ? pickFrom.find((d) => d.nicheId === nicheIdFromUrl)
             : undefined;
-          const selected = match ?? databases[0]!;
+          const selected = match ?? pickFrom[0]!;
           setSelectedNotionId(selected.notionId);
           setActiveNicheId(selected.nicheId);
           setActiveNicheName(selected.nicheName);
@@ -431,16 +443,27 @@ function ChatPageInner() {
     if (!title.trim() || !summaryText) return;
     setSavingNote(true);
     try {
-      await fetch("/api/members/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          content: summaryText,
-          nicheId: activeNicheId || undefined,
-          nicheName: activeNicheName || undefined,
-        }),
-      });
+      if (selectedNotionId && backend === "app") {
+        // Save to documents DB in workspace
+        await fetch("/api/members/workspace-save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            databaseId: selectedNotionId,
+            properties: { Title: title.trim(), Body: summaryText, Type: "Research" },
+          }),
+        });
+      } else if (selectedNotionId && backend === "notion") {
+        // Save to Notion documents DB
+        await fetch("/api/members/notion-add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            notionDatabaseId: selectedNotionId,
+            properties: { Title: title.trim(), Body: summaryText, Type: "Research" },
+          }),
+        });
+      }
       setNoteSaved(true);
       setShowNoteTitleInput(false);
     } finally {
@@ -556,13 +579,15 @@ function ChatPageInner() {
     setAddError(null);
     try {
       const isApp = backend === "app";
+      // Format the card as a document (Title + Body summary)
+      const docProperties = formatCardAsDocument(item);
       const res = await fetch(isApp ? "/api/members/workspace-save" : "/api/members/notion-add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
           isApp
-            ? { databaseId: selectedNotionId, properties: item }
-            : { notionDatabaseId: selectedNotionId, properties: item },
+            ? { databaseId: selectedNotionId, properties: docProperties }
+            : { notionDatabaseId: selectedNotionId, properties: docProperties },
         ),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -619,7 +644,7 @@ function ChatPageInner() {
                   </span>
                 )}
               </div>
-              <p style={{ fontSize: "12px", color: N_MUTED, margin: 0 }}>Search the web · save to {backend === "app" ? "workspace" : "Notion"}</p>
+              <p style={{ fontSize: "12px", color: N_MUTED, margin: 0 }}>Search the web · save to documents</p>
             </div>
           )}
           <button
@@ -786,30 +811,32 @@ function ChatPageInner() {
           <div style={{ padding: "8px 32px", borderBottom: `1px solid ${N_BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexShrink: 0 }}>
             <span style={{ fontSize: "13px", color: N_MUTED }}>
               {resultItems.length} result{resultItems.length !== 1 ? "s" : ""}
-              {addedIndices.size > 0 && ` · ${addedIndices.size} saved to ${backend === "app" ? "Workspace" : "Notion"}`}
+              {addedIndices.size > 0 && ` · ${addedIndices.size} saved to Documents`}
             </span>
             {deployedDbs.length > 0 && (
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <select
-                  value={selectedNotionId}
-                  onChange={(e) => handleDatabaseChange(e.target.value)}
-                  style={{
-                    fontSize: "13px",
-                    border: `1px solid ${N_BORDER_MED}`,
-                    borderRadius: "3px",
-                    padding: "3px 6px",
-                    color: N_FG,
-                    background: "white",
-                    fontFamily: N_FONT,
-                    maxWidth: "220px",
-                  }}
-                >
-                  {deployedDbs.map((db) => (
-                    <option key={db.notionId} value={db.notionId}>
-                      {db.nicheName} · {db.dbName}
-                    </option>
-                  ))}
-                </select>
+                {deployedDbs.length > 1 && (
+                  <select
+                    value={selectedNotionId}
+                    onChange={(e) => handleDatabaseChange(e.target.value)}
+                    style={{
+                      fontSize: "13px",
+                      border: `1px solid ${N_BORDER_MED}`,
+                      borderRadius: "3px",
+                      padding: "3px 6px",
+                      color: N_FG,
+                      background: "white",
+                      fontFamily: N_FONT,
+                      maxWidth: "220px",
+                    }}
+                  >
+                    {deployedDbs.map((db) => (
+                      <option key={db.notionId} value={db.notionId}>
+                        {db.nicheName} · Documents
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <button
                   disabled={pendingCount === 0 || addAllInProgress || !selectedNotionId}
                   onClick={() => void addAllToNotion()}
@@ -828,7 +855,7 @@ function ChatPageInner() {
                   }}
                 >
                   {addAllInProgress && <Loader2 style={{ width: "12px", height: "12px" }} className="animate-spin" />}
-                  Save all{pendingCount > 0 ? ` (${pendingCount})` : ""}
+                  Save all to documents{pendingCount > 0 ? ` (${pendingCount})` : ""}
                 </button>
               </div>
             )}
@@ -851,7 +878,7 @@ function ChatPageInner() {
               <span style={{ fontSize: "56px", lineHeight: 1 }}>🔍</span>
               <p style={{ fontSize: "20px", fontWeight: 600, color: N_FG, margin: 0 }}>Start researching</p>
               <p style={{ fontSize: "14px", color: N_MUTED, maxWidth: "340px", lineHeight: 1.6, margin: 0 }}>
-                Ask the assistant to find venues, vendors, or businesses — results appear here and can be saved directly to your {backend === "app" ? "workspace" : "Notion workspace"}.
+                Ask the assistant to find venues, vendors, or businesses — results appear here and can be saved directly to your documents.
               </p>
             </div>
           )}
@@ -893,7 +920,7 @@ function ChatPageInner() {
                         </button>
                         {noteSaved ? (
                           <span style={{ fontSize: "12px", color: "rgb(15,123,108)", fontWeight: 500 }}>
-                            ✓ Saved to notes
+                            ✓ Saved to documents
                           </span>
                         ) : showNoteTitleInput ? (
                           <div style={{ display: "flex", gap: "6px", alignItems: "center", flex: 1 }}>
@@ -934,7 +961,7 @@ function ChatPageInner() {
                             onClick={() => setShowNoteTitleInput(true)}
                             style={{ fontSize: "12px", color: N_MUTED, background: "transparent", border: `1px solid ${N_BORDER_MED}`, borderRadius: "3px", padding: "3px 10px", cursor: "pointer", fontFamily: N_FONT }}
                           >
-                            Save as note
+                            Save to documents
                           </button>
                         )}
                       </div>
@@ -977,7 +1004,7 @@ function ChatPageInner() {
                       adding={addingIndex === i}
                       onAdd={(idx, it) => void addToNotion(idx, it)}
                       disabled={addAllInProgress || !selectedNotionId}
-                      saveLabel={backend === "app" ? "Save to Workspace" : "Save to Notion"}
+                      saveLabel="Save to documents"
                     />
                   ))}
                 </div>
