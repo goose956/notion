@@ -121,46 +121,32 @@ export default async function HomePage() {
             Start it. AI finishes it.
           </h1>
           <p className="mt-4 max-w-2xl text-base md:text-lg text-muted-foreground">
-            Stridivo builds AI workspaces for specific niches — not static templates, but a{" "}
-            <strong className="text-foreground font-semibold">live AI that runs the whole job from start to finish</strong>.
-            Start with the Wedding Planner. More niches launching soon.
+            Pick your niche. Stridivo deploys a{" "}
+            <strong className="text-foreground font-semibold">live AI workspace that researches, drafts, and executes — start to finish</strong>.
+            Not a template. Not a chatbot. A workflow that gets the job done.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              href="/templates/wedding-planner"
+              href="/signup"
               className="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground h-10 px-5 text-sm font-medium hover:bg-primary/90 transition-colors"
             >
-              Start with Wedding Planner
+              Get started free
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/signup"
+              href="/templates"
               className="inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground h-10 px-5 text-sm font-medium hover:bg-accent/90 transition-colors"
             >
-              <Zap className="h-4 w-4" />
-              Try free — 25 credits
+              <Compass className="h-4 w-4" />
+              Browse workspaces
             </Link>
           </div>
 
-          {categoryLinks.length > 0 && (
-            <div className="mt-8 flex flex-wrap gap-2">
-              {categoryLinks.map((category) => (
-                <Link
-                  key={category}
-                  href={`/templates/category/${slugifyTemplateCategory(category)}`}
-                  className="rounded-full border border-primary/25 bg-primary/8 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
-                >
-                  {category}
-                </Link>
-              ))}
-            </div>
-          )}
-
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
-            <FeaturePill icon={<Compass className="h-4 w-4 text-primary" />} label="AI finds vendors for you" />
-            <FeaturePill icon={<Bot className="h-4 w-4 text-primary" />} label="Emails drafted in seconds" />
-            <FeaturePill icon={<Workflow className="h-4 w-4 text-primary" />} label="Speeches, plans & more" />
+            <FeaturePill icon={<Compass className="h-4 w-4 text-primary" />} label="AI researches for you" />
+            <FeaturePill icon={<Bot className="h-4 w-4 text-primary" />} label="Drafts, plans & emails done" />
+            <FeaturePill icon={<Workflow className="h-4 w-4 text-primary" />} label="Full workflow, not just tools" />
           </div>
         </div>
       </section>
@@ -168,11 +154,9 @@ export default async function HomePage() {
       <section className="max-w-6xl mx-auto px-6 py-10 md:py-12">
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight">AI Workspaces</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">Pick your niche</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {liveTemplates.length > 0
-                ? "Each workspace is a live AI built for one specific niche. Pick yours and get started."
-                : "Each workspace is a live AI built for one specific niche — not a template, a tool that works."}
+              Each workspace is a live AI built for one specific niche — it researches, drafts, and executes so you don&apos;t have to.
             </p>
           </div>
           <div className="hidden md:flex items-center gap-2 text-xs">
