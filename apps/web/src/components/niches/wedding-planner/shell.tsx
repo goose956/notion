@@ -27,6 +27,7 @@ export function WeddingNicheShell({
   onRowUpdated,
   onRowDeleted,
   onSeatedIdsChanged,
+  nicheId = "wedding-planner",
 }: {
   activeTab: string;
   databases: WorkspaceDatabase[];
@@ -35,6 +36,7 @@ export function WeddingNicheShell({
   onRowUpdated: (dbNotionId: string, pageId: string, name: string, val: string | number | boolean | null) => void;
   onRowDeleted: (dbNotionId: string, pageId: string) => void;
   onSeatedIdsChanged: (ids: Set<string>) => void;
+  nicheId?: string;
 }) {
   const [weddingCriteria, setWeddingCriteria] = useState<Record<string, unknown> | null>(apiWeddingCriteria);
   const [liveSeatedIds, setLiveSeatedIds] = useState<Set<string> | null>(null);
@@ -45,9 +47,9 @@ export function WeddingNicheShell({
     setLiveSeatedIds(null);
   }, [apiWeddingCriteria]);
 
-  const documentsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "documents") ?? null;
-  const guestsDb    = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "guests")    ?? null;
-  const honeymoonDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "honeymoon") ?? null;
+  const documentsDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "documents") ?? null;
+  const guestsDb    = databases.find((d) => d.nicheId === nicheId && d.dbId === "guests")    ?? null;
+  const honeymoonDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "honeymoon") ?? null;
 
   const seatedGuestIds = useMemo<Set<string>>(() => {
     if (liveSeatedIds !== null) return liveSeatedIds;
@@ -77,6 +79,7 @@ export function WeddingNicheShell({
         weddingCriteria={weddingCriteria}
         onWeddingCriteriaUpdated={setWeddingCriteria}
         liveSeatedCount={seatedGuestIds.size}
+        nicheId={nicheId}
       />
     </div>
   );
@@ -118,6 +121,7 @@ export function WeddingNicheShell({
         documentsDb={documentsDb}
         onDocumentSaved={(row) => { if (!documentsDb) return; onRowAdded(documentsDb.notionId, row); }}
         onDocumentDeleted={(pageId) => { if (!documentsDb) return; onRowDeleted(documentsDb.notionId, pageId); }}
+        nicheId={nicheId}
       />
     </div>
   );

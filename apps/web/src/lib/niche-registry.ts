@@ -96,6 +96,17 @@ const WEDDING_ACCENT: NicheAccent = {
   borderTop:      "1px solid rgba(190,24,93,0.12)",
 };
 
+// ─── Rainbow accent ───────────────────────────────────────────────────────────
+const RAINBOW_ACCENT: NicheAccent = {
+  hex:            "#7c3aed",
+  fgActive:       "#6d28d9",
+  fgHeader:       "#4c1d95",
+  bgActive:       "rgba(124,58,237,0.12)",
+  bgHover:        "rgba(124,58,237,0.06)",
+  bgGroupHeader:  "rgba(124,58,237,0.06)",
+  borderTop:      "1px solid rgba(124,58,237,0.12)",
+};
+
 // ─── Registry ─────────────────────────────────────────────────────────────────
 export const NICHE_REGISTRY: NicheRegistryEntry[] = [
   // ── Wedding Planner ──────────────────────────────────────────────────────────
@@ -106,6 +117,31 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
     hiddenDbIds:  ["honeymoon"],
     accent:       WEDDING_ACCENT,
     sidebarEmoji: "🌸",
+    topTabs: [
+      { tabId: WEDDING_TABS.DASHBOARD, label: "Dashboard", icon: "🏠", appOnly: true },
+    ],
+    afterDbNamePattern: /planning\s*(timetable|timeline)/i,
+    afterDbTabs: [
+      { tabId: WEDDING_TABS.SEATING,    label: "Seating Planner",   icon: "🪑", appOnly: true },
+      { tabId: WEDDING_TABS.DRAFT,      label: "Draft Letters",     icon: "✍️", appOnly: true, requiresDbId: "documents" },
+      { tabId: WEDDING_TABS.INVITATION, label: "Invitation Canvas", icon: "🎨", appOnly: true },
+      { tabId: WEDDING_TABS.SPEECH,     label: "AI Speech Writer",  icon: "🎤", appOnly: true },
+      { tabId: WEDDING_TABS.HONEYMOON,  label: "Honeymoon Planner", icon: "🌴", appOnly: true },
+    ],
+    dbPropertyInjections: {
+      documents: [{ id: "Email", name: "Email", type: "email" }],
+    },
+    savedResearchDbIds: ["documents"],
+  },
+
+  // ── Rainbow Wedding Planner ───────────────────────────────────────────────
+  {
+    nicheId:      "rainbow",
+    virtualTabIds: new Set(Object.values(WEDDING_TABS)),
+    defaultTabId: WEDDING_TABS.DASHBOARD,
+    hiddenDbIds:  ["honeymoon"],
+    accent:       RAINBOW_ACCENT,
+    sidebarEmoji: "🌈",
     topTabs: [
       { tabId: WEDDING_TABS.DASHBOARD, label: "Dashboard", icon: "🏠", appOnly: true },
     ],

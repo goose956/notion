@@ -152,12 +152,14 @@ export function WeddingSpeechWriter({
   documentsDb,
   onDocumentSaved,
   onDocumentDeleted,
+  nicheId = "wedding-planner",
 }: {
   weddingCriteria: Record<string, unknown> | null;
   onWeddingCriteriaUpdated: (criteria: Record<string, unknown>) => void;
   documentsDb: WorkspaceDatabase | null;
   onDocumentSaved: (row: WorkspaceRow) => void;
   onDocumentDeleted: (pageId: string) => void;
+  nicheId?: string;
 }) {
   const SPEECH_STATE_KEY = "speech-writer-state-v1";
   const coupleNames = asText(weddingCriteria?.["couple-names"]) ?? "the couple";
@@ -332,7 +334,7 @@ export function WeddingSpeechWriter({
         [SPEECH_STATE_KEY]: nextState,
       };
 
-      const res = await fetch("/api/members/criteria/wedding-planner", {
+      const res = await fetch(`/api/members/criteria/${nicheId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ criteria: payload }),

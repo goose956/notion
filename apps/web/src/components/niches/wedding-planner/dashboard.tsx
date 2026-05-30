@@ -104,11 +104,13 @@ export function WeddingWorkspaceDashboard({
   weddingCriteria,
   onWeddingCriteriaUpdated,
   liveSeatedCount,
+  nicheId = "wedding-planner",
 }: {
   databases: WorkspaceDatabase[];
   weddingCriteria: Record<string, unknown> | null;
   onWeddingCriteriaUpdated: (criteria: Record<string, unknown>) => void;
   liveSeatedCount: number;
+  nicheId?: string;
 }) {
   const [themeId, setThemeId] = useState<ThemeId>(() => {
     if (typeof window === "undefined") return "rose";
@@ -145,13 +147,13 @@ export function WeddingWorkspaceDashboard({
     setHeaderImageDataUrl(asText(weddingCriteria?.["dashboard-header-image"]));
   }, [weddingCriteria]);
 
-  const guestsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "guests") ?? null;
+  const guestsDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "guests") ?? null;
   const timelineDb =
     databases.find(
-      (d) => d.nicheId === "wedding-planner" && /planning\s*(timeline|timetable)/i.test(d.dbName),
+      (d) => d.nicheId === nicheId && /planning\s*(timeline|timetable)/i.test(d.dbName),
     ) ?? null;
-  const budgetDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "budget") ?? null;
-  const documentsDb = databases.find((d) => d.nicheId === "wedding-planner" && d.dbId === "documents") ?? null;
+  const budgetDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "budget") ?? null;
+  const documentsDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "documents") ?? null;
 
   const coupleNames = asText(weddingCriteria?.["couple-names"]);
   const weddingDate = parseWeddingDate(weddingCriteria?.["wedding-date"]);
@@ -307,7 +309,7 @@ export function WeddingWorkspaceDashboard({
         "dashboard-header-image": nextHeaderImageDataUrl,
       };
 
-      const res = await fetch("/api/members/criteria/wedding-planner", {
+      const res = await fetch(`/api/members/criteria/${nicheId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ criteria: nextCriteria }),

@@ -804,6 +804,19 @@ export default function WorkspacePage() {
                   onSeatedIdsChanged={setSeatedGuestIds}
                 />
               );
+              if (entry.nicheId === "rainbow") return (
+                <WeddingNicheShell
+                  key="rainbow"
+                  nicheId="rainbow"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiWeddingCriteria={apiWeddingCriteria}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                  onSeatedIdsChanged={setSeatedGuestIds}
+                />
+              );
               return null; // placeholder for future niches
             })}
             {/* DB table view — only when active tab is a real database row */}
