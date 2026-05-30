@@ -16,6 +16,14 @@ export const WORKFLOW_CATALOG = [
       "Surface off-market deals, score properties automatically and track your deal pipeline from any market.",
   },
   {
+    id: "rainbow",
+    name: "Rainbow Wedding Planner",
+    emoji: "🌈",
+    tagline: "Plan your LGBTQ+ wedding — vendors, guests, budget and timeline in one place.",
+    description:
+      "Everything the Wedding Planner has, built for LGBTQ+ couples — LGBTQ+ friendly vendor search, gender-neutral guest management, and full budget and timeline tracking.",
+  },
+  {
     id: "local-business-lead-tracker",
     name: "Local Business Leads",
     emoji: "📍",
