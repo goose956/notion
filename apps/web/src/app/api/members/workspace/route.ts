@@ -54,8 +54,14 @@ export interface WorkspaceDatabase {
 export interface WorkspaceResponse {
   databases: WorkspaceDatabase[];
   backend: "app" | "notion";
+  /** Criteria keyed by nicheId. Replaces the old weddingCriteria field. */
+  criteriaByNiche: Record<string, Record<string, unknown> | null>;
+  /** @deprecated Use criteriaByNiche["wedding-planner"] instead. */
   weddingCriteria?: Record<string, unknown> | null;
 }
+
+/** Niches that use the wedding-style criteria/onboarding system. */
+const CRITERIA_NICHES = ["wedding-planner", "rainbow"] as const;
 
 async function provisionAppWorkspace(userId: string, pack: NichePack, schemaVersion = 1): Promise<void> {
   const workspaceId = randomUUID();
@@ -223,15 +229,20 @@ export async function GET(_req: NextRequest) {
   // In-app workspaces are the full experience (seating chart, draft letters, etc.).
   // Notion is a sync target, not a replacement for the in-app workspace.
   const useAppBackend = !notionToken || hasAnyAppWorkspaces;
-  const weddingCriteriaRow =
-    typeof userEmail === "string" && userEmail.length > 0
-      ? await getUserCriteria(userEmail, "wedding-planner").catch(() => undefined)
-      : undefined;
-  const rawCriteria = weddingCriteriaRow?.criteria;
-  const weddingCriteria: Record<string, unknown> | null =
-    typeof rawCriteria === "string"
-      ? (JSON.parse(rawCriteria) as Record<string, unknown>)
-      : (rawCriteria as Record<string, unknown> | null | undefined) ?? null;
+  const criteriaByNiche: Record<string, Record<string, unknown> | null> = {};
+  if (typeof userEmail === "string" && userEmail.length > 0) {
+    await Promise.all(
+      CRITERIA_NICHES.map(async (nicheId) => {
+        const row = await getUserCriteria(userEmail, nicheId).catch(() => undefined);
+        const raw = row?.criteria;
+        criteriaByNiche[nicheId] =
+          typeof raw === "string"
+            ? (JSON.parse(raw) as Record<string, unknown>)
+            : (raw as Record<string, unknown> | null | undefined) ?? null;
+      }),
+    );
+  }
+  const weddingCriteria = criteriaByNiche["wedding-planner"] ?? null;
 
   // ── In-app (no Notion) flow ──────────────────────────────────────────────
   if (useAppBackend) {
@@ -402,6 +413,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({
       databases,
       backend: "app",
+      criteriaByNiche,
       weddingCriteria,
     } satisfies WorkspaceResponse);
   }
@@ -499,6 +511,7 @@ export async function GET(_req: NextRequest) {
   return NextResponse.json({
     databases,
     backend: "notion",
+    criteriaByNiche,
     weddingCriteria,
   } satisfies WorkspaceResponse);
 }

@@ -215,9 +215,11 @@ type SeatingPlannerViewProps = {
   embedded?: boolean;
   /** Called whenever the seated guest IDs change (used by parent to highlight guest list rows). */
   onSeatingChanged?: (seatedIds: Set<string>) => void;
+  /** The niche that owns this seating planner — used for criteria API calls and back link. */
+  nicheId?: string;
 };
 
-export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = false, onSeatingChanged }: SeatingPlannerViewProps) {
+export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = false, onSeatingChanged, nicheId = "wedding-planner" }: SeatingPlannerViewProps) {
   const ROOM_WIDTH = 1200;
   const ROOM_HEIGHT = 780;
   const GRID_SIZE = 24;
@@ -356,7 +358,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
 
     void (async () => {
       try {
-        const res = await fetch("/api/members/criteria/wedding-planner", { cache: "no-store" });
+        const res = await fetch(`/api/members/criteria/${nicheId}`, { cache: "no-store" });
         if (!res.ok) return;
         const body = (await res.json().catch(() => ({}))) as { criteria?: Record<string, unknown> | null };
         const fromDb = normalizePersistedLayout(body.criteria?.["seating-layout-v1"], guestsDb?.notionId ?? "");
@@ -422,7 +424,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
-          const getRes = await fetch("/api/members/criteria/wedding-planner", { cache: "no-store" });
+          const getRes = await fetch(`/api/members/criteria/${nicheId}`, { cache: "no-store" });
           const getBody = getRes.ok
             ? ((await getRes.json().catch(() => ({}))) as { criteria?: Record<string, unknown> | null })
             : { criteria: null };
@@ -430,7 +432,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
             ...(getBody.criteria ?? {}),
             "seating-layout-v1": payload,
           };
-          await fetch("/api/members/criteria/wedding-planner", {
+          await fetch(`/api/members/criteria/${nicheId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ criteria: nextCriteria }),
@@ -767,7 +769,7 @@ export function SeatingPlannerView({ guestsDb: guestsDbProp, onBack, embedded = 
               </button>
             ) : (
               <Link
-                href="/members/workspace?nicheId=wedding-planner&dbId=guests"
+                href={`/members/workspace?nicheId=${nicheId}&dbId=guests`}
                 style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "12px", color: "#be185d", textDecoration: "none" }}
               >
                 <ArrowLeft size={12} />

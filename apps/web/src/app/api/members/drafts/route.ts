@@ -16,6 +16,7 @@ const BodySchema = z.object({
   tone: z.string().trim().optional(),
   keyPoints: z.string().trim().optional(),
   extraInstructions: z.string().trim().optional(),
+  nicheId: z.string().trim().optional(),
 });
 
 interface DraftResponse {
@@ -95,10 +96,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const nicheId = body.data.nicheId ?? "wedding-planner";
   const [apiKey, model, criteria] = await Promise.all([
     resolveApiKey(userEmail),
     resolveModel(),
-    getUserCriteria(userEmail, "wedding-planner").catch(() => undefined),
+    getUserCriteria(userEmail, nicheId).catch(() => undefined),
   ]);
 
   if (!apiKey) {

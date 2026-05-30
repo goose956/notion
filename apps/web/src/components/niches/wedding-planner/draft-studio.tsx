@@ -8,9 +8,11 @@ import { findPropertyName } from "./utils";
 export function WeddingDraftStudio({
   db,
   onRowAdded,
+  nicheId = "wedding-planner",
 }: {
   db: WorkspaceDatabase;
   onRowAdded: (row: WorkspaceRow) => void;
+  nicheId?: string;
 }) {
   const [recipient, setRecipient] = useState("");
   const [email, setEmail] = useState("");
@@ -38,6 +40,7 @@ export function WeddingDraftStudio({
           tone,
           keyPoints,
           extraInstructions,
+          nicheId,
         }),
       });
       const body = (await res.json().catch(() => ({}))) as {

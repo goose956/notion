@@ -85,7 +85,7 @@ export function WeddingNicheShell({
   );
 
   if (activeTab === WEDDING_TABS.SEATING) return (
-    <SeatingPlannerView guestsDb={guestsDb} embedded onSeatingChanged={setLiveSeatedIds} />
+    <SeatingPlannerView guestsDb={guestsDb} embedded onSeatingChanged={setLiveSeatedIds} nicheId={nicheId} />
   );
 
   if (activeTab === WEDDING_TABS.DRAFT) return (
@@ -94,6 +94,7 @@ export function WeddingNicheShell({
         <WeddingDraftStudio
           db={documentsDb}
           onRowAdded={(row) => onRowAdded(documentsDb.notionId, row)}
+          nicheId={nicheId}
         />
       ) : (
         <div style={{ border: `1px solid ${N_BORDER}`, borderRadius: "8px", background: "#fff9f8", padding: "16px", color: N_MUTED, fontSize: "13px" }}>

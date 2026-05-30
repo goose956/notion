@@ -4,6 +4,7 @@ import { Loader2, Plus, Trash2, SlidersHorizontal, Mail } from "lucide-react";
 import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_BLUE, N_FONT } from "@/lib/workspace-tokens";
 import type { WorkspaceDatabase, WorkspaceRow, WorkspaceProperty } from "@/app/api/members/workspace/route";
+import { getNicheEntry } from "@/lib/niche-registry";
 const READONLY_TYPES = new Set(["formula", "rollup", "relation", "created_time", "last_edited_time", "created_by", "last_edited_by"]);
 
 // ─── Format a cell value for display ───────────────────────────────────────
@@ -265,7 +266,8 @@ export function DatabaseTable({
     });
   }
 
-  const supportsEmailCompose = isAppBackend && db.nicheId === "wedding-planner" && db.dbId === "documents";
+  const supportsEmailCompose = isAppBackend && db.dbId === "documents" &&
+    !!(getNicheEntry(db.nicheId)?.dbPropertyInjections?.["documents"]);
 
   function buildComposeMailto(row: WorkspaceRow): string | null {
     const email = row.properties["Email"];

@@ -260,6 +260,7 @@ export function WeddingSpeechWriter({
           tone,
           speechLength,
           extraInstructions,
+          nicheId,
         }),
       });
 

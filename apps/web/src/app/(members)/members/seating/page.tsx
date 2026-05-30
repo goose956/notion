@@ -25,10 +25,8 @@ export default function SeatingPlannerPage() {
         const data = (await res.json()) as WorkspaceResponse;
         setBackend(data.backend);
 
-        const db = data.databases.find(
-          (d) => d.nicheId === "wedding-planner" && d.dbId === "guests",
-        );
-        setGuestsDb(db ?? null);
+        const db = data.databases.find((d) => d.dbId === "guests") ?? null;
+        setGuestsDb(db);
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : "Failed to load seating planner");
       } finally {
@@ -88,10 +86,10 @@ export default function SeatingPlannerPage() {
       <div style={{ padding: "30px", fontFamily: N_FONT }}>
         <h1 style={{ marginTop: 0, color: "#37352F", fontSize: "22px" }}>Seating Planner</h1>
         <p style={{ color: "rgba(55,53,47,0.65)", maxWidth: "640px" }}>
-          Could not find the wedding Guest List database yet. Deploy the wedding niche and open this page again.
+          Could not find a Guest List database yet. Deploy a wedding niche and open this page again.
         </p>
         <Link
-          href="/members/workspace?nicheId=wedding-planner&dbId=guests"
+          href="/members/workspace?dbId=guests"
           style={{ color: "rgb(35,131,226)", textDecoration: "none" }}
         >
           Open guest list
@@ -100,5 +98,5 @@ export default function SeatingPlannerPage() {
     );
   }
 
-  return <SeatingPlannerView guestsDb={guestsDb} />;
+  return <SeatingPlannerView guestsDb={guestsDb} nicheId={guestsDb?.nicheId} />;
 }

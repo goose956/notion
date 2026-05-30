@@ -214,7 +214,7 @@ export default function WorkspacePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
 
-  const [apiWeddingCriteria, setApiWeddingCriteria] = useState<Record<string, unknown> | null>(null);
+  const [apiCriteriaByNiche, setApiCriteriaByNiche] = useState<Record<string, Record<string, unknown> | null>>({});
   const [seatedGuestIds, setSeatedGuestIds] = useState<Set<string>>(new Set());
   const lastUrlSelectionKeyRef = useRef<string>("");
 
@@ -349,7 +349,7 @@ export default function WorkspacePage() {
       const data = (await res.json()) as WorkspaceResponse;
       setDatabases(data.databases);
       setBackend(data.backend);
-      setApiWeddingCriteria(data.weddingCriteria ?? null);
+      setApiCriteriaByNiche(data.criteriaByNiche ?? {});
 
       // Auto-expand all niches and select first tab
       const nicheIds = [...new Set(data.databases.map((d) => d.nicheId))];
@@ -361,7 +361,7 @@ export default function WorkspacePage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
-      setApiWeddingCriteria(null);
+      setApiCriteriaByNiche({});
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -797,7 +797,7 @@ export default function WorkspacePage() {
                   key="wedding-planner"
                   activeTab={activeTab}
                   databases={databases}
-                  apiWeddingCriteria={apiWeddingCriteria}
+                  apiWeddingCriteria={apiCriteriaByNiche["wedding-planner"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}
@@ -810,7 +810,7 @@ export default function WorkspacePage() {
                   nicheId="rainbow"
                   activeTab={activeTab}
                   databases={databases}
-                  apiWeddingCriteria={apiWeddingCriteria}
+                  apiWeddingCriteria={apiCriteriaByNiche["rainbow"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}
