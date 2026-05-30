@@ -554,8 +554,27 @@ export default function WorkspacePage() {
         {nicheGroups.map((group) => {
           const expanded = expandedNiches.has(group.nicheId);
           const nicheEntry = getNicheEntry(group.nicheId);
+          const missingCriteria = backend === "app" && apiCriteriaByNiche[group.nicheId] === null;
           return (
             <div key={group.nicheId}>
+              {missingCriteria && (
+                <Link
+                  href={`/members/setup/${group.nicheId}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 10px",
+                    fontSize: "11px",
+                    background: "rgba(245,158,11,0.1)",
+                    color: "rgb(180,100,0)",
+                    textDecoration: "none",
+                    borderLeft: "2px solid rgb(245,158,11)",
+                  }}
+                >
+                  ⚠️ Setup needed → Complete
+                </Link>
+              )}
               <button
                 onClick={() =>
                   setExpandedNiches((prev) => {
@@ -698,7 +717,7 @@ export default function WorkspacePage() {
       </div>
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
         {loading ? (
           <div
             style={{
@@ -788,6 +807,42 @@ export default function WorkspacePage() {
           </div>
         ) : (
           <>
+            {/* Setup gate — shown when the active niche is missing criteria */}
+            {(() => {
+              const activeNicheId = activeDb?.nicheId ?? (isVirtualTab(activeTab) ? activeTab.split(":")[0] : null);
+              if (!activeNicheId || backend !== "app") return null;
+              if (apiCriteriaByNiche[activeNicheId] !== null && apiCriteriaByNiche[activeNicheId] !== undefined) return null;
+              // Only show the gate if we have loaded criteria (not still loading)
+              if (loading) return null;
+              return (
+                <div style={{
+                  position: "absolute", inset: 0, zIndex: 20,
+                  background: "rgba(255,255,255,0.92)", backdropFilter: "blur(4px)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexDirection: "column", gap: "16px", padding: "40px",
+                  textAlign: "center",
+                }}>
+                  <span style={{ fontSize: "40px" }}>⚙️</span>
+                  <p style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: N_FG }}>
+                    Complete your setup
+                  </p>
+                  <p style={{ margin: 0, fontSize: "14px", color: N_MUTED, maxWidth: "340px", lineHeight: 1.6 }}>
+                    This workspace needs a few details before the AI can give you relevant, personalised results.
+                  </p>
+                  <Link
+                    href={`/members/setup/${activeNicheId}`}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: "7px",
+                      padding: "10px 24px", borderRadius: "5px",
+                      fontSize: "14px", fontWeight: 600,
+                      background: N_FG, color: "white", textDecoration: "none",
+                    }}
+                  >
+                    Complete Setup →
+                  </Link>
+                </div>
+              );
+            })()}
             {/* Always-mounted niche shells. Each shell returns null when its
                 tabs are not active, but stays mounted to preserve state. */}
             {NICHE_REGISTRY.map((entry) => {

@@ -102,7 +102,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const nicheId = parsed.data.nicheId ?? "wedding-planner";
+  const nicheId = parsed.data.nicheId;
+  if (!nicheId) {
+    return NextResponse.json({ error: "nicheId is required" }, { status: 400 });
+  }
   const [apiKey, model, criteria] = await Promise.all([
     resolveApiKey(userEmail),
     resolveModel(),

@@ -61,7 +61,6 @@ export interface WorkspaceResponse {
 }
 
 /** Niches that use the wedding-style criteria/onboarding system. */
-const CRITERIA_NICHES = ["wedding-planner", "rainbow"] as const;
 
 async function provisionAppWorkspace(userId: string, pack: NichePack, schemaVersion = 1): Promise<void> {
   const workspaceId = randomUUID();
@@ -229,10 +228,14 @@ export async function GET(_req: NextRequest) {
   // In-app workspaces are the full experience (seating chart, draft letters, etc.).
   // Notion is a sync target, not a replacement for the in-app workspace.
   const useAppBackend = !notionToken || hasAnyAppWorkspaces;
+
+  // Fetch criteria for all niches the user actually has workspaces in (dynamic, not hardcoded).
   const criteriaByNiche: Record<string, Record<string, unknown> | null> = {};
   if (typeof userEmail === "string" && userEmail.length > 0) {
+    const userWorkspaces = await listAppWorkspacesByUser(userEmail).catch(() => []);
+    const userNicheIds = [...new Set(userWorkspaces.map((w) => w.nichePackId))];
     await Promise.all(
-      CRITERIA_NICHES.map(async (nicheId) => {
+      userNicheIds.map(async (nicheId) => {
         const row = await getUserCriteria(userEmail, nicheId).catch(() => undefined);
         const raw = row?.criteria;
         criteriaByNiche[nicheId] =
