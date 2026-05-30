@@ -115,14 +115,14 @@ export default async function HomePage() {
         <div className="relative max-w-6xl mx-auto px-6 py-16 md:py-20">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/8 px-3 py-1 text-xs font-medium text-primary shadow-sm">
             <Sparkles className="h-3.5 w-3.5" />
-            AI-Powered · Done For You
+            AI-powered done-for-you workflows
           </div>
           <h1 className="mt-4 max-w-3xl text-4xl md:text-5xl font-bold tracking-tight leading-tight">
-            The AI does the work.<br />You make the decisions.
+            Start it. AI finishes it.
           </h1>
           <p className="mt-4 max-w-2xl text-base md:text-lg text-muted-foreground">
             Stridivo builds AI workspaces for specific niches — not static templates, but a{" "}
-            <strong className="text-foreground font-semibold">live AI that researches, drafts, and plans for you</strong>.
+            <strong className="text-foreground font-semibold">live AI that runs the whole job from start to finish</strong>.
             Start with the Wedding Planner. More niches launching soon.
           </p>
 
