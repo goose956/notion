@@ -1,0 +1,37 @@
+[
+  {
+    "id": "couple-names",
+    "question": "What are the couple's names?",
+    "type": "text",
+    "required": true,
+    "hint": "e.g. Sarah & Emma"
+  },
+  {
+    "id": "wedding-date",
+    "question": "What is your wedding date (or approximate timeframe)?",
+    "type": "text",
+    "required": true,
+    "hint": "e.g. 14 June 2026 or 'Summer 2026'"
+  },
+  {
+    "id": "wedding-location",
+    "question": "Where are you getting married? (town, city, or region)",
+    "type": "text",
+    "required": true,
+    "hint": "e.g. Cotswolds, Edinburgh, Bristol"
+  },
+  {
+    "id": "guest-count",
+    "question": "Roughly how many guests are you inviting?",
+    "type": "number",
+    "required": true,
+    "hint": "e.g. 80"
+  },
+  {
+    "id": "total-budget",
+    "question": "What is your total wedding budget?",
+    "type": "number",
+    "required": true,
+    "hint": "Enter in £, e.g. 15000"
+  }
+]
