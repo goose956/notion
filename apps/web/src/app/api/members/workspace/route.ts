@@ -256,11 +256,7 @@ export async function GET(_req: NextRequest) {
     try {
       let workspaces = await listAppWorkspacesByUser(userId).catch(() => []);
 
-      // Self-heal: if no in-app workspace exists, provision default wedding workspace.
-      if (workspaces.length === 0) {
-        await maybeProvisionDefaultAppWorkspace(userId);
-        workspaces = await listAppWorkspacesByUser(userId).catch(() => []);
-      }
+      // No auto-provisioning here — workspaces are created via the onboarding flow.
 
       for (const workspace of workspaces) {
         try {
@@ -360,52 +356,7 @@ export async function GET(_req: NextRequest) {
         }
       }
 
-      // If everything was empty and no workspaces exist at all, provision once.
-      if (databases.length === 0 && workspaces.length === 0) {
-        await maybeProvisionDefaultAppWorkspace(userId);
-        const retriedWorkspaces = await listAppWorkspacesByUser(userId).catch(() => []);
-        for (const workspace of retriedWorkspaces) {
-          const packRow = await getNichePack(workspace.nichePackId).catch(() => undefined);
-          if (!packRow) continue;
-          const pack = packRow.schemaSnapshot as unknown as NichePack;
-          const appDbs = await listAppDatabasesByWorkspace(workspace.id).catch(() => []);
-          for (const appDb of appDbs) {
-            const appRowsPlusOne = await listAppRowsByDatabase(appDb.id, { limit: 51 }).catch(() => []);
-            const hasMore = appRowsPlusOne.length > 50;
-            const appRows = hasMore ? appRowsPlusOne.slice(0, 50) : appRowsPlusOne;
-            const packDbDef = pack.databases.find((d) => d.id === appDb.packDbId);
-            const packPropsMap = new Map<string, { type?: string; options?: Array<{ name: string } | string>; format?: string }>(
-              ((packDbDef?.properties ?? []) as Array<{ name: string; type?: string; options?: Array<{ name: string } | string>; format?: string }>).map((p) => [p.name, p])
-            );
-            const propertiesSchema = appDb.propertiesSchema as Array<{ name: string; type: string }>;
-            databases.push({
-              notionId: appDb.id,
-              nicheId: pack.id,
-              nicheName: pack.name,
-              dbId: appDb.packDbId,
-              dbName: appDb.name,
-              icon: packDbDef?.icon ?? null,
-              properties: propertiesSchema.map((p) => {
-                const fresh = packPropsMap.get(p.name);
-                const opts = fresh?.options ?? (p as { options?: Array<{ name: string } | string> }).options;
-                const fmt = fresh?.format ?? (p as { format?: string }).format;
-                return {
-                  id: p.name,
-                  name: p.name,
-                  type: fresh?.type ?? p.type,
-                  ...(Array.isArray(opts) ? { options: opts.map((o) => typeof o === "string" ? o : o.name) } : {}),
-                  ...(fmt !== undefined ? { format: fmt } : {}),
-                };
-              }),
-              rows: appRows.map((r) => ({
-                pageId: r.id,
-                properties: normaliseProperties(r.properties),
-              })),
-              hasMore,
-            });
-          }
-        }
-      }
+      // No fallback provisioning — workspaces are created via the onboarding flow.
     } catch {
       return NextResponse.json({ databases: [] });
     }
