@@ -221,8 +221,28 @@ export function WeddingWorkspaceDashboard({
   const seatingStarted = liveSeatedCount > 0;
   const seatingProgress = trackedGuests > 0 ? Math.round((liveSeatedCount / trackedGuests) * 100) : 0;
 
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
+  const [today, setToday] = useState<Date>(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+
+  // Refresh `today` at midnight so the countdown ticks down daily
+  useEffect(() => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const msUntilMidnight = tomorrow.getTime() - now.getTime();
+    const t = setTimeout(() => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      setToday(d);
+    }, msUntilMidnight);
+    return () => clearTimeout(t);
+  }, [today]); // re-schedules after each midnight tick
+
+  const now = today;
   const computedFromDate = weddingDate
     ? Math.ceil((weddingDate.getTime() - now.getTime()) / 86_400_000)
     : null;
