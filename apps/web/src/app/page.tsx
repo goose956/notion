@@ -93,12 +93,20 @@ export default async function HomePage() {
             <img src="/s-logo.png" alt="Stridivo" className="h-7 w-auto" />
             Stridivo.com
           </Link>
-          <Link
-            href="/signup"
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground h-8 px-4 text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            Get started free
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Log in
+            </Link>
+            <Link
+              href="/signup"
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground h-8 px-4 text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Get started free
+            </Link>
+          </div>
         </div>
       </header>
 
