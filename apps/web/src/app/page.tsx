@@ -118,8 +118,11 @@ export default async function HomePage() {
             AI-powered done-for-you workflows
           </div>
           <h1 className="mt-4 max-w-3xl text-4xl md:text-5xl font-bold tracking-tight leading-tight">
-            Start it. AI finishes it.
+            The AI does the work.<br />You make the decisions.
           </h1>
+          <p className="mt-3 text-sm font-semibold text-primary tracking-wide uppercase">
+            Start it. AI finishes it.
+          </p>
           <p className="mt-4 max-w-2xl text-base md:text-lg text-muted-foreground">
             Pick your niche. Stridivo deploys a{" "}
             <strong className="text-foreground font-semibold">live AI workspace that researches, drafts, and executes — start to finish</strong>.
