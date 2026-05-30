@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { listNichePacks } from "@niche-factory/db";
 import type { NichePackRow } from "@niche-factory/db";
-import { ArrowRight, Blocks, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, Blocks, ClipboardList, Plus, Sparkles } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -77,24 +77,30 @@ function NichePackRowCard({ row }: { row: NichePackRow }) {
   }).format(new Date(row.updatedAt));
 
   return (
-    <Link
-      href={`/admin/niches/${row.id}`}
-      className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors group"
-    >
+    <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors group">
       <div>
-        <p className="font-medium text-sm group-hover:underline inline-flex items-center gap-1.5">
+        <p className="font-medium text-sm inline-flex items-center gap-1.5">
           <span className="icon-badge h-5 w-5"><Blocks className="h-3 w-3" /></span>
           {row.name}
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">{row.id}</p>
       </div>
-      <div className="text-right">
-        <p className="text-xs text-muted-foreground">v{row.version}</p>
-        <p className="text-xs text-muted-foreground inline-flex items-center gap-1 justify-end">
-          Updated {updatedAt}
+      <div className="flex items-center gap-3">
+        <Link
+          href={`/admin/niches/${row.id}/onboarding`}
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
+        >
+          <ClipboardList className="h-3.5 w-3.5" />
+          Onboarding
+        </Link>
+        <Link
+          href={`/admin/niches/${row.id}`}
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span>v{row.version}</span>
           <ArrowRight className="h-3 w-3" />
-        </p>
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }
