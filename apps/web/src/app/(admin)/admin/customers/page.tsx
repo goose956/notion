@@ -94,14 +94,14 @@ export default async function AdminCustomersPage({
           {pTotalPages > 1 && (
             <div className="flex items-center gap-1">
               <Link
-                href={pageUrl({ pPage: pSafePage - 1 })}
+                href={pageUrl({ pPage: pSafePage - 1 }) as never}
                 className={`p-1 rounded hover:bg-muted transition-colors ${pSafePage <= 1 ? "pointer-events-none opacity-30" : ""}`}
                 aria-disabled={pSafePage <= 1}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Link>
               <Link
-                href={pageUrl({ pPage: pSafePage + 1 })}
+                href={pageUrl({ pPage: pSafePage + 1 }) as never}
                 className={`p-1 rounded hover:bg-muted transition-colors ${pSafePage >= pTotalPages ? "pointer-events-none opacity-30" : ""}`}
                 aria-disabled={pSafePage >= pTotalPages}
               >
@@ -151,14 +151,14 @@ export default async function AdminCustomersPage({
           {cTotalPages > 1 && (
             <div className="flex items-center gap-1">
               <Link
-                href={pageUrl({ cPage: cSafePage - 1 })}
+                href={pageUrl({ cPage: cSafePage - 1 }) as never}
                 className={`p-1 rounded hover:bg-muted transition-colors ${cSafePage <= 1 ? "pointer-events-none opacity-30" : ""}`}
                 aria-disabled={cSafePage <= 1}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Link>
               <Link
-                href={pageUrl({ cPage: cSafePage + 1 })}
+                href={pageUrl({ cPage: cSafePage + 1 }) as never}
                 className={`p-1 rounded hover:bg-muted transition-colors ${cSafePage >= cTotalPages ? "pointer-events-none opacity-30" : ""}`}
                 aria-disabled={cSafePage >= cTotalPages}
               >
