@@ -262,8 +262,29 @@ export function WeddingWorkspaceDashboard({
         : `${Math.abs(countdownDays)} day${Math.abs(countdownDays) === 1 ? "" : "s"} since your wedding date`;
 
   const normalizedDays = countdownDays === null ? null : Math.max(0, countdownDays);
+
+  // Track the original total days so the circle starts full on day 1 and drains
+  // by exactly 1/totalDays each day. Persisted in localStorage per niche so it
+  // survives page refreshes. Reset (upward only) when the user picks a later date.
+  const totalKey = `wsCountdownTotal_${nicheId}`;
+  const [totalCountdownDays, setTotalCountdownDays] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const stored = localStorage.getItem(totalKey);
+    return stored ? parseInt(stored, 10) : null;
+  });
+  useEffect(() => {
+    if (normalizedDays === null) return;
+    if (totalCountdownDays === null || normalizedDays > totalCountdownDays) {
+      setTotalCountdownDays(normalizedDays);
+      localStorage.setItem(totalKey, String(normalizedDays));
+    }
+  }, [normalizedDays, totalKey, totalCountdownDays]);
+
   const countdownPercent =
-    normalizedDays === null ? 0 : Math.min(100, Math.max(0, Math.round(((365 - Math.min(365, normalizedDays)) / 365) * 100)));
+    normalizedDays === null || !totalCountdownDays
+      ? 0
+      : Math.min(100, Math.max(0, Math.round((normalizedDays / totalCountdownDays) * 100)));
+
   const urgencyColor =
     normalizedDays === null
       ? "rgb(107,114,128)"
