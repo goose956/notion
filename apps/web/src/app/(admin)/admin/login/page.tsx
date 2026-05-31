@@ -2,11 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { createHash } from "crypto";
 
-function adminToken() {
-  const pw = process.env["ADMIN_PASSWORD"] ?? "changeme";
-  return createHash("sha256").update(pw + "niche-admin-salt").digest("hex");
+function adminToken(pw: string) {
+  return btoa(pw + "niche-admin-salt").replace(/=/g, "");
 }
 
 export default async function AdminLoginPage({
@@ -19,12 +17,11 @@ export default async function AdminLoginPage({
   async function login(formData: FormData) {
     "use server";
     const pw = String(formData.get("password") ?? "");
-    const expected = adminToken();
-    const actual = createHash("sha256").update(pw + "niche-admin-salt").digest("hex");
-    if (actual !== expected) {
+    const envPw = process.env["ADMIN_PASSWORD"] ?? "changeme";
+    if (pw !== envPw) {
       redirect("/admin/login?error=1");
     }
-    cookies().set("admin_auth", expected, {
+    cookies().set("admin_auth", adminToken(envPw), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
