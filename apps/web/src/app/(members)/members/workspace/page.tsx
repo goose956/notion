@@ -277,6 +277,20 @@ export default function WorkspacePage() {
     }
   }
 
+  async function pushAllToNotion() {
+    for (const group of nicheGroups) {
+      await pushToNotion(group.nicheId);
+    }
+  }
+
+  const isSyncingAny = nicheGroups.some((g) => syncingNiches.has(g.nicheId));
+  const combinedSyncResult = (() => {
+    const results = nicheGroups.map((g) => syncResults[g.nicheId]).filter(Boolean);
+    if (results.length === 0) return "";
+    if (results.every((r) => r?.startsWith("✓"))) return results.join(" · ");
+    return results.find((r) => !r?.startsWith("✓")) ?? "";
+  })();
+
   async function saveSchedule(nicheId: string, schedule: string) {
     setSchedules((prev) => ({ ...prev, [nicheId]: schedule }));
     await fetch("/api/members/sync-to-notion", {
@@ -686,68 +700,61 @@ export default function WorkspacePage() {
         {/* ── Notion sync footer — quiet, out of the way ─────────────────── */}
         {backend === "app" && nicheGroups.length > 0 && (
           <div style={{ borderTop: `1px solid ${N_BORDER}`, padding: "8px 10px", flexShrink: 0 }}>
-            {nicheGroups.map((group) => (
-              <div key={group.nicheId} style={{ marginBottom: nicheGroups.length > 1 ? "6px" : 0 }}>
-                {nicheGroups.length > 1 && (
-                  <p style={{ fontSize: "10px", fontWeight: 600, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 4px" }}>
-                    {group.nicheName}
-                  </p>
-                )}
-                <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
-                  <button
-                    onClick={() => void pushToNotion(group.nicheId)}
-                    disabled={syncingNiches.has(group.nicheId)}
-                    title="Copy workspace data to Notion"
-                    style={{
-                      flex: 1,
-                      padding: "4px 6px",
-                      borderRadius: "4px",
-                      border: "1px solid rgba(35,131,226,0.4)",
-                      background: "rgba(35,131,226,0.08)",
-                      fontSize: "11px",
-                      color: "rgb(35,131,226)",
-                      cursor: syncingNiches.has(group.nicheId) ? "default" : "pointer",
-                      fontFamily: N_FONT,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "4px",
-                      opacity: syncingNiches.has(group.nicheId) ? 0.6 : 1,
-                    }}
-                  >
-                    {syncingNiches.has(group.nicheId)
-                      ? <><Loader2 size={9} style={{ animation: "spin 1s linear infinite" }} /> Syncing…</>
-                      : <><RefreshCw size={9} /> Push to Notion</>
-                    }
-                  </button>
-                  <select
-                    value={schedules[group.nicheId] ?? "off"}
-                    onChange={(e) => void saveSchedule(group.nicheId, e.target.value)}
-                    title="Auto-sync schedule"
-                    style={{
-                      padding: "4px 4px",
-                      borderRadius: "4px",
-                      border: `1px solid ${N_BORDER_MED}`,
-                      fontSize: "10px",
-                      color: N_SUBTLE,
-                      background: "transparent",
-                      fontFamily: N_FONT,
-                      cursor: "pointer",
-                      maxWidth: "74px",
-                    }}
-                  >
-                    <option value="off">Off</option>
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                  </select>
-                </div>
-                {syncResults[group.nicheId] && (
-                  <p style={{ margin: "3px 0 0", fontSize: "10px", color: syncResults[group.nicheId]?.startsWith("✓") ? "rgb(15,123,108)" : "rgb(220,38,38)" }}>
-                    {syncResults[group.nicheId]}
-                  </p>
-                )}
-              </div>
-            ))}
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <button
+                onClick={() => void pushAllToNotion()}
+                disabled={isSyncingAny}
+                title="Copy workspace data to Notion"
+                style={{
+                  flex: 1,
+                  padding: "4px 6px",
+                  borderRadius: "4px",
+                  border: "1px solid rgba(35,131,226,0.4)",
+                  background: "rgba(35,131,226,0.08)",
+                  fontSize: "11px",
+                  color: "rgb(35,131,226)",
+                  cursor: isSyncingAny ? "default" : "pointer",
+                  fontFamily: N_FONT,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "4px",
+                  opacity: isSyncingAny ? 0.6 : 1,
+                }}
+              >
+                {isSyncingAny
+                  ? <><Loader2 size={9} style={{ animation: "spin 1s linear infinite" }} /> Syncing…</>
+                  : <><RefreshCw size={9} /> Push to Notion</>
+                }
+              </button>
+              <select
+                value={schedules[nicheGroups[0]?.nicheId ?? ""] ?? "off"}
+                onChange={(e) => {
+                  for (const group of nicheGroups) void saveSchedule(group.nicheId, e.target.value);
+                }}
+                title="Auto-sync schedule"
+                style={{
+                  padding: "4px 4px",
+                  borderRadius: "4px",
+                  border: `1px solid ${N_BORDER_MED}`,
+                  fontSize: "10px",
+                  color: N_SUBTLE,
+                  background: "transparent",
+                  fontFamily: N_FONT,
+                  cursor: "pointer",
+                  maxWidth: "74px",
+                }}
+              >
+                <option value="off">Off</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+              </select>
+            </div>
+            {combinedSyncResult && (
+              <p style={{ margin: "3px 0 0", fontSize: "10px", color: combinedSyncResult.startsWith("✓") ? "rgb(15,123,108)" : "rgb(220,38,38)" }}>
+                {combinedSyncResult}
+              </p>
+            )}
           </div>
         )}
       </div>
