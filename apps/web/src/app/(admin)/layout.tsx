@@ -1,27 +1,20 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { auth, signOut } from "@/auth";
+import { redirect } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { AdminNav } from "./admin-nav";
 import { getOpenTicketCount } from "@niche-factory/db";
-
-function isAdminEmail(email: string | null | undefined): boolean {
-  const raw = process.env["ADMIN_EMAIL"] ?? "";
-  if (!raw.trim()) return true; // not configured — allow all (dev fallback)
-  return raw.split(",").map((e) => e.trim().toLowerCase()).includes((email ?? "").toLowerCase());
-}
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Middleware already enforces the password cookie for all /admin/* routes.
+  // Layout just renders the shell.
   const session = await auth();
   const userName = session?.user?.name ?? session?.user?.email ?? "Account";
-
-  if (!isAdminEmail(session?.user?.email)) {
-    redirect("/members/get-started");
-  }
 
   const openTickets = await getOpenTicketCount().catch(() => 0);
 
@@ -48,6 +41,21 @@ export default async function AdminLayout({
             >
               <LogOut className="h-3.5 w-3.5" />
               Sign out
+            </button>
+          </form>
+          <form
+            action={async () => {
+              "use server";
+              cookies().set("admin_auth", "", { maxAge: 0, path: "/" });
+              redirect("/admin/login");
+            }}
+          >
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors text-xs"
+            >
+              <LogOut className="h-3 w-3" />
+              Admin logout
             </button>
           </form>
         </div>
