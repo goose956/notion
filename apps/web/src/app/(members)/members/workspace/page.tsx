@@ -253,13 +253,6 @@ export default function WorkspacePage() {
   const [schedules, setSchedules] = useState<Record<string, string>>({});
   const [selectedSyncNiche, setSelectedSyncNiche] = useState<string>("");
 
-  // Default selected sync niche to first group when groups load
-  useEffect(() => {
-    if (nicheGroups.length > 0 && !selectedSyncNiche) {
-      setSelectedSyncNiche(nicheGroups[0]!.nicheId);
-    }
-  }, [nicheGroups, selectedSyncNiche]);
-
   async function pushToNotion(nicheId: string) {
     setSyncingNiche(nicheId);
     setSyncResult("");
@@ -476,6 +469,13 @@ export default function WorkspacePage() {
       nicheGroups.push({ nicheId: db.nicheId, nicheName: db.nicheName, dbs: [db] });
     }
   }
+
+  // Default selected sync niche to first group when groups load
+  useEffect(() => {
+    if (nicheGroups.length > 0 && !selectedSyncNiche) {
+      setSelectedSyncNiche(nicheGroups[0]!.nicheId);
+    }
+  }, [nicheGroups, selectedSyncNiche]);
 
   // ── Activate a tab and collapse all other niche groups ───────────────────
   function activateTab(tabId: string, dbs: WorkspaceDatabase[] = databases) {
