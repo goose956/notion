@@ -2,15 +2,7 @@ import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
-import {
-  getNichePack,
-  getLatestAppWorkspaceByNiche,
-  getUserCriteria,
-  createAppWorkspace,
-  createAppDatabase,
-  updateAppWorkspaceStatus,
-} from "@niche-factory/db";
-import { randomUUID } from "node:crypto";
+import { getNichePack } from "@niche-factory/db";
 import { MembersNav } from "../../../(members)/members-nav";
 
 export const metadata = { title: "Get Started - Stridivo.com" };
@@ -26,12 +18,6 @@ const N_BLUE_BG = "rgba(35,131,226,0.08)";
 const N_GREEN = "rgb(15,123,108)";
 const N_FONT =
   'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
-
-function isNextRedirectError(err: unknown): boolean {
-  if (typeof err !== "object" || err === null) return false;
-  const maybeDigest = (err as { digest?: unknown }).digest;
-  return typeof maybeDigest === "string" && maybeDigest.startsWith("NEXT_REDIRECT");
-}
 
 // â”€â”€â”€ Shared top bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -282,8 +268,6 @@ export default async function GetStartedPage({
   const rawNext = searchParams.next ?? "";
   const nextUrl =
     rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
-  const forceView = searchParams.view === "1";
-
   // Activation links handle their own provisioning — skip get-started entirely
   if (nextUrl?.startsWith("/activate/")) {
     redirect(nextUrl);
@@ -297,93 +281,14 @@ export default async function GetStartedPage({
     : undefined;
   const nicheName = nichePackRow?.name ?? null;
   const autoNicheId = nicheIdFromNext;
-  const autoNichePackRow = nicheIdFromNext !== null ? nichePackRow : undefined;
 
-  // â”€â”€ In-App path: much simpler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── In-App path ──────────────────────────────────────────────────────────────
   if (isInApp) {
-    if (autoNicheId && autoNichePackRow && session?.user?.email) {
-      try {
-        const existing = await getLatestAppWorkspaceByNiche(
-          session.user.email,
-          autoNicheId,
-        );
-
-        const schema = autoNichePackRow.schemaSnapshot as {
-          onboardingQuestions?: unknown[];
-          databases: Array<{ id: string; name: string; properties: unknown[] }>;
-        };
-        const hasOnboardingQuestions =
-          Array.isArray(schema.onboardingQuestions) &&
-          schema.onboardingQuestions.length > 0;
-
-        // First-time in-app users should fill setup details (date, budget, etc.)
-        // before provisioning so the hosted workspace can use this context.
-        if (!existing && hasOnboardingQuestions) {
-          const savedCriteria = await getUserCriteria(
-            session.user.email,
-            autoNicheId,
-          ).catch(() => undefined);
-
-          if (!savedCriteria) {
-            redirect(`/members/setup/${encodeURIComponent(autoNicheId)}`);
-          }
-        }
-
-        if (!existing && !forceView) {
-          const workspaceId = randomUUID();
-          await createAppWorkspace({
-            id: workspaceId,
-            userId: session.user.email,
-            nichePackId: autoNicheId,
-            name: autoNichePackRow.name,
-            databaseIdMap: {},
-            status: "in_progress",
-            createdAt: new Date(),
-          });
-
-          const databaseIdMap: Record<string, string> = {};
-          const start = Date.now();
-
-          try {
-            for (const db of schema.databases) {
-              const dbId = randomUUID();
-              await createAppDatabase({
-                id: dbId,
-                workspaceId,
-                packDbId: db.id,
-                name: db.name,
-                propertiesSchema: db.properties as Record<string, unknown>[],
-                createdAt: new Date(),
-              });
-              databaseIdMap[db.id] = dbId;
-            }
-
-            await updateAppWorkspaceStatus(workspaceId, {
-              status: "success",
-              durationMs: Date.now() - start,
-              databaseIdMap,
-            });
-          } catch (err) {
-            const message =
-              err instanceof Error
-                ? err.message
-                : "Failed to create in-app databases";
-            await updateAppWorkspaceStatus(workspaceId, {
-              status: "failed",
-              errorMessage: message,
-            }).catch(() => null);
-          }
-        }
-
-        if (!forceView) {
-          redirect(`/members/chat?nicheId=${encodeURIComponent(autoNicheId)}`);
-        }
-      } catch (err) {
-        if (isNextRedirectError(err)) {
-          throw err;
-        }
-        // Fall back to manual setup card if auto-provisioning fails.
-      }
+    // If a niche is specified, send to the setup page which is the single
+    // provisioner. It will auto-deploy if criteria already exists, or show
+    // the onboarding form if not.
+    if (autoNicheId && session?.user?.email) {
+      redirect(`/members/setup/${encodeURIComponent(autoNicheId)}`);
     }
 
     return (

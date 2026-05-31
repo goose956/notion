@@ -1,9 +1,17 @@
 import { notFound, redirect } from "next/navigation";
-import { getNichePack, getUserCriteria, getLatestAppWorkspaceByNiche } from "@niche-factory/db";
+import {
+  getNichePack,
+  getUserCriteria,
+  getLatestAppWorkspaceByNiche,
+  createAppWorkspace,
+  createAppDatabase,
+  updateAppWorkspaceStatus,
+} from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 import { SetupForm } from "./setup-form.js";
 import { auth } from "@/auth";
 import { resolveNotionToken } from "@/lib/resolve-notion-token";
+import { randomUUID } from "node:crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -35,24 +43,64 @@ export default async function SetupPage({
   const notionToken = await resolveNotionToken(userEmail, sessionNotionToken);
   const isInApp = !notionToken;
 
-  // If the user already has criteria + a workspace for this niche, skip setup entirely.
   if (userEmail && isInApp) {
     const hasOnboardingQuestions =
       Array.isArray(pack.onboardingQuestions) && pack.onboardingQuestions.length > 0;
 
-    if (hasOnboardingQuestions) {
-      const [existingCriteria, existingWorkspace] = await Promise.all([
-        getUserCriteria(userEmail, nicheId).catch(() => undefined),
-        getLatestAppWorkspaceByNiche(userEmail, nicheId).catch(() => undefined),
-      ]);
+    const [existingCriteria, existingWorkspace] = await Promise.all([
+      getUserCriteria(userEmail, nicheId).catch(() => undefined),
+      getLatestAppWorkspaceByNiche(userEmail, nicheId).catch(() => undefined),
+    ]);
 
-      if (existingCriteria && existingWorkspace) {
-        redirect(`/members/workspace?nicheId=${encodeURIComponent(nicheId)}`);
+    // Already fully set up — send straight to workspace.
+    if (existingWorkspace) {
+      redirect(`/members/workspace?nicheId=${encodeURIComponent(nicheId)}`);
+    }
+
+    // Criteria already collected (e.g. from signup popup) but no workspace yet.
+    // Auto-deploy without showing the form again.
+    if (existingCriteria && (!hasOnboardingQuestions || existingCriteria)) {
+      try {
+        const workspaceId = randomUUID();
+        await createAppWorkspace({
+          id: workspaceId,
+          userId: userEmail,
+          nichePackId: nicheId,
+          name: pack.name,
+          databaseIdMap: {},
+          status: "in_progress",
+          createdAt: new Date(),
+        });
+
+        const databaseIdMap: Record<string, string> = {};
+        const start = Date.now();
+
+        for (const db of pack.databases) {
+          const dbId = randomUUID();
+          await createAppDatabase({
+            id: dbId,
+            workspaceId,
+            packDbId: db.id,
+            name: db.name,
+            propertiesSchema: db.properties as Record<string, unknown>[],
+            createdAt: new Date(),
+          });
+          databaseIdMap[db.id] = dbId;
+        }
+
+        await updateAppWorkspaceStatus(workspaceId, {
+          status: "success",
+          durationMs: Date.now() - start,
+          databaseIdMap,
+        });
+      } catch {
+        // If auto-deploy fails, fall through to show the form so the user
+        // can try manually via the normal deploy flow.
       }
-    } else {
-      // No onboarding questions — if workspace already exists just go there.
-      const existingWorkspace = await getLatestAppWorkspaceByNiche(userEmail, nicheId).catch(() => undefined);
-      if (existingWorkspace) {
+
+      // Re-check — if deploy succeeded, go to workspace. If it failed, show form.
+      const freshWorkspace = await getLatestAppWorkspaceByNiche(userEmail, nicheId).catch(() => undefined);
+      if (freshWorkspace) {
         redirect(`/members/workspace?nicheId=${encodeURIComponent(nicheId)}`);
       }
     }

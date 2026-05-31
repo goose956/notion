@@ -119,17 +119,20 @@ function SignupForm() {
         return;
       }
 
-      const getStartedUrl =
-        callbackUrl && callbackUrl !== "/members/get-started"
-          ? `/members/get-started?next=${encodeURIComponent(callbackUrl)}`
+      // After signup, go directly to the setup page for the niche (which will
+      // auto-deploy since criteria was just saved), or fall back to get-started.
+      const postSignupUrl = nicheId
+        ? `/members/setup/${nicheId}`
+        : callbackUrl && callbackUrl !== "/members/get-started"
+          ? callbackUrl
           : "/members/get-started";
 
       const result = await signIn("email", { email: email.trim(), redirect: false });
       if (result?.error) {
-        router.push(getStartedUrl as never);
+        router.push(postSignupUrl as never);
         return;
       }
-      router.push(getStartedUrl as never);
+      router.push(postSignupUrl as never);
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
