@@ -112,16 +112,18 @@ export function WeddingWorkspaceDashboard({
   liveSeatedCount: number;
   nicheId?: string;
 }) {
+  const storageKey = `wsDashboardTheme_${nicheId}`;
+  const defaultTheme: ThemeId = nicheId === "rainbow" ? "pride" : "rose";
   const [themeId, setThemeId] = useState<ThemeId>(() => {
-    if (typeof window === "undefined") return "rose";
-    return (localStorage.getItem("wsDashboardTheme") as ThemeId | null) ?? "rose";
+    if (typeof window === "undefined") return defaultTheme;
+    return (localStorage.getItem(storageKey) as ThemeId | null) ?? defaultTheme;
   });
   const [showThemePicker, setShowThemePicker] = useState(false);
   const theme = DASHBOARD_THEMES.find((t) => t.id === themeId) ?? DASHBOARD_THEMES[0];
 
   function selectTheme(id: ThemeId) {
     setThemeId(id);
-    localStorage.setItem("wsDashboardTheme", id);
+    localStorage.setItem(storageKey, id);
     setShowThemePicker(false);
   }
   const [coupleNamesInput, setCoupleNamesInput] = useState(asText(weddingCriteria?.["couple-names"]) ?? "");
