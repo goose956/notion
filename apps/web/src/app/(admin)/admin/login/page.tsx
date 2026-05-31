@@ -14,7 +14,7 @@ export default async function AdminLoginPage({
 }: {
   searchParams: Record<string, string | undefined>;
 }) {
-  const error = searchParams.error === "1";
+  const error = searchParams["error"] === "1";
 
   async function login(formData: FormData) {
     "use server";
