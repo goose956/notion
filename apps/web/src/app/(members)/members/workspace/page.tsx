@@ -809,7 +809,7 @@ export default function WorkspacePage() {
           <>
             {/* Setup gate — shown when the active niche is missing criteria */}
             {(() => {
-              const activeNicheId = activeDb?.nicheId ?? (isVirtualTab(activeTab) ? activeTab.split(":")[0] : null);
+              const activeNicheId = activeDb?.nicheId ?? (isVirtualTab(activeTab) ? (NICHE_REGISTRY.find(e => e.virtualTabIds.has(activeTab))?.nicheId ?? null) : null);
               if (!activeNicheId || backend !== "app") return null;
               if (apiCriteriaByNiche[activeNicheId] !== null && apiCriteriaByNiche[activeNicheId] !== undefined) return null;
               // Only show the gate if we have loaded criteria (not still loading)
