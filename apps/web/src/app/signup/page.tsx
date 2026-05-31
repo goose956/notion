@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Suspense } from "react";
 
@@ -26,7 +26,6 @@ function currencyFromCountry(country: string): string {
 }
 
 function SignupForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const callbackUrl = searchParams.get("callbackUrl") ?? "/members/get-started";
@@ -119,20 +118,19 @@ function SignupForm() {
         return;
       }
 
-      // After signup, go directly to the setup page for the niche (which will
-      // auto-deploy since criteria was just saved), or fall back to get-started.
+      // After signup, the user needs to click their magic link to authenticate.
+      // We pass the setup page as the callbackUrl so they land there (already
+      // authenticated) and the page auto-deploys their workspace.
       const postSignupUrl = nicheId
         ? `/members/setup/${nicheId}`
         : callbackUrl && callbackUrl !== "/members/get-started"
           ? callbackUrl
           : "/members/get-started";
 
-      const result = await signIn("email", { email: email.trim(), redirect: false });
-      if (result?.error) {
-        router.push(postSignupUrl as never);
-        return;
-      }
-      router.push(postSignupUrl as never);
+      await signIn("email", { email: email.trim(), redirect: false });
+      // Use a hard navigation (not router.push) so the browser sends
+      // the session cookie that signIn just set.
+      window.location.href = postSignupUrl;
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
