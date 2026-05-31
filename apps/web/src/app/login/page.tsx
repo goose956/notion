@@ -23,6 +23,7 @@ export default function LoginPage({
     "send-failed": "Failed to send the sign-in email. Please try again.",
     "invalid-link": "That sign-in link is invalid. Please request a new one.",
     "expired-link": "That sign-in link has expired. Links are valid for 15 minutes — please request a new one.",
+    "sign-in-failed": "Sign-in failed unexpectedly. Please request a new link.",
   };
   const errorMessage = errorCode ? (errorMessages[errorCode] ?? "Something went wrong. Please try again.") : null;
 
