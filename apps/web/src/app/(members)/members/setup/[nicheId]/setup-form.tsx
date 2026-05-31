@@ -224,7 +224,7 @@ function QuestionField({
 
 type AnswerMap = Record<string, string | string[]>;
 
-export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?: boolean }) {
+export function SetupForm({ pack, isInApp = false, criteriaOnly = false, nicheId }: { pack: NichePack; isInApp?: boolean; criteriaOnly?: boolean; nicheId?: string }) {
   const router = useRouter();
   const questions: OnboardingQuestion[] = pack.onboardingQuestions ?? [];
 
@@ -296,11 +296,7 @@ export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?
     setAnswers((prev) => ({ ...prev, [id]: val }));
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!pageIdValid) return;
-
-    // Build onboardingAnswers — skip empty optional fields
+  function buildAnswers() {
     const onboardingAnswers: Record<string, unknown> = {};
     for (const q of questions) {
       const val = answers[q.id];
@@ -312,13 +308,39 @@ export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?
           ? parseFloat(val) || val
           : val;
     }
+    return onboardingAnswers;
+  }
 
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!pageIdValid) return;
+
+    const onboardingAnswers = buildAnswers();
     setStatus("deploying");
     setErrorMsg(null);
 
     try {
+      // Criteria-only mode: workspace already exists, just save the answers.
+      if (criteriaOnly) {
+        const id = nicheId ?? pack.id;
+        const res = await fetch("/api/members/criteria", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nicheId: id, answers: onboardingAnswers }),
+        });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(body.error ?? `Save failed (${res.status})`);
+        }
+        setStatus("done");
+        setTimeout(() => {
+          router.push(`/members/workspace?nicheId=${encodeURIComponent(id)}`);
+        }, 1000);
+        return;
+      }
+
+      // Full deploy mode: create workspace + save criteria.
       const deployBody: Record<string, unknown> = { pack, onboardingAnswers };
-      // Only include parentPageId for Notion deploys
       if (!isInApp && pageId) {
         deployBody["parentPageId"] = pageId;
       }
@@ -335,12 +357,11 @@ export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?
       }
 
       setStatus("done");
-      // Brief pause so user sees the success state, then go to chat
       setTimeout(() => {
         router.push(`/members/chat?nicheId=${encodeURIComponent(pack.id)}`);
       }, 1500);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Deploy failed");
+      setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
       setStatus("error");
     }
   }
@@ -377,7 +398,7 @@ export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?
             lineHeight: 1.2,
           }}
         >
-          Set up: {pack.name}
+          {criteriaOnly ? "Complete your setup" : `Set up: ${pack.name}`}
         </h1>
         <p
           style={{
@@ -387,12 +408,14 @@ export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?
             lineHeight: 1.6,
           }}
         >
-          {pack.description}
+          {criteriaOnly
+            ? "Answer a few quick questions so the AI can give you relevant, personalised results."
+            : pack.description}
         </p>
       </div>
 
-      {/* What will be created */}
-      <div
+      {/* What will be created — hidden in criteria-only mode */}
+      {!criteriaOnly && <div
         style={{
           marginBottom: "32px",
           padding: "16px 18px",
@@ -435,7 +458,7 @@ export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?
             </div>
           ))}
         </div>
-      </div>
+      </div>}
 
       {status === "done" ? (
         <div
@@ -459,10 +482,10 @@ export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?
                 color: N_FG,
               }}
             >
-              Workspace created!
+              {criteriaOnly ? "All set!" : "Workspace created!"}
             </p>
             <p style={{ margin: 0, fontSize: "13px", color: N_MUTED }}>
-              Taking you to the Research Assistant…
+              {criteriaOnly ? "Taking you to your workspace…" : "Taking you to the Research Assistant…"}
             </p>
           </div>
         </div>
@@ -707,11 +730,11 @@ export function SetupForm({ pack, isInApp = false }: { pack: NichePack; isInApp?
                   size={16}
                   style={{ animation: "spin 1s linear infinite" }}
                 />
-                Creating your workspace…
+                {criteriaOnly ? "Saving…" : "Creating your workspace…"}
               </>
             ) : (
               <>
-                Create My Workspace
+                {criteriaOnly ? "Save & Continue" : "Create My Workspace"}
                 <ArrowRight size={16} />
               </>
             )}

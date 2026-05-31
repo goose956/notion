@@ -52,14 +52,22 @@ export default async function SetupPage({
       getLatestAppWorkspaceByNiche(userEmail, nicheId).catch(() => undefined),
     ]);
 
+    const hasCriteria = !!existingCriteria;
+
     // Already fully set up — send straight to workspace.
-    if (existingWorkspace) {
+    if (existingWorkspace && hasCriteria) {
       redirect(`/members/workspace?nicheId=${encodeURIComponent(nicheId)}`);
+    }
+
+    // Workspace exists but criteria is missing — show the form to collect
+    // criteria only (no re-deploy needed).
+    if (existingWorkspace && !hasCriteria) {
+      return <SetupForm pack={pack} isInApp={isInApp} criteriaOnly nicheId={nicheId} />;
     }
 
     // Criteria already collected (e.g. from signup popup) but no workspace yet.
     // Auto-deploy without showing the form again.
-    if (existingCriteria && (!hasOnboardingQuestions || existingCriteria)) {
+    if (existingCriteria) {
       try {
         const workspaceId = randomUUID();
         await createAppWorkspace({
@@ -106,5 +114,5 @@ export default async function SetupPage({
     }
   }
 
-  return <SetupForm pack={pack} isInApp={isInApp} />;
+  return <SetupForm pack={pack} isInApp={isInApp} nicheId={nicheId} />;
 }
