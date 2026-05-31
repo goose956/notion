@@ -8,12 +8,18 @@ const BodySchema = z.object({
   credits: z.number().int().min(0).max(100_000),
 });
 
+function adminToken() {
+  const pw = process.env["ADMIN_PASSWORD"] ?? "changeme";
+  return btoa(pw + "niche-admin-salt").replace(/=/g, "");
+}
+
 export async function PATCH(req: NextRequest) {
-  // Require an authenticated session (admin pages already protect via layout,
-  // but we double-check here so the API endpoint is not open).
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const adminCookie = req.cookies.get("admin_auth")?.value;
+  if (!adminCookie || adminCookie !== adminToken()) {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   let body: unknown;

@@ -2,28 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { deleteCustomerByEmail } from "@niche-factory/db";
+import { cookies } from "next/headers";
 
 const BodySchema = z.object({
   email: z.string().email(),
 });
 
-function isAdminEmail(email: string | null | undefined): boolean {
-  const raw = process.env["ADMIN_EMAIL"] ?? "";
-  if (!raw.trim()) return true;
-  const allowed = raw
-    .split(",")
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean);
-  return allowed.includes((email ?? "").toLowerCase());
+function adminToken() {
+  const pw = process.env["ADMIN_PASSWORD"] ?? "changeme";
+  return btoa(pw + "niche-admin-salt").replace(/=/g, "");
+}
+
+function isAdminAuthorized(req: NextRequest): boolean {
+  // Accept either a valid admin password cookie OR a logged-in admin email
+  const adminCookie = req.cookies.get("admin_auth")?.value;
+  if (adminCookie && adminCookie === adminToken()) return true;
+  return false;
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!isAdminEmail(session.user.email)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isAdminAuthorized(req)) {
+    // Fallback: check Notion session email
+    const session = await auth();
+    const raw = process.env["ADMIN_EMAIL"] ?? "";
+    const allowed = raw.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+    const email = session?.user?.email?.toLowerCase() ?? "";
+    if (!email || (allowed.length > 0 && !allowed.includes(email))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   let body: unknown;
