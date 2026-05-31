@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { findOrCreateCustomer, upsertUserCriteria, getSettingValue } from "@niche-factory/db";
+import {
+  findOrCreateCustomer,
+  upsertUserCriteria,
+  getSettingValue,
+  getNichePack,
+  getLatestAppWorkspaceByNiche,
+  createAppWorkspace,
+  createAppDatabase,
+  updateAppWorkspaceStatus,
+} from "@niche-factory/db";
+import type { NichePack } from "@niche-factory/schema";
+import { randomUUID } from "node:crypto";
 
 const BodySchema = z.object({
   email: z.string().email(),
@@ -21,10 +32,59 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A valid email address is required." }, { status: 422 });
   }
 
+  const { email, nicheId, onboardingAnswers } = parsed.data;
+
   try {
-    await findOrCreateCustomer(parsed.data.email);
-    if (parsed.data.nicheId && parsed.data.onboardingAnswers && Object.keys(parsed.data.onboardingAnswers).length > 0) {
-      await upsertUserCriteria(parsed.data.email, parsed.data.nicheId, parsed.data.onboardingAnswers).catch(() => null);
+    await findOrCreateCustomer(email);
+
+    if (nicheId && onboardingAnswers && Object.keys(onboardingAnswers).length > 0) {
+      // Save criteria first
+      await upsertUserCriteria(email, nicheId, onboardingAnswers).catch(() => null);
+
+      // Also provision the workspace immediately so the user can go straight
+      // to /members/workspace after sign-in — no setup page required.
+      // Guard: skip if workspace already exists for this niche.
+      const existing = await getLatestAppWorkspaceByNiche(email, nicheId).catch(() => undefined);
+      if (!existing) {
+        const packRow = await getNichePack(nicheId).catch(() => undefined);
+        if (packRow) {
+          const pack = packRow.schemaSnapshot as unknown as NichePack;
+          const workspaceId = randomUUID();
+          const start = Date.now();
+          try {
+            await createAppWorkspace({
+              id: workspaceId,
+              userId: email,
+              nichePackId: nicheId,
+              name: pack.name,
+              databaseIdMap: {},
+              status: "in_progress",
+              createdAt: new Date(),
+            });
+            const databaseIdMap: Record<string, string> = {};
+            for (const db of pack.databases) {
+              const dbId = randomUUID();
+              await createAppDatabase({
+                id: dbId,
+                workspaceId,
+                packDbId: db.id,
+                name: db.name,
+                schemaVersion: packRow.version,
+                propertiesSchema: db.properties as unknown as Record<string, unknown>[],
+                createdAt: new Date(),
+              });
+              databaseIdMap[db.id] = dbId;
+            }
+            await updateAppWorkspaceStatus(workspaceId, {
+              status: "success",
+              durationMs: Date.now() - start,
+              databaseIdMap,
+            });
+          } catch {
+            // Non-fatal — workspace will be provisioned later via setup page
+          }
+        }
+      }
     }
   } catch {
     // Non-fatal — customer row creation failure shouldn't block sign-up

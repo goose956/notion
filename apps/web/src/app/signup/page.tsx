@@ -121,8 +121,11 @@ function SignupForm() {
       // After signup, the user needs to click their magic link to authenticate.
       // We pass the setup page as the callbackUrl so they land there (already
       // authenticated) and the page auto-deploys their workspace.
+      // Go straight to the workspace — it was provisioned in /api/signup
+      // so there's no need to hit the setup page (which caused a double-form
+      // bug due to a session-cookie race on the signIn → redirect).
       const postSignupUrl = nicheId
-        ? `/members/setup/${nicheId}`
+        ? `/members/workspace?nicheId=${encodeURIComponent(nicheId)}`
         : callbackUrl && callbackUrl !== "/members/get-started"
           ? callbackUrl
           : "/members/get-started";
