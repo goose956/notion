@@ -248,13 +248,21 @@ export default function WorkspacePage() {
   }
 
   // ── Notion sync state ──────────────────────────────────────────────────────
-  const [syncingNiches, setSyncingNiches] = useState<Set<string>>(new Set());
-  const [syncResults, setSyncResults] = useState<Record<string, string>>({});
+  const [syncingNiche, setSyncingNiche] = useState<string | null>(null);
+  const [syncResult, setSyncResult] = useState<string>("");
   const [schedules, setSchedules] = useState<Record<string, string>>({});
+  const [selectedSyncNiche, setSelectedSyncNiche] = useState<string>("");
+
+  // Default selected sync niche to first group when groups load
+  useEffect(() => {
+    if (nicheGroups.length > 0 && !selectedSyncNiche) {
+      setSelectedSyncNiche(nicheGroups[0]!.nicheId);
+    }
+  }, [nicheGroups, selectedSyncNiche]);
 
   async function pushToNotion(nicheId: string) {
-    setSyncingNiches((prev) => new Set([...prev, nicheId]));
-    setSyncResults((prev) => ({ ...prev, [nicheId]: "" }));
+    setSyncingNiche(nicheId);
+    setSyncResult("");
     try {
       const res = await fetch("/api/members/sync-to-notion", {
         method: "POST",
@@ -263,33 +271,13 @@ export default function WorkspacePage() {
       });
       const data = await res.json() as { ok?: boolean; created?: number; updated?: number; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Sync failed");
-      setSyncResults((prev) => ({
-        ...prev,
-        [nicheId]: `✓ ${data.created ?? 0} created, ${data.updated ?? 0} updated`,
-      }));
+      setSyncResult(`✓ ${data.created ?? 0} created, ${data.updated ?? 0} updated`);
     } catch (err) {
-      setSyncResults((prev) => ({
-        ...prev,
-        [nicheId]: err instanceof Error ? err.message : "Sync failed",
-      }));
+      setSyncResult(err instanceof Error ? err.message : "Sync failed");
     } finally {
-      setSyncingNiches((prev) => { const s = new Set(prev); s.delete(nicheId); return s; });
+      setSyncingNiche(null);
     }
   }
-
-  async function pushAllToNotion() {
-    for (const group of nicheGroups) {
-      await pushToNotion(group.nicheId);
-    }
-  }
-
-  const isSyncingAny = nicheGroups.some((g) => syncingNiches.has(g.nicheId));
-  const combinedSyncResult = (() => {
-    const results = nicheGroups.map((g) => syncResults[g.nicheId]).filter(Boolean);
-    if (results.length === 0) return "";
-    if (results.every((r) => r?.startsWith("✓"))) return results.join(" · ");
-    return results.find((r) => !r?.startsWith("✓")) ?? "";
-  })();
 
   async function saveSchedule(nicheId: string, schedule: string) {
     setSchedules((prev) => ({ ...prev, [nicheId]: schedule }));
@@ -701,37 +689,59 @@ export default function WorkspacePage() {
         {backend === "app" && nicheGroups.length > 0 && (
           <div style={{ borderTop: `1px solid ${N_BORDER}`, padding: "8px 10px", flexShrink: 0 }}>
             <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              {/* Pack selector — only shown when more than one pack */}
+              {nicheGroups.length > 1 && (
+                <select
+                  value={selectedSyncNiche}
+                  onChange={(e) => { setSelectedSyncNiche(e.target.value); setSyncResult(""); }}
+                  style={{
+                    flex: 1,
+                    padding: "4px 5px",
+                    borderRadius: "4px",
+                    border: `1px solid ${N_BORDER_MED}`,
+                    fontSize: "10px",
+                    color: N_SUBTLE,
+                    background: "transparent",
+                    fontFamily: N_FONT,
+                    cursor: "pointer",
+                    minWidth: 0,
+                  }}
+                >
+                  {nicheGroups.map((g) => (
+                    <option key={g.nicheId} value={g.nicheId}>{g.nicheName}</option>
+                  ))}
+                </select>
+              )}
               <button
-                onClick={() => void pushAllToNotion()}
-                disabled={isSyncingAny}
+                onClick={() => void pushToNotion(selectedSyncNiche || nicheGroups[0]!.nicheId)}
+                disabled={!!syncingNiche}
                 title="Copy workspace data to Notion"
                 style={{
-                  flex: 1,
+                  flex: nicheGroups.length > 1 ? "0 0 auto" : 1,
                   padding: "4px 6px",
                   borderRadius: "4px",
                   border: "1px solid rgba(35,131,226,0.4)",
                   background: "rgba(35,131,226,0.08)",
                   fontSize: "11px",
                   color: "rgb(35,131,226)",
-                  cursor: isSyncingAny ? "default" : "pointer",
+                  cursor: syncingNiche ? "default" : "pointer",
                   fontFamily: N_FONT,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "4px",
-                  opacity: isSyncingAny ? 0.6 : 1,
+                  opacity: syncingNiche ? 0.6 : 1,
+                  whiteSpace: "nowrap",
                 }}
               >
-                {isSyncingAny
+                {syncingNiche
                   ? <><Loader2 size={9} style={{ animation: "spin 1s linear infinite" }} /> Syncing…</>
                   : <><RefreshCw size={9} /> Push to Notion</>
                 }
               </button>
               <select
-                value={schedules[nicheGroups[0]?.nicheId ?? ""] ?? "off"}
-                onChange={(e) => {
-                  for (const group of nicheGroups) void saveSchedule(group.nicheId, e.target.value);
-                }}
+                value={schedules[selectedSyncNiche || nicheGroups[0]?.nicheId ?? ""] ?? "off"}
+                onChange={(e) => void saveSchedule(selectedSyncNiche || nicheGroups[0]!.nicheId, e.target.value)}
                 title="Auto-sync schedule"
                 style={{
                   padding: "4px 4px",
@@ -750,9 +760,9 @@ export default function WorkspacePage() {
                 <option value="weekly">Weekly</option>
               </select>
             </div>
-            {combinedSyncResult && (
-              <p style={{ margin: "3px 0 0", fontSize: "10px", color: combinedSyncResult.startsWith("✓") ? "rgb(15,123,108)" : "rgb(220,38,38)" }}>
-                {combinedSyncResult}
+            {syncResult && (
+              <p style={{ margin: "3px 0 0", fontSize: "10px", color: syncResult.startsWith("✓") ? "rgb(15,123,108)" : "rgb(220,38,38)" }}>
+                {syncResult}
               </p>
             )}
           </div>
