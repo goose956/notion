@@ -217,6 +217,18 @@ export default function WorkspacePage() {
   const [apiCriteriaByNiche, setApiCriteriaByNiche] = useState<Record<string, Record<string, unknown> | null>>({});
   const [seatedGuestIds, setSeatedGuestIds] = useState<Set<string>>(new Set());
   const lastUrlSelectionKeyRef = useRef<string>("");
+  const sidebarNavRef = useRef<HTMLDivElement>(null);
+
+  // ── Scroll active niche group into view when activeTab changes ────────────
+  useEffect(() => {
+    if (!sidebarNavRef.current || !activeTab) return;
+    const activeNicheId =
+      databases.find((d) => d.notionId === activeTab)?.nicheId ??
+      NICHE_REGISTRY.find((e) => e.virtualTabIds.has(activeTab))?.nicheId;
+    if (!activeNicheId) return;
+    const groupEl = sidebarNavRef.current.querySelector(`[data-niche-id="${activeNicheId}"]`);
+    if (groupEl) groupEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [activeTab, databases]);
 
   // ── Saved research notes ───────────────────────────────────────────────────
   const [notes, setNotes] = useState<ResearchNote[]>([]);
@@ -292,6 +304,16 @@ export default function WorkspacePage() {
     nextDatabases: WorkspaceDatabase[],
     nextBackend: "app" | "notion" = backend,
   ) {
+    // If a niche was requested (no specific DB), activate its dashboard virtual tab
+    // so the user lands on that niche's section, not a random database row.
+    if (nicheIdParam && !dbIdParam && nextBackend === "app") {
+      const entry = getNicheEntry(nicheIdParam);
+      if (entry && nextDatabases.some((d) => d.nicheId === nicheIdParam)) {
+        setActiveTab(entry.defaultTabId);
+        return;
+      }
+    }
+
     // If a specific database was requested via URL params, jump straight to it
     if (nicheIdParam || dbIdParam) {
       const requestedDb = nextDatabases.find((d) =>
@@ -480,7 +502,7 @@ export default function WorkspacePage() {
         }}
       >
         {/* Scrollable nav area */}
-        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+        <div ref={sidebarNavRef} style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
         <div
           style={{
             padding: "14px 14px 10px",
@@ -556,7 +578,7 @@ export default function WorkspacePage() {
           const nicheEntry = getNicheEntry(group.nicheId);
           const missingCriteria = backend === "app" && apiCriteriaByNiche[group.nicheId] === null;
           return (
-            <div key={group.nicheId}>
+            <div key={group.nicheId} data-niche-id={group.nicheId}>
               {missingCriteria && (
                 <Link
                   href={`/members/setup/${group.nicheId}`}
