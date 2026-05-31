@@ -309,7 +309,7 @@ export default function WorkspacePage() {
     if (nicheIdParam && !dbIdParam && nextBackend === "app") {
       const entry = getNicheEntry(nicheIdParam);
       if (entry && nextDatabases.some((d) => d.nicheId === nicheIdParam)) {
-        setActiveTab(entry.defaultTabId);
+        activateTab(entry.defaultTabId, nextDatabases);
         return;
       }
     }
@@ -321,7 +321,7 @@ export default function WorkspacePage() {
         (dbIdParam ? d.dbId === dbIdParam : true),
       );
       if (requestedDb) {
-        setActiveTab(requestedDb.notionId);
+        activateTab(requestedDb.notionId, nextDatabases);
         return;
       }
     }
@@ -331,17 +331,24 @@ export default function WorkspacePage() {
       const defaultTab = getDefaultTabId(nextDatabases);
       if (defaultTab) {
         setActiveTab((prev) => (prev ? prev : defaultTab));
+        const nicheId =
+          nextDatabases.find((d) => d.notionId === defaultTab)?.nicheId ??
+          NICHE_REGISTRY.find((e) => e.virtualTabIds.has(defaultTab))?.nicheId;
+        if (nicheId) setExpandedNiches(new Set([nicheId]));
         return;
       }
     }
 
     // Final fallback — select first database
     if (nextDatabases.length > 0) {
+      const firstId = nextDatabases[0]!.notionId;
       setActiveTab((prev) => {
         if (isVirtualTab(prev) && nextBackend === "app") return prev;
         if (prev && nextDatabases.some((d) => d.notionId === prev)) return prev;
-        return nextDatabases[0]!.notionId;
+        return firstId;
       });
+      const nicheId = nextDatabases[0]?.nicheId;
+      if (nicheId) setExpandedNiches(new Set([nicheId]));
     }
   }
 
@@ -373,9 +380,6 @@ export default function WorkspacePage() {
       setBackend(data.backend);
       setApiCriteriaByNiche(data.criteriaByNiche ?? {});
 
-      // Auto-expand all niches and select first tab
-      const nicheIds = [...new Set(data.databases.map((d) => d.nicheId))];
-      setExpandedNiches(new Set(nicheIds));
       if (selectionMode === "initial") {
         applyRequestedSelection(data.databases, data.backend);
       } else {
@@ -468,6 +472,15 @@ export default function WorkspacePage() {
     } else {
       nicheGroups.push({ nicheId: db.nicheId, nicheName: db.nicheName, dbs: [db] });
     }
+  }
+
+  // ── Activate a tab and collapse all other niche groups ───────────────────
+  function activateTab(tabId: string, dbs: WorkspaceDatabase[] = databases) {
+    setActiveTab(tabId);
+    const nicheId =
+      dbs.find((d) => d.notionId === tabId)?.nicheId ??
+      NICHE_REGISTRY.find((e) => e.virtualTabIds.has(tabId))?.nicheId;
+    if (nicheId) setExpandedNiches(new Set([nicheId]));
   }
 
   const activeDb = databases.find((d) => d.notionId === activeTab) ?? null;
@@ -636,7 +649,7 @@ export default function WorkspacePage() {
                   accent={nicheEntry.accent}
                   activeTab={activeTab}
                   databases={databases}
-                  onSelect={setActiveTab}
+                  onSelect={activateTab}
                 />
               ))}
               {expanded &&
@@ -649,7 +662,7 @@ export default function WorkspacePage() {
                         db={db}
                         active={active}
                         accent={nicheEntry?.accent ?? null}
-                        onSelect={setActiveTab}
+                        onSelect={activateTab}
                       />
                       {backend === "app" && isAnchor && nicheEntry?.afterDbTabs?.map((tab) => (
                         <NicheSidebarTabBtn
@@ -658,7 +671,7 @@ export default function WorkspacePage() {
                           accent={nicheEntry.accent}
                           activeTab={activeTab}
                           databases={databases}
-                          onSelect={setActiveTab}
+                          onSelect={activateTab}
                         />
                       ))}
                     </div>
