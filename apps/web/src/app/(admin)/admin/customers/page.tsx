@@ -22,13 +22,13 @@ export default async function AdminCustomersPage({
   const totalRevenue = (totalRevenueCents / 100).toFixed(2);
 
   // ── Customers pagination ──────────────────────────────────────────────────
-  const cPage = Math.max(1, parseInt(String(searchParams.cPage ?? "1"), 10) || 1);
+  const cPage = Math.max(1, parseInt(String(searchParams["cPage"] ?? "1"), 10) || 1);
   const cTotalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
   const cSafePage = Math.min(cPage, cTotalPages);
   const pagedCustomers = customers.slice((cSafePage - 1) * PAGE_SIZE, cSafePage * PAGE_SIZE);
 
   // ── Purchases pagination ──────────────────────────────────────────────────
-  const pPage = Math.max(1, parseInt(String(searchParams.pPage ?? "1"), 10) || 1);
+  const pPage = Math.max(1, parseInt(String(searchParams["pPage"] ?? "1"), 10) || 1);
   const pTotalPages = Math.max(1, Math.ceil(purchases.length / PAGE_SIZE));
   const pSafePage = Math.min(pPage, pTotalPages);
   const pagedPurchases = purchases.slice((pSafePage - 1) * PAGE_SIZE, pSafePage * PAGE_SIZE);
