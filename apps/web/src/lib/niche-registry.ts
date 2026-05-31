@@ -66,6 +66,8 @@ export interface NicheSidebarTab {
 // ─── Registry entry shape ─────────────────────────────────────────────────────
 export interface NicheRegistryEntry {
   nicheId: string;
+  /** Human-readable name shown in the "Add workspace" list. */
+  displayName: string;
   /** All virtual (non-database) tab IDs this niche owns. */
   virtualTabIds: Set<string>;
   /** Tab to activate when user first lands on /members/workspace. */
@@ -109,13 +111,13 @@ const WEDDING_ACCENT: NicheAccent = {
 
 // ─── Rainbow accent ───────────────────────────────────────────────────────────
 const RAINBOW_ACCENT: NicheAccent = {
-  hex:            "#7c3aed",
-  fgActive:       "#6d28d9",
-  fgHeader:       "#4c1d95",
-  bgActive:       "rgba(124,58,237,0.12)",
-  bgHover:        "rgba(124,58,237,0.06)",
-  bgGroupHeader:  "rgba(124,58,237,0.06)",
-  borderTop:      "1px solid rgba(124,58,237,0.12)",
+  hex:            "#e11d7a",
+  fgActive:       "#c2185b",
+  fgHeader:       "#880e4f",
+  bgActive:       "rgba(225,29,122,0.10)",
+  bgHover:        "rgba(225,29,122,0.05)",
+  bgGroupHeader:  "linear-gradient(135deg,rgba(255,0,0,0.08),rgba(255,165,0,0.08),rgba(0,200,83,0.08),rgba(33,150,243,0.08),rgba(156,39,176,0.08))",
+  borderTop:      "2px solid rgba(225,29,122,0.30)",
 };
 
 // ─── Registry ─────────────────────────────────────────────────────────────────

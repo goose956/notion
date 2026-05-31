@@ -381,7 +381,7 @@ export function SetupForm({ pack, isInApp = false, criteriaOnly = false, nicheId
 
       setStatus("done");
       setTimeout(() => {
-        router.push(`/members/chat?nicheId=${encodeURIComponent(pack.id)}`);
+        router.push(`/members/workspace?nicheId=${encodeURIComponent(pack.id)}`);
       }, 1500);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
