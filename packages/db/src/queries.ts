@@ -442,6 +442,25 @@ export async function deleteCustomerByEmail(email: string): Promise<boolean> {
   const customerId = rows[0]?.id;
   if (!customerId) return false;
 
+  // Delete workspace data: rows → databases → workspaces (keyed by email)
+  const workspaces = await db
+    .select({ id: appWorkspaces.id })
+    .from(appWorkspaces)
+    .where(eq(appWorkspaces.userId, email));
+
+  for (const ws of workspaces) {
+    const dbs = await db
+      .select({ id: appDatabases.id })
+      .from(appDatabases)
+      .where(eq(appDatabases.workspaceId, ws.id));
+
+    for (const db_ of dbs) {
+      await db.delete(appRows).where(eq(appRows.databaseId, db_.id));
+    }
+    await db.delete(appDatabases).where(eq(appDatabases.workspaceId, ws.id));
+  }
+  await db.delete(appWorkspaces).where(eq(appWorkspaces.userId, email));
+
   await db.delete(purchases).where(eq(purchases.customerId, customerId));
   await db.delete(customers).where(eq(customers.id, customerId));
   return true;
