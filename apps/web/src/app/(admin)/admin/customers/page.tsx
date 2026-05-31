@@ -33,7 +33,7 @@ export default async function AdminCustomersPage({
   const pSafePage = Math.min(pPage, pTotalPages);
   const pagedPurchases = purchases.slice((pSafePage - 1) * PAGE_SIZE, pSafePage * PAGE_SIZE);
 
-  function pageUrl(params: Record<string, number>) {
+  function pageUrl(params: { cPage?: number; pPage?: number }) {
     const p = new URLSearchParams();
     if ((params.cPage ?? cSafePage) !== 1) p.set("cPage", String(params.cPage ?? cSafePage));
     if ((params.pPage ?? pSafePage) !== 1) p.set("pPage", String(params.pPage ?? pSafePage));
