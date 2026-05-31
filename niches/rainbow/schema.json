@@ -384,11 +384,25 @@
   ],
   "onboardingQuestions": [
     {
-      "id": "wedding-date",
-      "question": "What is your wedding date (or approximate timeframe)?",
+      "id": "country",
+      "question": "Which country is your wedding in?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)"],
+      "required": true
+    },
+    {
+      "id": "couple-names",
+      "question": "What are the couple's names?",
       "type": "text",
       "required": true,
-      "hint": "e.g. 14 June 2026 or 'Summer 2026'"
+      "hint": "e.g. Alex & Jordan"
+    },
+    {
+      "id": "wedding-date",
+      "question": "When is your wedding?",
+      "type": "date",
+      "required": true,
+      "hint": "You can update this later from your dashboard."
     },
     {
       "id": "wedding-location",
@@ -409,21 +423,7 @@
       "question": "What is your total wedding budget?",
       "type": "number",
       "required": true,
-      "hint": "Enter in £, e.g. 15000"
-    },
-    {
-      "id": "wedding-style",
-      "question": "How would you describe your wedding style?",
-      "type": "select",
-      "options": ["Rustic / Barn", "Classic / Traditional", "Modern / Minimalist", "Boho / Wildflower", "Black Tie / Formal", "Outdoor / Festival", "Intimate / Micro-wedding", "Not sure yet"],
-      "required": false
-    },
-    {
-      "id": "priority-vendors",
-      "question": "Which vendors are you most urgently looking for right now?",
-      "type": "multi_select",
-      "options": ["Venue", "Florist", "Photographer", "Caterer", "Music / DJ", "Cake", "Hair & Makeup", "Videographer", "Transport"],
-      "required": false
+      "hint": "e.g. 15000"
     }
   ]
 }
