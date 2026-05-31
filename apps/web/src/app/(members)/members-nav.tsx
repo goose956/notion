@@ -8,7 +8,7 @@ import { WORKFLOW_CATALOG } from "@/lib/workflow-catalog";
 
 const TOP_ITEMS = [
   { emoji: "🚀", label: "Home", href: "/members/chat" },
-  { emoji: "🔍", label: "Research Assistant", href: "/members/chat" },
+  { emoji: "🔍", label: "Research Assistant", href: "/members/chat" }, // href built dynamically below
   { emoji: "🔖", label: "Browse Workflows", href: "/members/workflows" },
 ] as const;
 
@@ -53,6 +53,11 @@ export function MembersNav({
   const extraWorkflows = activeWorkflows
     .map((slug) => WORKFLOW_CATALOG.find((w) => w.id === slug))
     .filter((w): w is NonNullable<typeof w> => w !== undefined);
+
+  // Which niche is effectively selected — used for Research Assistant link and sub-item highlighting
+  const effectiveNicheId = isActive("/members/workspace")
+    ? (nicheParam ?? extraWorkflows[0]?.id ?? null)
+    : (lastNicheId ?? extraWorkflows[0]?.id ?? null);
 
   // Scores for TOP_ITEMS active detection (query-param aware)
   const topItemScores = TOP_ITEMS.map((item) => {
@@ -209,18 +214,17 @@ export function MembersNav({
 
       {/* Workflow sub-items — only active workflows, no Browse link */}
       {!collapsed && workspaceOpen && extraWorkflows.map((w, i) => {
-        // Which niche to treat as selected:
-        // - On workspace page: use URL param, or first niche if no param
-        // - Elsewhere: use the last niche the user was on (from localStorage)
-        const effectiveNiche = isActive("/members/workspace")
-          ? (nicheParam ?? extraWorkflows[0]?.id ?? null)
-          : (lastNicheId ?? extraWorkflows[0]?.id ?? null);
-        const active = effectiveNiche === w.id || (effectiveNiche === null && i === 0);
+        const active = effectiveNicheId === w.id || (effectiveNicheId === null && i === 0);
         return subItem(`/members/workspace?nicheId=${w.id}`, w.emoji, w.name, active);
       })}
 
-      {/* Research Assistant */}
-      {navItem(TOP_ITEMS[1].href, TOP_ITEMS[1].emoji, TOP_ITEMS[1].label, topMaxScore >= 0 && topItemScores[1] === topMaxScore)}
+      {/* Research Assistant — carries the active nicheId so the chat page pre-selects the right workspace */}
+      {navItem(
+        effectiveNicheId ? `/members/chat?nicheId=${effectiveNicheId}` : "/members/chat",
+        TOP_ITEMS[1].emoji,
+        TOP_ITEMS[1].label,
+        topMaxScore >= 0 && topItemScores[1] === topMaxScore,
+      )}
 
       {/* Browse Workflows — standalone link */}
       {navItem(TOP_ITEMS[2].href, TOP_ITEMS[2].emoji, TOP_ITEMS[2].label, topMaxScore >= 0 && topItemScores[2] === topMaxScore)}
