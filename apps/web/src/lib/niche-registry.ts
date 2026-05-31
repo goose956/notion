@@ -125,6 +125,7 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
   // ── Wedding Planner ──────────────────────────────────────────────────────────
   {
     nicheId:      "wedding-planner",
+    displayName:  "Wedding Planner",
     virtualTabIds: new Set(Object.values(WEDDING_TABS)),
     defaultTabId: WEDDING_TABS.DASHBOARD,
     hiddenDbIds:  ["honeymoon"],
@@ -150,6 +151,7 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
   // ── Rainbow Wedding Planner ───────────────────────────────────────────────
   {
     nicheId:      "rainbow",
+    displayName:  "Rainbow Wedding Planner",
     virtualTabIds: new Set(Object.values(RAINBOW_TABS)),
     defaultTabId: RAINBOW_TABS.DASHBOARD,
     hiddenDbIds:  ["honeymoon"],
