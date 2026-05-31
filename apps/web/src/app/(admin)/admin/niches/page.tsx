@@ -87,7 +87,7 @@ function NichePackRowCard({ row }: { row: NichePackRow }) {
       </div>
       <div className="flex items-center gap-3">
         <Link
-          href={`/admin/niches/${row.id}/onboarding`}
+          href={`/admin/niches/${row.id}/onboarding` as never}
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
         >
           <ClipboardList className="h-3.5 w-3.5" />

@@ -23,7 +23,7 @@ export default async function AdminNicheEditorPage({
         <span className="font-medium">{pack.name}</span>
         <span className="text-muted-foreground">·</span>
         <Link
-          href={`/admin/niches/${params.id}/onboarding`}
+          href={`/admin/niches/${params.id}/onboarding` as never}
           className="text-primary hover:underline font-medium"
         >
           Onboarding Questions →
