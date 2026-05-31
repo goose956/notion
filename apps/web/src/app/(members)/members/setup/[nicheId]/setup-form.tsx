@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, type FormEvent, type ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
 import type { NichePack, OnboardingQuestion } from "@niche-factory/schema";
 import type { NotionPageResult } from "@/app/api/members/notion-pages/route";
 import { ArrowRight, CheckCircle2, ExternalLink, Loader2, Search, ChevronDown, X } from "lucide-react";
@@ -248,7 +247,6 @@ function QuestionField({
 type AnswerMap = Record<string, string | string[]>;
 
 export function SetupForm({ pack, isInApp = false, criteriaOnly = false, nicheId }: { pack: NichePack; isInApp?: boolean; criteriaOnly?: boolean; nicheId?: string }) {
-  const router = useRouter();
   const questions: OnboardingQuestion[] = pack.onboardingQuestions ?? [];
 
   // Page picker state
@@ -357,7 +355,7 @@ export function SetupForm({ pack, isInApp = false, criteriaOnly = false, nicheId
         }
         setStatus("done");
         setTimeout(() => {
-          router.push(`/members/workspace?nicheId=${encodeURIComponent(id)}`);
+          window.location.href = `/members/workspace?nicheId=${encodeURIComponent(id)}`;
         }, 1000);
         return;
       }
@@ -381,7 +379,7 @@ export function SetupForm({ pack, isInApp = false, criteriaOnly = false, nicheId
 
       setStatus("done");
       setTimeout(() => {
-        router.push(`/members/workspace?nicheId=${encodeURIComponent(pack.id)}`);
+        window.location.href = `/members/workspace?nicheId=${encodeURIComponent(pack.id)}`;
       }, 1500);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong");

@@ -220,10 +220,15 @@ export function isAppOnlyVirtualTab(tabId: string): boolean {
 export function getDefaultTabId(
   databases: Array<{ nicheId: string; notionId: string }>,
 ): string {
-  for (const entry of NICHE_REGISTRY) {
-    if (entry.defaultTabId && databases.some((d) => d.nicheId === entry.nicheId)) {
-      return entry.defaultTabId;
-    }
+  // Follow the order niches appear in the databases array (most recently
+  // added workspace first), not the registry declaration order.
+  // This ensures the niche the user just added becomes the active tab.
+  const seen = new Set<string>();
+  for (const db of databases) {
+    if (seen.has(db.nicheId)) continue;
+    seen.add(db.nicheId);
+    const entry = NICHE_REGISTRY.find((e) => e.nicheId === db.nicheId);
+    if (entry?.defaultTabId) return entry.defaultTabId;
   }
   return databases[0]?.notionId ?? "";
 }
