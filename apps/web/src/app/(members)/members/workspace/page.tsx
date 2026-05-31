@@ -740,7 +740,7 @@ export default function WorkspacePage() {
                 }
               </button>
               <select
-                value={schedules[selectedSyncNiche || nicheGroups[0]?.nicheId ?? ""] ?? "off"}
+                value={schedules[(selectedSyncNiche || nicheGroups[0]?.nicheId) ?? ""] ?? "off"}
                 onChange={(e) => void saveSchedule(selectedSyncNiche || nicheGroups[0]!.nicheId, e.target.value)}
                 title="Auto-sync schedule"
                 style={{
