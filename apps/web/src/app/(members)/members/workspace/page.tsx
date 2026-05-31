@@ -16,6 +16,7 @@ import { DatabaseTable } from "@/components/workspace/database-table";
 import { DocumentsView } from "@/components/workspace/documents-view";
 import { WeddingNicheShell } from "@/components/niches/wedding-planner/shell";
 import { ProjectManagerShell } from "@/components/niches/project-manager/shell";
+import { PinterestShell } from "@/components/niches/pinterest-poster/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -932,6 +933,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["project-manager"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "pinterest-poster") return (
+                <PinterestShell
+                  key="pinterest-poster"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["pinterest-poster"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}

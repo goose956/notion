@@ -23,6 +23,14 @@ export const WORKFLOW_CATALOG = [
     description:
       "Track all your business projects and tasks in one workspace. Apply reusable task templates, get AI focus recommendations, and plan your week — all in one place.",
   },
+  {
+    id: "pinterest-poster",
+    name: "Pinterest Poster",
+    emoji: "📌",
+    tagline: "Create and post Pinterest pins with AI-generated copy.",
+    description:
+      "Generate SEO-optimised pin titles, descriptions and tags with AI. Upload your own image or generate one — then post directly to your Pinterest board and track your history.",
+  },
 ] as const;
 
 export type WorkflowCatalogItem = (typeof WORKFLOW_CATALOG)[number];

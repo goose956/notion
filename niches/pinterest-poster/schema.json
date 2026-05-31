@@ -1,0 +1,47 @@
+{
+  "id": "pinterest-poster",
+  "name": "Pinterest Poster",
+  "version": "1.0.0",
+  "description": "Create and post Pinterest pins with AI-generated titles, descriptions and tags. Upload your own image or generate one with AI.",
+  "dataSources": [],
+  "databases": [
+    {
+      "id": "pin-history",
+      "name": "Pin History",
+      "icon": "📌",
+      "description": "All pins created and posted",
+      "properties": [
+        { "id": "Title",       "name": "Title",       "type": "title" },
+        { "id": "Description", "name": "Description", "type": "rich_text" },
+        { "id": "Tags",        "name": "Tags",        "type": "rich_text" },
+        { "id": "Board",       "name": "Board",       "type": "rich_text" },
+        { "id": "Image URL",   "name": "Image URL",   "type": "url" },
+        { "id": "Pin URL",     "name": "Pin URL",     "type": "url" },
+        { "id": "Status",      "name": "Status",      "type": "select",
+          "options": ["Posted", "Draft", "Failed"] },
+        { "id": "Topic",       "name": "Topic",       "type": "rich_text" },
+        { "id": "Date",        "name": "Date",        "type": "rich_text" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "board-name",
+      "question": "What's the name of your main Pinterest board?",
+      "placeholder": "e.g. Home Decor Ideas",
+      "type": "text"
+    },
+    {
+      "id": "topics",
+      "question": "What topics do you mainly pin about?",
+      "placeholder": "e.g. minimalist home decor, productivity, small business tips",
+      "type": "text"
+    },
+    {
+      "id": "posting-goal",
+      "question": "How many pins do you want to post per week?",
+      "placeholder": "e.g. 10",
+      "type": "text"
+    }
+  ]
+}

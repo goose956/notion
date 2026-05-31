@@ -19,6 +19,12 @@ export const WEDDING_TABS = {
   HONEYMOON:  "__workspace_honeymoon_planner__",
 } as const;
 
+// ─── Pinterest Poster tab IDs ─────────────────────────────────────────────────
+export const PINTEREST_TABS = {
+  DASHBOARD:  "__pinterest_dashboard__",
+  CREATE_PIN: "__pinterest_create__",
+} as const;
+
 // ─── Project HQ tab IDs ───────────────────────────────────────────────────────
 export const PROJECT_MANAGER_TABS = {
   DASHBOARD:       "__pm_dashboard__",
@@ -210,6 +216,29 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: PROJECT_MANAGER_TABS.APPLY_TEMPLATES, label: "Apply Templates", icon: "📋", appOnly: true },
       { tabId: PROJECT_MANAGER_TABS.FOCUS_MODE,      label: "Focus Mode",       icon: "🎯", appOnly: true },
       { tabId: PROJECT_MANAGER_TABS.TASK_BREAKDOWN,  label: "Task Breakdown",   icon: "🔨", appOnly: true },
+    ],
+  },
+
+  // ── Pinterest Poster ─────────────────────────────────────────────────────
+  {
+    nicheId:       "pinterest-poster",
+    displayName:   "Pinterest Poster",
+    virtualTabIds: new Set(Object.values(PINTEREST_TABS)),
+    defaultTabId:  PINTEREST_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#e60023",
+      fgActive:      "#ad081b",
+      fgHeader:      "#6f0110",
+      bgActive:      "rgba(230,0,35,0.10)",
+      bgHover:       "rgba(230,0,35,0.05)",
+      bgGroupHeader: "rgba(230,0,35,0.06)",
+      borderTop:     "1px solid rgba(230,0,35,0.15)",
+    },
+    sidebarEmoji: "📌",
+    topTabs: [
+      { tabId: PINTEREST_TABS.DASHBOARD,  label: "Dashboard",   icon: "🏠", appOnly: true },
+      { tabId: PINTEREST_TABS.CREATE_PIN, label: "Create Pin",  icon: "✏️", appOnly: true },
     ],
   },
 
