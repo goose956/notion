@@ -1,8 +1,0 @@
-name: real-estate-investor
-version: 1.0.0
-pricing:
-  monthly: 99
-  annual: 990
-schedule:
-  adapters: daily
-  enrichment: daily

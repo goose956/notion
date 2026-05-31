@@ -175,17 +175,6 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
   },
 
   // ── Add your next niche here ──────────────────────────────────────────────
-  // {
-  //   nicheId: "local-business-lead-tracker",
-  //   virtualTabIds: new Set(Object.values(LOCAL_BUSINESS_TABS)),
-  //   defaultTabId: LOCAL_BUSINESS_TABS.DASHBOARD,
-  //   hiddenDbIds: [],
-  //   accent: { hex: "#0ea5e9", fgActive: "#0369a1", fgHeader: "#0c4a6e",
-  //             bgActive: "rgba(14,165,233,0.12)", bgHover: "rgba(14,165,233,0.06)",
-  //             bgGroupHeader: "rgba(14,165,233,0.06)", borderTop: "1px solid rgba(14,165,233,0.12)" },
-  //   sidebarEmoji: "📍",
-  //   topTabs: [{ tabId: LOCAL_BUSINESS_TABS.DASHBOARD, label: "Dashboard", icon: "🏠" }],
-  // },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
