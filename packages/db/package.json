@@ -12,7 +12,8 @@
     "migrate": "tsx src/migrate.ts",
     "migrate:kit": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seed.ts",
+    "cleanup-orphans": "tsx src/cleanup-orphans.ts"
   },
   "dependencies": {
     "@niche-factory/schema": "workspace:*",
