@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { SeatingPlannerView } from "@/app/(members)/members/seating/SeatingPlannerView";
-import { WEDDING_TABS } from "@/lib/niche-registry";
+import { WEDDING_TABS, RAINBOW_TABS } from "@/lib/niche-registry";
 import { N_BORDER, N_MUTED } from "@/lib/workspace-tokens";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 import { WeddingWorkspaceDashboard } from "./dashboard";
@@ -28,6 +28,7 @@ export function WeddingNicheShell({
   onRowDeleted,
   onSeatedIdsChanged,
   nicheId = "wedding-planner",
+  tabs = WEDDING_TABS,
 }: {
   activeTab: string;
   databases: WorkspaceDatabase[];
@@ -37,6 +38,7 @@ export function WeddingNicheShell({
   onRowDeleted: (dbNotionId: string, pageId: string) => void;
   onSeatedIdsChanged: (ids: Set<string>) => void;
   nicheId?: string;
+  tabs?: typeof WEDDING_TABS | typeof RAINBOW_TABS;
 }) {
   const [weddingCriteria, setWeddingCriteria] = useState<Record<string, unknown> | null>(apiWeddingCriteria);
   const [liveSeatedIds, setLiveSeatedIds] = useState<Set<string> | null>(null);
@@ -72,7 +74,7 @@ export function WeddingNicheShell({
   }, [seatedGuestIds, onSeatedIdsChanged]);
 
   // ── Render the active wedding tab ────────────────────────────────────────
-  if (activeTab === WEDDING_TABS.DASHBOARD) return (
+  if (activeTab === tabs.DASHBOARD) return (
     <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
       <WeddingWorkspaceDashboard
         databases={databases}
@@ -84,11 +86,11 @@ export function WeddingNicheShell({
     </div>
   );
 
-  if (activeTab === WEDDING_TABS.SEATING) return (
+  if (activeTab === tabs.SEATING) return (
     <SeatingPlannerView guestsDb={guestsDb} embedded onSeatingChanged={setLiveSeatedIds} nicheId={nicheId} />
   );
 
-  if (activeTab === WEDDING_TABS.DRAFT) return (
+  if (activeTab === tabs.DRAFT) return (
     <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
       {documentsDb ? (
         <WeddingDraftStudio
@@ -104,7 +106,7 @@ export function WeddingNicheShell({
     </div>
   );
 
-  if (activeTab === WEDDING_TABS.INVITATION) return (
+  if (activeTab === tabs.INVITATION) return (
     <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
       <WeddingInvitationCanvas
         weddingCriteria={weddingCriteria}
@@ -114,7 +116,7 @@ export function WeddingNicheShell({
     </div>
   );
 
-  if (activeTab === WEDDING_TABS.SPEECH) return (
+  if (activeTab === tabs.SPEECH) return (
     <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
       <WeddingSpeechWriter
         weddingCriteria={weddingCriteria}
@@ -127,7 +129,7 @@ export function WeddingNicheShell({
     </div>
   );
 
-  if (activeTab === WEDDING_TABS.HONEYMOON) return (
+  if (activeTab === tabs.HONEYMOON) return (
     <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
       <WeddingHoneymoonPlanner
         honeymoonDb={honeymoonDb}

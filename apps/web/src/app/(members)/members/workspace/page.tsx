@@ -10,7 +10,7 @@ import type {
   WorkspaceResponse,
 } from "@/app/api/members/workspace/route";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_FONT } from "@/lib/workspace-tokens";
-import { NICHE_REGISTRY, isVirtualTab, getDefaultTabId, getHiddenDbIds, getNicheEntry, showsSavedResearch, type NicheAccent, type NicheSidebarTab } from "@/lib/niche-registry";
+import { NICHE_REGISTRY, RAINBOW_TABS, isVirtualTab, getDefaultTabId, getHiddenDbIds, getNicheEntry, showsSavedResearch, type NicheAccent, type NicheSidebarTab } from "@/lib/niche-registry";
 import type { ResearchNote } from "@/app/api/members/notes/route";
 import { DatabaseTable } from "@/components/workspace/database-table";
 import { DocumentsView } from "@/components/workspace/documents-view";
@@ -863,6 +863,7 @@ export default function WorkspacePage() {
                 <WeddingNicheShell
                   key="rainbow"
                   nicheId="rainbow"
+                  tabs={RAINBOW_TABS}
                   activeTab={activeTab}
                   databases={databases}
                   apiWeddingCriteria={apiCriteriaByNiche["rainbow"] ?? null}

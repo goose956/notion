@@ -19,6 +19,17 @@ export const WEDDING_TABS = {
   HONEYMOON:  "__workspace_honeymoon_planner__",
 } as const;
 
+// ─── Rainbow Wedding Planner tab IDs ─────────────────────────────────────────
+// Must be unique — never share IDs with another niche or both shells activate.
+export const RAINBOW_TABS = {
+  DASHBOARD:  "__rainbow_dashboard__",
+  SEATING:    "__rainbow_seating__",
+  DRAFT:      "__rainbow_draft_letters__",
+  INVITATION: "__rainbow_invitation_canvas__",
+  SPEECH:     "__rainbow_speech_writer__",
+  HONEYMOON:  "__rainbow_honeymoon_planner__",
+} as const;
+
 // ─── Accent palette ───────────────────────────────────────────────────────────
 export interface NicheAccent {
   /** Primary colour hex, used for active borders and icon tints. */
@@ -137,21 +148,21 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
   // ── Rainbow Wedding Planner ───────────────────────────────────────────────
   {
     nicheId:      "rainbow",
-    virtualTabIds: new Set(Object.values(WEDDING_TABS)),
-    defaultTabId: WEDDING_TABS.DASHBOARD,
+    virtualTabIds: new Set(Object.values(RAINBOW_TABS)),
+    defaultTabId: RAINBOW_TABS.DASHBOARD,
     hiddenDbIds:  ["honeymoon"],
     accent:       RAINBOW_ACCENT,
     sidebarEmoji: "🌈",
     topTabs: [
-      { tabId: WEDDING_TABS.DASHBOARD, label: "Dashboard", icon: "🏠", appOnly: true },
+      { tabId: RAINBOW_TABS.DASHBOARD, label: "Dashboard", icon: "🏠", appOnly: true },
     ],
     afterDbNamePattern: /planning\s*(timetable|timeline)/i,
     afterDbTabs: [
-      { tabId: WEDDING_TABS.SEATING,    label: "Seating Planner",   icon: "🪑", appOnly: true },
-      { tabId: WEDDING_TABS.DRAFT,      label: "Draft Letters",     icon: "✍️", appOnly: true, requiresDbId: "documents" },
-      { tabId: WEDDING_TABS.INVITATION, label: "Invitation Canvas", icon: "🎨", appOnly: true },
-      { tabId: WEDDING_TABS.SPEECH,     label: "AI Speech Writer",  icon: "🎤", appOnly: true },
-      { tabId: WEDDING_TABS.HONEYMOON,  label: "Honeymoon Planner", icon: "🌴", appOnly: true },
+      { tabId: RAINBOW_TABS.SEATING,    label: "Seating Planner",   icon: "🪑", appOnly: true },
+      { tabId: RAINBOW_TABS.DRAFT,      label: "Draft Letters",     icon: "✍️", appOnly: true, requiresDbId: "documents" },
+      { tabId: RAINBOW_TABS.INVITATION, label: "Invitation Canvas", icon: "🎨", appOnly: true },
+      { tabId: RAINBOW_TABS.SPEECH,     label: "AI Speech Writer",  icon: "🎤", appOnly: true },
+      { tabId: RAINBOW_TABS.HONEYMOON,  label: "Honeymoon Planner", icon: "🌴", appOnly: true },
     ],
     dbPropertyInjections: {
       documents: [{ id: "Email", name: "Email", type: "email" }],
