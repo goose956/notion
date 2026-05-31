@@ -6,7 +6,7 @@ import { DataSourceSchema } from "./data-source.js";
 export const OnboardingQuestionSchema = z.object({
   id: z.string().min(1),
   question: z.string().min(1),
-  type: z.enum(["text", "number", "select", "multi_select", "boolean"]),
+  type: z.enum(["text", "number", "select", "multi_select", "boolean", "date"]),
   options: z.array(z.string()).optional(),
   required: z.boolean().default(true),
   hint: z.string().optional(),

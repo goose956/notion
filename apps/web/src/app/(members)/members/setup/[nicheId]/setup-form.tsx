@@ -178,6 +178,29 @@ function QuestionField({
     );
   }
 
+  if (q.type === "date") {
+    return (
+      <div style={{ marginBottom: "20px" }}>
+        {fieldLabel(q)}
+        {q.hint && (
+          <p style={{ fontSize: "12px", color: N_SUBTLE, marginBottom: "6px" }}>
+            {q.hint}
+          </p>
+        )}
+        <input
+          id={q.id}
+          type="date"
+          value={typeof value === "string" ? value : ""}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            onChange(q.id, e.target.value)
+          }
+          style={inputStyle}
+          required={q.required}
+        />
+      </div>
+    );
+  }
+
   if (q.type === "boolean") {
     const checked = value === "true";
     return (

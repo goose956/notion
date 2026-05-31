@@ -398,9 +398,9 @@
     {
       "id": "wedding-date",
       "question": "When is your wedding?",
-      "type": "select",
-      "options": ["Jun 2026","Jul 2026","Aug 2026","Sep 2026","Oct 2026","Nov 2026","Dec 2026","Jan 2027","Feb 2027","Mar 2027","Apr 2027","May 2027","Jun 2027","Jul 2027","Aug 2027","Sep 2027","Oct 2027","Nov 2027","Dec 2027","Jan 2028","Feb 2028","Mar 2028","Apr 2028","May 2028","Jun 2028","Jul 2028","Aug 2028","Sep 2028","Oct 2028","Nov 2028","Dec 2028","Jan 2029","Feb 2029","Mar 2029","Apr 2029","May 2029","Jun 2029","Jul 2029","Aug 2029","Sep 2029","Oct 2029","Nov 2029","Dec 2029","Jan 2030","Feb 2030","Mar 2030","Apr 2030","May 2030","Jun 2030","Jul 2030","Aug 2030","Sep 2030","Oct 2030","Nov 2030","Dec 2030"],
-      "required": true
+      "type": "date",
+      "required": true,
+      "hint": "You can update this later from your dashboard."
     },
     {
       "id": "wedding-location",

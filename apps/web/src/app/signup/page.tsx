@@ -8,7 +8,7 @@ import { Suspense } from "react";
 interface OnboardingQuestion {
   id: string;
   question: string;
-  type: "text" | "number" | "select" | "multi_select";
+  type: "text" | "number" | "select" | "multi_select" | "date";
   required: boolean;
   hint?: string;
   options?: string[];
@@ -294,6 +294,16 @@ function SignupForm() {
                             </button>
                           );
                         })}
+                      </div>
+                    ) : q.type === "date" ? (
+                      <div>
+                        <input
+                          type="date"
+                          value={(answers[q.id] as string) ?? ""}
+                          onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                          style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid rgba(55,53,47,0.2)", fontFamily: "inherit", fontSize: "14px", boxSizing: "border-box" }}
+                        />
+                        {q.hint && <p style={{ margin: "5px 0 0", fontSize: "12px", color: "rgba(55,53,47,0.45)" }}>{q.hint}</p>}
                       </div>
                     ) : (
                       <input

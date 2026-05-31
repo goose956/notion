@@ -10,7 +10,7 @@ import { ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, GripVertical } from "l
 interface OnboardingQuestion {
   id: string;
   question: string;
-  type: "text" | "number" | "select" | "multi_select";
+  type: "text" | "number" | "select" | "multi_select" | "date";
   required: boolean;
   hint?: string;
   options?: string[];
@@ -390,6 +390,7 @@ function QuestionForm({
             <option value="number">Number</option>
             <option value="select">Select (single)</option>
             <option value="multi_select">Multi-select</option>
+            <option value="date">Date</option>
           </select>
         </div>
       </div>
