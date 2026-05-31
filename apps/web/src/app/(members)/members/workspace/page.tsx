@@ -15,6 +15,7 @@ import type { ResearchNote } from "@/app/api/members/notes/route";
 import { DatabaseTable } from "@/components/workspace/database-table";
 import { DocumentsView } from "@/components/workspace/documents-view";
 import { WeddingNicheShell } from "@/components/niches/wedding-planner/shell";
+import { ProjectManagerShell } from "@/components/niches/project-manager/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -906,6 +907,17 @@ export default function WorkspacePage() {
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}
                   onSeatedIdsChanged={setSeatedGuestIds}
+                />
+              );
+              if (entry.nicheId === "project-manager") return (
+                <ProjectManagerShell
+                  key="project-manager"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["project-manager"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
                 />
               );
               return null; // placeholder for future niches

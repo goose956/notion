@@ -21,6 +21,7 @@ function loadSchema(relativePath: string): NichePack {
 const packs: NichePack[] = [
   loadSchema("../../../niches/wedding-planner/schema.json"),
   loadSchema("../../../niches/rainbow/schema.json"),
+  loadSchema("../../../niches/project-manager/schema.json"),
 ];
 
 async function seed() {

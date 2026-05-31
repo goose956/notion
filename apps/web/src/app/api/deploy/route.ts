@@ -47,7 +47,7 @@ function buildNotionDeployPack(pack: NichePack): NichePack {
   return {
     ...pack,
     databases: notionDatabases,
-    dataSources: pack.dataSources.filter((s) => notionDbIds.has(s.targetDatabaseId)),
+    dataSources: (pack.dataSources ?? []).filter((s) => notionDbIds.has(s.targetDatabaseId)),
     enrichmentPrompts: pack.enrichmentPrompts?.filter((p) => notionDbIds.has(p.targetDatabaseId)),
     seedPages: pack.seedPages?.filter((p) => notionDbIds.has(p.databaseId)),
   };

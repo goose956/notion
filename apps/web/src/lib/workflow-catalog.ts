@@ -15,6 +15,14 @@ export const WORKFLOW_CATALOG = [
     description:
       "Everything the Wedding Planner has, built for LGBTQ+ couples — LGBTQ+ friendly vendor search, gender-neutral guest management, and full budget and timeline tracking.",
   },
+  {
+    id: "project-manager",
+    name: "Project HQ",
+    emoji: "🗂️",
+    tagline: "Every project, every task, one place.",
+    description:
+      "Track all your business projects and tasks in one workspace. Apply reusable task templates, get AI focus recommendations, and plan your week — all in one place.",
+  },
 ] as const;
 
 export type WorkflowCatalogItem = (typeof WORKFLOW_CATALOG)[number];

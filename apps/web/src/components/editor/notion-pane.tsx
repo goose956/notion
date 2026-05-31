@@ -156,7 +156,7 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
 
       // Auto-import on first deploy so users get value immediately.
       // Skip sources with schedule: "manual" — they require explicit user action.
-      const autoImportSources = pack.dataSources.filter(
+      const autoImportSources = (pack.dataSources ?? []).filter(
         (src) => src.schedule !== "manual",
       );
       if (isInitialDeploy && autoImportSources.length > 0) {
@@ -408,13 +408,13 @@ export function NotionPane({ pack, onPackUpdate }: NotionPaneProps) {
           </div>
 
           {/* Data sources */}
-          {pack.dataSources.length > 0 && lastDeploy !== null && (
+          {(pack.dataSources ?? []).length > 0 && lastDeploy !== null && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Data sources
               </p>
               <div className="space-y-1.5">
-                {pack.dataSources.map((src) => (
+                {(pack.dataSources ?? []).map((src) => (
                   <SyncRow
                     key={src.id}
                     nicheId={pack.id}

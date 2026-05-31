@@ -38,6 +38,11 @@ export const DatabaseSchema = z.object({
   /** The first property must be a title property */
   properties: z.array(PropertySchema).min(1),
   views: z.array(ViewSchema).optional(),
+  /**
+   * Optional seed rows created automatically when the database is first provisioned.
+   * Each object maps property name → value.
+   */
+  seedData: z.array(z.record(z.string(), z.unknown())).optional(),
 });
 
 export type Database = z.infer<typeof DatabaseSchema>;

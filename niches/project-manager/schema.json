@@ -1,0 +1,219 @@
+{
+  "version": "1.0.0",
+  "id": "project-manager",
+  "name": "Project HQ",
+  "description": "A focused workspace for managing your business projects and tasks. Track every project, assign tasks, apply reusable task templates, and let the AI tell you what to work on next.",
+  "tagline": "Every project. Every task. One place.",
+  "icon": "🗂️",
+  "databases": [
+    {
+      "id": "projects",
+      "name": "Projects",
+      "description": "One row per active business project.",
+      "icon": "🗂️",
+      "properties": [
+        { "type": "title", "name": "Name" },
+        {
+          "type": "select",
+          "name": "Status",
+          "options": [
+            { "name": "Active", "color": "green" },
+            { "name": "Paused", "color": "yellow" },
+            { "name": "Done", "color": "gray" },
+            { "name": "Blocked", "color": "red" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "Priority",
+          "options": [
+            { "name": "High", "color": "red" },
+            { "name": "Medium", "color": "yellow" },
+            { "name": "Low", "color": "blue" }
+          ]
+        },
+        { "type": "rich_text", "name": "Goal" },
+        { "type": "date", "name": "Start Date" },
+        { "type": "date", "name": "Target Date" },
+        { "type": "rich_text", "name": "Notes" }
+      ],
+      "views": [
+        { "name": "All Projects", "type": "table" },
+        { "name": "Active", "type": "table", "filters": [{ "propertyName": "Status", "condition": "equals", "value": "Active" }] },
+        { "name": "By Priority", "type": "board", "groupByProperty": "Priority" }
+      ]
+    },
+    {
+      "id": "tasks",
+      "name": "Tasks",
+      "description": "All tasks across every project.",
+      "icon": "✅",
+      "properties": [
+        { "type": "title", "name": "Task" },
+        { "type": "rich_text", "name": "Project" },
+        {
+          "type": "select",
+          "name": "Status",
+          "options": [
+            { "name": "To Do", "color": "gray" },
+            { "name": "In Progress", "color": "blue" },
+            { "name": "Done", "color": "green" },
+            { "name": "Blocked", "color": "red" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "Priority",
+          "options": [
+            { "name": "High", "color": "red" },
+            { "name": "Medium", "color": "yellow" },
+            { "name": "Low", "color": "blue" }
+          ]
+        },
+        { "type": "date", "name": "Due Date" },
+        {
+          "type": "select",
+          "name": "Type",
+          "options": [
+            { "name": "Development", "color": "blue" },
+            { "name": "Marketing", "color": "pink" },
+            { "name": "Research", "color": "purple" },
+            { "name": "Admin", "color": "gray" },
+            { "name": "Content", "color": "orange" },
+            { "name": "Launch", "color": "green" },
+            { "name": "Other", "color": "default" }
+          ]
+        },
+        { "type": "rich_text", "name": "Notes" }
+      ],
+      "views": [
+        { "name": "All Tasks", "type": "table" },
+        { "name": "Open", "type": "table", "filters": [{ "propertyName": "Status", "condition": "does_not_equal", "value": "Done" }], "sorts": [{ "propertyName": "Due Date", "direction": "ascending" }] },
+        { "name": "By Project", "type": "board", "groupByProperty": "Project" }
+      ]
+    },
+    {
+      "id": "task-templates",
+      "name": "Task Templates",
+      "description": "Reusable task templates — apply a set to any project in one click.",
+      "icon": "📋",
+      "properties": [
+        { "type": "title", "name": "Template Name" },
+        {
+          "type": "select",
+          "name": "Category",
+          "options": [
+            { "name": "Marketing", "color": "pink" },
+            { "name": "Launch", "color": "green" },
+            { "name": "Development", "color": "blue" },
+            { "name": "Research", "color": "purple" },
+            { "name": "Admin", "color": "gray" },
+            { "name": "Content", "color": "orange" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "Priority",
+          "options": [
+            { "name": "High", "color": "red" },
+            { "name": "Medium", "color": "yellow" },
+            { "name": "Low", "color": "blue" }
+          ]
+        },
+        { "type": "rich_text", "name": "Description" }
+      ],
+      "views": [
+        { "name": "All Templates", "type": "table" },
+        { "name": "By Category", "type": "board", "groupByProperty": "Category" }
+      ],
+      "seedData": [
+        { "Template Name": "Write X / Twitter announcement", "Category": "Marketing", "Priority": "High", "Description": "Draft and schedule a launch announcement thread for X/Twitter." },
+        { "Template Name": "Create LinkedIn post", "Category": "Marketing", "Priority": "Medium", "Description": "Write a professional LinkedIn announcement with key benefits and a CTA." },
+        { "Template Name": "Record YouTube walkthrough video", "Category": "Marketing", "Priority": "Medium", "Description": "Record a 5–10 min product walkthrough video and publish to YouTube." },
+        { "Template Name": "Write email announcement", "Category": "Marketing", "Priority": "High", "Description": "Draft and send an email to your list announcing the product or update." },
+        { "Template Name": "Update Etsy listing copy and images", "Category": "Marketing", "Priority": "High", "Description": "Refresh listing title, description, tags, and preview images on Etsy." },
+        { "Template Name": "Post in communities (Reddit / Facebook / Slack)", "Category": "Marketing", "Priority": "Medium", "Description": "Share in relevant communities — lead with value, not just a link." },
+        { "Template Name": "Create product screenshots and demo GIF", "Category": "Marketing", "Priority": "Medium", "Description": "Capture key UI screens and record an animated GIF for promotional use." },
+
+        { "Template Name": "Finalise pricing", "Category": "Launch", "Priority": "High", "Description": "Set final price tiers, compare to competitors, and confirm margins." },
+        { "Template Name": "Write landing page copy", "Category": "Launch", "Priority": "High", "Description": "Draft headline, benefits list, FAQ section, and call to action." },
+        { "Template Name": "Test end-to-end user flow", "Category": "Launch", "Priority": "High", "Description": "Walk through the full purchase and onboarding experience as a new user." },
+        { "Template Name": "Set up payment and checkout", "Category": "Launch", "Priority": "High", "Description": "Configure payment provider, test a transaction, confirm receipt emails." },
+        { "Template Name": "Prepare launch checklist", "Category": "Launch", "Priority": "Medium", "Description": "List every task that must be done before going live." },
+        { "Template Name": "Monitor launch day for bugs", "Category": "Launch", "Priority": "High", "Description": "Watch for errors, user feedback, and issues on launch day." },
+        { "Template Name": "Collect and respond to early feedback", "Category": "Launch", "Priority": "Medium", "Description": "Gather first impressions from early users and respond promptly." },
+
+        { "Template Name": "Write technical spec", "Category": "Development", "Priority": "Medium", "Description": "Document the architecture, data model, and implementation plan." },
+        { "Template Name": "Set up project repo and folder structure", "Category": "Development", "Priority": "High", "Description": "Initialise repo, set up CI, and establish folder conventions." },
+        { "Template Name": "Build core feature / MVP", "Category": "Development", "Priority": "High", "Description": "Implement the primary feature that defines the product value." },
+        { "Template Name": "Deploy to staging and test", "Category": "Development", "Priority": "High", "Description": "Deploy a staging build, run through all features, catch regressions." },
+        { "Template Name": "Deploy to production", "Category": "Development", "Priority": "High", "Description": "Push to live environment and confirm everything works end-to-end." },
+        { "Template Name": "Post-launch bug fixes", "Category": "Development", "Priority": "High", "Description": "Triage and fix bugs reported after launch." },
+
+        { "Template Name": "Competitor analysis", "Category": "Research", "Priority": "Medium", "Description": "Identify top 3–5 competitors, compare features, pricing, and positioning." },
+        { "Template Name": "Keyword and SEO research", "Category": "Research", "Priority": "Medium", "Description": "Find target keywords, check search volume, assess ranking difficulty." },
+        { "Template Name": "Review customer feedback", "Category": "Research", "Priority": "Medium", "Description": "Read recent reviews, support tickets, and feedback to find patterns." },
+        { "Template Name": "Market size and pricing research", "Category": "Research", "Priority": "Low", "Description": "Estimate market size and validate pricing against what customers will pay." },
+
+        { "Template Name": "Update project notes and documentation", "Category": "Admin", "Priority": "Low", "Description": "Keep docs and notes current so you can pick up where you left off." },
+        { "Template Name": "Review analytics and metrics", "Category": "Admin", "Priority": "Medium", "Description": "Check key metrics: traffic, conversions, revenue, churn." },
+        { "Template Name": "Set next milestone and goals", "Category": "Admin", "Priority": "Medium", "Description": "Define what success looks like for the next 2–4 weeks." },
+        { "Template Name": "Invoice and billing check", "Category": "Admin", "Priority": "Medium", "Description": "Review outstanding invoices, subscriptions, and tool costs." },
+
+        { "Template Name": "Write blog post or guide", "Category": "Content", "Priority": "Low", "Description": "Publish a detailed post that adds SEO value and demonstrates expertise." },
+        { "Template Name": "Update FAQs and help docs", "Category": "Content", "Priority": "Low", "Description": "Keep the help centre current with new features and common questions." },
+        { "Template Name": "Create case study or testimonial", "Category": "Content", "Priority": "Medium", "Description": "Document a customer win or use case for social proof." },
+        { "Template Name": "Design social media graphics", "Category": "Content", "Priority": "Low", "Description": "Create branded images for posts using Canva or Figma." }
+      ]
+    },
+    {
+      "id": "weekly-reviews",
+      "name": "Weekly Reviews",
+      "description": "One entry per week — what got done, what's still open, what to focus on next.",
+      "icon": "📅",
+      "properties": [
+        { "type": "title", "name": "Week" },
+        { "type": "date", "name": "Week Start" },
+        { "type": "rich_text", "name": "Wins" },
+        { "type": "rich_text", "name": "Still Open" },
+        { "type": "rich_text", "name": "Focus Next Week" },
+        {
+          "type": "select",
+          "name": "Energy Level",
+          "options": [
+            { "name": "High", "color": "green" },
+            { "name": "Medium", "color": "yellow" },
+            { "name": "Low", "color": "red" }
+          ]
+        },
+        { "type": "rich_text", "name": "Notes" }
+      ],
+      "views": [
+        { "name": "All Reviews", "type": "table" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "active-projects",
+      "question": "What are your main active projects right now?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. Stridivo, ListingLab, Amazon FBA — separate with commas"
+    },
+    {
+      "id": "good-week",
+      "question": "What does a productive week look like for you?",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. Ship one feature, publish two pieces of content, clear inbox"
+    },
+    {
+      "id": "work-areas",
+      "question": "Which areas of work take up most of your time?",
+      "type": "multi_select",
+      "options": ["Product Development", "Marketing", "Research", "Admin", "Content Creation", "Customer Support"],
+      "required": false
+    }
+  ]
+}

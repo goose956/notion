@@ -90,6 +90,13 @@ async function provisionAppWorkspace(userId: string, pack: NichePack, schemaVers
         createdAt: new Date(),
       });
       databaseIdMap[db.id] = appDbId;
+      // Seed initial rows declared in the schema (e.g. task templates)
+      const seedData = (db as unknown as { seedData?: Array<Record<string, unknown>> }).seedData;
+      if (Array.isArray(seedData)) {
+        for (const row of seedData) {
+          await createAppRow({ id: randomUUID(), databaseId: appDbId, properties: row as Record<string, string | number | boolean | null> }).catch(() => null);
+        }
+      }
     }
 
     await updateAppWorkspaceStatus(workspaceId, {

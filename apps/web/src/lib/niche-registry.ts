@@ -19,6 +19,14 @@ export const WEDDING_TABS = {
   HONEYMOON:  "__workspace_honeymoon_planner__",
 } as const;
 
+// ─── Project HQ tab IDs ───────────────────────────────────────────────────────
+export const PROJECT_MANAGER_TABS = {
+  DASHBOARD:       "__pm_dashboard__",
+  APPLY_TEMPLATES: "__pm_apply_templates__",
+  FOCUS_MODE:      "__pm_focus_mode__",
+  TASK_BREAKDOWN:  "__pm_task_breakdown__",
+} as const;
+
 // ─── Rainbow Wedding Planner tab IDs ─────────────────────────────────────────
 // Must be unique — never share IDs with another niche or both shells activate.
 export const RAINBOW_TABS = {
@@ -98,6 +106,17 @@ export interface NicheRegistryEntry {
   savedResearchDbIds?: string[];
 }
 
+// ─── Project HQ accent ───────────────────────────────────────────────────────
+const PROJECT_MANAGER_ACCENT: NicheAccent = {
+  hex:            "#4f46e5",
+  fgActive:       "#3730a3",
+  fgHeader:       "#1e1b4b",
+  bgActive:       "rgba(79,70,229,0.10)",
+  bgHover:        "rgba(79,70,229,0.05)",
+  bgGroupHeader:  "rgba(79,70,229,0.06)",
+  borderTop:      "1px solid rgba(79,70,229,0.15)",
+};
+
 // ─── Wedding Planner accent ───────────────────────────────────────────────────
 const WEDDING_ACCENT: NicheAccent = {
   hex:            "#be185d",
@@ -172,6 +191,26 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       documents: [{ id: "Email", name: "Email", type: "email" }],
     },
     savedResearchDbIds: ["documents"],
+  },
+
+  // ── Project HQ ───────────────────────────────────────────────────────────
+  {
+    nicheId:       "project-manager",
+    displayName:   "Project HQ",
+    virtualTabIds: new Set(Object.values(PROJECT_MANAGER_TABS)),
+    defaultTabId:  PROJECT_MANAGER_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent:        PROJECT_MANAGER_ACCENT,
+    sidebarEmoji:  "🗂️",
+    topTabs: [
+      { tabId: PROJECT_MANAGER_TABS.DASHBOARD, label: "Dashboard", icon: "🏠", appOnly: true },
+    ],
+    afterDbNamePattern: /^tasks$/i,
+    afterDbTabs: [
+      { tabId: PROJECT_MANAGER_TABS.APPLY_TEMPLATES, label: "Apply Templates", icon: "📋", appOnly: true },
+      { tabId: PROJECT_MANAGER_TABS.FOCUS_MODE,      label: "Focus Mode",       icon: "🎯", appOnly: true },
+      { tabId: PROJECT_MANAGER_TABS.TASK_BREAKDOWN,  label: "Task Breakdown",   icon: "🔨", appOnly: true },
+    ],
   },
 
   // ── Add your next niche here ──────────────────────────────────────────────

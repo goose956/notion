@@ -8,6 +8,7 @@ import {
   getLatestAppWorkspaceByNiche,
   createAppWorkspace,
   createAppDatabase,
+  createAppRow,
   updateAppWorkspaceStatus,
 } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
@@ -74,6 +75,12 @@ export async function POST(req: NextRequest) {
                 createdAt: new Date(),
               });
               databaseIdMap[db.id] = dbId;
+              const seedData = (db as unknown as { seedData?: Array<Record<string, unknown>> }).seedData;
+              if (Array.isArray(seedData)) {
+                for (const row of seedData) {
+                  await createAppRow({ id: randomUUID(), databaseId: dbId, properties: row as Record<string, string | number | boolean | null> }).catch(() => null);
+                }
+              }
             }
             await updateAppWorkspaceStatus(workspaceId, {
               status: "success",

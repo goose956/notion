@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   // Generate adapter stubs for each data source
   const adapterStubs: Record<string, string> = {};
-  for (const source of pack.dataSources) {
+  for (const source of pack.dataSources ?? []) {
     adapterStubs[source.stubFile] = scaffoldAdapter(source, pack.id);
   }
 

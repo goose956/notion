@@ -192,14 +192,14 @@ function describeChanges(before: NichePack, after: NichePack): string {
     }
   }
 
-  const beforeSources = new Set(before.dataSources.map((s) => s.id));
-  const afterSources = new Set(after.dataSources.map((s) => s.id));
-  for (const s of after.dataSources) {
+  const beforeSources = new Set((before.dataSources ?? []).map((s) => s.id));
+  const afterSources = new Set((after.dataSources ?? []).map((s) => s.id));
+  for (const s of after.dataSources ?? []) {
     if (!beforeSources.has(s.id)) lines.push(`- Added data source: **${s.label}**`);
   }
   for (const id of beforeSources) {
     if (!afterSources.has(id)) {
-      const s = before.dataSources.find((x) => x.id === id);
+      const s = (before.dataSources ?? []).find((x) => x.id === id);
       lines.push(`- Removed data source: **${s?.label ?? id}**`);
     }
   }
