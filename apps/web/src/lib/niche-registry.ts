@@ -41,6 +41,19 @@ export const NEURODIVERGENT_TABS = {
   BREAKDOWN:  "__nd_breakdown__",
 } as const;
 
+// ─── Neurodivergent Wedding Planner tab IDs ──────────────────────────────────
+export const NDW_TABS = {
+  DASHBOARD:   "__ndw_dashboard__",
+  SEATING:     "__ndw_seating__",
+  DRAFT:       "__ndw_draft__",
+  INVITATION:  "__ndw_invitation__",
+  SPEECH:      "__ndw_speech__",
+  HONEYMOON:   "__ndw_honeymoon__",
+  VENDOR_DUMP: "__ndw_vendor_dump__",
+  FOCUS:       "__ndw_focus__",
+  BREAKDOWN:   "__ndw_breakdown__",
+} as const;
+
 // ─── Rainbow Wedding Planner tab IDs ─────────────────────────────────────────
 // Must be unique — never share IDs with another niche or both shells activate.
 export const RAINBOW_TABS = {
@@ -276,6 +289,43 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: NEURODIVERGENT_TABS.BRAIN_DUMP, label: "Brain Dump",     icon: "🌀", appOnly: true },
       { tabId: NEURODIVERGENT_TABS.BREAKDOWN,  label: "Break It Down",  icon: "🔨", appOnly: true },
     ],
+  },
+
+  // ── Neurodivergent Wedding Planner ───────────────────────────────────────
+  {
+    nicheId:       "neurodivergent-wedding",
+    displayName:   "ND Wedding Planner",
+    virtualTabIds: new Set(Object.values(NDW_TABS)),
+    defaultTabId:  NDW_TABS.DASHBOARD,
+    hiddenDbIds:   ["honeymoon"],
+    accent: {
+      hex:           "#7c3aed",
+      fgActive:      "#6d28d9",
+      fgHeader:      "#3b0764",
+      bgActive:      "rgba(124,58,237,0.10)",
+      bgHover:       "rgba(124,58,237,0.05)",
+      bgGroupHeader: "rgba(124,58,237,0.06)",
+      borderTop:     "1px solid rgba(124,58,237,0.15)",
+    },
+    sidebarEmoji: "💜",
+    topTabs: [
+      { tabId: NDW_TABS.DASHBOARD, label: "Dashboard", icon: "🏠", appOnly: true },
+    ],
+    afterDbNamePattern: /planning\s*(timetable|timeline)/i,
+    afterDbTabs: [
+      { tabId: NDW_TABS.FOCUS,       label: "What can I do?",   icon: "⚡", appOnly: true },
+      { tabId: NDW_TABS.VENDOR_DUMP, label: "Vendor Brain Dump", icon: "🌀", appOnly: true },
+      { tabId: NDW_TABS.BREAKDOWN,   label: "Break It Down",     icon: "🔨", appOnly: true },
+      { tabId: NDW_TABS.SEATING,     label: "Seating Planner",   icon: "🪑", appOnly: true },
+      { tabId: NDW_TABS.DRAFT,       label: "Draft Letters",     icon: "✍️", appOnly: true, requiresDbId: "documents" },
+      { tabId: NDW_TABS.INVITATION,  label: "Invitation Canvas", icon: "🎨", appOnly: true },
+      { tabId: NDW_TABS.SPEECH,      label: "AI Speech Writer",  icon: "🎤", appOnly: true },
+      { tabId: NDW_TABS.HONEYMOON,   label: "Honeymoon Planner", icon: "🌴", appOnly: true },
+    ],
+    dbPropertyInjections: {
+      documents: [{ id: "Email", name: "Email", type: "email" }],
+    },
+    savedResearchDbIds: ["documents"],
   },
 
   // ── Add your next niche here ──────────────────────────────────────────────

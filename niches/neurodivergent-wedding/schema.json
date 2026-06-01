@@ -1,0 +1,372 @@
+{
+  "version": "1.0.0",
+  "id": "neurodivergent-wedding",
+  "name": "Neurodivergent Wedding Planner",
+  "description": "A wedding planning workspace built for ADHD and autistic brains. Every vendor, guest, and task in one place — with energy-matched task lists, a vendor brain dump, and micro-step breakdowns so nothing feels too big to start.",
+  "tagline": "Plan your wedding with your brain, not against it.",
+  "icon": "💜",
+  "databases": [
+    {
+      "id": "vendors",
+      "name": "Vendors",
+      "description": "Every supplier and service provider considered or booked for the wedding.",
+      "icon": "💐",
+      "properties": [
+        { "type": "title", "name": "Vendor Name" },
+        {
+          "type": "select",
+          "name": "Category",
+          "options": [
+            { "name": "Florist", "color": "pink" },
+            { "name": "Venue", "color": "purple" },
+            { "name": "Catering", "color": "orange" },
+            { "name": "Photography", "color": "blue" },
+            { "name": "Videography", "color": "blue" },
+            { "name": "Music / DJ", "color": "yellow" },
+            { "name": "Cake", "color": "pink" },
+            { "name": "Hair & Makeup", "color": "red" },
+            { "name": "Dress / Attire", "color": "purple" },
+            { "name": "Transport", "color": "gray" },
+            { "name": "Stationery", "color": "brown" },
+            { "name": "Officiant", "color": "green" },
+            { "name": "Other", "color": "default" }
+          ]
+        },
+        {
+          "type": "status",
+          "name": "Status",
+          "options": [
+            { "name": "Not Contacted", "color": "gray" },
+            { "name": "Contacted", "color": "blue" },
+            { "name": "Booked", "color": "green" },
+            { "name": "Cancelled", "color": "red" }
+          ]
+        },
+        { "type": "number", "name": "Quoted Price", "format": "pound" },
+        { "type": "number", "name": "Deposit Paid", "format": "pound" },
+        { "type": "checkbox", "name": "Deposit Confirmed" },
+        { "type": "url", "name": "Website" },
+        { "type": "email", "name": "Email" },
+        { "type": "phone_number", "name": "Phone" },
+        { "type": "rich_text", "name": "Address" },
+        { "type": "rich_text", "name": "Location" },
+        { "type": "number", "name": "Rating", "format": "number" },
+        { "type": "url", "name": "Reviews URL" },
+        { "type": "rich_text", "name": "Notes" },
+        { "type": "date", "name": "Follow-up Date" },
+        { "type": "date", "name": "Added" },
+        { "type": "rich_text", "name": "Source" }
+      ],
+      "views": [
+        { "name": "All Vendors", "type": "table" },
+        { "name": "By Category", "type": "board", "groupByProperty": "Category" },
+        { "name": "Booked", "type": "table", "filters": [{ "propertyName": "Status", "condition": "equals", "value": "Booked" }] }
+      ]
+    },
+    {
+      "id": "budget",
+      "name": "Budget",
+      "description": "Track every wedding cost — estimated vs actual — broken down by category.",
+      "icon": "💷",
+      "properties": [
+        { "type": "title", "name": "Item" },
+        {
+          "type": "select",
+          "name": "Category",
+          "options": [
+            { "name": "Venue", "color": "purple" },
+            { "name": "Catering", "color": "orange" },
+            { "name": "Flowers", "color": "pink" },
+            { "name": "Photography", "color": "blue" },
+            { "name": "Music", "color": "yellow" },
+            { "name": "Attire", "color": "red" },
+            { "name": "Transport", "color": "gray" },
+            { "name": "Stationery", "color": "brown" },
+            { "name": "Hair & Makeup", "color": "red" },
+            { "name": "Cake", "color": "pink" },
+            { "name": "Honeymoon", "color": "green" },
+            { "name": "Miscellaneous", "color": "default" }
+          ]
+        },
+        { "type": "number", "name": "Estimated Cost", "format": "pound" },
+        { "type": "number", "name": "Actual Cost", "format": "pound" },
+        { "type": "number", "name": "Deposit", "format": "pound" },
+        { "type": "checkbox", "name": "Paid" },
+        { "type": "date", "name": "Due Date" },
+        { "type": "rich_text", "name": "Vendor" },
+        { "type": "rich_text", "name": "Notes" }
+      ],
+      "views": [
+        { "name": "Full Budget", "type": "table" },
+        { "name": "By Category", "type": "board", "groupByProperty": "Category" },
+        { "name": "Unpaid", "type": "table", "filters": [{ "propertyName": "Paid", "condition": "equals", "value": false }] }
+      ]
+    },
+    {
+      "id": "guests",
+      "name": "Guest List",
+      "description": "Every invited guest with RSVP status, dietary requirements, and table assignment.",
+      "icon": "👰",
+      "properties": [
+        { "type": "title", "name": "Full Name" },
+        {
+          "type": "select",
+          "name": "RSVP",
+          "options": [
+            { "name": "Pending", "color": "yellow" },
+            { "name": "Attending", "color": "green" },
+            { "name": "Declined", "color": "red" }
+          ]
+        },
+        { "type": "email", "name": "Email" },
+        { "type": "phone_number", "name": "Phone" },
+        { "type": "checkbox", "name": "Seated" },
+        { "type": "rich_text", "name": "Plus One Name" },
+        {
+          "type": "select",
+          "name": "Side",
+          "options": [
+            { "name": "Partner 1", "color": "pink" },
+            { "name": "Partner 2", "color": "blue" },
+            { "name": "Both", "color": "purple" }
+          ]
+        },
+        {
+          "type": "multi_select",
+          "name": "Dietary Requirements",
+          "options": [
+            { "name": "Vegetarian", "color": "green" },
+            { "name": "Vegan", "color": "green" },
+            { "name": "Gluten Free", "color": "yellow" },
+            { "name": "Nut Allergy", "color": "red" },
+            { "name": "Halal", "color": "orange" },
+            { "name": "Kosher", "color": "blue" },
+            { "name": "None", "color": "default" }
+          ]
+        },
+        { "type": "rich_text", "name": "Table" },
+        {
+          "type": "select",
+          "name": "Invitation Sent",
+          "options": [
+            { "name": "Not Sent", "color": "gray" },
+            { "name": "Save the Date", "color": "yellow" },
+            { "name": "Full Invite", "color": "green" }
+          ]
+        },
+        { "type": "checkbox", "name": "Gift Received" },
+        { "type": "checkbox", "name": "Thank You Sent" },
+        { "type": "rich_text", "name": "Notes" }
+      ],
+      "views": [
+        { "name": "All Guests", "type": "table" },
+        { "name": "RSVP Board", "type": "board", "groupByProperty": "RSVP" },
+        { "name": "Attending", "type": "table", "filters": [{ "propertyName": "RSVP", "condition": "equals", "value": "Attending" }] }
+      ]
+    },
+    {
+      "id": "honeymoon",
+      "name": "Honeymoon Planner",
+      "description": "Research and compare honeymoon hotels, transfers, restaurants, and activities in one place.",
+      "icon": "🌴",
+      "properties": [
+        { "type": "title", "name": "Place" },
+        {
+          "type": "select",
+          "name": "Category",
+          "options": [
+            { "name": "Hotel", "color": "blue" },
+            { "name": "Taxi Transfer", "color": "gray" },
+            { "name": "Restaurant", "color": "orange" },
+            { "name": "Activity", "color": "green" },
+            { "name": "Tour", "color": "yellow" },
+            { "name": "Other", "color": "default" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "Status",
+          "options": [
+            { "name": "Researching", "color": "yellow" },
+            { "name": "Shortlisted", "color": "blue" },
+            { "name": "Booked", "color": "green" },
+            { "name": "Rejected", "color": "red" }
+          ]
+        },
+        { "type": "rich_text", "name": "Location" },
+        { "type": "url", "name": "Website" },
+        { "type": "phone_number", "name": "Phone" },
+        { "type": "email", "name": "Email" },
+        { "type": "rich_text", "name": "Price" },
+        { "type": "rich_text", "name": "Notes" },
+        { "type": "date", "name": "Added" }
+      ],
+      "views": [
+        { "name": "All Places", "type": "table" },
+        { "name": "By Category", "type": "board", "groupByProperty": "Category" },
+        { "name": "Shortlist", "type": "table", "filters": [{ "propertyName": "Status", "condition": "equals", "value": "Shortlisted" }] }
+      ]
+    },
+    {
+      "id": "timeline",
+      "name": "Planning Timeline",
+      "description": "Every task needed to pull off the wedding — with energy levels so you know when to tackle each one.",
+      "icon": "📅",
+      "properties": [
+        { "type": "title", "name": "Task" },
+        { "type": "status", "name": "Status" },
+        {
+          "type": "select",
+          "name": "Energy Required",
+          "options": [
+            { "name": "Low 🔋", "color": "green" },
+            { "name": "Medium ⚡", "color": "yellow" },
+            { "name": "High 🚀", "color": "red" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "Category",
+          "options": [
+            { "name": "Venue & Catering", "color": "purple" },
+            { "name": "Vendors", "color": "pink" },
+            { "name": "Guests", "color": "blue" },
+            { "name": "Attire", "color": "red" },
+            { "name": "Legal & Admin", "color": "gray" },
+            { "name": "Honeymoon", "color": "green" },
+            { "name": "On the Day", "color": "orange" },
+            { "name": "Other", "color": "default" }
+          ]
+        },
+        { "type": "date", "name": "Due Date" },
+        {
+          "type": "select",
+          "name": "When",
+          "options": [
+            { "name": "12+ months before", "color": "gray" },
+            { "name": "9–12 months before", "color": "blue" },
+            { "name": "6–9 months before", "color": "purple" },
+            { "name": "3–6 months before", "color": "yellow" },
+            { "name": "1–3 months before", "color": "orange" },
+            { "name": "2–4 weeks before", "color": "red" },
+            { "name": "Week of", "color": "red" },
+            { "name": "Day of", "color": "pink" }
+          ]
+        },
+        { "type": "checkbox", "name": "High Priority" },
+        { "type": "rich_text", "name": "Notes" }
+      ],
+      "views": [
+        { "name": "All Tasks", "type": "table" },
+        { "name": "By Energy", "type": "board", "groupByProperty": "Energy Required" },
+        { "name": "By Timeline", "type": "board", "groupByProperty": "When" },
+        { "name": "Open", "type": "table", "filters": [{ "propertyName": "Status", "condition": "does_not_equal", "value": "Done" }] }
+      ],
+      "seedData": [
+        { "Task": "Set your wedding date", "Category": "Legal & Admin", "When": "12+ months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Agree your total budget", "Category": "Legal & Admin", "When": "12+ months before", "High Priority": true, "Energy Required": "High 🚀" },
+        { "Task": "Write your initial guest list", "Category": "Guests", "When": "12+ months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Research and book your venue", "Category": "Venue & Catering", "When": "12+ months before", "High Priority": true, "Energy Required": "High 🚀" },
+        { "Task": "Book your photographer", "Category": "Vendors", "When": "12+ months before", "High Priority": true, "Energy Required": "High 🚀" },
+        { "Task": "Start dress shopping", "Category": "Attire", "When": "12+ months before", "High Priority": false, "Energy Required": "High 🚀" },
+        { "Task": "Announce your engagement", "Category": "Other", "When": "12+ months before", "High Priority": false, "Energy Required": "Low 🔋" },
+        { "Task": "Book your caterer", "Category": "Venue & Catering", "When": "9–12 months before", "High Priority": true, "Energy Required": "High 🚀" },
+        { "Task": "Book your florist", "Category": "Vendors", "When": "9–12 months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Book your music / DJ / band", "Category": "Vendors", "When": "9–12 months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Book your officiant or celebrant", "Category": "Legal & Admin", "When": "9–12 months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Send save the dates", "Category": "Guests", "When": "9–12 months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Book hair and makeup artist", "Category": "Vendors", "When": "6–9 months before", "High Priority": false, "Energy Required": "Medium ⚡" },
+        { "Task": "Book wedding cake", "Category": "Vendors", "When": "6–9 months before", "High Priority": false, "Energy Required": "Low 🔋" },
+        { "Task": "Book wedding transport", "Category": "Vendors", "When": "6–9 months before", "High Priority": false, "Energy Required": "Low 🔋" },
+        { "Task": "Plan and book your honeymoon", "Category": "Honeymoon", "When": "6–9 months before", "High Priority": false, "Energy Required": "High 🚀" },
+        { "Task": "Order wedding rings", "Category": "Other", "When": "6–9 months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Send formal invitations", "Category": "Guests", "When": "3–6 months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Arrange wedding insurance", "Category": "Legal & Admin", "When": "3–6 months before", "High Priority": true, "Energy Required": "Low 🔋" },
+        { "Task": "Chase RSVPs and finalise guest list", "Category": "Guests", "When": "1–3 months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Finalise menu with caterer", "Category": "Venue & Catering", "When": "1–3 months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Final dress fitting", "Category": "Attire", "When": "1–3 months before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Create table seating plan", "Category": "Guests", "When": "1–3 months before", "High Priority": false, "Energy Required": "High 🚀" },
+        { "Task": "Write your vows", "Category": "Legal & Admin", "When": "1–3 months before", "High Priority": true, "Energy Required": "High 🚀" },
+        { "Task": "Confirm all vendor bookings and timings", "Category": "Vendors", "When": "1–3 months before", "High Priority": true, "Energy Required": "Low 🔋" },
+        { "Task": "Provide final guest numbers to venue", "Category": "Venue & Catering", "When": "2–4 weeks before", "High Priority": true, "Energy Required": "Low 🔋" },
+        { "Task": "Prepare final vendor payments", "Category": "Legal & Admin", "When": "2–4 weeks before", "High Priority": true, "Energy Required": "Medium ⚡" },
+        { "Task": "Wedding rehearsal", "Category": "On the Day", "When": "Week of", "High Priority": true, "Energy Required": "High 🚀" },
+        { "Task": "Enjoy your wedding day! 💜", "Category": "On the Day", "When": "Day of", "High Priority": true, "Energy Required": "High 🚀" }
+      ]
+    },
+    {
+      "id": "documents",
+      "name": "Documents",
+      "description": "AI-drafted letters, emails, and notes saved from the research chatbot.",
+      "icon": "📄",
+      "properties": [
+        { "type": "title", "name": "Title" },
+        {
+          "type": "select",
+          "name": "Type",
+          "options": [
+            { "name": "Venue Enquiry", "color": "purple" },
+            { "name": "Vendor Enquiry", "color": "pink" },
+            { "name": "Contract Note", "color": "orange" },
+            { "name": "AI Research", "color": "blue" },
+            { "name": "Guest Communication", "color": "green" },
+            { "name": "Other", "color": "default" }
+          ]
+        },
+        { "type": "date", "name": "Created" },
+        { "type": "rich_text", "name": "Recipient" },
+        { "type": "rich_text", "name": "Subject" },
+        { "type": "rich_text", "name": "Body" },
+        { "type": "rich_text", "name": "Summary" }
+      ],
+      "views": [
+        { "name": "All Documents", "type": "table" },
+        { "name": "By Type", "type": "board", "groupByProperty": "Type" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "couple-names",
+      "question": "What are your names?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. Emma & James"
+    },
+    {
+      "id": "wedding-date",
+      "question": "When is your wedding?",
+      "type": "date",
+      "required": false,
+      "hint": "You can update this later from your dashboard."
+    },
+    {
+      "id": "wedding-location",
+      "question": "Where are you getting married?",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. Cotswolds, Edinburgh, Bristol"
+    },
+    {
+      "id": "total-budget",
+      "question": "What is your total wedding budget?",
+      "type": "number",
+      "required": false,
+      "hint": "e.g. 15000 — you can set this later"
+    },
+    {
+      "id": "biggest-challenge",
+      "question": "What feels most overwhelming about wedding planning right now?",
+      "type": "select",
+      "options": ["Finding vendors", "Managing the guest list", "Keeping track of costs", "The sheer number of decisions", "Communicating with people", "All of it honestly"],
+      "required": false
+    },
+    {
+      "id": "nd-type",
+      "question": "How would you describe yourself? (helps us personalise your dashboard)",
+      "type": "multi_select",
+      "options": ["ADHD", "Autistic", "Dyslexic", "Highly sensitive", "Late diagnosed", "Rather not say"],
+      "required": false
+    }
+  ]
+}

@@ -39,6 +39,14 @@ export const WORKFLOW_CATALOG = [
     description:
       "A low-friction workspace for ADHD and autistic brains. Capture thoughts before they vanish, find tasks that match your current energy, and build habits without shame spirals.",
   },
+  {
+    id: "neurodivergent-wedding",
+    name: "ND Wedding Planner",
+    emoji: "💜",
+    tagline: "Plan your wedding at your own pace, one energy level at a time.",
+    description:
+      "Everything the Wedding Planner has, built for neurodivergent couples. Filter planning tasks by energy level, dump vendor thoughts and let AI sort them, break overwhelming tasks into tiny steps, and use seating, draft letters, speeches and honeymoon planning — all in one place.",
+  },
 ] as const;
 
 export type WorkflowCatalogItem = (typeof WORKFLOW_CATALOG)[number];
