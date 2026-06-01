@@ -55,6 +55,14 @@ export const WORKFLOW_CATALOG = [
     description:
       "Everything the Wedding Planner has, built for neurodivergent couples. Filter planning tasks by energy level, dump vendor thoughts and let AI sort them, break overwhelming tasks into tiny steps, and use seating, draft letters, speeches and honeymoon planning — all in one place.",
   },
+  {
+    id: "food-business",
+    name: "Food Business Plan",
+    emoji: "🍽️",
+    tagline: "Build your complete food business plan — AI writes it, projects your P&L and generates your compliance checklist.",
+    description:
+      "Everything you need to open or grow a food business. AI writes your full business plan (executive summary, market analysis, operations, financials, food safety), projects a 12-month P&L with food-specific cost model (food cost %, labour %, fixed costs), and generates a tailored compliance checklist — every licence, registration and certificate you need to trade legally.",
+  },
 ] as const;
 
 export type WorkflowCatalogItem = (typeof WORKFLOW_CATALOG)[number];

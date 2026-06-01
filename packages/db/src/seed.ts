@@ -26,6 +26,7 @@ const packs: NichePack[] = [
   loadSchema("../../../niches/neurodivergent/schema.json"),
   loadSchema("../../../niches/neurodivergent-wedding/schema.json"),
   loadSchema("../../../niches/side-hustle/schema.json"),
+  loadSchema("../../../niches/food-business/schema.json"),
 ];
 
 async function seed() {

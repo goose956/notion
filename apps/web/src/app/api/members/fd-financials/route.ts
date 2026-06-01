@@ -1,0 +1,96 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { deductCredits, findOrCreateCustomer, getCustomerCredits } from "@niche-factory/db";
+import { auth } from "@/auth";
+
+const BodySchema = z.object({
+  startingCustomers:  z.number().min(0),
+  avgSpend:           z.number().positive(),
+  foodCostPct:        z.number().min(0).max(100),
+  labourCostPct:      z.number().min(0).max(100),
+  fixedMonthlyCosts:  z.number().min(0),
+  monthlyGrowthRate:  z.number().min(0).max(200),
+});
+
+const CREDITS_PER_CALL = 1;
+
+interface MonthRow {
+  month:            string;
+  customers:        number;
+  revenue:          number;
+  foodCosts:        number;
+  labourCosts:      number;
+  fixedCosts:       number;
+  grossProfit:      number;
+  netProfit:        number;
+  cumulativeProfit: number;
+}
+
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  let body: unknown;
+  try { body = await req.json(); } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = BodySchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
+
+  const userEmail = session.user.email;
+  await findOrCreateCustomer(userEmail).catch(() => null);
+  const credits = await getCustomerCredits(userEmail).catch(() => 0);
+  if (credits < CREDITS_PER_CALL) {
+    return NextResponse.json({ error: `You need ${CREDITS_PER_CALL} credit to generate financial projections.` }, { status: 402 });
+  }
+
+  const { startingCustomers, avgSpend, foodCostPct, labourCostPct, fixedMonthlyCosts, monthlyGrowthRate } = parsed.data;
+
+  const MONTH_NAMES = ["Month 1","Month 2","Month 3","Month 4","Month 5","Month 6","Month 7","Month 8","Month 9","Month 10","Month 11","Month 12"];
+  const months: MonthRow[] = [];
+  let cumulative = 0;
+  let breakEvenMonth: string | null = null;
+
+  for (let i = 0; i < 12; i++) {
+    const customers   = Math.round(startingCustomers * Math.pow(1 + monthlyGrowthRate / 100, i));
+    const revenue     = Math.round(customers * avgSpend);
+    const foodCosts   = Math.round(revenue * foodCostPct / 100);
+    const labourCosts = Math.round(revenue * labourCostPct / 100);
+    const grossProfit = revenue - foodCosts - labourCosts;
+    const netProfit   = grossProfit - fixedMonthlyCosts;
+    cumulative       += netProfit;
+
+    const row: MonthRow = {
+      month: MONTH_NAMES[i]!,
+      customers,
+      revenue,
+      foodCosts,
+      labourCosts,
+      fixedCosts:       fixedMonthlyCosts,
+      grossProfit:      Math.round(grossProfit),
+      netProfit:        Math.round(netProfit),
+      cumulativeProfit: Math.round(cumulative),
+    };
+
+    if (!breakEvenMonth && cumulative >= 0) breakEvenMonth = row.month;
+    months.push(row);
+  }
+
+  const last         = months[11]!;
+  const totalProfit  = months.reduce((s, m) => s + m.netProfit, 0);
+  const grossMargin  = last.revenue > 0 ? Math.round((last.grossProfit / last.revenue) * 100) : 0;
+
+  const summary = [
+    `Based on ${startingCustomers} starting customers at £${avgSpend} average spend, growing ${monthlyGrowthRate}% per month,`,
+    `you reach ${last.customers} customers by month 12 with £${last.revenue.toLocaleString()} monthly revenue.`,
+    `Food cost: ${foodCostPct}% · Labour: ${labourCostPct}% · Gross margin: ${grossMargin}%.`,
+    breakEvenMonth
+      ? `Cumulative break-even reached in ${breakEvenMonth}.`
+      : "Cumulative break-even is not reached within 12 months at these numbers — review your cost structure.",
+    `Total year-1 net profit: £${totalProfit.toLocaleString()}.`,
+  ].join(" ");
+
+  await deductCredits(userEmail, CREDITS_PER_CALL);
+  return NextResponse.json({ months, breakEvenMonth, summary });
+}

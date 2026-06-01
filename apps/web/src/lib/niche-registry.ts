@@ -41,6 +41,14 @@ export const NEURODIVERGENT_TABS = {
   BREAKDOWN:  "__nd_breakdown__",
 } as const;
 
+// ─── Food Business Plan tab IDs ──────────────────────────────────────────────
+export const FD_TABS = {
+  DASHBOARD:   "__fd_dashboard__",
+  PLAN:        "__fd_plan__",
+  FINANCIALS:  "__fd_financials__",
+  COMPLIANCE:  "__fd_compliance__",
+} as const;
+
 // ─── Side Hustle Business Plan tab IDs ───────────────────────────────────────
 export const SH_TABS = {
   DASHBOARD:  "__sh_dashboard__",
@@ -358,6 +366,31 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: SH_TABS.PLAN,       label: "Plan Builder",        icon: "✍️", appOnly: true },
       { tabId: SH_TABS.FINANCIALS, label: "Financial Projector", icon: "📊", appOnly: true },
       { tabId: SH_TABS.MARKET,     label: "Market Analyser",     icon: "🔍", appOnly: true },
+    ],
+  },
+
+  // ── Food Business Plan ──────────────────────────────────────────────────────
+  {
+    nicheId:       "food-business",
+    displayName:   "Food Business Plan",
+    virtualTabIds: new Set(Object.values(FD_TABS)),
+    defaultTabId:  FD_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#dc2626",
+      fgActive:      "#b91c1c",
+      fgHeader:      "#450a0a",
+      bgActive:      "rgba(220,38,38,0.10)",
+      bgHover:       "rgba(220,38,38,0.05)",
+      bgGroupHeader: "rgba(220,38,38,0.06)",
+      borderTop:     "1px solid rgba(220,38,38,0.15)",
+    },
+    sidebarEmoji: "🍽️",
+    topTabs: [
+      { tabId: FD_TABS.DASHBOARD,  label: "Dashboard",          icon: "🏠", appOnly: true },
+      { tabId: FD_TABS.PLAN,       label: "Plan Builder",        icon: "✍️", appOnly: true },
+      { tabId: FD_TABS.FINANCIALS, label: "Financial Projector", icon: "📊", appOnly: true },
+      { tabId: FD_TABS.COMPLIANCE, label: "Compliance",          icon: "✅", appOnly: true },
     ],
   },
 

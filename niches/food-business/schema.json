@@ -1,0 +1,144 @@
+{
+  "version": "1.0.0",
+  "id": "food-business",
+  "name": "Food Business Plan",
+  "description": "Build a complete food business plan with AI. Write your plan sections, project your financials with a food-specific P&L model, and get a tailored compliance checklist of every licence, registration and certificate you need to open legally.",
+  "databases": [
+    {
+      "id": "business-profile",
+      "name": "Business Profile",
+      "properties": [
+        { "name": "Business Name",        "type": "title" },
+        { "name": "Food Type",            "type": "select", "options": [{ "name": "Restaurant" }, { "name": "Café" }, { "name": "Bakery" }, { "name": "Food Truck" }, { "name": "Home Catering" }, { "name": "Meal Prep" }, { "name": "Takeaway" }, { "name": "Other" }] },
+        { "name": "Premises Type",        "type": "select", "options": [{ "name": "Own premises" }, { "name": "Rented kitchen" }, { "name": "Home kitchen" }, { "name": "Mobile" }, { "name": "Online only" }] },
+        { "name": "Average Customer Spend", "type": "number", "format": "pound" },
+        { "name": "Food Cost %",          "type": "number" },
+        { "name": "Labour Cost %",        "type": "number" },
+        { "name": "Fixed Monthly Costs",  "type": "number", "format": "pound" },
+        { "name": "Primary Goal",         "type": "select", "options": [{ "name": "Open a food business" }, { "name": "Get a business loan" }, { "name": "Start a side income" }, { "name": "Scale an existing business" }] },
+        { "name": "Stage",                "type": "select", "options": [{ "name": "Planning", "color": "gray" }, { "name": "Pre-launch", "color": "yellow" }, { "name": "Trading", "color": "green" }, { "name": "Scaling", "color": "blue" }] }
+      ]
+    },
+    {
+      "id": "menu",
+      "name": "Menu & Products",
+      "properties": [
+        { "name": "Item",       "type": "title" },
+        { "name": "Category",   "type": "select", "options": [{ "name": "Starter", "color": "yellow" }, { "name": "Main", "color": "orange" }, { "name": "Dessert", "color": "pink" }, { "name": "Drink", "color": "blue" }, { "name": "Snack", "color": "green" }, { "name": "Cake", "color": "purple" }, { "name": "Bread", "color": "brown" }, { "name": "Other", "color": "gray" }] },
+        { "name": "Price",      "type": "number", "format": "pound" },
+        { "name": "Food Cost",  "type": "number", "format": "pound" },
+        { "name": "Allergens",  "type": "multi_select", "options": [{ "name": "Gluten" }, { "name": "Dairy" }, { "name": "Eggs" }, { "name": "Nuts" }, { "name": "Peanuts" }, { "name": "Soy" }, { "name": "Fish" }, { "name": "Shellfish" }, { "name": "Sesame" }, { "name": "Celery" }, { "name": "Mustard" }, { "name": "Sulphites" }, { "name": "Lupin" }, { "name": "Molluscs" }] },
+        { "name": "Available",  "type": "checkbox" },
+        { "name": "Notes",      "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "financials",
+      "name": "Financial Projections",
+      "properties": [
+        { "name": "Month",          "type": "title" },
+        { "name": "Customers",      "type": "number" },
+        { "name": "Revenue",        "type": "number", "format": "pound" },
+        { "name": "Food Costs",     "type": "number", "format": "pound" },
+        { "name": "Labour Costs",   "type": "number", "format": "pound" },
+        { "name": "Fixed Costs",    "type": "number", "format": "pound" },
+        { "name": "Gross Profit",   "type": "number", "format": "pound" },
+        { "name": "Net Profit",     "type": "number", "format": "pound" },
+        { "name": "Cumulative Profit", "type": "number", "format": "pound" }
+      ]
+    },
+    {
+      "id": "licences",
+      "name": "Licences & Compliance",
+      "properties": [
+        { "name": "Licence",    "type": "title" },
+        { "name": "Category",   "type": "select", "options": [{ "name": "Registration", "color": "blue" }, { "name": "Licence", "color": "orange" }, { "name": "Certificate", "color": "green" }, { "name": "Insurance", "color": "purple" }, { "name": "Inspection", "color": "red" }] },
+        { "name": "Status",     "type": "select", "options": [{ "name": "Not started", "color": "gray" }, { "name": "In progress", "color": "yellow" }, { "name": "Obtained", "color": "green" }, { "name": "Renewal due", "color": "red" }] },
+        { "name": "Due Date",   "type": "date" },
+        { "name": "Authority",  "type": "rich_text" },
+        { "name": "Cost",       "type": "rich_text" },
+        { "name": "Notes",      "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "suppliers",
+      "name": "Suppliers",
+      "properties": [
+        { "name": "Supplier",       "type": "title" },
+        { "name": "Category",       "type": "select", "options": [{ "name": "Produce", "color": "green" }, { "name": "Meat", "color": "red" }, { "name": "Fish", "color": "blue" }, { "name": "Dairy", "color": "yellow" }, { "name": "Dry Goods", "color": "orange" }, { "name": "Packaging", "color": "gray" }, { "name": "Equipment", "color": "purple" }, { "name": "Other", "color": "gray" }] },
+        { "name": "Contact",        "type": "rich_text" },
+        { "name": "Lead Time",      "type": "select", "options": [{ "name": "Same day" }, { "name": "Next day" }, { "name": "2–3 days" }, { "name": "1 week" }, { "name": "2+ weeks" }] },
+        { "name": "Monthly Spend",  "type": "number", "format": "pound" },
+        { "name": "Notes",          "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "documents",
+      "name": "Business Plan Sections",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Section", "type": "select", "options": [{ "name": "Executive Summary" }, { "name": "Market Analysis" }, { "name": "Operations Plan" }, { "name": "Financial Plan" }, { "name": "Food Safety & Compliance" }, { "name": "Full Plan" }] },
+        { "name": "Content", "type": "rich_text" },
+        { "name": "Version", "type": "number" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)"],
+      "required": true
+    },
+    {
+      "id": "business-name",
+      "question": "What is your food business called?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. The Little Bakehouse, Spice Route Kitchen, Rosa's Catering"
+    },
+    {
+      "id": "food-type",
+      "question": "What type of food business is it?",
+      "type": "select",
+      "options": ["Restaurant", "Café", "Bakery", "Food Truck", "Home Catering", "Meal Prep", "Takeaway", "Other"],
+      "required": true
+    },
+    {
+      "id": "premises-type",
+      "question": "Where will you operate from?",
+      "type": "select",
+      "options": ["Own premises", "Rented kitchen", "Home kitchen", "Mobile", "Online only"],
+      "required": true
+    },
+    {
+      "id": "avg-spend",
+      "question": "What is the average amount each customer spends?",
+      "type": "number",
+      "required": false,
+      "hint": "e.g. 12 for a café, 35 for a restaurant — per visit or order"
+    },
+    {
+      "id": "food-cost-pct",
+      "question": "What % of revenue do you expect to spend on food costs?",
+      "type": "number",
+      "required": false,
+      "hint": "Typical range: 25–35% for restaurants, 30–40% for cafés and bakeries"
+    },
+    {
+      "id": "fixed-monthly-costs",
+      "question": "What are your estimated fixed monthly costs?",
+      "type": "number",
+      "required": false,
+      "hint": "Rent, rates, utilities, insurance — costs that don't change with sales"
+    },
+    {
+      "id": "primary-goal",
+      "question": "What is your primary goal with this plan?",
+      "type": "select",
+      "options": ["Open a food business", "Get a business loan", "Start a side income", "Scale an existing business"],
+      "required": true
+    }
+  ]
+}
