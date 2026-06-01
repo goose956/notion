@@ -12,6 +12,7 @@ import {
   createAppWorkspace,
   updateAppWorkspaceStatus,
   createAppDatabase,
+  addCustomerWorkflow,
 } from "@niche-factory/db";
 import { randomUUID } from "node:crypto";
 import { auth } from "@/auth";
@@ -147,6 +148,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    await addCustomerWorkflow(userId, pack.id).catch((err) => {
+      console.warn("[POST /api/deploy] addCustomerWorkflow (in-app) failed (non-fatal):", err);
+    });
+
     return NextResponse.json({
       result: { databaseIds, workspaceId, durationMs },
       deployId: workspaceId,
@@ -213,6 +218,13 @@ export async function POST(request: NextRequest) {
       const msg = err instanceof Error ? err.message : "Could not save criteria";
       console.warn(`[POST /api/deploy] Criteria save failed (non-fatal): ${msg}`);
     }
+  }
+
+  const workflowEmail = userEmail ?? (typeof notionUserId === "string" ? notionUserId : null);
+  if (workflowEmail) {
+    await addCustomerWorkflow(workflowEmail, pack.id).catch((err) => {
+      console.warn("[POST /api/deploy] addCustomerWorkflow (notion) failed (non-fatal):", err);
+    });
   }
 
   return NextResponse.json({ result, deployId, backend: "notion" });
