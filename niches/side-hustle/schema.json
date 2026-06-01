@@ -1,7 +1,7 @@
 {
+  "version": "1.0.0",
   "id": "side-hustle",
   "name": "Side Hustle Business Plan",
-  "emoji": "🚀",
   "description": "Turn your side hustle into a real business. AI builds your plan, financial projections and market research — ready for a bank loan, investor pitch, or just getting serious.",
   "databases": [
     {
