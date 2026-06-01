@@ -19,6 +19,7 @@ import { ProjectManagerShell } from "@/components/niches/project-manager/shell";
 import { PinterestShell } from "@/components/niches/pinterest-poster/shell";
 import { NeurodivergentNicheShell } from "@/components/niches/neurodivergent/shell";
 import { NDWeddingNicheShell } from "@/components/niches/nd-wedding/shell";
+import { SideHustleNicheShell } from "@/components/niches/side-hustle/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -972,6 +973,17 @@ export default function WorkspacePage() {
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}
                   onSeatedIdsChanged={setSeatedGuestIds}
+                />
+              );
+              if (entry.nicheId === "side-hustle") return (
+                <SideHustleNicheShell
+                  key="side-hustle"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["side-hustle"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
                 />
               );
               return null; // placeholder for future niches

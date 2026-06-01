@@ -41,6 +41,14 @@ export const NEURODIVERGENT_TABS = {
   BREAKDOWN:  "__nd_breakdown__",
 } as const;
 
+// ─── Side Hustle Business Plan tab IDs ───────────────────────────────────────
+export const SH_TABS = {
+  DASHBOARD:  "__sh_dashboard__",
+  PLAN:       "__sh_plan__",
+  FINANCIALS: "__sh_financials__",
+  MARKET:     "__sh_market__",
+} as const;
+
 // ─── Neurodivergent Wedding Planner tab IDs ──────────────────────────────────
 export const NDW_TABS = {
   DASHBOARD:   "__ndw_dashboard__",
@@ -326,6 +334,31 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       documents: [{ id: "Email", name: "Email", type: "email" }],
     },
     savedResearchDbIds: ["documents"],
+  },
+
+  // ── Side Hustle Business Plan ────────────────────────────────────────────
+  {
+    nicheId:       "side-hustle",
+    displayName:   "Side Hustle Business Plan",
+    virtualTabIds: new Set(Object.values(SH_TABS)),
+    defaultTabId:  SH_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#f97316",
+      fgActive:      "#ea580c",
+      fgHeader:      "#7c2d12",
+      bgActive:      "rgba(249,115,22,0.10)",
+      bgHover:       "rgba(249,115,22,0.05)",
+      bgGroupHeader: "rgba(249,115,22,0.06)",
+      borderTop:     "1px solid rgba(249,115,22,0.15)",
+    },
+    sidebarEmoji: "🚀",
+    topTabs: [
+      { tabId: SH_TABS.DASHBOARD,  label: "Dashboard",          icon: "🏠", appOnly: true },
+      { tabId: SH_TABS.PLAN,       label: "Plan Builder",        icon: "✍️", appOnly: true },
+      { tabId: SH_TABS.FINANCIALS, label: "Financial Projector", icon: "📊", appOnly: true },
+      { tabId: SH_TABS.MARKET,     label: "Market Analyser",     icon: "🔍", appOnly: true },
+    ],
   },
 
   // ── Add your next niche here ──────────────────────────────────────────────

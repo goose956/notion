@@ -1,0 +1,140 @@
+{
+  "id": "side-hustle",
+  "name": "Side Hustle Business Plan",
+  "emoji": "🚀",
+  "description": "Turn your side hustle into a real business. AI builds your plan, financial projections and market research — ready for a bank loan, investor pitch, or just getting serious.",
+  "databases": [
+    {
+      "dbId": "business-profile",
+      "name": "Business Profile",
+      "properties": [
+        { "name": "Business Name",              "type": "title" },
+        { "name": "Business Type",              "type": "select",     "options": ["Product", "Service", "Digital", "Mix"] },
+        { "name": "What You Sell",              "type": "rich_text" },
+        { "name": "Price Per Sale",             "type": "number" },
+        { "name": "Cost Per Sale",              "type": "number" },
+        { "name": "Fixed Monthly Costs",        "type": "number" },
+        { "name": "Target Customers Per Month", "type": "number" },
+        { "name": "Current Monthly Revenue",    "type": "number" },
+        { "name": "Primary Goal",               "type": "select",     "options": ["Quit my job", "Get a bank loan", "Pitch to investors", "Get organised"] },
+        { "name": "Stage",                      "type": "select",     "options": ["Idea", "Just started", "Growing", "Scaling"] }
+      ]
+    },
+    {
+      "dbId": "financials",
+      "name": "Financial Projections",
+      "properties": [
+        { "name": "Month",     "type": "title" },
+        { "name": "Customers", "type": "number" },
+        { "name": "Revenue",   "type": "number" },
+        { "name": "Variable Costs", "type": "number" },
+        { "name": "Fixed Costs",    "type": "number" },
+        { "name": "Profit",    "type": "number" },
+        { "name": "Cumulative Profit", "type": "number" },
+        { "name": "Notes",     "type": "rich_text" }
+      ]
+    },
+    {
+      "dbId": "milestones",
+      "name": "Action Plan",
+      "properties": [
+        { "name": "Milestone", "type": "title" },
+        { "name": "Due Date",  "type": "date" },
+        { "name": "Status",    "type": "select",   "options": ["Not started", "In progress", "Done"] },
+        { "name": "Category",  "type": "select",   "options": ["Revenue", "Marketing", "Operations", "Legal", "Product"] },
+        { "name": "Priority",  "type": "select",   "options": ["High", "Medium", "Low"] }
+      ],
+      "seedData": [
+        { "Milestone": "Register as sole trader or limited company", "Status": "Not started", "Category": "Legal",      "Priority": "High" },
+        { "Milestone": "Open a dedicated business bank account",     "Status": "Not started", "Category": "Legal",      "Priority": "High" },
+        { "Milestone": "Set up basic bookkeeping",                   "Status": "Not started", "Category": "Operations", "Priority": "High" },
+        { "Milestone": "Define your ideal customer in writing",      "Status": "Not started", "Category": "Marketing",  "Priority": "High" },
+        { "Milestone": "Set your prices and validate them",          "Status": "Not started", "Category": "Revenue",    "Priority": "High" },
+        { "Milestone": "Get your first 10 paying customers",         "Status": "Not started", "Category": "Revenue",    "Priority": "High" },
+        { "Milestone": "Launch your first marketing channel",        "Status": "Not started", "Category": "Marketing",  "Priority": "Medium" },
+        { "Milestone": "Build a simple website or online shop",      "Status": "Not started", "Category": "Marketing",  "Priority": "Medium" },
+        { "Milestone": "Create a simple referral or repeat system",  "Status": "Not started", "Category": "Marketing",  "Priority": "Low" },
+        { "Milestone": "Review your finances every month",           "Status": "Not started", "Category": "Operations", "Priority": "Medium" }
+      ]
+    },
+    {
+      "dbId": "market-research",
+      "name": "Market Research",
+      "properties": [
+        { "name": "Name",     "type": "title" },
+        { "name": "Type",     "type": "select",    "options": ["Competitor", "Target Customer", "Market Insight"] },
+        { "name": "Notes",    "type": "rich_text" },
+        { "name": "Source",   "type": "url" },
+        { "name": "Strength", "type": "select",    "options": ["Strong", "Moderate", "Weak"] }
+      ]
+    },
+    {
+      "dbId": "documents",
+      "name": "Business Plan Sections",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Section", "type": "select", "options": ["Executive Summary", "Market Analysis", "Business Model", "Operations Plan", "Financial Summary", "Full Plan"] },
+        { "name": "Content", "type": "rich_text" },
+        { "name": "Version", "type": "number" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "business-name",
+      "question": "What is your business called?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. Bloom Candles, Jake's Photography, TidyVA"
+    },
+    {
+      "id": "what-you-sell",
+      "question": "What do you sell or offer?",
+      "type": "text",
+      "required": true,
+      "hint": "Describe your product or service in a sentence."
+    },
+    {
+      "id": "business-type",
+      "question": "What type of business is it?",
+      "type": "select",
+      "options": ["Product", "Service", "Digital", "Mix"],
+      "required": true
+    },
+    {
+      "id": "price-per-sale",
+      "question": "What is your average price per sale (£)?",
+      "type": "number",
+      "required": false,
+      "hint": "e.g. 25 — you can update this later"
+    },
+    {
+      "id": "cost-per-sale",
+      "question": "What does each sale cost you to deliver (£)?",
+      "type": "number",
+      "required": false,
+      "hint": "Materials, time, fees — your variable cost per unit"
+    },
+    {
+      "id": "fixed-monthly-costs",
+      "question": "What are your fixed monthly costs (£)?",
+      "type": "number",
+      "required": false,
+      "hint": "Subscriptions, tools, rent — costs you pay regardless of sales"
+    },
+    {
+      "id": "target-customers",
+      "question": "How many customers per month are you targeting?",
+      "type": "number",
+      "required": false,
+      "hint": "Your goal — not your current number"
+    },
+    {
+      "id": "primary-goal",
+      "question": "What is your primary goal with this plan?",
+      "type": "select",
+      "options": ["Quit my job", "Get a bank loan", "Pitch to investors", "Get organised"],
+      "required": true
+    }
+  ]
+}

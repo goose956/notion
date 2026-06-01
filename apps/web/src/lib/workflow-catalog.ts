@@ -40,6 +40,14 @@ export const WORKFLOW_CATALOG = [
       "A low-friction workspace for ADHD and autistic brains. Capture thoughts before they vanish, find tasks that match your current energy, and build habits without shame spirals.",
   },
   {
+    id: "side-hustle",
+    name: "Side Hustle Business Plan",
+    emoji: "🚀",
+    tagline: "Turn your side hustle into a real business — AI builds your plan, financials and market research.",
+    description:
+      "Stop staring at a blank business plan. Answer a few questions and the AI writes your executive summary, market analysis, business model and more. Plus: a 12-month financial projector and competitor map — ready for a bank loan, investor pitch, or just getting serious.",
+  },
+  {
     id: "neurodivergent-wedding",
     name: "ND Wedding Planner",
     emoji: "💜",
