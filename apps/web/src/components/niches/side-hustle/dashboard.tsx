@@ -1,7 +1,7 @@
 "use client";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import type { WorkspaceDatabase } from "@/app/api/members/workspace/route";
-import { asText, asNumber, ACCENT, ACCENT_LIGHT, ACCENT_BORDER, GOAL_BADGE, PLAN_SECTIONS } from "./utils";
+import { asText, asNumber, ACCENT, ACCENT_LIGHT, ACCENT_BORDER, GOAL_BADGE, PLAN_SECTIONS, getCurrencyCode, formatCurrency } from "./utils";
 
 const SH_GRADIENT = "linear-gradient(135deg, #431407 0%, #9a3412 40%, #ea580c 75%, #fdba74 100%)";
 const SH_SHADOW   = "rgba(234,88,12,0.30)";
@@ -15,6 +15,7 @@ export function SideHustleDashboard({
   criteria:  Record<string, unknown> | null;
   nicheId?:  string;
 }) {
+  const currency      = getCurrencyCode(criteria);
   const businessName  = asText(criteria?.["business-name"]) || "Your Business";
   const goal          = asText(criteria?.["primary-goal"]);
   const goalBadge     = GOAL_BADGE[goal] ?? null;
@@ -84,7 +85,7 @@ export function SideHustleDashboard({
         <div style={{ borderRadius: "12px", background: ACCENT_LIGHT, border: `1px solid ${ACCENT_BORDER}`, padding: "14px" }}>
           <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#c2410c" }}>Peak monthly revenue</p>
           <p style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: N_FG }}>
-            {peakRevenue !== null ? `£${peakRevenue.toLocaleString()}` : "—"}
+            {formatCurrency(peakRevenue, currency)}
           </p>
           <p style={{ margin: "3px 0 0", fontSize: "11px", color: N_MUTED }}>month 12 projection</p>
         </div>
@@ -92,7 +93,7 @@ export function SideHustleDashboard({
         <div style={{ borderRadius: "12px", background: "rgba(5,150,105,0.06)", border: "1px solid rgba(5,150,105,0.18)", padding: "14px" }}>
           <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "#065f46" }}>Peak monthly profit</p>
           <p style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: N_FG }}>
-            {peakProfit !== null ? `£${peakProfit.toLocaleString()}` : "—"}
+            {formatCurrency(peakProfit, currency)}
           </p>
           {breakEvenRow && <p style={{ margin: "3px 0 0", fontSize: "11px", color: N_MUTED }}>Break-even: {asText(breakEvenRow.properties["Month"])}</p>}
         </div>

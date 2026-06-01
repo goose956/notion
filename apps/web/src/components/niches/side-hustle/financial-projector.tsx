@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
-import { asNumber, ACCENT, ACCENT_LIGHT, ACCENT_BORDER } from "./utils";
+import { asNumber, ACCENT, ACCENT_LIGHT, ACCENT_BORDER, getCurrencyCode, formatCurrency } from "./utils";
 
 interface MonthRow {
   month:            string;
@@ -45,6 +45,7 @@ export function SHFinancialProjector({
   financialsDb: WorkspaceDatabase | null;
   onRowAdded:   (dbNotionId: string, row: WorkspaceRow) => void;
 }) {
+  const currency = getCurrencyCode(criteria);
   const [price,       setPrice]      = useState(String(asNumber(criteria?.["price-per-sale"])        ?? ""));
   const [varCost,     setVarCost]    = useState(String(asNumber(criteria?.["cost-per-sale"])          ?? ""));
   const [fixedCosts,  setFixed]      = useState(String(asNumber(criteria?.["fixed-monthly-costs"])    ?? ""));
@@ -138,9 +139,9 @@ export function SHFinancialProjector({
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", marginBottom: "20px" }}>
-        <NumInput label="Price per sale (£)"          hint="Your average revenue per customer"       value={price}      onChange={setPrice} />
-        <NumInput label="Variable cost per sale (£)"  hint="Materials, fees, delivery per unit"      value={varCost}    onChange={setVarCost} />
-        <NumInput label="Fixed monthly costs (£)"     hint="Rent, subscriptions, tools — always on"  value={fixedCosts} onChange={setFixed} />
+        <NumInput label={`Price per sale (${currency})`}          hint="Your average revenue per customer"       value={price}      onChange={setPrice} />
+        <NumInput label={`Variable cost per sale (${currency})`}  hint="Materials, fees, delivery per unit"      value={varCost}    onChange={setVarCost} />
+        <NumInput label={`Fixed monthly costs (${currency})`}     hint="Rent, subscriptions, tools — always on"  value={fixedCosts} onChange={setFixed} />
         <NumInput label="Starting customers (month 1)" hint="How many customers do you have now?"    value={startCust}  onChange={setStartCust} />
         <NumInput label="Monthly growth rate (%)"     hint="Realistic: 5–15% for early stage"        value={growthRate} onChange={setGrowthRate} />
       </div>
@@ -198,14 +199,14 @@ export function SHFinancialProjector({
                         {row.month}{isBreakEven ? " ⭐" : ""}
                       </td>
                       <td style={{ padding: "9px 12px", textAlign: "right", color: N_SUBTLE }}>{row.customers}</td>
-                      <td style={{ padding: "9px 12px", textAlign: "right", color: N_FG }}>£{row.revenue.toLocaleString()}</td>
-                      <td style={{ padding: "9px 12px", textAlign: "right", color: N_SUBTLE }}>£{row.variableCosts.toLocaleString()}</td>
-                      <td style={{ padding: "9px 12px", textAlign: "right", color: N_SUBTLE }}>£{row.fixedCosts.toLocaleString()}</td>
+                      <td style={{ padding: "9px 12px", textAlign: "right", color: N_FG }}>{formatCurrency(row.revenue, currency)}</td>
+                      <td style={{ padding: "9px 12px", textAlign: "right", color: N_SUBTLE }}>{formatCurrency(row.variableCosts, currency)}</td>
+                      <td style={{ padding: "9px 12px", textAlign: "right", color: N_SUBTLE }}>{formatCurrency(row.fixedCosts, currency)}</td>
                       <td style={{ padding: "9px 12px", textAlign: "right", fontWeight: 600, color: isProfitable ? "#065f46" : "#b91c1c" }}>
-                        {isProfitable ? "+" : ""}£{row.profit.toLocaleString()}
+                        {isProfitable ? "+" : ""}{formatCurrency(row.profit, currency)}
                       </td>
                       <td style={{ padding: "9px 12px", textAlign: "right", color: row.cumulativeProfit >= 0 ? "#065f46" : N_SUBTLE }}>
-                        £{row.cumulativeProfit.toLocaleString()}
+                        {formatCurrency(row.cumulativeProfit, currency)}
                       </td>
                     </tr>
                   );

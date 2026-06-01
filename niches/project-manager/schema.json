@@ -195,6 +195,13 @@
   ],
   "onboardingQuestions": [
     {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)"],
+      "required": true
+    },
+    {
       "id": "active-projects",
       "question": "What are your main active projects right now?",
       "type": "text",

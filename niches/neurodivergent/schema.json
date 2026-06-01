@@ -135,6 +135,13 @@
   ],
   "onboardingQuestions": [
     {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)"],
+      "required": true
+    },
+    {
       "id": "name",
       "question": "What should we call you?",
       "type": "text",

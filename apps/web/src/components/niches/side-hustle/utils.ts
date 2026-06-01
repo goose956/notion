@@ -12,6 +12,21 @@ export const ACCENT        = "#f97316";
 export const ACCENT_LIGHT  = "rgba(249,115,22,0.08)";
 export const ACCENT_BORDER = "rgba(249,115,22,0.22)";
 
+export function getCurrencyCode(criteria: Record<string, unknown> | null): string {
+  const code = asText(criteria?.["currency-code"]).toUpperCase();
+  if (/^[A-Z]{3}$/.test(code)) return code;
+  return "GBP";
+}
+
+export function formatCurrency(value: number | null, currencyCode: string): string {
+  if (value === null || !Number.isFinite(value)) return "—";
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: currencyCode,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 export const PLAN_SECTIONS = [
   "Executive Summary",
   "Market Analysis",
