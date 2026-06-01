@@ -5,44 +5,44 @@
   "description": "Turn your side hustle into a real business. AI builds your plan, financial projections and market research — ready for a bank loan, investor pitch, or just getting serious.",
   "databases": [
     {
-      "dbId": "business-profile",
+      "id": "business-profile",
       "name": "Business Profile",
       "properties": [
         { "name": "Business Name",              "type": "title" },
-        { "name": "Business Type",              "type": "select",     "options": ["Product", "Service", "Digital", "Mix"] },
+        { "name": "Business Type",              "type": "select",   "options": [{ "name": "Product" }, { "name": "Service" }, { "name": "Digital" }, { "name": "Mix" }] },
         { "name": "What You Sell",              "type": "rich_text" },
-        { "name": "Price Per Sale",             "type": "number" },
-        { "name": "Cost Per Sale",              "type": "number" },
-        { "name": "Fixed Monthly Costs",        "type": "number" },
+        { "name": "Price Per Sale",             "type": "number",   "format": "pound" },
+        { "name": "Cost Per Sale",              "type": "number",   "format": "pound" },
+        { "name": "Fixed Monthly Costs",        "type": "number",   "format": "pound" },
         { "name": "Target Customers Per Month", "type": "number" },
-        { "name": "Current Monthly Revenue",    "type": "number" },
-        { "name": "Primary Goal",               "type": "select",     "options": ["Quit my job", "Get a bank loan", "Pitch to investors", "Get organised"] },
-        { "name": "Stage",                      "type": "select",     "options": ["Idea", "Just started", "Growing", "Scaling"] }
+        { "name": "Current Monthly Revenue",    "type": "number",   "format": "pound" },
+        { "name": "Primary Goal",               "type": "select",   "options": [{ "name": "Quit my job" }, { "name": "Get a bank loan" }, { "name": "Pitch to investors" }, { "name": "Get organised" }] },
+        { "name": "Stage",                      "type": "select",   "options": [{ "name": "Idea" }, { "name": "Just started" }, { "name": "Growing" }, { "name": "Scaling" }] }
       ]
     },
     {
-      "dbId": "financials",
+      "id": "financials",
       "name": "Financial Projections",
       "properties": [
-        { "name": "Month",     "type": "title" },
-        { "name": "Customers", "type": "number" },
-        { "name": "Revenue",   "type": "number" },
-        { "name": "Variable Costs", "type": "number" },
-        { "name": "Fixed Costs",    "type": "number" },
-        { "name": "Profit",    "type": "number" },
-        { "name": "Cumulative Profit", "type": "number" },
-        { "name": "Notes",     "type": "rich_text" }
+        { "name": "Month",             "type": "title" },
+        { "name": "Customers",         "type": "number" },
+        { "name": "Revenue",           "type": "number", "format": "pound" },
+        { "name": "Variable Costs",    "type": "number", "format": "pound" },
+        { "name": "Fixed Costs",       "type": "number", "format": "pound" },
+        { "name": "Profit",            "type": "number", "format": "pound" },
+        { "name": "Cumulative Profit", "type": "number", "format": "pound" },
+        { "name": "Notes",             "type": "rich_text" }
       ]
     },
     {
-      "dbId": "milestones",
+      "id": "milestones",
       "name": "Action Plan",
       "properties": [
         { "name": "Milestone", "type": "title" },
         { "name": "Due Date",  "type": "date" },
-        { "name": "Status",    "type": "select",   "options": ["Not started", "In progress", "Done"] },
-        { "name": "Category",  "type": "select",   "options": ["Revenue", "Marketing", "Operations", "Legal", "Product"] },
-        { "name": "Priority",  "type": "select",   "options": ["High", "Medium", "Low"] }
+        { "name": "Status",    "type": "select", "options": [{ "name": "Not started", "color": "gray" }, { "name": "In progress", "color": "yellow" }, { "name": "Done", "color": "green" }] },
+        { "name": "Category",  "type": "select", "options": [{ "name": "Revenue", "color": "green" }, { "name": "Marketing", "color": "blue" }, { "name": "Operations", "color": "orange" }, { "name": "Legal", "color": "red" }, { "name": "Product", "color": "purple" }] },
+        { "name": "Priority",  "type": "select", "options": [{ "name": "High", "color": "red" }, { "name": "Medium", "color": "yellow" }, { "name": "Low", "color": "gray" }] }
       ],
       "seedData": [
         { "Milestone": "Register as sole trader or limited company", "Status": "Not started", "Category": "Legal",      "Priority": "High" },
@@ -58,22 +58,22 @@
       ]
     },
     {
-      "dbId": "market-research",
+      "id": "market-research",
       "name": "Market Research",
       "properties": [
         { "name": "Name",     "type": "title" },
-        { "name": "Type",     "type": "select",    "options": ["Competitor", "Target Customer", "Market Insight"] },
+        { "name": "Type",     "type": "select",    "options": [{ "name": "Competitor", "color": "red" }, { "name": "Target Customer", "color": "blue" }, { "name": "Market Insight", "color": "green" }] },
         { "name": "Notes",    "type": "rich_text" },
         { "name": "Source",   "type": "url" },
-        { "name": "Strength", "type": "select",    "options": ["Strong", "Moderate", "Weak"] }
+        { "name": "Strength", "type": "select",    "options": [{ "name": "Strong", "color": "red" }, { "name": "Moderate", "color": "yellow" }, { "name": "Weak", "color": "green" }] }
       ]
     },
     {
-      "dbId": "documents",
+      "id": "documents",
       "name": "Business Plan Sections",
       "properties": [
         { "name": "Title",   "type": "title" },
-        { "name": "Section", "type": "select", "options": ["Executive Summary", "Market Analysis", "Business Model", "Operations Plan", "Financial Summary", "Full Plan"] },
+        { "name": "Section", "type": "select", "options": [{ "name": "Executive Summary" }, { "name": "Market Analysis" }, { "name": "Business Model" }, { "name": "Operations Plan" }, { "name": "Financial Summary" }, { "name": "Full Plan" }] },
         { "name": "Content", "type": "rich_text" },
         { "name": "Version", "type": "number" }
       ]
