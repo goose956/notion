@@ -31,6 +31,14 @@ export const WORKFLOW_CATALOG = [
     description:
       "Generate SEO-optimised pin titles, descriptions and tags with AI. Upload your own image or generate one — then post directly to your Pinterest board and track your history.",
   },
+  {
+    id: "neurodivergent",
+    name: "Neurodivergent Life OS",
+    emoji: "🧠",
+    tagline: "Work with your brain, not against it.",
+    description:
+      "A low-friction workspace for ADHD and autistic brains. Capture thoughts before they vanish, find tasks that match your current energy, and build habits without shame spirals.",
+  },
 ] as const;
 
 export type WorkflowCatalogItem = (typeof WORKFLOW_CATALOG)[number];

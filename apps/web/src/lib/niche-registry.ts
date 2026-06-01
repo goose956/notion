@@ -33,6 +33,14 @@ export const PROJECT_MANAGER_TABS = {
   TASK_BREAKDOWN:  "__pm_task_breakdown__",
 } as const;
 
+// ─── Neurodivergent Life OS tab IDs ──────────────────────────────────────────
+export const NEURODIVERGENT_TABS = {
+  DASHBOARD:  "__nd_dashboard__",
+  BRAIN_DUMP: "__nd_brain_dump__",
+  FOCUS:      "__nd_focus__",
+  BREAKDOWN:  "__nd_breakdown__",
+} as const;
+
 // ─── Rainbow Wedding Planner tab IDs ─────────────────────────────────────────
 // Must be unique — never share IDs with another niche or both shells activate.
 export const RAINBOW_TABS = {
@@ -239,6 +247,34 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
     topTabs: [
       { tabId: PINTEREST_TABS.DASHBOARD,  label: "Dashboard",   icon: "🏠", appOnly: true },
       { tabId: PINTEREST_TABS.CREATE_PIN, label: "Create Pin",  icon: "✏️", appOnly: true },
+    ],
+  },
+
+  // ── Neurodivergent Life OS ───────────────────────────────────────────────
+  {
+    nicheId:       "neurodivergent",
+    displayName:   "Neurodivergent Life OS",
+    virtualTabIds: new Set(Object.values(NEURODIVERGENT_TABS)),
+    defaultTabId:  NEURODIVERGENT_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#0d9488",
+      fgActive:      "#0f766e",
+      fgHeader:      "#134e4a",
+      bgActive:      "rgba(13,148,136,0.10)",
+      bgHover:       "rgba(13,148,136,0.05)",
+      bgGroupHeader: "rgba(13,148,136,0.06)",
+      borderTop:     "1px solid rgba(13,148,136,0.15)",
+    },
+    sidebarEmoji: "🧠",
+    topTabs: [
+      { tabId: NEURODIVERGENT_TABS.DASHBOARD, label: "Dashboard", icon: "🏠", appOnly: true },
+    ],
+    afterDbNamePattern: /^tasks$/i,
+    afterDbTabs: [
+      { tabId: NEURODIVERGENT_TABS.FOCUS,     label: "What can I do?",  icon: "⚡", appOnly: true },
+      { tabId: NEURODIVERGENT_TABS.BRAIN_DUMP, label: "Brain Dump",     icon: "🌀", appOnly: true },
+      { tabId: NEURODIVERGENT_TABS.BREAKDOWN,  label: "Break It Down",  icon: "🔨", appOnly: true },
     ],
   },
 

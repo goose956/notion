@@ -23,6 +23,7 @@ const packs: NichePack[] = [
   loadSchema("../../../niches/rainbow/schema.json"),
   loadSchema("../../../niches/project-manager/schema.json"),
   loadSchema("../../../niches/pinterest-poster/schema.json"),
+  loadSchema("../../../niches/neurodivergent/schema.json"),
 ];
 
 async function seed() {

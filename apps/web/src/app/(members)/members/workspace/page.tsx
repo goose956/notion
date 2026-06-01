@@ -17,6 +17,7 @@ import { DocumentsView } from "@/components/workspace/documents-view";
 import { WeddingNicheShell } from "@/components/niches/wedding-planner/shell";
 import { ProjectManagerShell } from "@/components/niches/project-manager/shell";
 import { PinterestShell } from "@/components/niches/pinterest-poster/shell";
+import { NeurodivergentNicheShell } from "@/components/niches/neurodivergent/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -944,6 +945,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["pinterest-poster"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "neurodivergent") return (
+                <NeurodivergentNicheShell
+                  key="neurodivergent"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["neurodivergent"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}

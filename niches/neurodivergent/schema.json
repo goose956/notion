@@ -1,0 +1,166 @@
+{
+  "version": "1.0.0",
+  "id": "neurodivergent",
+  "name": "Neurodivergent Life OS",
+  "description": "A low-friction workspace designed for ADHD and autistic brains. Capture thoughts before they vanish, find tasks that match your current energy, and build habits without shame spirals.",
+  "tagline": "Work with your brain, not against it.",
+  "icon": "🧠",
+  "databases": [
+    {
+      "id": "tasks",
+      "name": "Tasks",
+      "description": "Everything you need to do — filtered by energy and context so you always know where to start.",
+      "icon": "✅",
+      "properties": [
+        { "type": "title", "name": "Task" },
+        {
+          "type": "select",
+          "name": "Energy Required",
+          "options": [
+            { "name": "Low 🔋", "color": "green" },
+            { "name": "Medium ⚡", "color": "yellow" },
+            { "name": "High 🚀", "color": "red" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "Context",
+          "options": [
+            { "name": "Anywhere", "color": "default" },
+            { "name": "At desk", "color": "blue" },
+            { "name": "Home", "color": "purple" },
+            { "name": "Quick win", "color": "green" },
+            { "name": "Out & about", "color": "orange" },
+            { "name": "Phone only", "color": "pink" }
+          ]
+        },
+        {
+          "type": "status",
+          "name": "Status",
+          "options": [
+            { "name": "To Do", "color": "gray" },
+            { "name": "Doing it", "color": "blue" },
+            { "name": "Done", "color": "green" },
+            { "name": "Waiting", "color": "yellow" },
+            { "name": "Dropped", "color": "red" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "Priority",
+          "options": [
+            { "name": "Must do", "color": "red" },
+            { "name": "Should do", "color": "yellow" },
+            { "name": "Nice to do", "color": "blue" }
+          ]
+        },
+        { "type": "rich_text", "name": "Project" },
+        { "type": "date", "name": "Due Date" },
+        { "type": "rich_text", "name": "Notes" }
+      ],
+      "views": [
+        { "name": "All Tasks", "type": "table" },
+        { "name": "Open", "type": "table", "filters": [{ "propertyName": "Status", "condition": "does_not_equal", "value": "Done" }] },
+        { "name": "By Energy", "type": "board", "groupByProperty": "Energy Required" },
+        { "name": "By Context", "type": "board", "groupByProperty": "Context" }
+      ]
+    },
+    {
+      "id": "brain-dump",
+      "name": "Brain Dump",
+      "description": "Raw thoughts, ideas, and captured items — sorted by AI after the fact.",
+      "icon": "🌀",
+      "properties": [
+        { "type": "title", "name": "Note" },
+        {
+          "type": "select",
+          "name": "Category",
+          "options": [
+            { "name": "Task", "color": "blue" },
+            { "name": "Habit", "color": "green" },
+            { "name": "Idea", "color": "purple" },
+            { "name": "Feeling", "color": "pink" },
+            { "name": "Note", "color": "gray" }
+          ]
+        },
+        { "type": "checkbox", "name": "Processed" },
+        { "type": "created_time", "name": "Captured" },
+        { "type": "rich_text", "name": "Context" }
+      ],
+      "views": [
+        { "name": "All", "type": "table" },
+        { "name": "Unprocessed", "type": "table", "filters": [{ "propertyName": "Processed", "condition": "equals", "value": false }] }
+      ]
+    },
+    {
+      "id": "habits",
+      "name": "Habits",
+      "description": "Flexible habit tracking — no shame, no streaks lost over bad days.",
+      "icon": "🌱",
+      "properties": [
+        { "type": "title", "name": "Habit" },
+        {
+          "type": "select",
+          "name": "Frequency",
+          "options": [
+            { "name": "Daily", "color": "green" },
+            { "name": "Weekdays", "color": "blue" },
+            { "name": "Weekly", "color": "yellow" },
+            { "name": "As needed", "color": "gray" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "Category",
+          "options": [
+            { "name": "Body", "color": "green" },
+            { "name": "Mind", "color": "purple" },
+            { "name": "Social", "color": "orange" },
+            { "name": "Work", "color": "blue" },
+            { "name": "Self-care", "color": "pink" }
+          ]
+        },
+        { "type": "number", "name": "Current Streak" },
+        { "type": "number", "name": "Best Streak" },
+        { "type": "date", "name": "Last Done" },
+        { "type": "checkbox", "name": "Done Today" },
+        { "type": "rich_text", "name": "Notes" }
+      ],
+      "views": [
+        { "name": "All Habits", "type": "table" },
+        { "name": "Today", "type": "table", "filters": [{ "propertyName": "Done Today", "condition": "equals", "value": false }] },
+        { "name": "By Category", "type": "board", "groupByProperty": "Category" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "name",
+      "question": "What should we call you?",
+      "type": "text",
+      "required": true,
+      "hint": "Your first name or preferred name"
+    },
+    {
+      "id": "neurodivergent-type",
+      "question": "What best describes you? (no need to pick just one)",
+      "type": "multi_select",
+      "options": ["ADHD", "Autistic", "Dyslexic", "Highly sensitive", "Late diagnosed", "Self-suspected", "Other / rather not say"],
+      "required": false
+    },
+    {
+      "id": "biggest-challenge",
+      "question": "What's your biggest day-to-day challenge?",
+      "type": "select",
+      "options": ["Starting tasks", "Finishing tasks", "Remembering things", "Managing energy", "Overwhelm", "Time blindness", "All of the above"],
+      "required": false
+    },
+    {
+      "id": "good-day",
+      "question": "What does a good day look like for you?",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. Got one important thing done, had enough breaks, didn't spiral"
+    }
+  ]
+}
