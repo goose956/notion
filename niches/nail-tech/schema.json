@@ -1,0 +1,134 @@
+{
+  "version": "1.0.0",
+  "id": "nail-tech",
+  "name": "Nail Tech & Beauty Business Planner",
+  "description": "Run a professional nail tech or beauty business. Price your services correctly, track clients and appointments, stay compliant with COSHH and patch test requirements, and build a complete business plan with AI.",
+  "databases": [
+    {
+      "id": "service-menu",
+      "name": "Service Menu",
+      "properties": [
+        { "name": "Service",        "type": "title" },
+        { "name": "Category",       "type": "select", "options": [{ "name": "Nails", "color": "pink" }, { "name": "Gel Nails", "color": "purple" }, { "name": "Acrylics", "color": "red" }, { "name": "Nail Art", "color": "orange" }, { "name": "Lashes", "color": "default" }, { "name": "Brows", "color": "brown" }, { "name": "Skincare", "color": "green" }, { "name": "Waxing", "color": "yellow" }, { "name": "Facial", "color": "blue" }, { "name": "Other", "color": "gray" }] },
+        { "name": "Duration (mins)", "type": "number" },
+        { "name": "Price",           "type": "number", "format": "pound" },
+        { "name": "Materials Cost",  "type": "number", "format": "pound" },
+        { "name": "Patch Test Required", "type": "checkbox" },
+        { "name": "Available",       "type": "checkbox" },
+        { "name": "Notes",           "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "clients",
+      "name": "Client Records",
+      "properties": [
+        { "name": "Client Name",         "type": "title" },
+        { "name": "Phone",               "type": "rich_text" },
+        { "name": "Email",               "type": "email" },
+        { "name": "Patch Test Date",     "type": "date" },
+        { "name": "Patch Test Result",   "type": "select", "options": [{ "name": "Clear", "color": "green" }, { "name": "Reaction — do not treat", "color": "red" }, { "name": "Pending", "color": "yellow" }, { "name": "Not required", "color": "gray" }] },
+        { "name": "Contraindications",   "type": "rich_text" },
+        { "name": "Preferred Services",  "type": "rich_text" },
+        { "name": "Last Visit",          "type": "date" },
+        { "name": "Total Spent",         "type": "number", "format": "pound" },
+        { "name": "Notes",               "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "appointments",
+      "name": "Appointments",
+      "properties": [
+        { "name": "Client",     "type": "title" },
+        { "name": "Service",    "type": "rich_text" },
+        { "name": "Date",       "type": "date" },
+        { "name": "Duration",   "type": "select", "options": [{ "name": "30 min" }, { "name": "45 min" }, { "name": "1 hour" }, { "name": "1.5 hours" }, { "name": "2 hours" }, { "name": "2.5 hours" }, { "name": "3 hours" }] },
+        { "name": "Price",      "type": "number", "format": "pound" },
+        { "name": "Status",     "type": "select", "options": [{ "name": "Enquiry", "color": "gray" }, { "name": "Booked", "color": "blue" }, { "name": "Deposit Paid", "color": "orange" }, { "name": "Completed", "color": "green" }, { "name": "No-show", "color": "red" }, { "name": "Cancelled", "color": "pink" }] },
+        { "name": "Deposit",    "type": "number", "format": "pound" },
+        { "name": "Notes",      "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "financials",
+      "name": "Financial Projections",
+      "properties": [
+        { "name": "Month",             "type": "title" },
+        { "name": "Appointments",      "type": "number" },
+        { "name": "Revenue",           "type": "number", "format": "pound" },
+        { "name": "Materials Cost",    "type": "number", "format": "pound" },
+        { "name": "Labour Cost",       "type": "number", "format": "pound" },
+        { "name": "Fixed Costs",       "type": "number", "format": "pound" },
+        { "name": "Gross Profit",      "type": "number", "format": "pound" },
+        { "name": "Net Profit",        "type": "number", "format": "pound" },
+        { "name": "Cumulative Profit", "type": "number", "format": "pound" }
+      ]
+    },
+    {
+      "id": "compliance",
+      "name": "Licences & Compliance",
+      "properties": [
+        { "name": "Requirement", "type": "title" },
+        { "name": "Category",    "type": "select", "options": [{ "name": "Registration", "color": "blue" }, { "name": "Certificate", "color": "green" }, { "name": "Insurance", "color": "purple" }, { "name": "COSHH", "color": "orange" }, { "name": "Patch Testing", "color": "pink" }, { "name": "Inspection", "color": "red" }] },
+        { "name": "Status",      "type": "select", "options": [{ "name": "Not started", "color": "gray" }, { "name": "In progress", "color": "yellow" }, { "name": "Obtained", "color": "green" }, { "name": "Renewal due", "color": "red" }] },
+        { "name": "Due Date",    "type": "date" },
+        { "name": "Authority",   "type": "rich_text" },
+        { "name": "Cost",        "type": "rich_text" },
+        { "name": "Notes",       "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "documents",
+      "name": "Business Plan Sections",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Section", "type": "select", "options": [{ "name": "Executive Summary" }, { "name": "Service Menu & Pricing" }, { "name": "Client Acquisition & Retention" }, { "name": "Operations & Workspace" }, { "name": "Financial Plan" }, { "name": "Health, Safety & Compliance" }] },
+        { "name": "Content", "type": "rich_text" },
+        { "name": "Version", "type": "number" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)"],
+      "required": true
+    },
+    {
+      "id": "business-name",
+      "question": "What is your beauty business called?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. Polished by Priya, The Nail Studio, Gloss & Glow"
+    },
+    {
+      "id": "operation-type",
+      "question": "Where do you work from?",
+      "type": "select",
+      "options": ["Home salon", "Mobile (client's home)", "Rented chair / room", "Own salon premises"],
+      "required": true
+    },
+    {
+      "id": "speciality",
+      "question": "What is your main speciality?",
+      "type": "select",
+      "options": ["Nails (gel, acrylic, nail art)", "Lashes & brows", "Full beauty (nails + lashes + brows)", "Skincare & facials", "Waxing & hair removal", "Mixed treatments"],
+      "required": true
+    },
+    {
+      "id": "primary-goal",
+      "question": "What is your primary goal?",
+      "type": "select",
+      "options": ["Start a beauty business", "Grow an existing business", "Go full-time from part-time", "Get business funding"],
+      "required": true
+    },
+    {
+      "id": "currency-code",
+      "question": "What currency do you use?",
+      "type": "select",
+      "options": ["GBP", "USD", "EUR", "CAD", "AUD"],
+      "required": false
+    }
+  ]
+}

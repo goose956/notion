@@ -95,6 +95,14 @@ export const WORKFLOW_CATALOG = [
     description:
       "Everything a short-term rental host needs to delight guests. AI writes localised guidebook sections (dining, things to do, transport, emergency info and more) using live search results. Generate a full welcome pack — welcome letter, check-in guide, house rules, checkout checklist and WiFi card. A guest messaging tool writes warm, personalised messages for every stage of the booking: pre-arrival, check-in day, mid-stay check-in, checkout reminder and review requests.",
   },
+  {
+    id: "nail-tech",
+    name: "Nail Tech & Beauty Planner",
+    emoji: "💅",
+    tagline: "Price your services properly, stay compliant with COSHH and patch testing rules, and build a real business plan.",
+    description:
+      "Everything a nail technician or independent beauty therapist needs to run a professional business. A service pricing calculator accounts for materials, labour time, overhead, and margin — so you stop undercharging. A compliance checklist covers every legal requirement: COSHH assessments for nail chemicals and adhesives, patch testing protocols (48-hour rule + record keeping), treatment liability insurance, ventilation requirements, PAT testing, and local authority registration. A built-in client tracker flags clients with pending patch test results before treatment. AI writes each section of your business plan from Executive Summary to Health, Safety & Compliance — tailored to your speciality and operation type.",
+  },
 ] as const;
 
 export type WorkflowCatalogItem = (typeof WORKFLOW_CATALOG)[number];

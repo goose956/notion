@@ -57,6 +57,14 @@ export const CAKE_TABS = {
   COMPLIANCE: "__cake_compliance__",
 } as const;
 
+// ─── Nail Tech & Beauty Business Planner tab IDs ─────────────────────────────
+export const NAIL_TABS = {
+  DASHBOARD:  "__nail_dashboard__",
+  PLAN:       "__nail_plan__",
+  PRICING:    "__nail_pricing__",
+  COMPLIANCE: "__nail_compliance__",
+} as const;
+
 // ─── STR Guidebook & Welcome Portal tab IDs ──────────────────────────────────
 export const STR_TABS = {
   DASHBOARD:   "__str_dashboard__",
@@ -523,6 +531,31 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: STR_TABS.GUIDEBOOK,    label: "Guidebook",      icon: "📖", appOnly: true },
       { tabId: STR_TABS.WELCOME_PACK, label: "Welcome Pack",   icon: "💌", appOnly: true },
       { tabId: STR_TABS.GUEST_COMMS,  label: "Guest Messages", icon: "💬", appOnly: true },
+    ],
+  },
+
+  // ── Nail Tech & Beauty Business Planner ─────────────────────────────────────
+  {
+    nicheId:       "nail-tech",
+    displayName:   "Nail Tech & Beauty Planner",
+    virtualTabIds: new Set(Object.values(NAIL_TABS)),
+    defaultTabId:  NAIL_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#c026d3",
+      fgActive:      "#a21caf",
+      fgHeader:      "#4a044e",
+      bgActive:      "rgba(192,38,211,0.10)",
+      bgHover:       "rgba(192,38,211,0.05)",
+      bgGroupHeader: "rgba(192,38,211,0.06)",
+      borderTop:     "1px solid rgba(192,38,211,0.15)",
+    },
+    sidebarEmoji: "💅",
+    topTabs: [
+      { tabId: NAIL_TABS.DASHBOARD,  label: "Dashboard",            icon: "🏠", appOnly: true },
+      { tabId: NAIL_TABS.PLAN,       label: "Plan Builder",          icon: "✍️", appOnly: true },
+      { tabId: NAIL_TABS.PRICING,    label: "Pricing & Financials",  icon: "💅", appOnly: true },
+      { tabId: NAIL_TABS.COMPLIANCE, label: "Compliance",            icon: "✅", appOnly: true },
     ],
   },
 
