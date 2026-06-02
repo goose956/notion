@@ -49,6 +49,14 @@ export const CC_TABS = {
   CAPTION:   "__cc_caption__",
 } as const;
 
+// ─── Cake Business Planner tab IDs ───────────────────────────────────────────
+export const CAKE_TABS = {
+  DASHBOARD:  "__cake_dashboard__",
+  PLAN:       "__cake_plan__",
+  PRICING:    "__cake_pricing__",
+  COMPLIANCE: "__cake_compliance__",
+} as const;
+
 // ─── STR Guidebook & Welcome Portal tab IDs ──────────────────────────────────
 export const STR_TABS = {
   DASHBOARD:   "__str_dashboard__",
@@ -465,6 +473,31 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: ETSY_TABS.LISTING_WRITER, label: "Listing Writer",  icon: "✍️", appOnly: true },
       { tabId: ETSY_TABS.FINANCIALS,     label: "Finance Tracker", icon: "📊", appOnly: true },
       { tabId: ETSY_TABS.REVIEWS,        label: "Review Manager",  icon: "⭐", appOnly: true },
+    ],
+  },
+
+  // ── Cake Business Planner ────────────────────────────────────────────────────
+  {
+    nicheId:       "cake-business",
+    displayName:   "Cake Business Planner",
+    virtualTabIds: new Set(Object.values(CAKE_TABS)),
+    defaultTabId:  CAKE_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#db2777",
+      fgActive:      "#be185d",
+      fgHeader:      "#500724",
+      bgActive:      "rgba(219,39,119,0.10)",
+      bgHover:       "rgba(219,39,119,0.05)",
+      bgGroupHeader: "rgba(219,39,119,0.06)",
+      borderTop:     "1px solid rgba(219,39,119,0.15)",
+    },
+    sidebarEmoji: "🎂",
+    topTabs: [
+      { tabId: CAKE_TABS.DASHBOARD,  label: "Dashboard",            icon: "🏠", appOnly: true },
+      { tabId: CAKE_TABS.PLAN,       label: "Plan Builder",          icon: "✍️", appOnly: true },
+      { tabId: CAKE_TABS.PRICING,    label: "Pricing & Financials",  icon: "🎂", appOnly: true },
+      { tabId: CAKE_TABS.COMPLIANCE, label: "Compliance",            icon: "✅", appOnly: true },
     ],
   },
 

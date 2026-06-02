@@ -1,0 +1,123 @@
+{
+  "version": "1.0.0",
+  "id": "cake-business",
+  "name": "Cake Business Planner",
+  "description": "Build a cake business from the ground up. Price your cakes correctly with a profit-first calculator, write your business plan with AI, track custom orders, and get a compliance checklist tailored to home bakers and cake makers.",
+  "databases": [
+    {
+      "id": "cake-menu",
+      "name": "Cake Menu & Products",
+      "properties": [
+        { "name": "Cake",       "type": "title" },
+        { "name": "Category",   "type": "select", "options": [{ "name": "Custom Celebration", "color": "pink" }, { "name": "Wedding Tier", "color": "default" }, { "name": "Cupcakes", "color": "purple" }, { "name": "Traybake", "color": "yellow" }, { "name": "Drip Cake", "color": "orange" }, { "name": "Vegan", "color": "green" }, { "name": "Gluten-Free", "color": "blue" }, { "name": "Seasonal", "color": "red" }, { "name": "Other", "color": "gray" }] },
+        { "name": "Price",           "type": "number", "format": "pound" },
+        { "name": "Serves",          "type": "number" },
+        { "name": "Ingredients Cost","type": "number", "format": "pound" },
+        { "name": "Time (hrs)",      "type": "number" },
+        { "name": "Allergens",       "type": "multi_select", "options": [{ "name": "Gluten" }, { "name": "Dairy" }, { "name": "Eggs" }, { "name": "Nuts" }, { "name": "Peanuts" }, { "name": "Soy" }, { "name": "Sesame" }, { "name": "Sulphites" }, { "name": "Lupin" }] },
+        { "name": "Available",       "type": "checkbox" },
+        { "name": "Notes",           "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "orders",
+      "name": "Custom Orders",
+      "properties": [
+        { "name": "Customer",    "type": "title" },
+        { "name": "Cake Type",   "type": "rich_text" },
+        { "name": "Event",       "type": "select", "options": [{ "name": "Birthday", "color": "pink" }, { "name": "Wedding", "color": "default" }, { "name": "Anniversary", "color": "red" }, { "name": "Baby Shower", "color": "blue" }, { "name": "Christening", "color": "purple" }, { "name": "Corporate", "color": "orange" }, { "name": "Graduation", "color": "green" }, { "name": "Other", "color": "gray" }] },
+        { "name": "Event Date",  "type": "date" },
+        { "name": "Tiers",       "type": "number" },
+        { "name": "Serves",      "type": "number" },
+        { "name": "Flavour",     "type": "rich_text" },
+        { "name": "Quote",       "type": "number", "format": "pound" },
+        { "name": "Deposit",     "type": "number", "format": "pound" },
+        { "name": "Balance Due", "type": "number", "format": "pound" },
+        { "name": "Status",      "type": "select", "options": [{ "name": "Enquiry", "color": "gray" }, { "name": "Quoted", "color": "yellow" }, { "name": "Confirmed", "color": "blue" }, { "name": "Deposit Paid", "color": "orange" }, { "name": "In Progress", "color": "purple" }, { "name": "Completed", "color": "green" }, { "name": "Cancelled", "color": "red" }] },
+        { "name": "Notes",       "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "financials",
+      "name": "Financial Projections",
+      "properties": [
+        { "name": "Month",             "type": "title" },
+        { "name": "Orders",            "type": "number" },
+        { "name": "Revenue",           "type": "number", "format": "pound" },
+        { "name": "Ingredients Cost",  "type": "number", "format": "pound" },
+        { "name": "Labour Cost",       "type": "number", "format": "pound" },
+        { "name": "Fixed Costs",       "type": "number", "format": "pound" },
+        { "name": "Gross Profit",      "type": "number", "format": "pound" },
+        { "name": "Net Profit",        "type": "number", "format": "pound" },
+        { "name": "Cumulative Profit", "type": "number", "format": "pound" }
+      ]
+    },
+    {
+      "id": "compliance",
+      "name": "Licences & Compliance",
+      "properties": [
+        { "name": "Requirement", "type": "title" },
+        { "name": "Category",    "type": "select", "options": [{ "name": "Registration", "color": "blue" }, { "name": "Certificate", "color": "green" }, { "name": "Licence", "color": "orange" }, { "name": "Insurance", "color": "purple" }, { "name": "Labelling", "color": "pink" }, { "name": "Inspection", "color": "red" }] },
+        { "name": "Status",      "type": "select", "options": [{ "name": "Not started", "color": "gray" }, { "name": "In progress", "color": "yellow" }, { "name": "Obtained", "color": "green" }, { "name": "Renewal due", "color": "red" }] },
+        { "name": "Due Date",    "type": "date" },
+        { "name": "Authority",   "type": "rich_text" },
+        { "name": "Cost",        "type": "rich_text" },
+        { "name": "Notes",       "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "documents",
+      "name": "Business Plan Sections",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Section", "type": "select", "options": [{ "name": "Executive Summary" }, { "name": "Product Range & Pricing" }, { "name": "Sales & Marketing" }, { "name": "Operations & Kitchen Setup" }, { "name": "Financial Plan" }, { "name": "Food Safety & Compliance" }] },
+        { "name": "Content", "type": "rich_text" },
+        { "name": "Version", "type": "number" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)"],
+      "required": true
+    },
+    {
+      "id": "business-name",
+      "question": "What is your cake business called?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. Crumbs & Co, The Little Cake Studio, Baked by Emma"
+    },
+    {
+      "id": "operation-type",
+      "question": "Where do you bake from?",
+      "type": "select",
+      "options": ["Home kitchen", "Rented kitchen", "Own premises / studio", "Market stall / pop-up"],
+      "required": true
+    },
+    {
+      "id": "speciality",
+      "question": "What is your main speciality?",
+      "type": "select",
+      "options": ["Custom celebration cakes", "Wedding cakes", "Cupcakes & bakes", "Vegan / free-from cakes", "Mixed / all of the above"],
+      "required": true
+    },
+    {
+      "id": "primary-goal",
+      "question": "What is your primary goal?",
+      "type": "select",
+      "options": ["Start a cake business", "Grow an existing business", "Go full-time from part-time", "Get business funding"],
+      "required": true
+    },
+    {
+      "id": "currency-code",
+      "question": "What currency do you use?",
+      "type": "select",
+      "options": ["GBP", "USD", "EUR", "CAD", "AUD"],
+      "required": false
+    }
+  ]
+}

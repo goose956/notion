@@ -80,6 +80,14 @@ export const WORKFLOW_CATALOG = [
       "Everything an Etsy seller needs in one place. AI writes SEO-optimised titles, descriptions and 13 tags for any listing. A finance tracker applies Etsy's real fee model (6.5% transaction + 3% payment processing + $0.20/listing) to project your true profit. A review reply generator writes personalised replies for 5-star praise and 1-star complaints alike — helping your shop rank higher in Etsy search.",
   },
   {
+    id: "cake-business",
+    name: "Cake Business Planner",
+    emoji: "🎂",
+    tagline: "Price your cakes correctly, build your business plan, and get compliant — built specifically for cake makers.",
+    description:
+      "The only business tool built for cake makers. A pricing calculator shows your real minimum price based on ingredients, time, overhead and packaging — no more guessing or undercharging. AI writes your full business plan across 6 sections (product range, marketing, operations, financials, compliance). A 12-month financial projector uses order-based modelling with per-order labour cost. A compliance checklist covers Natasha's Law allergen labelling, food business registration, hygiene certificates, product liability insurance and more — tailored to your country and operation type.",
+  },
+  {
     id: "str-guidebook",
     name: "STR Guidebook & Welcome Portal",
     emoji: "🏡",
