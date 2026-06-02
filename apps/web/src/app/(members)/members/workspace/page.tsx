@@ -21,6 +21,7 @@ import { NeurodivergentNicheShell } from "@/components/niches/neurodivergent/she
 import { NDWeddingNicheShell } from "@/components/niches/nd-wedding/shell";
 import { SideHustleNicheShell } from "@/components/niches/side-hustle/shell";
 import { FoodBusinessNicheShell } from "@/components/niches/food-business/shell";
+import { EtsyShopNicheShell } from "@/components/niches/etsy-shop/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1046,6 +1047,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["food-business"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "etsy-shop") return (
+                <EtsyShopNicheShell
+                  key="etsy-shop"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["etsy-shop"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}

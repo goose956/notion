@@ -41,6 +41,14 @@ export const NEURODIVERGENT_TABS = {
   BREAKDOWN:  "__nd_breakdown__",
 } as const;
 
+// ─── Etsy Shop Manager tab IDs ───────────────────────────────────────────────
+export const ETSY_TABS = {
+  DASHBOARD:      "__etsy_dashboard__",
+  LISTING_WRITER: "__etsy_listing_writer__",
+  FINANCIALS:     "__etsy_financials__",
+  REVIEWS:        "__etsy_reviews__",
+} as const;
+
 // ─── Food Business Plan tab IDs ──────────────────────────────────────────────
 export const FD_TABS = {
   DASHBOARD:   "__fd_dashboard__",
@@ -391,6 +399,31 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: FD_TABS.PLAN,       label: "Plan Builder",        icon: "✍️", appOnly: true },
       { tabId: FD_TABS.FINANCIALS, label: "Financial Projector", icon: "📊", appOnly: true },
       { tabId: FD_TABS.COMPLIANCE, label: "Compliance",          icon: "✅", appOnly: true },
+    ],
+  },
+
+  // ── Etsy Shop Manager ────────────────────────────────────────────────────
+  {
+    nicheId:       "etsy-shop",
+    displayName:   "Etsy Shop Manager",
+    virtualTabIds: new Set(Object.values(ETSY_TABS)),
+    defaultTabId:  ETSY_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#f1641e",
+      fgActive:      "#c2410c",
+      fgHeader:      "#7c2d12",
+      bgActive:      "rgba(241,100,30,0.10)",
+      bgHover:       "rgba(241,100,30,0.05)",
+      bgGroupHeader: "rgba(241,100,30,0.06)",
+      borderTop:     "1px solid rgba(241,100,30,0.15)",
+    },
+    sidebarEmoji: "🛍️",
+    topTabs: [
+      { tabId: ETSY_TABS.DASHBOARD,      label: "Dashboard",       icon: "🏠", appOnly: true },
+      { tabId: ETSY_TABS.LISTING_WRITER, label: "Listing Writer",  icon: "✍️", appOnly: true },
+      { tabId: ETSY_TABS.FINANCIALS,     label: "Finance Tracker", icon: "📊", appOnly: true },
+      { tabId: ETSY_TABS.REVIEWS,        label: "Review Manager",  icon: "⭐", appOnly: true },
     ],
   },
 

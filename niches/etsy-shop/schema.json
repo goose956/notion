@@ -1,0 +1,122 @@
+{
+  "version": "1.0.0",
+  "id": "etsy-shop",
+  "name": "Etsy Shop Manager",
+  "description": "Run your Etsy shop like a pro. Write SEO-optimised listings with AI, track your real profit after fees, manage orders, and generate review replies that build your reputation.",
+  "databases": [
+    {
+      "id": "listings",
+      "name": "Listings",
+      "properties": [
+        { "name": "Title",     "type": "title" },
+        { "name": "Category",  "type": "select", "options": [{ "name": "Digital Download", "color": "blue" }, { "name": "Handmade", "color": "orange" }, { "name": "Vintage", "color": "yellow" }, { "name": "Supplies", "color": "green" }, { "name": "Print on Demand", "color": "purple" }, { "name": "Jewellery", "color": "pink" }, { "name": "Home Decor", "color": "brown" }, { "name": "Art", "color": "red" }, { "name": "Clothing", "color": "gray" }, { "name": "Other", "color": "gray" }] },
+        { "name": "Price",     "type": "number", "format": "dollar" },
+        { "name": "COGS",      "type": "number", "format": "dollar" },
+        { "name": "Views",     "type": "number" },
+        { "name": "Sales",     "type": "number" },
+        { "name": "Status",    "type": "select", "options": [{ "name": "Active", "color": "green" }, { "name": "Draft", "color": "gray" }, { "name": "Inactive", "color": "red" }, { "name": "Sold Out", "color": "yellow" }] },
+        { "name": "Tags",      "type": "rich_text" },
+        { "name": "Notes",     "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "orders",
+      "name": "Orders",
+      "properties": [
+        { "name": "Order ID",        "type": "title" },
+        { "name": "Listing",         "type": "rich_text" },
+        { "name": "Sale Price",      "type": "number", "format": "dollar" },
+        { "name": "Etsy Fees",       "type": "number", "format": "dollar" },
+        { "name": "Shipping Cost",   "type": "number", "format": "dollar" },
+        { "name": "COGS",            "type": "number", "format": "dollar" },
+        { "name": "Net Profit",      "type": "number", "format": "dollar" },
+        { "name": "Buyer Country",   "type": "rich_text" },
+        { "name": "Status",          "type": "select", "options": [{ "name": "Pending", "color": "yellow" }, { "name": "Processing", "color": "blue" }, { "name": "Shipped", "color": "orange" }, { "name": "Delivered", "color": "green" }, { "name": "Refunded", "color": "red" }] },
+        { "name": "Order Date",      "type": "date" }
+      ]
+    },
+    {
+      "id": "reviews",
+      "name": "Reviews",
+      "properties": [
+        { "name": "Listing",       "type": "title" },
+        { "name": "Rating",        "type": "select", "options": [{ "name": "⭐⭐⭐⭐⭐ 5 stars", "color": "green" }, { "name": "⭐⭐⭐⭐ 4 stars", "color": "blue" }, { "name": "⭐⭐⭐ 3 stars", "color": "yellow" }, { "name": "⭐⭐ 2 stars", "color": "orange" }, { "name": "⭐ 1 star", "color": "red" }] },
+        { "name": "Comment",       "type": "rich_text" },
+        { "name": "Reply",         "type": "rich_text" },
+        { "name": "Review Date",   "type": "date" },
+        { "name": "Replied",       "type": "checkbox" }
+      ]
+    },
+    {
+      "id": "finance",
+      "name": "Monthly Finance",
+      "properties": [
+        { "name": "Month",          "type": "title" },
+        { "name": "Revenue",        "type": "number", "format": "dollar" },
+        { "name": "Etsy Fees",      "type": "number", "format": "dollar" },
+        { "name": "Payment Fees",   "type": "number", "format": "dollar" },
+        { "name": "Listing Fees",   "type": "number", "format": "dollar" },
+        { "name": "Ad Spend",       "type": "number", "format": "dollar" },
+        { "name": "COGS",           "type": "number", "format": "dollar" },
+        { "name": "Fixed Costs",    "type": "number", "format": "dollar" },
+        { "name": "Net Profit",     "type": "number", "format": "dollar" }
+      ]
+    },
+    {
+      "id": "ideas",
+      "name": "Product Ideas",
+      "properties": [
+        { "name": "Product Idea",     "type": "title" },
+        { "name": "Category",         "type": "select", "options": [{ "name": "Digital Download", "color": "blue" }, { "name": "Handmade", "color": "orange" }, { "name": "Print on Demand", "color": "purple" }, { "name": "Supplies", "color": "green" }, { "name": "Other", "color": "gray" }] },
+        { "name": "Target Buyer",     "type": "rich_text" },
+        { "name": "Estimated Price",  "type": "number", "format": "dollar" },
+        { "name": "Priority",         "type": "select", "options": [{ "name": "High", "color": "red" }, { "name": "Medium", "color": "yellow" }, { "name": "Low", "color": "gray" }] },
+        { "name": "Status",           "type": "select", "options": [{ "name": "Idea", "color": "gray" }, { "name": "Researching", "color": "yellow" }, { "name": "In Progress", "color": "blue" }, { "name": "Live", "color": "green" }, { "name": "Parked", "color": "orange" }] }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "shop-name",
+      "question": "What is your Etsy shop name?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. LucyMadePrints, TheCozyStudio, VintageVault"
+    },
+    {
+      "id": "shop-type",
+      "question": "What do you mainly sell?",
+      "type": "select",
+      "options": ["Digital Downloads", "Handmade Items", "Print on Demand", "Vintage", "Craft Supplies", "Mixed"],
+      "required": true
+    },
+    {
+      "id": "currency-code",
+      "question": "What currency do you sell in?",
+      "type": "select",
+      "options": ["USD", "GBP", "EUR", "CAD", "AUD"],
+      "required": true
+    },
+    {
+      "id": "shop-stage",
+      "question": "How established is your shop?",
+      "type": "select",
+      "options": ["Just starting", "Under 50 sales", "50–500 sales", "500+ sales"],
+      "required": true
+    },
+    {
+      "id": "avg-price",
+      "question": "What is your average listing price?",
+      "type": "number",
+      "required": false,
+      "hint": "e.g. 5 for digital downloads, 25 for handmade items"
+    },
+    {
+      "id": "monthly-listings",
+      "question": "How many new listings do you add per month?",
+      "type": "number",
+      "required": false,
+      "hint": "Helps us calculate your monthly listing fees"
+    }
+  ]
+}

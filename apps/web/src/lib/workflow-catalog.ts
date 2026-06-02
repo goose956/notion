@@ -63,6 +63,14 @@ export const WORKFLOW_CATALOG = [
     description:
       "Everything you need to open or grow a food business. AI writes your full business plan (executive summary, market analysis, operations, financials, food safety), projects a 12-month P&L with food-specific cost model (food cost %, labour %, fixed costs), and generates a tailored compliance checklist — every licence, registration and certificate you need to trade legally.",
   },
+  {
+    id: "etsy-shop",
+    name: "Etsy Shop Manager",
+    emoji: "🛍️",
+    tagline: "Run your Etsy shop like a pro — AI writes SEO listings, tracks your real profit and generates review replies.",
+    description:
+      "Everything an Etsy seller needs in one place. AI writes SEO-optimised titles, descriptions and 13 tags for any listing. A finance tracker applies Etsy's real fee model (6.5% transaction + 3% payment processing + $0.20/listing) to project your true profit. A review reply generator writes personalised replies for 5-star praise and 1-star complaints alike — helping your shop rank higher in Etsy search.",
+  },
 ] as const;
 
 export type WorkflowCatalogItem = (typeof WORKFLOW_CATALOG)[number];
