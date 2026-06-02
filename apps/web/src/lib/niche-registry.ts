@@ -49,6 +49,14 @@ export const CC_TABS = {
   CAPTION:   "__cc_caption__",
 } as const;
 
+// ─── STR Guidebook & Welcome Portal tab IDs ──────────────────────────────────
+export const STR_TABS = {
+  DASHBOARD:   "__str_dashboard__",
+  GUIDEBOOK:   "__str_guidebook__",
+  WELCOME_PACK: "__str_welcome_pack__",
+  GUEST_COMMS: "__str_guest_comms__",
+} as const;
+
 // ─── Etsy Shop Manager tab IDs ───────────────────────────────────────────────
 export const ETSY_TABS = {
   DASHBOARD:      "__etsy_dashboard__",
@@ -457,6 +465,31 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: ETSY_TABS.LISTING_WRITER, label: "Listing Writer",  icon: "✍️", appOnly: true },
       { tabId: ETSY_TABS.FINANCIALS,     label: "Finance Tracker", icon: "📊", appOnly: true },
       { tabId: ETSY_TABS.REVIEWS,        label: "Review Manager",  icon: "⭐", appOnly: true },
+    ],
+  },
+
+  // ── STR Guidebook & Welcome Portal ──────────────────────────────────────────
+  {
+    nicheId:       "str-guidebook",
+    displayName:   "STR Guidebook & Welcome Portal",
+    virtualTabIds: new Set(Object.values(STR_TABS)),
+    defaultTabId:  STR_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#0891b2",
+      fgActive:      "#0e7490",
+      fgHeader:      "#164e63",
+      bgActive:      "rgba(8,145,178,0.10)",
+      bgHover:       "rgba(8,145,178,0.05)",
+      bgGroupHeader: "rgba(8,145,178,0.06)",
+      borderTop:     "1px solid rgba(8,145,178,0.15)",
+    },
+    sidebarEmoji: "🏡",
+    topTabs: [
+      { tabId: STR_TABS.DASHBOARD,    label: "Dashboard",      icon: "🏠", appOnly: true },
+      { tabId: STR_TABS.GUIDEBOOK,    label: "Guidebook",      icon: "📖", appOnly: true },
+      { tabId: STR_TABS.WELCOME_PACK, label: "Welcome Pack",   icon: "💌", appOnly: true },
+      { tabId: STR_TABS.GUEST_COMMS,  label: "Guest Messages", icon: "💬", appOnly: true },
     ],
   },
 

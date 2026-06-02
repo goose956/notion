@@ -23,6 +23,7 @@ import { SideHustleNicheShell } from "@/components/niches/side-hustle/shell";
 import { FoodBusinessNicheShell } from "@/components/niches/food-business/shell";
 import { EtsyShopNicheShell } from "@/components/niches/etsy-shop/shell";
 import { ContentCreatorNicheShell } from "@/components/niches/content-creator/shell";
+import { STRGuidebookNicheShell } from "@/components/niches/str-guidebook/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1070,6 +1071,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["etsy-shop"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "str-guidebook") return (
+                <STRGuidebookNicheShell
+                  key="str-guidebook"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["str-guidebook"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}

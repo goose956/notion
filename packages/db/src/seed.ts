@@ -29,6 +29,7 @@ const packs: NichePack[] = [
   loadSchema("../../../niches/food-business/schema.json"),
   loadSchema("../../../niches/etsy-shop/schema.json"),
   loadSchema("../../../niches/content-creator/schema.json"),
+  loadSchema("../../../niches/str-guidebook/schema.json"),
 ];
 
 async function seed() {

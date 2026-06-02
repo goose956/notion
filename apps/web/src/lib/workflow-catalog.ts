@@ -79,6 +79,14 @@ export const WORKFLOW_CATALOG = [
     description:
       "Everything an Etsy seller needs in one place. AI writes SEO-optimised titles, descriptions and 13 tags for any listing. A finance tracker applies Etsy's real fee model (6.5% transaction + 3% payment processing + $0.20/listing) to project your true profit. A review reply generator writes personalised replies for 5-star praise and 1-star complaints alike — helping your shop rank higher in Etsy search.",
   },
+  {
+    id: "str-guidebook",
+    name: "STR Guidebook & Welcome Portal",
+    emoji: "🏡",
+    tagline: "Give every guest a 5-star experience — AI builds your local guidebook and welcome pack from scratch.",
+    description:
+      "Everything a short-term rental host needs to delight guests. AI writes localised guidebook sections (dining, things to do, transport, emergency info and more) using live search results. Generate a full welcome pack — welcome letter, check-in guide, house rules, checkout checklist and WiFi card. A guest messaging tool writes warm, personalised messages for every stage of the booking: pre-arrival, check-in day, mid-stay check-in, checkout reminder and review requests.",
+  },
 ] as const;
 
 export type WorkflowCatalogItem = (typeof WORKFLOW_CATALOG)[number];

@@ -1,0 +1,116 @@
+{
+  "version": "1.0.0",
+  "id": "str-guidebook",
+  "name": "STR Guidebook & Welcome Portal",
+  "description": "Build a polished local guidebook and welcome pack for your short-term rental in minutes. AI searches for top local restaurants, activities and transport, then writes your guidebook, house rules, check-in instructions and guest messages — all tailored to your property.",
+  "databases": [
+    {
+      "id": "properties",
+      "name": "Properties",
+      "properties": [
+        { "name": "Property Name",   "type": "title" },
+        { "name": "Type",            "type": "select", "options": [{ "name": "Apartment", "color": "blue" }, { "name": "House", "color": "green" }, { "name": "Villa", "color": "orange" }, { "name": "Cabin", "color": "brown" }, { "name": "Studio", "color": "purple" }, { "name": "Cottage", "color": "yellow" }, { "name": "Other", "color": "gray" }] },
+        { "name": "Address",         "type": "rich_text" },
+        { "name": "Neighbourhood",   "type": "rich_text" },
+        { "name": "City",            "type": "rich_text" },
+        { "name": "Bedrooms",        "type": "number" },
+        { "name": "Max Guests",      "type": "number" },
+        { "name": "WiFi Name",       "type": "rich_text" },
+        { "name": "WiFi Password",   "type": "rich_text" },
+        { "name": "Check-in Time",   "type": "rich_text" },
+        { "name": "Check-out Time",  "type": "rich_text" },
+        { "name": "Status",          "type": "select", "options": [{ "name": "Active", "color": "green" }, { "name": "Seasonal", "color": "yellow" }, { "name": "Paused", "color": "gray" }] }
+      ]
+    },
+    {
+      "id": "guidebook",
+      "name": "Guidebook Sections",
+      "properties": [
+        { "name": "Title",           "type": "title" },
+        { "name": "Property",        "type": "rich_text" },
+        { "name": "Section",         "type": "select", "options": [{ "name": "Dining & Cafés", "color": "orange" }, { "name": "Things to Do", "color": "blue" }, { "name": "Supermarkets & Shops", "color": "green" }, { "name": "Transport & Parking", "color": "purple" }, { "name": "Emergency & Safety", "color": "red" }, { "name": "Local Tips", "color": "yellow" }] },
+        { "name": "Content",         "type": "rich_text" },
+        { "name": "Last Updated",    "type": "date" }
+      ]
+    },
+    {
+      "id": "welcome-pack",
+      "name": "Welcome Pack",
+      "properties": [
+        { "name": "Title",           "type": "title" },
+        { "name": "Property",        "type": "rich_text" },
+        { "name": "Type",            "type": "select", "options": [{ "name": "Welcome Letter", "color": "blue" }, { "name": "Check-in Guide", "color": "green" }, { "name": "House Rules", "color": "orange" }, { "name": "Checkout Checklist", "color": "purple" }, { "name": "WiFi Card", "color": "yellow" }, { "name": "Full Pack", "color": "gray" }] },
+        { "name": "Content",         "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "guests",
+      "name": "Guests",
+      "properties": [
+        { "name": "Guest Name",      "type": "title" },
+        { "name": "Property",        "type": "rich_text" },
+        { "name": "Check-in Date",   "type": "date" },
+        { "name": "Check-out Date",  "type": "date" },
+        { "name": "Party Size",      "type": "number" },
+        { "name": "Status",          "type": "select", "options": [{ "name": "Upcoming", "color": "blue" }, { "name": "Checked In", "color": "green" }, { "name": "Checked Out", "color": "gray" }, { "name": "Cancelled", "color": "red" }] },
+        { "name": "Platform",        "type": "select", "options": [{ "name": "Airbnb", "color": "red" }, { "name": "Vrbo", "color": "blue" }, { "name": "Booking.com", "color": "purple" }, { "name": "Direct", "color": "green" }, { "name": "Other", "color": "gray" }] },
+        { "name": "Notes",           "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "guest-messages",
+      "name": "Guest Messages",
+      "properties": [
+        { "name": "Subject",         "type": "title" },
+        { "name": "Property",        "type": "rich_text" },
+        { "name": "Type",            "type": "select", "options": [{ "name": "Pre-arrival", "color": "blue" }, { "name": "Check-in Day", "color": "green" }, { "name": "Mid-stay Check-in", "color": "yellow" }, { "name": "Checkout Reminder", "color": "orange" }, { "name": "Review Request", "color": "purple" }, { "name": "Custom", "color": "gray" }] },
+        { "name": "Message",         "type": "rich_text" },
+        { "name": "Sent",            "type": "checkbox" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "property-name",
+      "question": "What is your property called?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. The Beach House, Cosy City Studio, Mountain Retreat"
+    },
+    {
+      "id": "property-type",
+      "question": "What type of property is it?",
+      "type": "select",
+      "options": ["Apartment", "House", "Villa", "Cabin", "Studio", "Cottage", "Other"],
+      "required": true
+    },
+    {
+      "id": "neighbourhood",
+      "question": "What neighbourhood or area is it in?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. Shoreditch, East London — be specific, this is used to search for local recommendations"
+    },
+    {
+      "id": "city",
+      "question": "Which city is the property in?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. London, New York, Barcelona"
+    },
+    {
+      "id": "host-name",
+      "question": "What is your first name? (used in guest messages)",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. Sarah"
+    },
+    {
+      "id": "currency-code",
+      "question": "What currency do you charge in?",
+      "type": "select",
+      "options": ["GBP", "USD", "EUR", "CAD", "AUD"],
+      "required": true
+    }
+  ]
+}
