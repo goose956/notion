@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, ExternalLink, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, Plus, ExternalLink, RefreshCw, ChevronDown, ChevronRight, Menu, X as XIcon } from "lucide-react";
 import type {
   WorkspaceDatabase,
   WorkspaceRow,
@@ -219,6 +219,16 @@ export default function WorkspacePage() {
   const [activeTab, setActiveTab] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
   const [expandedNiches, setExpandedNiches] = useState<Set<string>>(new Set());
+
+  // ── Mobile sidebar state ───────────────────────────────────────────────────
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  useEffect(() => {
+    function check() { setIsMobile(window.innerWidth < 768); }
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const [apiCriteriaByNiche, setApiCriteriaByNiche] = useState<Record<string, Record<string, unknown> | null>>({});
   const [seatedGuestIds, setSeatedGuestIds] = useState<Set<string>>(new Set());
@@ -489,6 +499,8 @@ export default function WorkspacePage() {
       dbs.find((d) => d.notionId === tabId)?.nicheId ??
       NICHE_REGISTRY.find((e) => e.virtualTabIds.has(tabId))?.nicheId;
     if (nicheId) setExpandedNiches(new Set([nicheId]));
+    // Close sidebar drawer on mobile after selecting a tab
+    setSidebarOpen(false);
   }
 
   const activeDb = databases.find((d) => d.notionId === activeTab) ?? null;
@@ -510,6 +522,14 @@ export default function WorkspacePage() {
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: N_FONT }}>
 
+      {/* ── Mobile backdrop ───────────────────────────────────────────────── */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 40 }}
+        />
+      )}
+
       {/* ── Left sidebar: database list ───────────────────────────────────── */}
       <div
         style={{
@@ -520,6 +540,17 @@ export default function WorkspacePage() {
           flexDirection: "column",
           background: "white",
           overflow: "hidden",
+          // Mobile: fixed drawer that slides in from the left
+          ...(isMobile ? {
+            position: "fixed",
+            top: 0,
+            left: 0,
+            height: "100vh",
+            zIndex: 50,
+            transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+            transition: "transform 0.25s ease",
+            boxShadow: sidebarOpen ? "4px 0 24px rgba(0,0,0,0.15)" : "none",
+          } : {}),
         }}
       >
         {/* Scrollable nav area */}
@@ -554,6 +585,15 @@ export default function WorkspacePage() {
                 style={refreshing ? { animation: "spin 1s linear infinite" } : undefined}
               />
             </button>
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                title="Close menu"
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "3px", color: N_SUBTLE, display: "flex", alignItems: "center" }}
+              >
+                <XIcon size={15} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -776,6 +816,19 @@ export default function WorkspacePage() {
 
       {/* ── Main content ─────────────────────────────────────────────────── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
+
+        {/* Mobile header bar with hamburger */}
+        {isMobile && (
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderBottom: `1px solid ${N_BORDER}`, background: "white", flexShrink: 0 }}>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", color: N_FG, display: "flex", alignItems: "center" }}
+            >
+              <Menu size={20} />
+            </button>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: N_FG }}>🗂️ My Workspace</span>
+          </div>
+        )}
         {loading ? (
           <div
             style={{
