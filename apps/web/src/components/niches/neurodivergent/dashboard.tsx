@@ -197,7 +197,8 @@ export function NeurodivergentDashboard({
     <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontFamily: N_FONT }}>
 
       {/* HERO */}
-      <section style={{ borderRadius: "16px", background: theme.gradient, overflow: "hidden", boxShadow: `0 12px 40px ${theme.shadow}, 0 2px 8px rgba(0,0,0,0.10)`, padding: "22px 26px 20px", position: "relative" }}>
+      <div style={{ position: "relative" }}>
+      <section style={{ borderRadius: "16px", background: theme.gradient, overflow: "hidden", boxShadow: `0 12px 40px ${theme.shadow}, 0 2px 8px rgba(0,0,0,0.10)`, padding: "22px 26px 20px" }}>
         <p style={{ margin: "0 0 8px", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
           🧠 Neurodivergent Life OS
         </p>
@@ -244,25 +245,27 @@ export function NeurodivergentDashboard({
           {saveError && <p style={{ margin: "6px 0 0", fontSize: "11px", color: "#ffb3b3" }}>{saveError}</p>}
         </div>
 
-        {/* Theme picker */}
-        <div style={{ position: "absolute", top: "14px", right: "14px" }}>
-          <button onClick={() => setShowThemePicker((v) => !v)} title="Change theme"
-            style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.30)", borderRadius: "8px", padding: "6px 8px", cursor: "pointer", color: "white", display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", fontWeight: 600, fontFamily: N_FONT }}>
-            <Palette size={13} /> Theme
-          </button>
-          {showThemePicker && (
-            <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "white", border: `1px solid ${N_BORDER_MED}`, borderRadius: "12px", padding: "8px", boxShadow: "0 8px 30px rgba(0,0,0,0.14)", zIndex: 50, display: "flex", flexDirection: "column", gap: "4px", minWidth: "140px" }}>
-              {DASHBOARD_THEMES.map((t) => (
-                <button key={t.id} onClick={() => selectTheme(t.id)}
-                  style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 10px", borderRadius: "8px", border: "none", background: themeId === t.id ? theme.accentLight : "transparent", color: themeId === t.id ? theme.accentText : N_FG, fontWeight: themeId === t.id ? 700 : 400, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT, textAlign: "left" }}>
-                  <span>{t.emoji}</span> {t.label}
-                  {themeId === t.id && <span style={{ marginLeft: "auto", fontSize: "10px" }}>✓</span>}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </section>
+
+      {/* Theme picker — outside section so overflow:hidden doesn't clip the dropdown */}
+      <div style={{ position: "absolute", top: "14px", right: "14px", zIndex: 10 }}>
+        <button onClick={() => setShowThemePicker((v) => !v)} title="Change theme"
+          style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.30)", borderRadius: "8px", padding: "6px 8px", cursor: "pointer", color: "white", display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", fontWeight: 600, fontFamily: N_FONT }}>
+          <Palette size={13} /> Theme
+        </button>
+        {showThemePicker && (
+          <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "white", border: `1px solid ${N_BORDER_MED}`, borderRadius: "12px", padding: "8px", boxShadow: "0 8px 30px rgba(0,0,0,0.14)", zIndex: 50, display: "flex", flexDirection: "column", gap: "4px", minWidth: "160px" }}>
+            {DASHBOARD_THEMES.map((t) => (
+              <button key={t.id} onClick={() => selectTheme(t.id)}
+                style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", borderRadius: "8px", border: "none", background: themeId === t.id ? theme.accentLight : "transparent", color: themeId === t.id ? theme.accentText : N_FG, fontWeight: themeId === t.id ? 700 : 400, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT, textAlign: "left", whiteSpace: "nowrap" }}>
+                <span>{t.emoji}</span> {t.label}
+                {themeId === t.id && <span style={{ marginLeft: "auto", fontSize: "10px" }}>✓</span>}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      </div>
 
       {/* STATS ROW */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px" }}>
