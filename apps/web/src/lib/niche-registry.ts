@@ -41,6 +41,14 @@ export const NEURODIVERGENT_TABS = {
   BREAKDOWN:  "__nd_breakdown__",
 } as const;
 
+// ─── Content Creator OS tab IDs ──────────────────────────────────────────────
+export const CC_TABS = {
+  DASHBOARD: "__cc_dashboard__",
+  IDEAS:     "__cc_ideas__",
+  SCRIPT:    "__cc_script__",
+  CAPTION:   "__cc_caption__",
+} as const;
+
 // ─── Etsy Shop Manager tab IDs ───────────────────────────────────────────────
 export const ETSY_TABS = {
   DASHBOARD:      "__etsy_dashboard__",
@@ -399,6 +407,31 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: FD_TABS.PLAN,       label: "Plan Builder",        icon: "✍️", appOnly: true },
       { tabId: FD_TABS.FINANCIALS, label: "Financial Projector", icon: "📊", appOnly: true },
       { tabId: FD_TABS.COMPLIANCE, label: "Compliance",          icon: "✅", appOnly: true },
+    ],
+  },
+
+  // ── Content Creator OS ─────────────────────────────────────────────────────
+  {
+    nicheId:       "content-creator",
+    displayName:   "Content Creator OS",
+    virtualTabIds: new Set(Object.values(CC_TABS)),
+    defaultTabId:  CC_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#6366f1",
+      fgActive:      "#4f46e5",
+      fgHeader:      "#1e1b4b",
+      bgActive:      "rgba(99,102,241,0.10)",
+      bgHover:       "rgba(99,102,241,0.05)",
+      bgGroupHeader: "rgba(99,102,241,0.06)",
+      borderTop:     "1px solid rgba(99,102,241,0.15)",
+    },
+    sidebarEmoji: "🎬",
+    topTabs: [
+      { tabId: CC_TABS.DASHBOARD, label: "Dashboard",      icon: "🏠", appOnly: true },
+      { tabId: CC_TABS.IDEAS,     label: "Idea Generator", icon: "💡", appOnly: true },
+      { tabId: CC_TABS.SCRIPT,    label: "Script Writer",  icon: "✍️", appOnly: true },
+      { tabId: CC_TABS.CAPTION,   label: "Caption Writer", icon: "🖊️", appOnly: true },
     ],
   },
 

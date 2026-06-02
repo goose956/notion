@@ -64,6 +64,14 @@ export const WORKFLOW_CATALOG = [
       "Everything you need to open or grow a food business. AI writes your full business plan (executive summary, market analysis, operations, financials, food safety), projects a 12-month P&L with food-specific cost model (food cost %, labour %, fixed costs), and generates a tailored compliance checklist — every licence, registration and certificate you need to trade legally.",
   },
   {
+    id: "content-creator",
+    name: "Content Creator OS",
+    emoji: "🎬",
+    tagline: "Generate ideas, write scripts and captions with AI — and run your whole creator business in one place.",
+    description:
+      "Everything a creator needs in one workspace. Generate high-performing content ideas with hooks and angles. Write full scripts, threads, podcast outlines and blog posts tailored to your platform. Create optimised captions and hashtags with one click. Track your content calendar, brand deals and monthly analytics — all without leaving Notion.",
+  },
+  {
     id: "etsy-shop",
     name: "Etsy Shop Manager",
     emoji: "🛍️",

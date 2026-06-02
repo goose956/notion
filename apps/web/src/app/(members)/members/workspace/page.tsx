@@ -22,6 +22,7 @@ import { NDWeddingNicheShell } from "@/components/niches/nd-wedding/shell";
 import { SideHustleNicheShell } from "@/components/niches/side-hustle/shell";
 import { FoodBusinessNicheShell } from "@/components/niches/food-business/shell";
 import { EtsyShopNicheShell } from "@/components/niches/etsy-shop/shell";
+import { ContentCreatorNicheShell } from "@/components/niches/content-creator/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1047,6 +1048,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["food-business"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "content-creator") return (
+                <ContentCreatorNicheShell
+                  key="content-creator"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["content-creator"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}

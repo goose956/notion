@@ -1,0 +1,118 @@
+{
+  "version": "1.0.0",
+  "id": "content-creator",
+  "name": "Content Creator OS",
+  "description": "Run your content business from one place. Generate ideas, write scripts and captions with AI, track your content calendar, manage brand deals and monitor your analytics — all in one workspace.",
+  "databases": [
+    {
+      "id": "content",
+      "name": "Content Calendar",
+      "properties": [
+        { "name": "Title",         "type": "title" },
+        { "name": "Platform",      "type": "select", "options": [{ "name": "YouTube", "color": "red" }, { "name": "TikTok", "color": "gray" }, { "name": "Instagram", "color": "pink" }, { "name": "Twitter/X", "color": "blue" }, { "name": "Blog", "color": "green" }, { "name": "Podcast", "color": "purple" }, { "name": "LinkedIn", "color": "blue" }, { "name": "Multi", "color": "orange" }] },
+        { "name": "Format",        "type": "select", "options": [{ "name": "Short-form video", "color": "orange" }, { "name": "Long-form video", "color": "red" }, { "name": "Reel / TikTok", "color": "pink" }, { "name": "Post", "color": "blue" }, { "name": "Story", "color": "yellow" }, { "name": "Article", "color": "green" }, { "name": "Episode", "color": "purple" }, { "name": "Thread", "color": "gray" }] },
+        { "name": "Status",        "type": "select", "options": [{ "name": "Idea", "color": "gray" }, { "name": "Scripting", "color": "yellow" }, { "name": "Filming", "color": "orange" }, { "name": "Editing", "color": "blue" }, { "name": "Scheduled", "color": "purple" }, { "name": "Published", "color": "green" }, { "name": "Paused", "color": "red" }] },
+        { "name": "Publish Date",  "type": "date" },
+        { "name": "Views",         "type": "number" },
+        { "name": "Likes",         "type": "number" },
+        { "name": "Comments",      "type": "number" },
+        { "name": "Notes",         "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "ideas",
+      "name": "Ideas Bank",
+      "properties": [
+        { "name": "Idea",          "type": "title" },
+        { "name": "Platform",      "type": "select", "options": [{ "name": "YouTube", "color": "red" }, { "name": "TikTok", "color": "gray" }, { "name": "Instagram", "color": "pink" }, { "name": "Twitter/X", "color": "blue" }, { "name": "Blog", "color": "green" }, { "name": "Podcast", "color": "purple" }, { "name": "Any", "color": "orange" }] },
+        { "name": "Format",        "type": "select", "options": [{ "name": "Short-form", "color": "orange" }, { "name": "Long-form", "color": "red" }, { "name": "Post", "color": "blue" }, { "name": "Article", "color": "green" }, { "name": "Episode", "color": "purple" }] },
+        { "name": "Hook",          "type": "rich_text" },
+        { "name": "Priority",      "type": "select", "options": [{ "name": "High", "color": "red" }, { "name": "Medium", "color": "yellow" }, { "name": "Low", "color": "gray" }] },
+        { "name": "Status",        "type": "select", "options": [{ "name": "New", "color": "blue" }, { "name": "In Progress", "color": "yellow" }, { "name": "Done", "color": "green" }, { "name": "Parked", "color": "gray" }] }
+      ]
+    },
+    {
+      "id": "scripts",
+      "name": "Scripts & Captions",
+      "properties": [
+        { "name": "Title",         "type": "title" },
+        { "name": "Platform",      "type": "select", "options": [{ "name": "YouTube", "color": "red" }, { "name": "TikTok", "color": "gray" }, { "name": "Instagram", "color": "pink" }, { "name": "Twitter/X", "color": "blue" }, { "name": "Blog", "color": "green" }, { "name": "Podcast", "color": "purple" }] },
+        { "name": "Type",          "type": "select", "options": [{ "name": "Full Script", "color": "blue" }, { "name": "Caption", "color": "green" }, { "name": "Hook", "color": "orange" }, { "name": "Outline", "color": "yellow" }, { "name": "Thread", "color": "purple" }] },
+        { "name": "Content",       "type": "rich_text" },
+        { "name": "Status",        "type": "select", "options": [{ "name": "Draft", "color": "gray" }, { "name": "Ready", "color": "green" }, { "name": "Used", "color": "blue" }] }
+      ]
+    },
+    {
+      "id": "brand-deals",
+      "name": "Brand Deals",
+      "properties": [
+        { "name": "Brand",         "type": "title" },
+        { "name": "Status",        "type": "select", "options": [{ "name": "Outreach", "color": "blue" }, { "name": "Negotiating", "color": "yellow" }, { "name": "Confirmed", "color": "orange" }, { "name": "Delivered", "color": "green" }, { "name": "Paid", "color": "purple" }, { "name": "Declined", "color": "red" }] },
+        { "name": "Rate",          "type": "number", "format": "dollar" },
+        { "name": "Deliverable",   "type": "rich_text" },
+        { "name": "Deadline",      "type": "date" },
+        { "name": "Platform",      "type": "select", "options": [{ "name": "YouTube", "color": "red" }, { "name": "TikTok", "color": "gray" }, { "name": "Instagram", "color": "pink" }, { "name": "Blog", "color": "green" }, { "name": "Multiple", "color": "orange" }] },
+        { "name": "Notes",         "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "analytics",
+      "name": "Analytics",
+      "properties": [
+        { "name": "Month",               "type": "title" },
+        { "name": "Platform",            "type": "select", "options": [{ "name": "YouTube", "color": "red" }, { "name": "TikTok", "color": "gray" }, { "name": "Instagram", "color": "pink" }, { "name": "Twitter/X", "color": "blue" }, { "name": "Blog", "color": "green" }, { "name": "Total", "color": "purple" }] },
+        { "name": "Followers",           "type": "number" },
+        { "name": "Follower Growth",     "type": "number" },
+        { "name": "Total Views",         "type": "number" },
+        { "name": "Avg Engagement %",    "type": "number" },
+        { "name": "Revenue",             "type": "number", "format": "dollar" },
+        { "name": "Brand Deal Revenue",  "type": "number", "format": "dollar" },
+        { "name": "Posts Published",     "type": "number" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "creator-name",
+      "question": "What is your channel / creator name?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. TechWithAlex, MindfulMornings, The Budget Kitchen"
+    },
+    {
+      "id": "primary-platform",
+      "question": "What is your primary platform?",
+      "type": "select",
+      "options": ["YouTube", "TikTok", "Instagram", "Twitter/X", "Blog", "Podcast", "Multi-platform"],
+      "required": true
+    },
+    {
+      "id": "niche",
+      "question": "What is your content niche?",
+      "type": "text",
+      "required": true,
+      "hint": "e.g. personal finance for millennials, budget travel, plant-based cooking, productivity hacks"
+    },
+    {
+      "id": "content-goal",
+      "question": "What is your main goal right now?",
+      "type": "select",
+      "options": ["Grow my audience", "Monetise my channel", "Land brand deals", "Build my personal brand", "Side income"],
+      "required": true
+    },
+    {
+      "id": "posting-frequency",
+      "question": "How often do you post?",
+      "type": "select",
+      "options": ["Daily", "3-4x per week", "1-2x per week", "A few times a month", "Irregularly"],
+      "required": false
+    },
+    {
+      "id": "currency-code",
+      "question": "What currency do you work in?",
+      "type": "select",
+      "options": ["USD", "GBP", "EUR", "CAD", "AUD"],
+      "required": true
+    }
+  ]
+}
