@@ -1,0 +1,60 @@
+{
+  "version": "1.0.0",
+  "id": "amazon-fba",
+  "name": "Amazon FBA Seller OS",
+  "description": "AI researches product viability, writes optimised listings and generates supplier briefs — everything you need to find and launch winning FBA products.",
+  "databases": [
+    {
+      "id": "products",
+      "name": "Products",
+      "properties": [
+        { "name": "Title",           "type": "title" },
+        { "name": "ASIN",            "type": "rich_text" },
+        { "name": "Category",        "type": "select", "options": [{ "name": "Home & Kitchen" }, { "name": "Beauty & Personal Care" }, { "name": "Sports & Outdoors" }, { "name": "Toys & Games" }, { "name": "Pet Supplies" }, { "name": "Office Products" }, { "name": "Garden & Outdoor" }, { "name": "Health & Household" }, { "name": "Baby" }, { "name": "Other" }] },
+        { "name": "Status",          "type": "select", "options": [{ "name": "Researching", "color": "yellow" }, { "name": "Sourcing", "color": "orange" }, { "name": "Live", "color": "green" }, { "name": "Paused", "color": "gray" }, { "name": "Dropped", "color": "red" }] },
+        { "name": "Monthly Revenue", "type": "number" },
+        { "name": "Notes",           "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "documents",
+      "name": "Documents",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Type",    "type": "select", "options": [{ "name": "Research Report", "color": "blue" }, { "name": "Listing", "color": "green" }, { "name": "Supplier Brief", "color": "orange" }] },
+        { "name": "Product", "type": "rich_text" },
+        { "name": "Content", "type": "rich_text" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)", "Other"],
+      "required": true
+    },
+    {
+      "id": "marketplace",
+      "question": "Which Amazon marketplace do you sell on?",
+      "type": "select",
+      "options": ["Amazon UK (amazon.co.uk)", "Amazon US (amazon.com)", "Both UK and US", "Amazon EU", "Amazon AU"],
+      "required": true
+    },
+    {
+      "id": "category",
+      "question": "What is your main product category?",
+      "type": "select",
+      "options": ["Home & Kitchen", "Beauty & Personal Care", "Sports & Outdoors", "Toys & Games", "Pet Supplies", "Office Products", "Garden & Outdoor", "Health & Household", "Baby", "Not decided yet"],
+      "required": true
+    },
+    {
+      "id": "business-stage",
+      "question": "Where are you in your FBA journey?",
+      "type": "select",
+      "options": ["Just starting out — researching products", "Have products — growing my catalogue", "Scaling — multiple SKUs live"],
+      "required": true
+    }
+  ]
+}

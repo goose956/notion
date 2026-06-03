@@ -30,6 +30,7 @@ import { AuthorNicheShell } from "@/components/niches/author/shell";
 import { TeacherNicheShell } from "@/components/niches/teacher/shell";
 import { PTNicheShell } from "@/components/niches/personal-trainer/shell";
 import { FreelancerNicheShell } from "@/components/niches/freelancer/shell";
+import { FBANicheShell }        from "@/components/niches/amazon-fba/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1154,6 +1155,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["freelancer"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "amazon-fba") return (
+                <FBANicheShell
+                  key="amazon-fba"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["amazon-fba"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}

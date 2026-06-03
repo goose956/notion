@@ -128,6 +128,14 @@ export const WORKFLOW_CATALOG = [
       "Everything a personal trainer needs to run a professional business. The Programme Builder generates a complete 4-week personalised training programme from a client's goal, fitness level, available equipment, and any injuries or restrictions — ready to hand over immediately. A client check-in tool writes professional progress updates in your chosen tone. A nutrition guide generates calorie targets, macro splits, food lists and a sample meal plan tailored to each client's goal. Save every programme, check-in and nutrition guide to your documents library and export any document as a PDF.",
   },
   {
+    id: "amazon-fba",
+    name: "Amazon FBA Seller OS",
+    emoji: "📦",
+    tagline: "Research products, write optimised listings and generate supplier briefs — your full FBA workflow in one place.",
+    description:
+      "Everything an Amazon FBA seller needs to find, source and launch products. The Product Research tool generates a full viability report for any product idea — estimated demand, competition analysis, profit projections, risk assessment and a clear GO / TEST / AVOID verdict. The Listing Writer produces a fully SEO-optimised listing ready to paste into Seller Central: keyword-rich title, five benefit-led bullet points, a customer-focused product description and backend search terms. The Supplier Brief generates a professional sourcing document and outreach message — with full product specifications, FBA packaging requirements, MOQ targets, quality control terms and 10 intelligent questions to qualify suppliers. Save every report, listing and brief to your documents library and export any document as a PDF.",
+  },
+  {
     id: "nail-tech",
     name: "Nail Tech & Beauty Planner",
     emoji: "💅",

@@ -66,6 +66,15 @@ export const FREELANCER_TABS = {
   LIBRARY:   "__fl_library__",
 } as const;
 
+// ─── Amazon FBA Seller OS tab IDs ────────────────────────────────────────────
+export const FBA_TABS = {
+  DASHBOARD: "__fba_dashboard__",
+  RESEARCH:  "__fba_research__",
+  LISTING:   "__fba_listing__",
+  SUPPLIER:  "__fba_supplier__",
+  LIBRARY:   "__fba_library__",
+} as const;
+
 // ─── Personal Trainer Business OS tab IDs ────────────────────────────────────
 export const PT_TABS = {
   DASHBOARD:  "__pt_dashboard__",
@@ -698,6 +707,32 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: PT_TABS.CHECKIN,    label: "Client Check-In",    icon: "✅", appOnly: true },
       { tabId: PT_TABS.NUTRITION,  label: "Nutrition Guide",    icon: "🥗", appOnly: true },
       { tabId: PT_TABS.LIBRARY,    label: "My Documents",       icon: "📁", appOnly: true },
+    ],
+  },
+
+  // ── Amazon FBA Seller OS ────────────────────────────────────────────────────
+  {
+    nicheId:       "amazon-fba",
+    displayName:   "Amazon FBA Seller OS",
+    virtualTabIds: new Set(Object.values(FBA_TABS)),
+    defaultTabId:  FBA_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#ea580c",
+      fgActive:      "#c2410c",
+      fgHeader:      "#7c2d12",
+      bgActive:      "rgba(234,88,12,0.10)",
+      bgHover:       "rgba(234,88,12,0.05)",
+      bgGroupHeader: "rgba(234,88,12,0.06)",
+      borderTop:     "1px solid rgba(234,88,12,0.15)",
+    },
+    sidebarEmoji: "📦",
+    topTabs: [
+      { tabId: FBA_TABS.DASHBOARD, label: "Dashboard",       icon: "🏠", appOnly: true },
+      { tabId: FBA_TABS.RESEARCH,  label: "Product Research", icon: "🔍", appOnly: true },
+      { tabId: FBA_TABS.LISTING,   label: "Listing Writer",   icon: "✍️", appOnly: true },
+      { tabId: FBA_TABS.SUPPLIER,  label: "Supplier Brief",   icon: "📋", appOnly: true },
+      { tabId: FBA_TABS.LIBRARY,   label: "My Documents",     icon: "📁", appOnly: true },
     ],
   },
 
