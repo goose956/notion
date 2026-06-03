@@ -308,7 +308,7 @@ export default function ExportPage() {
   function handleChange(index: number, field: keyof NicheExportData, value: string) {
     setRows((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
+      next[index] = { ...next[index], [field]: value } as NicheExportData;
       return next;
     });
   }
