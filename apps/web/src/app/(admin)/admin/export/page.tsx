@@ -151,7 +151,7 @@ function NicheRow({
         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
         onClick={() => setOpen((p) => !p)}
       >
-        <span className="text-lg">{WORKFLOW_CATALOG[index].emoji}</span>
+        <span className="text-lg">{WORKFLOW_CATALOG[index]?.emoji}</span>
         <span className="font-medium flex-1">{row.name}</span>
         {filled ? (
           <span className="text-xs text-green-600 font-medium">Ready</span>
