@@ -112,6 +112,14 @@ export const WORKFLOW_CATALOG = [
       "Everything a teacher needs to cut planning time in half. AI generates complete, curriculum-aligned lesson plans with starter, main activities, differentiation and plenary. A report writer produces professional, personalised report comments in your chosen tone and length. An assessment builder creates ready-to-print quizzes, worksheets, exam papers and marking rubrics with mark schemes included. Save everything to your planning library and export any document as a PDF.",
   },
   {
+    id: "freelancer",
+    name: "Freelancer OS",
+    emoji: "💼",
+    tagline: "AI writes your proposals, invoices and cold outreach — so you spend less time on admin and more time on paid work.",
+    description:
+      "Everything a freelancer needs to win clients and get paid. The Proposal Writer generates a full professional project proposal from a brief — introduction, approach, deliverables, timeline, pricing and call to action. The Invoice Builder creates a formatted invoice with line items, payment terms and your details. The Outreach Writer crafts personalised cold emails, LinkedIn messages, Instagram DMs or Twitter pitches that sound human, not spammy. Save every proposal, invoice and outreach message to your documents library and export as PDF.",
+  },
+  {
     id: "personal-trainer",
     name: "Personal Trainer Business OS",
     emoji: "💪",

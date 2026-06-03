@@ -57,6 +57,15 @@ export const CAKE_TABS = {
   COMPLIANCE: "__cake_compliance__",
 } as const;
 
+// ─── Freelancer OS tab IDs ───────────────────────────────────────────────────
+export const FREELANCER_TABS = {
+  DASHBOARD: "__fl_dashboard__",
+  PROPOSAL:  "__fl_proposal__",
+  INVOICE:   "__fl_invoice__",
+  OUTREACH:  "__fl_outreach__",
+  LIBRARY:   "__fl_library__",
+} as const;
+
 // ─── Personal Trainer Business OS tab IDs ────────────────────────────────────
 export const PT_TABS = {
   DASHBOARD:  "__pt_dashboard__",
@@ -637,6 +646,32 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: TEACHER_TABS.REPORTS,     label: "Report Writer",   icon: "📝", appOnly: true },
       { tabId: TEACHER_TABS.ASSESSMENTS, label: "Assessments",     icon: "📊", appOnly: true },
       { tabId: TEACHER_TABS.LIBRARY,     label: "My Documents",    icon: "📁", appOnly: true },
+    ],
+  },
+
+  // ── Freelancer OS ───────────────────────────────────────────────────────────
+  {
+    nicheId:       "freelancer",
+    displayName:   "Freelancer OS",
+    virtualTabIds: new Set(Object.values(FREELANCER_TABS)),
+    defaultTabId:  FREELANCER_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#4f46e5",
+      fgActive:      "#3730a3",
+      fgHeader:      "#1e1b4b",
+      bgActive:      "rgba(79,70,229,0.10)",
+      bgHover:       "rgba(79,70,229,0.05)",
+      bgGroupHeader: "rgba(79,70,229,0.06)",
+      borderTop:     "1px solid rgba(79,70,229,0.15)",
+    },
+    sidebarEmoji: "💼",
+    topTabs: [
+      { tabId: FREELANCER_TABS.DASHBOARD, label: "Dashboard",       icon: "🏠", appOnly: true },
+      { tabId: FREELANCER_TABS.PROPOSAL,  label: "Proposal Writer", icon: "📄", appOnly: true },
+      { tabId: FREELANCER_TABS.INVOICE,   label: "Invoice Builder", icon: "🧾", appOnly: true },
+      { tabId: FREELANCER_TABS.OUTREACH,  label: "Outreach Writer", icon: "📧", appOnly: true },
+      { tabId: FREELANCER_TABS.LIBRARY,   label: "My Documents",    icon: "📁", appOnly: true },
     ],
   },
 

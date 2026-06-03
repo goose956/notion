@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "id": "freelancer",
+  "name": "Freelancer OS",
+  "description": "AI writes your proposals, invoices and outreach emails — so you spend less time on admin and more time on paid work.",
+  "databases": [
+    {
+      "id": "clients",
+      "name": "Clients",
+      "properties": [
+        { "name": "Title",    "type": "title" },
+        { "name": "Industry", "type": "select", "options": [{ "name": "Technology" }, { "name": "E-commerce" }, { "name": "Healthcare" }, { "name": "Finance" }, { "name": "Education" }, { "name": "Hospitality" }, { "name": "Creative & Media" }, { "name": "Real Estate" }, { "name": "Non-Profit" }, { "name": "Other" }] },
+        { "name": "Status",   "type": "select", "options": [{ "name": "Active", "color": "green" }, { "name": "Prospect", "color": "yellow" }, { "name": "Past", "color": "gray" }] },
+        { "name": "Notes",    "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "projects",
+      "name": "Projects",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Client",  "type": "rich_text" },
+        { "name": "Status",  "type": "select", "options": [{ "name": "Active", "color": "green" }, { "name": "Completed", "color": "blue" }, { "name": "On Hold", "color": "yellow" }, { "name": "Cancelled", "color": "red" }] },
+        { "name": "Value",   "type": "number" },
+        { "name": "Notes",   "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "documents",
+      "name": "Documents",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Type",    "type": "select", "options": [{ "name": "Proposal", "color": "blue" }, { "name": "Invoice", "color": "green" }, { "name": "Outreach", "color": "purple" }] },
+        { "name": "Client",  "type": "rich_text" },
+        { "name": "Content", "type": "rich_text" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)", "Other"],
+      "required": true
+    },
+    {
+      "id": "your-name",
+      "question": "What is your name or trading name?",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. Jordan Smith, Smith Creative Studio"
+    },
+    {
+      "id": "service",
+      "question": "What service do you primarily offer?",
+      "type": "select",
+      "options": ["Web Design", "Web Development", "Copywriting & Content", "Marketing & SEO", "Consulting", "Photography", "Video & Animation", "Graphic Design", "Virtual Assistant", "Other"],
+      "required": true
+    },
+    {
+      "id": "rate-type",
+      "question": "How do you typically charge clients?",
+      "type": "select",
+      "options": ["Hourly Rate", "Day Rate", "Project-Based", "Retainer", "Mixed"],
+      "required": true
+    }
+  ]
+}

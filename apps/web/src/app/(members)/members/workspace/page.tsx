@@ -29,6 +29,7 @@ import { NailTechNicheShell } from "@/components/niches/nail-tech/shell";
 import { AuthorNicheShell } from "@/components/niches/author/shell";
 import { TeacherNicheShell } from "@/components/niches/teacher/shell";
 import { PTNicheShell } from "@/components/niches/personal-trainer/shell";
+import { FreelancerNicheShell } from "@/components/niches/freelancer/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1142,6 +1143,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["personal-trainer"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "freelancer") return (
+                <FreelancerNicheShell
+                  key="freelancer"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["freelancer"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}
