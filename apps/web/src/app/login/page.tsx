@@ -4,9 +4,9 @@ import { getSettingValue } from "@niche-factory/db";
 import { buildMagicLink } from "@/lib/magic-link";
 
 function resolveSafeCallbackUrl(callbackUrl: string | undefined): string {
-  if (!callbackUrl) return "/members/connections";
-  if (callbackUrl === "undefined" || callbackUrl.endsWith("/undefined")) return "/members/connections";
-  if (!callbackUrl.startsWith("/")) return "/members/connections";
+  if (!callbackUrl) return "/members/workspace";
+  if (callbackUrl === "undefined" || callbackUrl.endsWith("/undefined")) return "/members/workspace";
+  if (!callbackUrl.startsWith("/")) return "/members/workspace";
   return callbackUrl;
 }
 
