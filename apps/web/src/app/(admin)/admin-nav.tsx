@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart2, Blocks, Bot, FileText, LayoutDashboard, MessageSquare, SlidersHorizontal, TrendingUp, Users, Wrench } from "lucide-react";
+import { BarChart2, Blocks, Bot, Download, FileText, LayoutDashboard, MessageSquare, SlidersHorizontal, TrendingUp, Users, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -16,6 +16,7 @@ const navItems = [
   { href: "/admin/stats", label: "Stats", icon: BarChart2, exact: false as boolean },
   { href: "/admin/funnel", label: "Funnel", icon: TrendingUp, exact: false as boolean },
   { href: "/admin/support", label: "Support", icon: MessageSquare, exact: false as boolean },
+  { href: "/admin/export", label: "Export", icon: Download, exact: false as boolean },
 ] as const;
 
 export function AdminNav({ openTickets = 0 }: { openTickets?: number }) {
