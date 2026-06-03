@@ -17,6 +17,7 @@ const NICHE_CATEGORIES: Record<string, string> = {
   "str-guidebook":       "Property",
   "author":              "Creative",
   "nail-tech":           "Beauty",
+  "teacher":             "Education",
 };
 
 const PAGE_SIZE = 15;
@@ -183,6 +184,7 @@ function categoryColor(cat: string): string {
   if (c === "property")    return "bg-orange-50 text-orange-700 border-orange-200";
   if (c === "creative")    return "bg-indigo-50 text-indigo-700 border-indigo-200";
   if (c === "beauty")      return "bg-rose-50 text-rose-700 border-rose-200";
+  if (c === "education")   return "bg-blue-50 text-blue-700 border-blue-200";
   return "bg-primary/8 text-primary border-primary/20";
 }
 

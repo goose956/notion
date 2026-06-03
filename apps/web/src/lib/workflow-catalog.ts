@@ -104,6 +104,14 @@ export const WORKFLOW_CATALOG = [
       "Everything a fiction writer needs in one workspace. AI generates a full chapter-by-chapter outline from your premise, builds complete character profiles (backstory, motivation, arc, voice), and writes or continues scenes in your genre and POV. Whether you're plotting a thriller, drafting a romance, or stuck mid-chapter — the AI moves your manuscript forward. Save every outline section, character profile and scene to your Notion databases as you go.",
   },
   {
+    id: "teacher",
+    name: "Teacher Planning OS",
+    emoji: "🏫",
+    tagline: "AI writes your lesson plans, student report comments and assessments — ready to use in minutes.",
+    description:
+      "Everything a teacher needs to cut planning time in half. AI generates complete, curriculum-aligned lesson plans with starter, main activities, differentiation and plenary. A report writer produces professional, personalised report comments in your chosen tone and length. An assessment builder creates ready-to-print quizzes, worksheets, exam papers and marking rubrics with mark schemes included. Save everything to your planning library and export any document as a PDF.",
+  },
+  {
     id: "nail-tech",
     name: "Nail Tech & Beauty Planner",
     emoji: "💅",

@@ -27,6 +27,7 @@ import { STRGuidebookNicheShell } from "@/components/niches/str-guidebook/shell"
 import { CakeBusinessNicheShell } from "@/components/niches/cake-business/shell";
 import { NailTechNicheShell } from "@/components/niches/nail-tech/shell";
 import { AuthorNicheShell } from "@/components/niches/author/shell";
+import { TeacherNicheShell } from "@/components/niches/teacher/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1118,6 +1119,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["author"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "teacher") return (
+                <TeacherNicheShell
+                  key="teacher"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["teacher"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}

@@ -57,6 +57,15 @@ export const CAKE_TABS = {
   COMPLIANCE: "__cake_compliance__",
 } as const;
 
+// ─── Teacher Planning OS tab IDs ─────────────────────────────────────────────
+export const TEACHER_TABS = {
+  DASHBOARD:   "__teacher_dashboard__",
+  LESSONS:     "__teacher_lessons__",
+  REPORTS:     "__teacher_reports__",
+  ASSESSMENTS: "__teacher_assessments__",
+  LIBRARY:     "__teacher_library__",
+} as const;
+
 // ─── Author & Book Writing OS tab IDs ────────────────────────────────────────
 export const AUTHOR_TABS = {
   DASHBOARD:  "__author_dashboard__",
@@ -593,6 +602,32 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: AUTHOR_TABS.SCENE,      label: "Scene Writer",     icon: "✍️", appOnly: true },
       { tabId: AUTHOR_TABS.COVER,      label: "Cover Studio",     icon: "🎨", appOnly: true },
       { tabId: AUTHOR_TABS.LIBRARY,    label: "My Library",       icon: "📚", appOnly: true },
+    ],
+  },
+
+  // ── Teacher Planning OS ──────────────────────────────────────────────────
+  {
+    nicheId:       "teacher",
+    displayName:   "Teacher Planning OS",
+    virtualTabIds: new Set(Object.values(TEACHER_TABS)),
+    defaultTabId:  TEACHER_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#2563eb",
+      fgActive:      "#1d4ed8",
+      fgHeader:      "#1e3a8a",
+      bgActive:      "rgba(37,99,235,0.10)",
+      bgHover:       "rgba(37,99,235,0.05)",
+      bgGroupHeader: "rgba(37,99,235,0.06)",
+      borderTop:     "1px solid rgba(37,99,235,0.15)",
+    },
+    sidebarEmoji: "🏫",
+    topTabs: [
+      { tabId: TEACHER_TABS.DASHBOARD,   label: "Dashboard",       icon: "🏠", appOnly: true },
+      { tabId: TEACHER_TABS.LESSONS,     label: "Lesson Planner",  icon: "📋", appOnly: true },
+      { tabId: TEACHER_TABS.REPORTS,     label: "Report Writer",   icon: "📝", appOnly: true },
+      { tabId: TEACHER_TABS.ASSESSMENTS, label: "Assessments",     icon: "📊", appOnly: true },
+      { tabId: TEACHER_TABS.LIBRARY,     label: "My Documents",    icon: "📁", appOnly: true },
     ],
   },
 
