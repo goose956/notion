@@ -326,23 +326,25 @@ export default function ExportPage() {
 
   async function parseAll() {
     for (let i = 0; i < rows.length; i++) {
+      const row = rows[i]!;
       const res = await fetch("/api/admin/export/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: rows[i].name, description: rows[i].short_description }),
+        body: JSON.stringify({ name: row.name, description: row.short_description }),
       });
       const data = await res.json();
       setRows((prev) => {
         const next = [...prev];
+        const cur = next[i]!;
         next[i] = {
-          ...next[i],
-          feature_1: data.features?.[0] ?? next[i].feature_1,
-          feature_2: data.features?.[1] ?? next[i].feature_2,
-          feature_3: data.features?.[2] ?? next[i].feature_3,
-          feature_4: data.features?.[3] ?? next[i].feature_4,
-          feature_5: data.features?.[4] ?? next[i].feature_5,
-          target_audience: data.target_audience ?? next[i].target_audience,
-          seed_keywords: data.seed_keywords ?? next[i].seed_keywords,
+          ...cur,
+          feature_1: data.features?.[0] ?? cur.feature_1,
+          feature_2: data.features?.[1] ?? cur.feature_2,
+          feature_3: data.features?.[2] ?? cur.feature_3,
+          feature_4: data.features?.[3] ?? cur.feature_4,
+          feature_5: data.features?.[4] ?? cur.feature_5,
+          target_audience: data.target_audience ?? cur.target_audience,
+          seed_keywords: data.seed_keywords ?? cur.seed_keywords,
         };
         return next;
       });
