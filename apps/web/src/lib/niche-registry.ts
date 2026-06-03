@@ -57,6 +57,14 @@ export const CAKE_TABS = {
   COMPLIANCE: "__cake_compliance__",
 } as const;
 
+// ─── Author & Book Writing OS tab IDs ────────────────────────────────────────
+export const AUTHOR_TABS = {
+  DASHBOARD:  "__author_dashboard__",
+  OUTLINE:    "__author_outline__",
+  CHARACTERS: "__author_characters__",
+  SCENE:      "__author_scene__",
+} as const;
+
 // ─── Nail Tech & Beauty Business Planner tab IDs ─────────────────────────────
 export const NAIL_TABS = {
   DASHBOARD:  "__nail_dashboard__",
@@ -556,6 +564,31 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: NAIL_TABS.PLAN,       label: "Plan Builder",          icon: "✍️", appOnly: true },
       { tabId: NAIL_TABS.PRICING,    label: "Pricing & Financials",  icon: "💅", appOnly: true },
       { tabId: NAIL_TABS.COMPLIANCE, label: "Compliance",            icon: "✅", appOnly: true },
+    ],
+  },
+
+  // ── Author & Book Writing OS ────────────────────────────────────────────────
+  {
+    nicheId:       "author",
+    displayName:   "Author & Book Writing OS",
+    virtualTabIds: new Set(Object.values(AUTHOR_TABS)),
+    defaultTabId:  AUTHOR_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#d97706",
+      fgActive:      "#b45309",
+      fgHeader:      "#78350f",
+      bgActive:      "rgba(217,119,6,0.10)",
+      bgHover:       "rgba(217,119,6,0.05)",
+      bgGroupHeader: "rgba(217,119,6,0.06)",
+      borderTop:     "1px solid rgba(217,119,6,0.15)",
+    },
+    sidebarEmoji: "📖",
+    topTabs: [
+      { tabId: AUTHOR_TABS.DASHBOARD,  label: "Dashboard",        icon: "🏠", appOnly: true },
+      { tabId: AUTHOR_TABS.OUTLINE,    label: "Story Planner",    icon: "📜", appOnly: true },
+      { tabId: AUTHOR_TABS.CHARACTERS, label: "Character Builder", icon: "🧑‍🎨", appOnly: true },
+      { tabId: AUTHOR_TABS.SCENE,      label: "Scene Writer",     icon: "✍️", appOnly: true },
     ],
   },
 

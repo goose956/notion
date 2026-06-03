@@ -26,6 +26,7 @@ import { ContentCreatorNicheShell } from "@/components/niches/content-creator/sh
 import { STRGuidebookNicheShell } from "@/components/niches/str-guidebook/shell";
 import { CakeBusinessNicheShell } from "@/components/niches/cake-business/shell";
 import { NailTechNicheShell } from "@/components/niches/nail-tech/shell";
+import { AuthorNicheShell } from "@/components/niches/author/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1106,6 +1107,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["nail-tech"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "author") return (
+                <AuthorNicheShell
+                  key="author"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["author"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}

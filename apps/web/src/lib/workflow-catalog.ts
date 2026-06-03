@@ -96,6 +96,14 @@ export const WORKFLOW_CATALOG = [
       "Everything a short-term rental host needs to delight guests. AI writes localised guidebook sections (dining, things to do, transport, emergency info and more) using live search results. Generate a full welcome pack — welcome letter, check-in guide, house rules, checkout checklist and WiFi card. A guest messaging tool writes warm, personalised messages for every stage of the booking: pre-arrival, check-in day, mid-stay check-in, checkout reminder and review requests.",
   },
   {
+    id: "author",
+    name: "Author & Book Writing OS",
+    emoji: "📖",
+    tagline: "AI builds your chapter outline, character profiles and writes scenes — so you can focus on the story.",
+    description:
+      "Everything a fiction writer needs in one workspace. AI generates a full chapter-by-chapter outline from your premise, builds complete character profiles (backstory, motivation, arc, voice), and writes or continues scenes in your genre and POV. Whether you're plotting a thriller, drafting a romance, or stuck mid-chapter — the AI moves your manuscript forward. Save every outline section, character profile and scene to your Notion databases as you go.",
+  },
+  {
     id: "nail-tech",
     name: "Nail Tech & Beauty Planner",
     emoji: "💅",
