@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { TEACHER_TABS } from "@/lib/niche-registry";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 import { TeacherDashboard } from "./dashboard";
@@ -30,7 +30,7 @@ export function TeacherNicheShell({
 
   const documentsDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "documents") ?? null;
 
-  const wrap = (children: React.ReactNode) => (
+  const wrap = (children: ReactNode) => (
     <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>{children}</div>
   );
 
