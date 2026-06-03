@@ -1,87 +1,25 @@
 import Link from "next/link";
-import { listTemplates } from "@niche-factory/db";
-import type { TemplateRow } from "@niche-factory/db";
-import { slugifyTemplateCategory } from "@/lib/template-categories";
-import { ArrowRight, Compass, Sparkles, Workflow, Zap, Bot, Database } from "lucide-react";
+import { WORKFLOW_CATALOG } from "@/lib/workflow-catalog";
+import { ArrowRight, Compass, Bot, Workflow, Sparkles } from "lucide-react";
 
-interface GalleryCard {
-  title: string;
-  category: string;
-  painPoint: string;
-  tags: string[];
-  metric: string;
-  href?: `/templates/${string}`;
-}
+const NICHE_CATEGORIES: Record<string, string> = {
+  "wedding-planner":     "Wedding",
+  "rainbow":             "Wedding",
+  "neurodivergent-wedding": "Wedding",
+  "project-manager":     "Productivity",
+  "pinterest-poster":    "Creator",
+  "content-creator":     "Creator",
+  "neurodivergent":      "Wellness",
+  "side-hustle":         "Business",
+  "food-business":       "Business",
+  "cake-business":       "Business",
+  "etsy-shop":           "Ecommerce",
+  "str-guidebook":       "Property",
+  "author":              "Creative",
+  "nail-tech":           "Beauty",
+};
 
-const dummyWorkflows: GalleryCard[] = [
-  {
-    title: "Track YouTube Videos for Forex Niche",
-    category: "Finance",
-    painPoint: "Stop losing high-signal trade videos across tabs, bookmarks, and notes.",
-    tags: ["forex", "youtube", "research"],
-    metric: "312 installs",
-  },
-  {
-    title: "Local Plumber Lead Pipeline",
-    category: "Local SEO",
-    painPoint: "Capture Google Maps businesses and turn raw listings into qualified outreach leads.",
-    tags: ["leads", "google maps", "outbound"],
-    metric: "188 installs",
-  },
-  {
-    title: "Creator Sponsorship CRM",
-    category: "Creator Ops",
-    painPoint: "Manage brand deals, follow-ups, and payout stages without spreadsheet chaos.",
-    tags: ["crm", "creator", "sponsorships"],
-    metric: "241 installs",
-  },
-  {
-    title: "Airbnb Arbitrage Deal Scout",
-    category: "Real Estate",
-    painPoint: "Compare rental comps, occupancy assumptions, and landlord outreach in one flow.",
-    tags: ["airbnb", "real estate", "deals"],
-    metric: "154 installs",
-  },
-  {
-    title: "Newsletter Content Mining Board",
-    category: "Content",
-    painPoint: "Turn scattered ideas into ranked newsletter angles with deadlines and owners.",
-    tags: ["newsletter", "content", "editorial"],
-    metric: "96 installs",
-  },
-  {
-    title: "Agency Client Onboarding Hub",
-    category: "Operations",
-    painPoint: "Standardize intake forms, kickoff tasks, and handoff status across every new client.",
-    tags: ["agency", "onboarding", "ops"],
-    metric: "267 installs",
-  },
-];
-
-export default async function HomePage() {
-  let liveTemplates: TemplateRow[] = [];
-  try {
-    liveTemplates = await listTemplates({ publishedOnly: true });
-  } catch {
-    // Fall back to dummy cards if DB is unavailable.
-  }
-
-  const liveCards: GalleryCard[] = liveTemplates.slice(0, 9).map((template) => ({
-    title: template.title,
-    category: template.category || "Workflow",
-    painPoint: template.problemStatement,
-    tags: ((template.tags as string[]) ?? []).slice(0, 4),
-    metric: `${template.viewCount.toLocaleString()} views`,
-    href: `/templates/${template.slug}` as `/templates/${string}`,
-  }));
-
-  const TARGET_GALLERY_SIZE = 9;
-  const dummyNeeded = Math.max(0, TARGET_GALLERY_SIZE - liveCards.length);
-  const dummyCards = dummyWorkflows.slice(0, dummyNeeded);
-  const galleryItems: GalleryCard[] = [...liveCards, ...dummyCards];
-  const categoryLinks = Array.from(new Set(liveTemplates.map((template) => template.category).filter(Boolean)))
-    .slice(0, 8);
-
+export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
 
@@ -137,13 +75,6 @@ export default async function HomePage() {
               Get started free
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link
-              href="/templates"
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground h-10 px-5 text-sm font-medium hover:bg-accent/90 transition-colors"
-            >
-              <Compass className="h-4 w-4" />
-              Browse workspaces
-            </Link>
           </div>
 
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
@@ -162,52 +93,40 @@ export default async function HomePage() {
               Each workspace is a live AI built for one specific niche — it researches, drafts, and executes so you don&apos;t have to.
             </p>
           </div>
-          <div className="hidden md:flex items-center gap-2 text-xs">
-            <span className="rounded-full border border-primary/25 bg-primary/10 text-primary px-2.5 py-1 font-medium">Trending</span>
-            <span className="rounded-full border border-accent/25 bg-accent/10 text-accent px-2.5 py-1 font-medium">Top Rated</span>
-            <span className="rounded-full border border-green-300 bg-green-50 text-green-700 px-2.5 py-1 font-medium">New</span>
-          </div>
+          <p className="hidden md:block text-sm text-muted-foreground">
+            25 free credits on signup — no card required
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {galleryItems.map((workflow) => {
-            const card = (
-              <article className="group surface-card p-5 flex flex-col gap-4 hover:shadow-lg hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${categoryColor(workflow.category)}`}>
-                    {workflow.category}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{workflow.metric}</span>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold leading-snug group-hover:underline capitalize">
-                    {workflow.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                    {workflow.painPoint}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 mt-auto">
-                  {workflow.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className={`text-xs px-2 py-0.5 rounded-full border ${categoryColor(workflow.category)}`}
-                    >
-                      #{tag}
+          {WORKFLOW_CATALOG.map((niche) => {
+            const category = NICHE_CATEGORIES[niche.id] ?? "Workflow";
+            const href = `/signup?callbackUrl=${encodeURIComponent(`/members/setup/${niche.id}`)}&title=${encodeURIComponent(niche.name)}`;
+            return (
+              <Link key={niche.id} href={href} className="block group">
+                <article className="surface-card p-5 flex flex-col gap-4 h-full hover:shadow-lg hover:border-primary/30 transition-all">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${categoryColor(category)}`}>
+                      {category}
                     </span>
-                  ))}
-                </div>
-              </article>
-            );
+                    <span className="text-xl">{niche.emoji}</span>
+                  </div>
 
-            return workflow.href ? (
-              <Link key={workflow.title} href={workflow.href} className="block">
-                {card}
+                  <div className="space-y-2 flex-1">
+                    <h3 className="text-base font-semibold leading-snug group-hover:underline">
+                      {niche.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                      {niche.tagline}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-xs font-semibold text-primary mt-auto">
+                    Get started free
+                    <ArrowRight className="h-3 w-3" />
+                  </div>
+                </article>
               </Link>
-            ) : (
-              <div key={workflow.title}>{card}</div>
             );
           })}
         </div>
@@ -218,14 +137,15 @@ export default async function HomePage() {
 
 function categoryColor(cat: string): string {
   const c = cat.toLowerCase();
-  if (c.includes("finance") || c.includes("forex") || c.includes("invest")) return "bg-emerald-50 text-emerald-700 border-emerald-200";
-  if (c.includes("real estate") || c.includes("property")) return "bg-sky-50 text-sky-700 border-sky-200";
-  if (c.includes("creator") || c.includes("content") || c.includes("newsletter")) return "bg-violet-50 text-violet-700 border-violet-200";
-  if (c.includes("local") || c.includes("lead") || c.includes("seo")) return "bg-orange-50 text-orange-700 border-orange-200";
-  if (c.includes("ops") || c.includes("operation") || c.includes("agency")) return "bg-slate-100 text-slate-700 border-slate-300";
-  if (c.includes("wedding") || c.includes("event") || c.includes("planner")) return "bg-pink-50 text-pink-700 border-pink-200";
-  if (c.includes("ecommerce") || c.includes("shopify") || c.includes("retail")) return "bg-amber-50 text-amber-700 border-amber-200";
-  if (c.includes("health") || c.includes("fitness") || c.includes("wellness")) return "bg-teal-50 text-teal-700 border-teal-200";
+  if (c === "wedding")     return "bg-pink-50 text-pink-700 border-pink-200";
+  if (c === "productivity") return "bg-sky-50 text-sky-700 border-sky-200";
+  if (c === "creator")     return "bg-violet-50 text-violet-700 border-violet-200";
+  if (c === "wellness")    return "bg-teal-50 text-teal-700 border-teal-200";
+  if (c === "business")    return "bg-amber-50 text-amber-700 border-amber-200";
+  if (c === "ecommerce")   return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (c === "property")    return "bg-orange-50 text-orange-700 border-orange-200";
+  if (c === "creative")    return "bg-indigo-50 text-indigo-700 border-indigo-200";
+  if (c === "beauty")      return "bg-rose-50 text-rose-700 border-rose-200";
   return "bg-primary/8 text-primary border-primary/20";
 }
 
