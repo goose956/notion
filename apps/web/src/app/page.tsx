@@ -19,7 +19,14 @@ const NICHE_CATEGORIES: Record<string, string> = {
   "nail-tech":           "Beauty",
 };
 
-export default function HomePage() {
+const PAGE_SIZE = 15;
+
+export default function HomePage({ searchParams }: { searchParams?: { page?: string } }) {
+  const currentPage = Math.max(1, parseInt(searchParams?.page ?? "1", 10) || 1);
+  const totalPages  = Math.ceil(WORKFLOW_CATALOG.length / PAGE_SIZE);
+  const page        = Math.min(currentPage, totalPages);
+  const pageItems   = WORKFLOW_CATALOG.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="min-h-screen bg-background">
 
@@ -99,7 +106,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {WORKFLOW_CATALOG.map((niche) => {
+          {pageItems.map((niche) => {
             const category = NICHE_CATEGORIES[niche.id] ?? "Workflow";
             const href = `/signup?callbackUrl=${encodeURIComponent(`/members/setup/${niche.id}`)}&title=${encodeURIComponent(niche.name)}` as "/signup";
             return (
@@ -130,6 +137,36 @@ export default function HomePage() {
             );
           })}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-10">
+            {page > 1 && (
+              <Link
+                href={page - 1 === 1 ? "/" : `/?page=${page - 1}` as "/"}
+                className="inline-flex items-center gap-1.5 rounded-md border bg-background h-9 px-4 text-sm font-medium hover:bg-accent transition-colors"
+              >
+                ← Previous
+              </Link>
+            )}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Link
+                key={p}
+                href={p === 1 ? "/" : `/?page=${p}` as "/"}
+                className={`inline-flex items-center justify-center rounded-md h-9 w-9 text-sm font-medium border transition-colors ${p === page ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-accent"}`}
+              >
+                {p}
+              </Link>
+            ))}
+            {page < totalPages && (
+              <Link
+                href={`/?page=${page + 1}` as "/"}
+                className="inline-flex items-center gap-1.5 rounded-md border bg-background h-9 px-4 text-sm font-medium hover:bg-accent transition-colors"
+              >
+                Next →
+              </Link>
+            )}
+          </div>
+        )}
       </section>
     </div>
   );
