@@ -20,7 +20,8 @@ const NICHE_TAB_COUNT: Record<string, number> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { nicheId, folder } = await req.json();
+  const { nicheId, folder, accents } = await req.json();
+  const accentList: string[] = Array.isArray(accents) ? accents : [];
 
   if (!nicheId || !folder) {
     return NextResponse.json({ error: "nicheId and folder required" }, { status: 400 });
@@ -47,7 +48,8 @@ export async function POST(req: NextRequest) {
     const paths: string[] = [];
 
     for (let i = 0; i < tabsToShoot; i++) {
-      const url = `${origin}/niche-preview/${nicheId}/${i}`;
+      const accent = accentList[i] ? `?accent=${encodeURIComponent(accentList[i]!)}` : "";
+      const url = `${origin}/niche-preview/${nicheId}/${i}${accent}`;
       const page = await browser.newPage();
       await page.setViewport({ width: 1280, height: 800 });
       await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });

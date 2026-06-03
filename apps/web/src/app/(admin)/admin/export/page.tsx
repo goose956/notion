@@ -4,6 +4,31 @@ import { useState } from "react";
 import { Download, Sparkles, Camera, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { WORKFLOW_CATALOG } from "@/lib/workflow-catalog";
 
+// ─── Suggested colour palettes per niche ────────────────────────────────────
+// 3 colours per niche — one per screenshot tab, kept visually distinct
+const NICHE_PALETTES: Record<string, [string, string, string]> = {
+  "wedding-planner":        ["#be185d", "#9d174d", "#f43f8e"],
+  "rainbow":                ["#e11d7a", "#7c3aed", "#0891b2"],
+  "project-manager":        ["#4f46e5", "#0284c7", "#059669"],
+  "pinterest-poster":       ["#e11d48", "#db2777", "#9333ea"],
+  "neurodivergent":         ["#0d9488", "#0891b2", "#7c3aed"],
+  "side-hustle":            ["#ea580c", "#d97706", "#16a34a"],
+  "neurodivergent-wedding": ["#7c3aed", "#be185d", "#0d9488"],
+  "food-business":          ["#16a34a", "#0891b2", "#ca8a04"],
+  "content-creator":        ["#0284c7", "#7c3aed", "#e11d48"],
+  "etsy-shop":              ["#f59e0b", "#ea580c", "#16a34a"],
+  "cake-business":          ["#db2777", "#9333ea", "#ea580c"],
+  "str-guidebook":          ["#0891b2", "#0d9488", "#4f46e5"],
+  "nail-tech":              ["#c026d3", "#db2777", "#7c3aed"],
+};
+
+// Curated swatches users can quick-pick from
+const QUICK_SWATCHES = [
+  "#e11d48", "#db2777", "#c026d3", "#9333ea", "#7c3aed",
+  "#4f46e5", "#2563eb", "#0284c7", "#0891b2", "#0d9488",
+  "#16a34a", "#ca8a04", "#ea580c", "#e83d00", "#f59e0b",
+];
+
 interface NicheExportData {
   id: string;
   name: string;
@@ -19,69 +44,130 @@ interface NicheExportData {
   screenshot_1: string;
   screenshot_2: string;
   screenshot_3: string;
+  accent_1: string;
+  accent_2: string;
+  accent_3: string;
 }
 
 function initData(): NicheExportData[] {
-  return WORKFLOW_CATALOG.map((w) => ({
-    id: w.id,
-    name: w.name,
-    tagline: w.tagline,
-    short_description: w.description,
-    feature_1: "",
-    feature_2: "",
-    feature_3: "",
-    feature_4: "",
-    feature_5: "",
-    target_audience: "",
-    seed_keywords: "",
-    screenshot_1: "",
-    screenshot_2: "",
-    screenshot_3: "",
-  }));
+  return WORKFLOW_CATALOG.map((w) => {
+    const palette = NICHE_PALETTES[w.id] ?? ["#4f46e5", "#0284c7", "#16a34a"];
+    return {
+      id: w.id,
+      name: w.name,
+      tagline: w.tagline,
+      short_description: w.description,
+      feature_1: "",
+      feature_2: "",
+      feature_3: "",
+      feature_4: "",
+      feature_5: "",
+      target_audience: "",
+      seed_keywords: "",
+      screenshot_1: "",
+      screenshot_2: "",
+      screenshot_3: "",
+      accent_1: palette[0],
+      accent_2: palette[1],
+      accent_3: palette[2],
+    };
+  });
 }
 
 function toCsv(rows: NicheExportData[]): string {
   const headers = [
-    "app_name",
-    "tagline",
-    "short_description",
-    "feature_1",
-    "feature_2",
-    "feature_3",
-    "feature_4",
-    "feature_5",
-    "target_audience",
-    "seed_keywords",
-    "screenshot_1",
-    "screenshot_2",
-    "screenshot_3",
+    "app_name", "tagline", "short_description",
+    "feature_1", "feature_2", "feature_3", "feature_4", "feature_5",
+    "target_audience", "seed_keywords",
+    "screenshot_1", "screenshot_2", "screenshot_3",
   ];
   const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
   const lines = [
     headers.join(","),
     ...rows.map((r) =>
       [
-        r.name,
-        r.tagline,
-        r.short_description,
-        r.feature_1,
-        r.feature_2,
-        r.feature_3,
-        r.feature_4,
-        r.feature_5,
-        r.target_audience,
-        r.seed_keywords,
-        r.screenshot_1,
-        r.screenshot_2,
-        r.screenshot_3,
-      ]
-        .map(escape)
-        .join(",")
+        r.name, r.tagline, r.short_description,
+        r.feature_1, r.feature_2, r.feature_3, r.feature_4, r.feature_5,
+        r.target_audience, r.seed_keywords,
+        r.screenshot_1, r.screenshot_2, r.screenshot_3,
+      ].map(escape).join(",")
     ),
   ];
   return lines.join("\n");
 }
 
+// ─── Colour picker for a single slot ────────────────────────────────────────
+function ColourPicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      <div className="flex items-center gap-2">
+        {/* Colour preview + native picker */}
+        <label className="relative cursor-pointer">
+          <span
+            className="block w-8 h-8 rounded-md border-2 border-white/20 shadow-sm"
+            style={{ background: value }}
+          />
+          <input
+            type="color"
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        </label>
+
+        {/* Hex input */}
+        <input
+          className="w-24 border rounded-md px-2 py-1 text-xs font-mono bg-background"
+          value={value}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (/^#[0-9a-fA-F]{0,6}$/.test(v)) onChange(v);
+          }}
+        />
+
+        {/* Quick swatch toggle */}
+        <button
+          type="button"
+          onClick={() => setOpen((p) => !p)}
+          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+        >
+          Presets
+        </button>
+      </div>
+
+      {open && (
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {QUICK_SWATCHES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              title={c}
+              onClick={() => { onChange(c); setOpen(false); }}
+              className="w-6 h-6 rounded-md border-2 transition-transform hover:scale-110"
+              style={{
+                background: c,
+                borderColor: c === value ? "white" : "transparent",
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Per-niche row ───────────────────────────────────────────────────────────
 function NicheRow({
   row,
   index,
@@ -129,7 +215,11 @@ function NicheRow({
       const res = await fetch("/api/admin/export/screenshots", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nicheId: row.id, folder: screenshotFolder }),
+        body: JSON.stringify({
+          nicheId: row.id,
+          folder: screenshotFolder,
+          accents: [row.accent_1, row.accent_2, row.accent_3],
+        }),
       });
       const data = await res.json();
       if (data.paths) {
@@ -147,11 +237,22 @@ function NicheRow({
 
   return (
     <div className="border rounded-lg overflow-hidden">
+      {/* Header row */}
       <button
         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
         onClick={() => setOpen((p) => !p)}
       >
         <span className="text-lg">{WORKFLOW_CATALOG[index]?.emoji}</span>
+        {/* Accent colour preview dots */}
+        <span className="flex items-center gap-1">
+          {([row.accent_1, row.accent_2, row.accent_3] as const).map((c, i) => (
+            <span
+              key={i}
+              className="w-3 h-3 rounded-full border border-white/10"
+              style={{ background: c }}
+            />
+          ))}
+        </span>
         <span className="font-medium flex-1">{row.name}</span>
         {filled ? (
           <span className="text-xs text-green-600 font-medium">Ready</span>
@@ -167,17 +268,10 @@ function NicheRow({
 
       {open && (
         <div className="px-4 pb-4 space-y-4 border-t pt-4">
+          {/* Name + tagline */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field
-              label="App name"
-              value={row.name}
-              onChange={(v) => onChange(index, "name", v)}
-            />
-            <Field
-              label="Tagline"
-              value={row.tagline}
-              onChange={(v) => onChange(index, "tagline", v)}
-            />
+            <Field label="App name" value={row.name} onChange={(v) => onChange(index, "name", v)} />
+            <Field label="Tagline" value={row.tagline} onChange={(v) => onChange(index, "tagline", v)} />
           </div>
 
           <Field
@@ -187,17 +281,14 @@ function NicheRow({
             multiline
           />
 
+          {/* AI parse */}
           <div className="flex items-center gap-3">
             <button
               onClick={handleParse}
               disabled={parsing}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-60"
             >
-              {parsing ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="h-3.5 w-3.5" />
-              )}
+              {parsing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
               Parse with AI
             </button>
             <span className="text-xs text-muted-foreground">
@@ -205,6 +296,7 @@ function NicheRow({
             </span>
           </div>
 
+          {/* Features */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {([1, 2, 3, 4, 5] as const).map((n) => (
               <Field
@@ -216,25 +308,32 @@ function NicheRow({
             ))}
           </div>
 
+          {/* Audience + keywords */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field
-              label="Target audience"
-              value={row.target_audience}
-              onChange={(v) => onChange(index, "target_audience", v)}
-            />
-            <Field
-              label="Seed keywords (comma-separated)"
-              value={row.seed_keywords}
-              onChange={(v) => onChange(index, "seed_keywords", v)}
-            />
+            <Field label="Target audience" value={row.target_audience} onChange={(v) => onChange(index, "target_audience", v)} />
+            <Field label="Seed keywords (comma-separated)" value={row.seed_keywords} onChange={(v) => onChange(index, "seed_keywords", v)} />
           </div>
 
+          {/* ── Colours ── */}
+          <div className="space-y-3">
+            <p className="text-sm font-medium">Screenshot colours</p>
+            <p className="text-xs text-muted-foreground">
+              Each screenshot uses a different accent colour — keeps the listing images visually varied.
+            </p>
+            <div className="grid grid-cols-3 gap-4">
+              <ColourPicker label="Screenshot 1 accent" value={row.accent_1} onChange={(v) => onChange(index, "accent_1", v)} />
+              <ColourPicker label="Screenshot 2 accent" value={row.accent_2} onChange={(v) => onChange(index, "accent_2", v)} />
+              <ColourPicker label="Screenshot 3 accent" value={row.accent_3} onChange={(v) => onChange(index, "accent_3", v)} />
+            </div>
+          </div>
+
+          {/* ── Screenshots ── */}
           <div className="space-y-2">
             <p className="text-sm font-medium">Screenshots</p>
             <div className="flex items-center gap-2">
               <input
                 className="flex-1 border rounded-md px-3 py-1.5 text-sm bg-background"
-                placeholder="Output folder path (e.g. C:\screenshots\nail-tech)"
+                placeholder="Output folder path on server"
                 value={screenshotFolder}
                 onChange={(e) => setScreenshotFolder(e.target.value)}
               />
@@ -243,23 +342,17 @@ function NicheRow({
                 disabled={screenshotting}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm hover:bg-muted disabled:opacity-60"
               >
-                {screenshotting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Camera className="h-3.5 w-3.5" />
-                )}
+                {screenshotting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
                 Screenshot
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-3 gap-2">
               {([1, 2, 3] as const).map((n) => (
                 <Field
                   key={n}
                   label={`Screenshot ${n} path`}
                   value={row[`screenshot_${n}` as keyof NicheExportData]}
-                  onChange={(v) =>
-                    onChange(index, `screenshot_${n}` as keyof NicheExportData, v)
-                  }
+                  onChange={(v) => onChange(index, `screenshot_${n}` as keyof NicheExportData, v)}
                 />
               ))}
             </div>
@@ -302,8 +395,10 @@ function Field({
   );
 }
 
+// ─── Page ────────────────────────────────────────────────────────────────────
 export default function ExportPage() {
   const [rows, setRows] = useState<NicheExportData[]>(initData);
+  const [parsingAll, setParsingAll] = useState(false);
 
   function handleChange(index: number, field: keyof NicheExportData, value: string) {
     setRows((prev) => {
@@ -324,39 +419,33 @@ export default function ExportPage() {
     URL.revokeObjectURL(url);
   }
 
-  async function parseAll() {
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i]!;
-      const res = await fetch("/api/admin/export/parse", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: row.name, description: row.short_description }),
-      });
-      const data = await res.json();
-      setRows((prev) => {
-        const next = [...prev];
-        const cur = next[i]!;
-        next[i] = {
-          ...cur,
-          feature_1: data.features?.[0] ?? cur.feature_1,
-          feature_2: data.features?.[1] ?? cur.feature_2,
-          feature_3: data.features?.[2] ?? cur.feature_3,
-          feature_4: data.features?.[3] ?? cur.feature_4,
-          feature_5: data.features?.[4] ?? cur.feature_5,
-          target_audience: data.target_audience ?? cur.target_audience,
-          seed_keywords: data.seed_keywords ?? cur.seed_keywords,
-        };
-        return next;
-      });
-    }
-  }
-
-  const [parsingAll, setParsingAll] = useState(false);
-
   async function handleParseAll() {
     setParsingAll(true);
     try {
-      await parseAll();
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]!;
+        const res = await fetch("/api/admin/export/parse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: row.name, description: row.short_description }),
+        });
+        const data = await res.json();
+        setRows((prev) => {
+          const next = [...prev];
+          const cur = next[i]!;
+          next[i] = {
+            ...cur,
+            feature_1: data.features?.[0] ?? cur.feature_1,
+            feature_2: data.features?.[1] ?? cur.feature_2,
+            feature_3: data.features?.[2] ?? cur.feature_3,
+            feature_4: data.features?.[3] ?? cur.feature_4,
+            feature_5: data.features?.[4] ?? cur.feature_5,
+            target_audience: data.target_audience ?? cur.target_audience,
+            seed_keywords: data.seed_keywords ?? cur.seed_keywords,
+          };
+          return next;
+        });
+      }
     } finally {
       setParsingAll(false);
     }
@@ -371,8 +460,8 @@ export default function ExportPage() {
         </div>
         <h1 className="text-2xl font-bold tracking-tight">Export Niche Packs</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Generate a CSV for the Listing Factory desktop app. Edit fields per niche, use AI to
-          auto-fill features and keywords, take screenshots, then download.
+          Generate a CSV for the Listing Factory desktop app. Edit fields, pick screenshot colours,
+          run AI parse, take screenshots, then download.
         </p>
       </div>
 
@@ -382,11 +471,7 @@ export default function ExportPage() {
           disabled={parsingAll}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-60"
         >
-          {parsingAll ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Sparkles className="h-4 w-4" />
-          )}
+          {parsingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           Parse All with AI
         </button>
         <button

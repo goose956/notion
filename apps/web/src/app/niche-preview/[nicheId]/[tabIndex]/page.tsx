@@ -69,8 +69,10 @@ function getTabDescription(nicheId: string, tabIndex: number) {
 
 export default function NichePreviewPage({
   params,
+  searchParams,
 }: {
   params: { nicheId: string; tabIndex: string };
+  searchParams: { accent?: string };
 }) {
   const { nicheId, tabIndex } = params;
   const tabIdx = parseInt(tabIndex, 10);
@@ -78,7 +80,8 @@ export default function NichePreviewPage({
   const niche = WORKFLOW_CATALOG.find((w) => w.id === nicheId);
   if (!niche) notFound();
 
-  const accent = NICHE_ACCENTS[nicheId] ?? "#6366f1";
+  // Query param overrides the default — allows per-screenshot colour control
+  const accent = searchParams.accent ?? NICHE_ACCENTS[nicheId] ?? "#6366f1";
   const tabs = NICHE_TABS[nicheId] ?? [];
   const activeTab = tabs[tabIdx] ?? tabs[0] ?? "Dashboard";
   const { heading, bullets } = getTabDescription(nicheId, tabIdx);
