@@ -18,6 +18,13 @@
   ],
   "onboardingQuestions": [
     {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)", "Other"],
+      "required": true
+    },
+    {
       "id": "school-name",
       "question": "What is your school called?",
       "type": "text",

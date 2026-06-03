@@ -25,8 +25,9 @@ export function AuthorCharacterBuilder({
   const [saving,     setSaving]    = useState(false);
   const [saveMsg,    setSaveMsg]   = useState<string | null>(null);
 
-  const genre   = String(criteria?.["genre"]     ?? "").trim();
-  const premise = String(criteria?.["premise"]   ?? "").trim();
+  const genre    = String(criteria?.["genre"]    ?? "").trim();
+  const premise  = String(criteria?.["premise"]  ?? "").trim();
+  const country  = String(criteria?.["country"]  ?? "").trim();
 
   async function generate() {
     if (!charName.trim()) { setError("Enter a character name first."); return; }
@@ -35,7 +36,7 @@ export function AuthorCharacterBuilder({
       const res = await fetch("/api/members/author-character", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ charName, role, genre, premise, notes }),
+        body: JSON.stringify({ charName, role, genre, premise, notes, country }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };

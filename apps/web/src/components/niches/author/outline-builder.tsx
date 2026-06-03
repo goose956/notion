@@ -27,6 +27,7 @@ export function AuthorOutlineBuilder({
   const premise   = String(criteria?.["premise"]    ?? "").trim();
   const pov       = String(criteria?.["pov"]        ?? "").trim();
   const audience  = String(criteria?.["target-audience"] ?? "").trim();
+  const country   = String(criteria?.["country"]        ?? "").trim();
 
   async function generate() {
     if (!bookTitle && !premise) { setError("Add your book title and premise in Setup first."); return; }
@@ -35,7 +36,7 @@ export function AuthorOutlineBuilder({
       const res = await fetch("/api/members/author-outline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ section, bookTitle, genre, premise, pov, audience, extraNotes }),
+        body: JSON.stringify({ section, bookTitle, genre, premise, pov, audience, extraNotes, country }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };

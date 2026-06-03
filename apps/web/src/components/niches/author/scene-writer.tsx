@@ -33,9 +33,10 @@ export function AuthorSceneWriter({
   const [saving,    setSaving]  = useState(false);
   const [saveMsg,   setSaveMsg] = useState<string | null>(null);
 
-  const genre    = String(criteria?.["genre"]     ?? "").trim();
-  const bookPov  = String(criteria?.["pov"]       ?? pov).trim();
-  const tone     = String(criteria?.["tone"]      ?? "").trim();
+  const genre    = String(criteria?.["genre"]    ?? "").trim();
+  const bookPov  = String(criteria?.["pov"]      ?? pov).trim();
+  const tone     = String(criteria?.["tone"]     ?? "").trim();
+  const country  = String(criteria?.["country"]  ?? "").trim();
 
   async function generate() {
     const needsDesc = mode === "write" || mode === "dialogue";
@@ -46,7 +47,7 @@ export function AuthorSceneWriter({
       const res = await fetch("/api/members/author-scene", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, sceneDesc, existing, genre, pov: bookPov || pov, tone }),
+        body: JSON.stringify({ mode, sceneDesc, existing, genre, pov: bookPov || pov, tone, country }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };

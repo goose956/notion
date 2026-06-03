@@ -10,6 +10,7 @@ const BodySchema = z.object({
   genre:    z.string().trim().default(""),
   premise:  z.string().trim().default(""),
   notes:    z.string().trim().default(""),
+  country:  z.string().trim().default(""),
 });
 
 const CREDITS_PER_CALL = 1;
@@ -37,7 +38,9 @@ export async function POST(req: NextRequest) {
   const parsed = BodySchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
-  const { charName, role, genre, premise, notes } = parsed.data;
+  const { charName, role, genre, premise, notes, country } = parsed.data;
+  const usEnglish = country.toLowerCase().includes("united states");
+  const spelling  = usEnglish ? "US English (realize, color, organize)" : "British English (realise, colour, organise)";
 
   const credits = await getCustomerCredits(email).catch(() => 0);
   if (credits < CREDITS_PER_CALL) return NextResponse.json({ error: "Not enough credits" }, { status: 402 });
@@ -52,6 +55,7 @@ export async function POST(req: NextRequest) {
   const prompt = `Create a full character profile for ${charName}, the ${role} in a ${genre || "fiction"} novel.
 ${premise ? `Story premise: ${premise}` : ""}
 ${notes ? `What the author already knows about this character: ${notes}` : ""}
+${country ? `Publishing market: ${country} — use ${spelling} throughout.` : ""}
 
 Write a detailed character profile covering:
 

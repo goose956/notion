@@ -11,6 +11,7 @@ const BodySchema = z.object({
   genre:     z.string().trim().default(""),
   pov:       z.string().trim().default(""),
   tone:      z.string().trim().default(""),
+  country:   z.string().trim().default(""),
 });
 
 const CREDITS_PER_CALL = 2;
@@ -38,7 +39,9 @@ export async function POST(req: NextRequest) {
   const parsed = BodySchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
-  const { mode, sceneDesc, existing, genre, pov, tone } = parsed.data;
+  const { mode, sceneDesc, existing, genre, pov, tone, country } = parsed.data;
+  const usEnglish = country.toLowerCase().includes("united states");
+  const spelling  = usEnglish ? "US English (realize, color, organize)" : "British English (realise, colour, organise)";
 
   const credits = await getCustomerCredits(email).catch(() => 0);
   if (credits < CREDITS_PER_CALL) return NextResponse.json({ error: "Not enough credits" }, { status: 402 });
@@ -51,9 +54,10 @@ export async function POST(req: NextRequest) {
   const customer = await findOrCreateCustomer(email);
 
   const context = [
-    genre  && `Genre: ${genre}`,
-    pov    && `POV: ${pov}`,
-    tone   && `Tone: ${tone}`,
+    genre   && `Genre: ${genre}`,
+    pov     && `POV: ${pov}`,
+    tone    && `Tone: ${tone}`,
+    country && `Publishing market: ${country} — use ${spelling}`,
   ].filter(Boolean).join("\n");
 
   const prompts: Record<string, string> = {

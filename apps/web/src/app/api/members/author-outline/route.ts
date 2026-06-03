@@ -12,6 +12,7 @@ const BodySchema = z.object({
   pov:        z.string().trim().default(""),
   audience:   z.string().trim().default(""),
   extraNotes: z.string().trim().default(""),
+  country:    z.string().trim().default(""),
 });
 
 const CREDITS_PER_CALL = 2;
@@ -105,7 +106,9 @@ export async function POST(req: NextRequest) {
   const parsed = BodySchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
-  const { section, bookTitle, genre, premise, pov, audience, extraNotes } = parsed.data;
+  const { section, bookTitle, genre, premise, pov, audience, extraNotes, country } = parsed.data;
+  const usEnglish = country.toLowerCase().includes("united states");
+  const spelling  = usEnglish ? "US English (realize, color, organize)" : "British English (realise, colour, organise)";
 
   const credits = await getCustomerCredits(email).catch(() => 0);
   if (credits < CREDITS_PER_CALL) return NextResponse.json({ error: "Not enough credits" }, { status: 402 });
@@ -122,6 +125,7 @@ Book details:
 - Genre: ${genre || "Not specified"}
 - POV: ${pov || "Not specified"}
 - Target audience: ${audience || "Not specified"}
+${country ? `- Publishing market: ${country} — use ${spelling} throughout` : ""}
 ${premise ? `- Premise: ${premise}` : ""}
 ${extraNotes ? `\nAdditional context from the author:\n${extraNotes}` : ""}`;
 

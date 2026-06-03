@@ -37,6 +37,13 @@
   ],
   "onboardingQuestions": [
     {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)", "Other"],
+      "required": true
+    },
+    {
       "id": "book-title",
       "question": "What is your book called?",
       "type": "text",
