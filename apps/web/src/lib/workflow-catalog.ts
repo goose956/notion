@@ -112,6 +112,14 @@ export const WORKFLOW_CATALOG = [
       "Everything a teacher needs to cut planning time in half. AI generates complete, curriculum-aligned lesson plans with starter, main activities, differentiation and plenary. A report writer produces professional, personalised report comments in your chosen tone and length. An assessment builder creates ready-to-print quizzes, worksheets, exam papers and marking rubrics with mark schemes included. Save everything to your planning library and export any document as a PDF.",
   },
   {
+    id: "personal-trainer",
+    name: "Personal Trainer Business OS",
+    emoji: "💪",
+    tagline: "AI builds personalised training programmes, writes client check-ins and nutrition guides — all in one place.",
+    description:
+      "Everything a personal trainer needs to run a professional business. The Programme Builder generates a complete 4-week personalised training programme from a client's goal, fitness level, available equipment, and any injuries or restrictions — ready to hand over immediately. A client check-in tool writes professional progress updates in your chosen tone. A nutrition guide generates calorie targets, macro splits, food lists and a sample meal plan tailored to each client's goal. Save every programme, check-in and nutrition guide to your documents library and export any document as a PDF.",
+  },
+  {
     id: "nail-tech",
     name: "Nail Tech & Beauty Planner",
     emoji: "💅",

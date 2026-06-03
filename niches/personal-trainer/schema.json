@@ -1,0 +1,59 @@
+{
+  "version": "1.0.0",
+  "id": "personal-trainer",
+  "name": "Personal Trainer Business OS",
+  "description": "AI builds personalised training programmes, writes client check-ins and nutrition guides — so you can focus on coaching, not admin.",
+  "databases": [
+    {
+      "id": "clients",
+      "name": "Clients",
+      "properties": [
+        { "name": "Title",     "type": "title" },
+        { "name": "Goal",      "type": "select", "options": [{ "name": "Weight Loss" }, { "name": "Muscle Building" }, { "name": "Athletic Performance" }, { "name": "General Fitness" }, { "name": "Rehabilitation" }, { "name": "Endurance" }, { "name": "Flexibility & Mobility" }] },
+        { "name": "Level",     "type": "select", "options": [{ "name": "Beginner" }, { "name": "Intermediate" }, { "name": "Advanced" }] },
+        { "name": "Equipment", "type": "select", "options": [{ "name": "Full Gym" }, { "name": "Home Gym" }, { "name": "Dumbbells Only" }, { "name": "Bodyweight Only" }, { "name": "Resistance Bands" }, { "name": "Kettlebells" }] },
+        { "name": "Notes",     "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "documents",
+      "name": "Documents",
+      "properties": [
+        { "name": "Title",    "type": "title" },
+        { "name": "Type",     "type": "select", "options": [{ "name": "Training Programme", "color": "green" }, { "name": "Client Check-In", "color": "blue" }, { "name": "Nutrition Guide", "color": "orange" }] },
+        { "name": "Client",   "type": "rich_text" },
+        { "name": "Content",  "type": "rich_text" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Europe (EUR)", "Other"],
+      "required": true
+    },
+    {
+      "id": "business-name",
+      "question": "What is your business called?",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. Peak Performance PT, FitWith Jordan — leave blank if you haven't decided yet"
+    },
+    {
+      "id": "speciality",
+      "question": "What is your main coaching speciality?",
+      "type": "select",
+      "options": ["Weight Loss & Fat Loss", "Muscle Building & Strength", "Athletic Performance", "General Fitness & Lifestyle", "Rehabilitation & Injury Recovery", "Pre/Post-Natal Fitness", "Older Adults & Mobility"],
+      "required": true
+    },
+    {
+      "id": "setting",
+      "question": "Where do you train your clients?",
+      "type": "select",
+      "options": ["Commercial Gym", "Private Studio", "Home Visits", "Online / Remote", "Mixed (gym + online)"],
+      "required": true
+    }
+  ]
+}

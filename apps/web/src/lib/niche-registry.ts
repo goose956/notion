@@ -57,6 +57,15 @@ export const CAKE_TABS = {
   COMPLIANCE: "__cake_compliance__",
 } as const;
 
+// ─── Personal Trainer Business OS tab IDs ────────────────────────────────────
+export const PT_TABS = {
+  DASHBOARD:  "__pt_dashboard__",
+  PROGRAMME:  "__pt_programme__",
+  CHECKIN:    "__pt_checkin__",
+  NUTRITION:  "__pt_nutrition__",
+  LIBRARY:    "__pt_library__",
+} as const;
+
 // ─── Teacher Planning OS tab IDs ─────────────────────────────────────────────
 export const TEACHER_TABS = {
   DASHBOARD:   "__teacher_dashboard__",
@@ -628,6 +637,32 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: TEACHER_TABS.REPORTS,     label: "Report Writer",   icon: "📝", appOnly: true },
       { tabId: TEACHER_TABS.ASSESSMENTS, label: "Assessments",     icon: "📊", appOnly: true },
       { tabId: TEACHER_TABS.LIBRARY,     label: "My Documents",    icon: "📁", appOnly: true },
+    ],
+  },
+
+  // ── Personal Trainer Business OS ────────────────────────────────────────────
+  {
+    nicheId:       "personal-trainer",
+    displayName:   "Personal Trainer Business OS",
+    virtualTabIds: new Set(Object.values(PT_TABS)),
+    defaultTabId:  PT_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#16a34a",
+      fgActive:      "#15803d",
+      fgHeader:      "#14532d",
+      bgActive:      "rgba(22,163,74,0.10)",
+      bgHover:       "rgba(22,163,74,0.05)",
+      bgGroupHeader: "rgba(22,163,74,0.06)",
+      borderTop:     "1px solid rgba(22,163,74,0.15)",
+    },
+    sidebarEmoji: "💪",
+    topTabs: [
+      { tabId: PT_TABS.DASHBOARD,  label: "Dashboard",          icon: "🏠", appOnly: true },
+      { tabId: PT_TABS.PROGRAMME,  label: "Programme Builder",  icon: "📋", appOnly: true },
+      { tabId: PT_TABS.CHECKIN,    label: "Client Check-In",    icon: "✅", appOnly: true },
+      { tabId: PT_TABS.NUTRITION,  label: "Nutrition Guide",    icon: "🥗", appOnly: true },
+      { tabId: PT_TABS.LIBRARY,    label: "My Documents",       icon: "📁", appOnly: true },
     ],
   },
 
