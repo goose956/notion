@@ -25,9 +25,9 @@ function BookBadge({ book }: { book: string }) {
 function ExpandableRow({ row, titleKey, subtitleKey, contentKey, bookKey }: {
   row: WorkspaceRow;
   titleKey: string;
-  subtitleKey?: string;
+  subtitleKey?: string | undefined;
   contentKey: string;
-  bookKey?: string;
+  bookKey?: string | undefined;
 }) {
   const [open, setOpen] = useState(false);
   const title    = asText(row.properties[titleKey]);
@@ -62,9 +62,9 @@ function ExpandableRow({ row, titleKey, subtitleKey, contentKey, bookKey }: {
 function SectionPanel({ rows, titleKey, subtitleKey, contentKey, bookKey, emptyMsg, bookFilter }: {
   rows: WorkspaceRow[];
   titleKey: string;
-  subtitleKey?: string;
+  subtitleKey?: string | undefined;
   contentKey: string;
-  bookKey?: string;
+  bookKey?: string | undefined;
   emptyMsg: string;
   bookFilter: string;
 }) {
