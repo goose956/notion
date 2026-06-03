@@ -1,0 +1,68 @@
+{
+  "version": "1.0.0",
+  "id": "author",
+  "name": "Author & Book Writing OS",
+  "description": "Everything a fiction writer needs in one workspace. AI generates a full chapter-by-chapter outline from your premise, builds complete character profiles, and writes or continues scenes in your genre and POV.",
+  "databases": [
+    {
+      "id": "documents",
+      "name": "Story Documents",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Section", "type": "select", "options": [{ "name": "Premise & Hook" }, { "name": "Three-Act Structure" }, { "name": "Chapter-by-Chapter Outline" }, { "name": "Subplots & Themes" }, { "name": "Opening Scene" }, { "name": "Climax & Resolution" }, { "name": "Cover Brief" }] },
+        { "name": "Content", "type": "rich_text" },
+        { "name": "Book",    "type": "select" }
+      ]
+    },
+    {
+      "id": "characters",
+      "name": "Characters",
+      "properties": [
+        { "name": "Title",    "type": "title" },
+        { "name": "Role",     "type": "select", "options": [{ "name": "Protagonist" }, { "name": "Antagonist" }, { "name": "Supporting" }, { "name": "Mentor" }, { "name": "Love Interest" }, { "name": "Comic Relief" }, { "name": "Other" }] },
+        { "name": "Profile",  "type": "rich_text" },
+        { "name": "Book",     "type": "select" }
+      ]
+    },
+    {
+      "id": "scenes",
+      "name": "Scenes",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Mode",    "type": "select", "options": [{ "name": "Write" }, { "name": "Continue" }, { "name": "Rewrite" }, { "name": "Dialogue" }] },
+        { "name": "Content", "type": "rich_text" },
+        { "name": "Book",    "type": "select" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "book-title",
+      "question": "What is your book called?",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. The Lighthouse Keeper, A Quiet Storm — leave blank if you haven't decided yet"
+    },
+    {
+      "id": "genre",
+      "question": "What genre are you writing in?",
+      "type": "select",
+      "options": ["Literary Fiction", "Thriller / Suspense", "Mystery / Crime", "Romance", "Fantasy", "Science Fiction", "Horror", "Historical Fiction", "Young Adult", "Children's Fiction", "Memoir / Creative Non-Fiction", "Other"],
+      "required": true
+    },
+    {
+      "id": "target-audience",
+      "question": "Who is your target reader?",
+      "type": "select",
+      "options": ["Adults (general)", "Young Adults (16–21)", "Teens (12–16)", "Children (8–12)", "Children (under 8)"],
+      "required": false
+    },
+    {
+      "id": "premise",
+      "question": "What is your story about? (brief premise)",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. A disgraced detective investigates a murder in a town where everyone has something to hide"
+    }
+  ]
+}
