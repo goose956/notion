@@ -6,6 +6,8 @@ import { AuthorDashboard } from "./dashboard";
 import { AuthorOutlineBuilder } from "./outline-builder";
 import { AuthorCharacterBuilder } from "./character-builder";
 import { AuthorSceneWriter } from "./scene-writer";
+import { AuthorCoverStudio } from "./cover-studio";
+import { AuthorLibrary } from "./library";
 
 export function AuthorNicheShell({
   activeTab,
@@ -52,6 +54,18 @@ export function AuthorNicheShell({
   if (activeTab === AUTHOR_TABS.SCENE) return (
     <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
       <AuthorSceneWriter criteria={criteria} scenesDb={scenesDb} onRowAdded={onRowAdded} />
+    </div>
+  );
+
+  if (activeTab === AUTHOR_TABS.COVER) return (
+    <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+      <AuthorCoverStudio criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />
+    </div>
+  );
+
+  if (activeTab === AUTHOR_TABS.LIBRARY) return (
+    <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+      <AuthorLibrary databases={databases} />
     </div>
   );
 

@@ -54,18 +54,19 @@ export function AuthorCharacterBuilder({
     if (!result || !charactersDb) return;
     setSaving(true); setSaveMsg(null);
     try {
-      const res = await fetch("/api/members/workspace/add-row", {
+      const properties = { Title: result.name, Role: role, Profile: result.profile, Book: String(criteria?.["book-title"] ?? "Untitled") };
+      const propertyTypes = { Title: "title", Role: "select", Profile: "rich_text", Book: "select" };
+      const res = await fetch("/api/members/workspace", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          databaseId: charactersDb.notionId,
-          properties: { Name: result.name, Role: role, Profile: result.profile },
-        }),
+        body: JSON.stringify({ databaseId: charactersDb.notionId, properties, propertyTypes }),
       });
       if (!res.ok) throw new Error("Failed to save");
-      const row = await res.json() as WorkspaceRow;
-      onRowAdded(charactersDb.notionId, row);
-      setSaveMsg(`${result.name} saved to Characters`);
+      const data = await res.json() as { pageId?: string };
+      if (data.pageId) {
+        onRowAdded(charactersDb.notionId, { pageId: data.pageId, properties });
+        setSaveMsg(`${result.name} saved to Characters`);
+      }
     } catch {
       setSaveMsg("Save failed — try again");
     } finally {

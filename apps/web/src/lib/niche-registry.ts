@@ -63,6 +63,8 @@ export const AUTHOR_TABS = {
   OUTLINE:    "__author_outline__",
   CHARACTERS: "__author_characters__",
   SCENE:      "__author_scene__",
+  COVER:      "__author_cover__",
+  LIBRARY:    "__author_library__",
 } as const;
 
 // ─── Nail Tech & Beauty Business Planner tab IDs ─────────────────────────────
@@ -589,6 +591,8 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: AUTHOR_TABS.OUTLINE,    label: "Story Planner",    icon: "📜", appOnly: true },
       { tabId: AUTHOR_TABS.CHARACTERS, label: "Character Builder", icon: "🧑‍🎨", appOnly: true },
       { tabId: AUTHOR_TABS.SCENE,      label: "Scene Writer",     icon: "✍️", appOnly: true },
+      { tabId: AUTHOR_TABS.COVER,      label: "Cover Studio",     icon: "🎨", appOnly: true },
+      { tabId: AUTHOR_TABS.LIBRARY,    label: "My Library",       icon: "📚", appOnly: true },
     ],
   },
 

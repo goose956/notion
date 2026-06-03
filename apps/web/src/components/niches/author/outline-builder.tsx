@@ -54,18 +54,19 @@ export function AuthorOutlineBuilder({
     if (!result || !documentsDb) return;
     setSaving(true); setSaveMsg(null);
     try {
-      const res = await fetch("/api/members/workspace/add-row", {
+      const properties = { Title: result.section, Section: result.section, Content: result.content, Book: bookTitle || "Untitled" };
+      const propertyTypes = { Title: "title", Section: "select", Content: "rich_text", Book: "select" };
+      const res = await fetch("/api/members/workspace", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          databaseId: documentsDb.notionId,
-          properties: { Name: result.section, Section: result.section, Content: result.content },
-        }),
+        body: JSON.stringify({ databaseId: documentsDb.notionId, properties, propertyTypes }),
       });
       if (!res.ok) throw new Error("Failed to save");
-      const row = await res.json() as WorkspaceRow;
-      onRowAdded(documentsDb.notionId, row);
-      setSaveMsg("Saved to your Outline notebook");
+      const data = await res.json() as { pageId?: string };
+      if (data.pageId) {
+        onRowAdded(documentsDb.notionId, { pageId: data.pageId, properties });
+        setSaveMsg("Saved to your Outline notebook");
+      }
     } catch {
       setSaveMsg("Save failed — try again");
     } finally {

@@ -66,18 +66,19 @@ export function AuthorSceneWriter({
     const name = sceneDesc.trim().slice(0, 60) || "Scene";
     setSaving(true); setSaveMsg(null);
     try {
-      const res = await fetch("/api/members/workspace/add-row", {
+      const properties = { Title: name, Mode: mode, Content: result, Book: String(criteria?.["book-title"] ?? "Untitled") };
+      const propertyTypes = { Title: "title", Mode: "select", Content: "rich_text", Book: "select" };
+      const res = await fetch("/api/members/workspace", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          databaseId: scenesDb.notionId,
-          properties: { Name: name, Mode: mode, Content: result },
-        }),
+        body: JSON.stringify({ databaseId: scenesDb.notionId, properties, propertyTypes }),
       });
       if (!res.ok) throw new Error("Failed to save");
-      const row = await res.json() as WorkspaceRow;
-      onRowAdded(scenesDb.notionId, row);
-      setSaveMsg("Scene saved to Scene Library");
+      const data = await res.json() as { pageId?: string };
+      if (data.pageId) {
+        onRowAdded(scenesDb.notionId, { pageId: data.pageId, properties });
+        setSaveMsg("Scene saved to Scene Library");
+      }
     } catch {
       setSaveMsg("Save failed — try again");
     } finally {
