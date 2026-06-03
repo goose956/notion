@@ -215,7 +215,7 @@ function ErrorBox({ message }: { message: string }) {
 }
 
 function ResultCard({ title, subtitle, onSave, saving, saveMsg, children }: {
-  title: string; subtitle: string; onSave?: () => void; saving?: boolean; saveMsg?: string | null; children: React.ReactNode;
+  title: string; subtitle: string; onSave?: (() => void) | undefined; saving?: boolean | undefined; saveMsg?: string | null | undefined; children: React.ReactNode;
 }) {
   return (
     <section style={{ borderRadius: "12px", border: `1px solid ${N_BORDER_MED}`, background: "white", overflow: "hidden" }}>
