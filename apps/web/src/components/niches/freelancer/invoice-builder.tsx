@@ -123,7 +123,7 @@ export function FreelancerInvoiceBuilder({
         </div>
         <div>
           {label("Your Name / Business")}
-          <input style={inp} value={yourName} readOnly placeholder={yourName || "From onboarding"} style={{ ...inp, background: yourName ? "#f9fafb" : "white" }} />
+          <input style={{ ...inp, background: yourName ? "#f9fafb" : "white" }} value={yourName} readOnly placeholder={yourName || "From onboarding"} />
         </div>
         <div>
           {label("Your Email")}
