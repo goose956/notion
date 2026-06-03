@@ -112,6 +112,14 @@ export const WORKFLOW_CATALOG = [
       "Everything a teacher needs to cut planning time in half. AI generates complete, curriculum-aligned lesson plans with starter, main activities, differentiation and plenary. A report writer produces professional, personalised report comments in your chosen tone and length. An assessment builder creates ready-to-print quizzes, worksheets, exam papers and marking rubrics with mark schemes included. Save everything to your planning library and export any document as a PDF.",
   },
   {
+    id: "podcast",
+    name: "Podcast OS",
+    emoji: "🎙️",
+    tagline: "Plan episodes, write show notes, book guests and repurpose transcripts — your full podcast workflow in one place.",
+    description:
+      "Everything a podcaster needs to produce, publish and grow. The Episode Planner generates a complete episode plan from a topic — hook script, intro, segment-by-segment structure, interview questions and an outro with CTA. The Show Notes Writer produces SEO-optimised show notes with episode summary, key takeaways, timestamps, links and hashtags ready to paste into your podcast host. The Guest Outreach tool writes personalised subject lines, outreach emails and follow-up messages that actually get replies. The Transcript Summary turns any episode transcript into a full summary, key quotes, chapter markers, three ready-to-post social media clips and a blog post intro. Save every plan, set of show notes and outreach email to your documents library and export any document as a PDF.",
+  },
+  {
     id: "freelancer",
     name: "Freelancer OS",
     emoji: "💼",

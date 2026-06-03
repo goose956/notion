@@ -66,6 +66,16 @@ export const FREELANCER_TABS = {
   LIBRARY:   "__fl_library__",
 } as const;
 
+// ─── Podcast OS tab IDs ──────────────────────────────────────────────────────
+export const PODCAST_TABS = {
+  DASHBOARD:  "__podcast_dashboard__",
+  EPISODE:    "__podcast_episode__",
+  SHOW_NOTES: "__podcast_shownotes__",
+  OUTREACH:   "__podcast_outreach__",
+  TRANSCRIPT: "__podcast_transcript__",
+  LIBRARY:    "__podcast_library__",
+} as const;
+
 // ─── Amazon FBA Seller OS tab IDs ────────────────────────────────────────────
 export const FBA_TABS = {
   DASHBOARD: "__fba_dashboard__",
@@ -707,6 +717,33 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: PT_TABS.CHECKIN,    label: "Client Check-In",    icon: "✅", appOnly: true },
       { tabId: PT_TABS.NUTRITION,  label: "Nutrition Guide",    icon: "🥗", appOnly: true },
       { tabId: PT_TABS.LIBRARY,    label: "My Documents",       icon: "📁", appOnly: true },
+    ],
+  },
+
+  // ── Podcast OS ──────────────────────────────────────────────────────────────
+  {
+    nicheId:       "podcast",
+    displayName:   "Podcast OS",
+    virtualTabIds: new Set(Object.values(PODCAST_TABS)),
+    defaultTabId:  PODCAST_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#7c3aed",
+      fgActive:      "#6d28d9",
+      fgHeader:      "#3b0764",
+      bgActive:      "rgba(124,58,237,0.10)",
+      bgHover:       "rgba(124,58,237,0.05)",
+      bgGroupHeader: "rgba(124,58,237,0.06)",
+      borderTop:     "1px solid rgba(124,58,237,0.15)",
+    },
+    sidebarEmoji: "🎙️",
+    topTabs: [
+      { tabId: PODCAST_TABS.DASHBOARD,  label: "Dashboard",           icon: "🏠", appOnly: true },
+      { tabId: PODCAST_TABS.EPISODE,    label: "Episode Planner",     icon: "📋", appOnly: true },
+      { tabId: PODCAST_TABS.SHOW_NOTES, label: "Show Notes",          icon: "📝", appOnly: true },
+      { tabId: PODCAST_TABS.OUTREACH,   label: "Guest Outreach",      icon: "📧", appOnly: true },
+      { tabId: PODCAST_TABS.TRANSCRIPT, label: "Transcript Summary",  icon: "🎧", appOnly: true },
+      { tabId: PODCAST_TABS.LIBRARY,    label: "My Documents",        icon: "📁", appOnly: true },
     ],
   },
 

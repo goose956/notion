@@ -31,6 +31,7 @@ import { TeacherNicheShell } from "@/components/niches/teacher/shell";
 import { PTNicheShell } from "@/components/niches/personal-trainer/shell";
 import { FreelancerNicheShell } from "@/components/niches/freelancer/shell";
 import { FBANicheShell }        from "@/components/niches/amazon-fba/shell";
+import { PodcastNicheShell }   from "@/components/niches/podcast/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1155,6 +1156,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["freelancer"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "podcast") return (
+                <PodcastNicheShell
+                  key="podcast"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["podcast"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}
