@@ -1,33 +1,65 @@
 {
+  "version": "1.0.0",
   "id": "vibe-coder",
   "name": "Vibe Coder OS",
+  "description": "Score your ideas, plan your build and launch fast — the full indie hacker workflow in one place.",
   "databases": [
     {
-      "dbId": "ideas",
+      "id": "ideas",
       "name": "Idea Bank",
       "properties": [
         { "name": "Title",  "type": "title" },
-        { "name": "Status", "type": "select",    "options": ["Raw", "Validated", "Building", "Shipped", "Parked"] },
+        { "name": "Status", "type": "select", "options": [{ "name": "Raw", "color": "gray" }, { "name": "Validated", "color": "blue" }, { "name": "Building", "color": "yellow" }, { "name": "Shipped", "color": "green" }, { "name": "Parked", "color": "brown" }] },
         { "name": "Score",  "type": "rich_text" },
         { "name": "Notes",  "type": "rich_text" }
       ]
     },
     {
-      "dbId": "documents",
+      "id": "documents",
       "name": "Documents",
       "properties": [
         { "name": "Title",   "type": "title" },
-        { "name": "Type",    "type": "select",    "options": ["Idea Score", "Project Plan", "Launch Kit"] },
+        { "name": "Type",    "type": "select", "options": [{ "name": "Idea Score", "color": "green" }, { "name": "Project Plan", "color": "blue" }, { "name": "Launch Kit", "color": "orange" }] },
         { "name": "Project", "type": "rich_text" },
         { "name": "Content", "type": "rich_text" }
       ]
     }
   ],
-  "onboarding": [
-    { "id": "your-name",      "label": "Your Name",       "type": "text",   "placeholder": "e.g. Alex" },
-    { "id": "building-with",  "label": "Primary Tool",    "type": "select", "options": ["Claude Code", "Cursor", "Windsurf", "Bolt", "v0", "Lovable", "Mix of tools"] },
-    { "id": "niche",          "label": "Project Niche",   "type": "select", "options": ["SaaS / Micro-SaaS", "Dev Tools", "Consumer Apps", "Tools & Utilities", "AI Wrappers", "Marketplaces", "Content Tools", "Other"] },
-    { "id": "stage",          "label": "Your Stage",      "type": "select", "options": ["Just starting out", "Side project builder", "Full-time indie hacker", "Building for clients"] },
-    { "id": "country",        "label": "Country",         "type": "text",   "placeholder": "e.g. United Kingdom" }
+  "onboardingQuestions": [
+    {
+      "id": "your-name",
+      "question": "What is your name?",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. Alex"
+    },
+    {
+      "id": "building-with",
+      "question": "What is your primary AI coding tool?",
+      "type": "select",
+      "options": ["Claude Code", "Cursor", "Windsurf", "Bolt", "v0", "Lovable", "Mix of tools"],
+      "required": true
+    },
+    {
+      "id": "niche",
+      "question": "What type of projects do you build?",
+      "type": "select",
+      "options": ["SaaS / Micro-SaaS", "Dev Tools", "Consumer Apps", "Tools & Utilities", "AI Wrappers", "Marketplaces", "Content Tools", "Other"],
+      "required": true
+    },
+    {
+      "id": "stage",
+      "question": "What stage are you at?",
+      "type": "select",
+      "options": ["Just starting out", "Side project builder", "Full-time indie hacker", "Building for clients"],
+      "required": true
+    },
+    {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "Other"],
+      "required": true
+    }
   ]
 }

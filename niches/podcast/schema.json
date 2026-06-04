@@ -1,34 +1,66 @@
 {
+  "version": "1.0.0",
   "id": "podcast",
   "name": "Podcast OS",
+  "description": "Plan episodes, write show notes, book guests and repurpose transcripts — your full podcast workflow in one place.",
   "databases": [
     {
-      "dbId": "episodes",
+      "id": "episodes",
       "name": "Episodes",
       "properties": [
         { "name": "Title",  "type": "title" },
         { "name": "Guest",  "type": "rich_text" },
         { "name": "Number", "type": "rich_text" },
-        { "name": "Status", "type": "select",     "options": ["Planning", "Recorded", "Editing", "Published"] },
+        { "name": "Status", "type": "select", "options": [{ "name": "Planning", "color": "yellow" }, { "name": "Recorded", "color": "blue" }, { "name": "Editing", "color": "orange" }, { "name": "Published", "color": "green" }] },
         { "name": "Notes",  "type": "rich_text" }
       ]
     },
     {
-      "dbId": "documents",
+      "id": "documents",
       "name": "Documents",
       "properties": [
         { "name": "Title",   "type": "title" },
-        { "name": "Type",    "type": "select",    "options": ["Episode Plan", "Show Notes", "Guest Outreach", "Transcript Summary"] },
+        { "name": "Type",    "type": "select", "options": [{ "name": "Episode Plan", "color": "purple" }, { "name": "Show Notes", "color": "blue" }, { "name": "Guest Outreach", "color": "green" }, { "name": "Transcript Summary", "color": "orange" }] },
         { "name": "Episode", "type": "rich_text" },
         { "name": "Content", "type": "rich_text" }
       ]
     }
   ],
-  "onboarding": [
-    { "id": "podcast-name",   "label": "Podcast Name",  "type": "text",   "placeholder": "e.g. The Growth Files" },
-    { "id": "niche",          "label": "Niche / Genre", "type": "select", "options": ["Business & Entrepreneurship", "Personal Development", "Health & Wellness", "True Crime", "Comedy", "Technology", "Sports", "Education", "Arts & Culture", "Other"] },
-    { "id": "format",         "label": "Format",        "type": "select", "options": ["Interview", "Solo", "Co-hosted", "Narrative / Storytelling"] },
-    { "id": "episode-length", "label": "Episode Length","type": "select", "options": ["Under 20 mins", "20–45 mins", "45–60 mins", "60+ mins"] },
-    { "id": "country",        "label": "Country",       "type": "text",   "placeholder": "e.g. United Kingdom" }
+  "onboardingQuestions": [
+    {
+      "id": "podcast-name",
+      "question": "What is your podcast called?",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. The Growth Files"
+    },
+    {
+      "id": "niche",
+      "question": "What niche or genre is your podcast?",
+      "type": "select",
+      "options": ["Business & Entrepreneurship", "Personal Development", "Health & Wellness", "True Crime", "Comedy", "Technology", "Sports", "Education", "Arts & Culture", "Other"],
+      "required": true
+    },
+    {
+      "id": "format",
+      "question": "What format is your show?",
+      "type": "select",
+      "options": ["Interview", "Solo", "Co-hosted", "Narrative / Storytelling"],
+      "required": true
+    },
+    {
+      "id": "episode-length",
+      "question": "How long are your episodes typically?",
+      "type": "select",
+      "options": ["Under 20 mins", "20-45 mins", "45-60 mins", "60+ mins"],
+      "required": true
+    },
+    {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "Other"],
+      "required": true
+    }
   ]
 }
