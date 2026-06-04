@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
-import { getCustomerByUserId, deductCredits } from "@niche-factory/db";
-import { resolveApiKey, resolveModel } from "@/lib/ai-config";
 import Anthropic from "@anthropic-ai/sdk";
+import { deductCredits, findOrCreateCustomer, getCustomerCredits, getSettingValue } from "@niche-factory/db";
+import { auth } from "@/auth";
 
 const Body = z.object({
   calories:    z.string(),
@@ -17,18 +16,39 @@ const Body = z.object({
 
 const COST = 2;
 
-export async function POST(req: Request) {
+async function resolveApiKey(email: string): Promise<string | undefined> {
+  const customerKey = await getSettingValue(`customer.${email}.anthropic.apiKey`);
+  if (customerKey?.trim()) return customerKey.trim();
+  const globalKey = await getSettingValue("anthropic.apiKey");
+  if (globalKey?.trim()) return globalKey.trim();
+  return process.env["ANTHROPIC_API_KEY"];
+}
+
+async function resolveModel(): Promise<string> {
+  const model = await getSettingValue("anthropic.model");
+  if (model?.trim()) return model.trim();
+  return process.env["ANTHROPIC_MODEL"] ?? "claude-haiku-4-5";
+}
+
+export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
+  const email   = session?.user?.email;
+  if (!email) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
-  const customer = await getCustomerByUserId(session.user.id);
-  if (!customer) return NextResponse.json({ error: "No account found" }, { status: 404 });
-  if ((customer.credits ?? 0) < COST) return NextResponse.json({ error: "Not enough credits" }, { status: 402 });
+  const credits = await getCustomerCredits(email).catch(() => 0);
+  if (credits < COST) return NextResponse.json({ error: "Not enough credits" }, { status: 402 });
 
-  const body = Body.safeParse(await req.json());
-  if (!body.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const parsed = Body.safeParse(await req.json());
+  if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
-  const { calories, days, dietType, allergies, preferences, notes, goal } = body.data;
+  const { calories, days, dietType, allergies, preferences, notes, goal } = parsed.data;
+
+  const apiKey = await resolveApiKey(email);
+  if (!apiKey) return NextResponse.json({ error: "No Anthropic API key configured" }, { status: 500 });
+
+  const model    = await resolveModel();
+  const client   = new Anthropic({ apiKey });
+  const customer = await findOrCreateCustomer(email);
 
   const prompt = `You are a keto nutrition expert. Generate a detailed ${days}-day keto meal plan.
 
@@ -58,9 +78,8 @@ MEAL PREP TIPS — 3–5 practical tips for this plan
 Keep it practical and achievable. Prioritise real, whole foods. Be specific with portion sizes.`;
 
   try {
-    const client = new Anthropic({ apiKey: resolveApiKey() });
     const msg = await client.messages.create({
-      model:      resolveModel(),
+      model,
       max_tokens: 4096,
       messages:   [{ role: "user", content: prompt }],
     });

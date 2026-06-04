@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
-import { getCustomerByUserId, deductCredits } from "@niche-factory/db";
-import { resolveApiKey, resolveModel } from "@/lib/ai-config";
 import Anthropic from "@anthropic-ai/sdk";
+import { deductCredits, findOrCreateCustomer, getCustomerCredits, getSettingValue } from "@niche-factory/db";
+import { auth } from "@/auth";
 
 const Body = z.object({
   mealName: z.string().optional().default(""),
@@ -14,18 +13,39 @@ const Body = z.object({
 
 const COST = 1;
 
-export async function POST(req: Request) {
+async function resolveApiKey(email: string): Promise<string | undefined> {
+  const customerKey = await getSettingValue(`customer.${email}.anthropic.apiKey`);
+  if (customerKey?.trim()) return customerKey.trim();
+  const globalKey = await getSettingValue("anthropic.apiKey");
+  if (globalKey?.trim()) return globalKey.trim();
+  return process.env["ANTHROPIC_API_KEY"];
+}
+
+async function resolveModel(): Promise<string> {
+  const model = await getSettingValue("anthropic.model");
+  if (model?.trim()) return model.trim();
+  return process.env["ANTHROPIC_MODEL"] ?? "claude-haiku-4-5";
+}
+
+export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
+  const email   = session?.user?.email;
+  if (!email) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
-  const customer = await getCustomerByUserId(session.user.id);
-  if (!customer) return NextResponse.json({ error: "No account found" }, { status: 404 });
-  if ((customer.credits ?? 0) < COST) return NextResponse.json({ error: "Not enough credits" }, { status: 402 });
+  const credits = await getCustomerCredits(email).catch(() => 0);
+  if (credits < COST) return NextResponse.json({ error: "Not enough credits" }, { status: 402 });
 
-  const body = Body.safeParse(await req.json());
-  if (!body.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const parsed = Body.safeParse(await req.json());
+  if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
-  const { mealName, mealType, servings, recipe } = body.data;
+  const { mealName, mealType, servings, recipe } = parsed.data;
+
+  const apiKey = await resolveApiKey(email);
+  if (!apiKey) return NextResponse.json({ error: "No Anthropic API key configured" }, { status: 500 });
+
+  const model    = await resolveModel();
+  const client   = new Anthropic({ apiKey });
+  const customer = await findOrCreateCustomer(email);
 
   const prompt = `You are a keto nutrition expert and recipe analyst. Analyse the following recipe and provide:
 
@@ -51,9 +71,8 @@ IMPORTANT: At the very end of your response, on the last line, output ONLY a JSO
 Replace NUMBER with integers. These are per-serving values.`;
 
   try {
-    const client = new Anthropic({ apiKey: resolveApiKey() });
     const msg = await client.messages.create({
-      model:      resolveModel(),
+      model,
       max_tokens: 2048,
       messages:   [{ role: "user", content: prompt }],
     });
@@ -62,7 +81,6 @@ Replace NUMBER with integers. These are per-serving values.`;
     const name = mealName || "Keto Recipe";
     const title = `${name} — Keto Analysis`;
 
-    // Extract JSON macros from last line
     let macros: { calories: number; netCarbs: number; protein: number; fat: number } | null = null;
     let analysis = raw;
     const lastLine = raw.split("\n").findLast((l) => l.trim().startsWith("{"));

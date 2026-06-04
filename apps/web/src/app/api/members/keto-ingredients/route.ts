@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
-import { getCustomerByUserId, deductCredits } from "@niche-factory/db";
-import { resolveApiKey, resolveModel } from "@/lib/ai-config";
 import Anthropic from "@anthropic-ai/sdk";
+import { deductCredits, findOrCreateCustomer, getCustomerCredits, getSettingValue } from "@niche-factory/db";
+import { auth } from "@/auth";
 
 const Body = z.object({
   ingredients: z.array(z.string()).min(1),
@@ -14,19 +13,40 @@ const Body = z.object({
 
 const COST = 2;
 
-export async function POST(req: Request) {
+async function resolveApiKey(email: string): Promise<string | undefined> {
+  const customerKey = await getSettingValue(`customer.${email}.anthropic.apiKey`);
+  if (customerKey?.trim()) return customerKey.trim();
+  const globalKey = await getSettingValue("anthropic.apiKey");
+  if (globalKey?.trim()) return globalKey.trim();
+  return process.env["ANTHROPIC_API_KEY"];
+}
+
+async function resolveModel(): Promise<string> {
+  const model = await getSettingValue("anthropic.model");
+  if (model?.trim()) return model.trim();
+  return process.env["ANTHROPIC_MODEL"] ?? "claude-haiku-4-5";
+}
+
+export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
+  const email   = session?.user?.email;
+  if (!email) return NextResponse.json({ error: "Unauthorised" }, { status: 401 });
 
-  const customer = await getCustomerByUserId(session.user.id);
-  if (!customer) return NextResponse.json({ error: "No account found" }, { status: 404 });
-  if ((customer.credits ?? 0) < COST) return NextResponse.json({ error: "Not enough credits" }, { status: 402 });
+  const credits = await getCustomerCredits(email).catch(() => 0);
+  if (credits < COST) return NextResponse.json({ error: "Not enough credits" }, { status: 402 });
 
-  const body = Body.safeParse(await req.json());
-  if (!body.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const parsed = Body.safeParse(await req.json());
+  if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
-  const { ingredients, servings, mealCount, allergies } = body.data;
+  const { ingredients, servings, mealCount, allergies } = parsed.data;
   const count = parseInt(mealCount, 10) || 3;
+
+  const apiKey = await resolveApiKey(email);
+  if (!apiKey) return NextResponse.json({ error: "No Anthropic API key configured" }, { status: 500 });
+
+  const model    = await resolveModel();
+  const client   = new Anthropic({ apiKey });
+  const customer = await findOrCreateCustomer(email);
 
   const prompt = `You are a keto chef. The user has these ingredients available:
 ${ingredients.map((i) => `- ${i}`).join("\n")}
@@ -52,23 +72,19 @@ For EACH meal, provide the following in exactly this JSON structure. Return ONLY
 macros are per serving (integers). Be creative but realistic — only use what's in the ingredient list plus basic staples.`;
 
   try {
-    const client = new Anthropic({ apiKey: resolveApiKey() });
     const msg = await client.messages.create({
-      model:      resolveModel(),
+      model,
       max_tokens: 3000,
       messages:   [{ role: "user", content: prompt }],
     });
 
     const raw = (msg.content[0] as { type: string; text: string }).text.trim();
 
-    // Parse the JSON array from the response
     let meals = [];
     try {
-      // Strip any markdown code fences if present
       const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
       meals = JSON.parse(cleaned);
     } catch {
-      // Fallback: try to extract the array from the response
       const match = raw.match(/\[[\s\S]*\]/);
       if (match) meals = JSON.parse(match[0]);
     }
