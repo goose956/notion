@@ -38,6 +38,7 @@ const packs: NichePack[] = [
   loadSchema("../../../niches/freelancer/schema.json"),
   loadSchema("../../../niches/amazon-fba/schema.json"),
   loadSchema("../../../niches/podcast/schema.json"),
+  loadSchema("../../../niches/vibe-coder/schema.json"),
 ];
 
 async function seed() {

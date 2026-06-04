@@ -1,0 +1,33 @@
+{
+  "id": "vibe-coder",
+  "name": "Vibe Coder OS",
+  "databases": [
+    {
+      "dbId": "ideas",
+      "name": "Idea Bank",
+      "properties": [
+        { "name": "Title",  "type": "title" },
+        { "name": "Status", "type": "select",    "options": ["Raw", "Validated", "Building", "Shipped", "Parked"] },
+        { "name": "Score",  "type": "rich_text" },
+        { "name": "Notes",  "type": "rich_text" }
+      ]
+    },
+    {
+      "dbId": "documents",
+      "name": "Documents",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Type",    "type": "select",    "options": ["Idea Score", "Project Plan", "Launch Kit"] },
+        { "name": "Project", "type": "rich_text" },
+        { "name": "Content", "type": "rich_text" }
+      ]
+    }
+  ],
+  "onboarding": [
+    { "id": "your-name",      "label": "Your Name",       "type": "text",   "placeholder": "e.g. Alex" },
+    { "id": "building-with",  "label": "Primary Tool",    "type": "select", "options": ["Claude Code", "Cursor", "Windsurf", "Bolt", "v0", "Lovable", "Mix of tools"] },
+    { "id": "niche",          "label": "Project Niche",   "type": "select", "options": ["SaaS / Micro-SaaS", "Dev Tools", "Consumer Apps", "Tools & Utilities", "AI Wrappers", "Marketplaces", "Content Tools", "Other"] },
+    { "id": "stage",          "label": "Your Stage",      "type": "select", "options": ["Just starting out", "Side project builder", "Full-time indie hacker", "Building for clients"] },
+    { "id": "country",        "label": "Country",         "type": "text",   "placeholder": "e.g. United Kingdom" }
+  ]
+}

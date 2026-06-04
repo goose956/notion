@@ -66,6 +66,15 @@ export const FREELANCER_TABS = {
   LIBRARY:   "__fl_library__",
 } as const;
 
+// ─── Vibe Coder OS tab IDs ───────────────────────────────────────────────────
+export const VIBE_CODER_TABS = {
+  DASHBOARD: "__vc_dashboard__",
+  SCORE:     "__vc_score__",
+  PLAN:      "__vc_plan__",
+  LAUNCH:    "__vc_launch__",
+  LIBRARY:   "__vc_library__",
+} as const;
+
 // ─── Podcast OS tab IDs ──────────────────────────────────────────────────────
 export const PODCAST_TABS = {
   DASHBOARD:  "__podcast_dashboard__",
@@ -717,6 +726,32 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: PT_TABS.CHECKIN,    label: "Client Check-In",    icon: "✅", appOnly: true },
       { tabId: PT_TABS.NUTRITION,  label: "Nutrition Guide",    icon: "🥗", appOnly: true },
       { tabId: PT_TABS.LIBRARY,    label: "My Documents",       icon: "📁", appOnly: true },
+    ],
+  },
+
+  // ── Vibe Coder OS ───────────────────────────────────────────────────────────
+  {
+    nicheId:       "vibe-coder",
+    displayName:   "Vibe Coder OS",
+    virtualTabIds: new Set(Object.values(VIBE_CODER_TABS)),
+    defaultTabId:  VIBE_CODER_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#84cc16",
+      fgActive:      "#65a30d",
+      fgHeader:      "#3f6212",
+      bgActive:      "rgba(132,204,22,0.12)",
+      bgHover:       "rgba(132,204,22,0.06)",
+      bgGroupHeader: "rgba(132,204,22,0.06)",
+      borderTop:     "1px solid rgba(132,204,22,0.20)",
+    },
+    sidebarEmoji: "💻",
+    topTabs: [
+      { tabId: VIBE_CODER_TABS.DASHBOARD, label: "Dashboard",       icon: "🏠", appOnly: true },
+      { tabId: VIBE_CODER_TABS.SCORE,     label: "Idea Scorer",     icon: "⚡", appOnly: true },
+      { tabId: VIBE_CODER_TABS.PLAN,      label: "Project Planner", icon: "🔨", appOnly: true },
+      { tabId: VIBE_CODER_TABS.LAUNCH,    label: "Launch Kit",      icon: "🚀", appOnly: true },
+      { tabId: VIBE_CODER_TABS.LIBRARY,   label: "My Documents",    icon: "📁", appOnly: true },
     ],
   },
 

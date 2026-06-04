@@ -112,6 +112,14 @@ export const WORKFLOW_CATALOG = [
       "Everything a teacher needs to cut planning time in half. AI generates complete, curriculum-aligned lesson plans with starter, main activities, differentiation and plenary. A report writer produces professional, personalised report comments in your chosen tone and length. An assessment builder creates ready-to-print quizzes, worksheets, exam papers and marking rubrics with mark schemes included. Save everything to your planning library and export any document as a PDF.",
   },
   {
+    id: "vibe-coder",
+    name: "Vibe Coder OS",
+    emoji: "💻",
+    tagline: "Score your ideas, plan your build and launch fast — the full indie hacker workflow in one place.",
+    description:
+      "Everything a solo builder needs to go from idea to shipped. The Idea Scorer gives an honest, multi-dimensional score on any product idea — market demand, build complexity, monetisation potential, differentiation and founder-market fit — then delivers a clear BUILD IT, VALIDATE FIRST or SKIP verdict with specific next steps. The Project Planner turns a validated idea into a full build plan: recommended tech stack, scoped MVP feature set, weekly sprint breakdown, key technical decisions, suggested file structure and a launch checklist. The Launch Kit generates platform-native launch content for Product Hunt, Hacker News Show HN, Twitter/X thread, Reddit and LinkedIn — written in the founder's voice, not corporate copy. Track every idea in your Idea Bank with status labels from Raw through to Shipped. Save every score, plan and launch kit to your documents library and export as PDF.",
+  },
+  {
     id: "podcast",
     name: "Podcast OS",
     emoji: "🎙️",

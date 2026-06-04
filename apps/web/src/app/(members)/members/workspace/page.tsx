@@ -31,7 +31,8 @@ import { TeacherNicheShell } from "@/components/niches/teacher/shell";
 import { PTNicheShell } from "@/components/niches/personal-trainer/shell";
 import { FreelancerNicheShell } from "@/components/niches/freelancer/shell";
 import { FBANicheShell }        from "@/components/niches/amazon-fba/shell";
-import { PodcastNicheShell }   from "@/components/niches/podcast/shell";
+import { PodcastNicheShell }      from "@/components/niches/podcast/shell";
+import { VibeCoderNicheShell }    from "@/components/niches/vibe-coder/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1156,6 +1157,17 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   apiCriteria={apiCriteriaByNiche["freelancer"] ?? null}
+                  onRowAdded={handleRowAdded}
+                  onRowUpdated={handleRowUpdated}
+                  onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "vibe-coder") return (
+                <VibeCoderNicheShell
+                  key="vibe-coder"
+                  activeTab={activeTab}
+                  databases={databases}
+                  apiCriteria={apiCriteriaByNiche["vibe-coder"] ?? null}
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}
