@@ -152,6 +152,14 @@ export const WORKFLOW_CATALOG = [
       "Everything an Amazon FBA seller needs to find, source and launch products. The Product Research tool generates a full viability report for any product idea — estimated demand, competition analysis, profit projections, risk assessment and a clear GO / TEST / AVOID verdict. The Listing Writer produces a fully SEO-optimised listing ready to paste into Seller Central: keyword-rich title, five benefit-led bullet points, a customer-focused product description and backend search terms. The Supplier Brief generates a professional sourcing document and outreach message — with full product specifications, FBA packaging requirements, MOQ targets, quality control terms and 10 intelligent questions to qualify suppliers. Save every report, listing and brief to your documents library and export any document as a PDF.",
   },
   {
+    id: "keto",
+    name: "Keto OS",
+    emoji: "🥑",
+    tagline: "Generate meal plans, analyse any recipe for macros and track your meals — your complete keto toolkit in one place.",
+    description:
+      "Everything a keto dieter needs to stay on track and eat well. The Meal Planner generates a full multi-day keto meal plan tailored to your calorie target, diet approach, allergies and food preferences — complete with daily macro breakdowns and a full shopping list. The Recipe Analyser calculates a detailed macro breakdown (calories, net carbs, protein, fat) for any recipe you paste in, gives it a keto suitability score out of 10, and suggests specific modifications to make it more keto-friendly. Save any analysed meal directly to My Meals — your personal keto recipe collection with macro chips, expandable ingredient lists and a one-click meal book export as PDF or text. The Macro Calculator uses the Mifflin-St Jeor formula to calculate your personalised daily targets based on your stats, activity level and goal. Save everything to your Documents library.",
+  },
+  {
     id: "nail-tech",
     name: "Nail Tech & Beauty Planner",
     emoji: "💅",

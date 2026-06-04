@@ -33,6 +33,7 @@ import { FreelancerNicheShell } from "@/components/niches/freelancer/shell";
 import { FBANicheShell }        from "@/components/niches/amazon-fba/shell";
 import { PodcastNicheShell }      from "@/components/niches/podcast/shell";
 import { VibeCoderNicheShell }    from "@/components/niches/vibe-coder/shell";
+import { KetoNicheShell }         from "@/components/niches/keto/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1193,6 +1194,15 @@ export default function WorkspacePage() {
                   onRowAdded={handleRowAdded}
                   onRowUpdated={handleRowUpdated}
                   onRowDeleted={handleRowDeleted}
+                />
+              );
+              if (entry.nicheId === "keto") return (
+                <KetoNicheShell
+                  key="keto"
+                  activeTab={activeTab}
+                  databases={databases}
+                  criteria={apiCriteriaByNiche["keto"] ?? null}
+                  onRowAdded={handleRowAdded}
                 />
               );
               return null; // placeholder for future niches

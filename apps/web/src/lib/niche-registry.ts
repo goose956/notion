@@ -94,6 +94,15 @@ export const FBA_TABS = {
   LIBRARY:   "__fba_library__",
 } as const;
 
+// ─── Keto OS tab IDs ─────────────────────────────────────────────────────────
+export const KETO_TABS = {
+  DASHBOARD: "__keto_dashboard__",
+  PLANNER:   "__keto_planner__",
+  ANALYSER:  "__keto_analyser__",
+  MACROS:    "__keto_macros__",
+  MY_MEALS:  "__keto_my_meals__",
+} as const;
+
 // ─── Personal Trainer Business OS tab IDs ────────────────────────────────────
 export const PT_TABS = {
   DASHBOARD:  "__pt_dashboard__",
@@ -805,6 +814,32 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: FBA_TABS.LISTING,   label: "Listing Writer",   icon: "✍️", appOnly: true },
       { tabId: FBA_TABS.SUPPLIER,  label: "Supplier Brief",   icon: "📋", appOnly: true },
       { tabId: FBA_TABS.LIBRARY,   label: "My Documents",     icon: "📁", appOnly: true },
+    ],
+  },
+
+  // ── Keto OS ─────────────────────────────────────────────────────────────────
+  {
+    nicheId:       "keto",
+    displayName:   "Keto OS",
+    virtualTabIds: new Set(Object.values(KETO_TABS)),
+    defaultTabId:  KETO_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#059669",
+      fgActive:      "#047857",
+      fgHeader:      "#064e3b",
+      bgActive:      "rgba(5,150,105,0.10)",
+      bgHover:       "rgba(5,150,105,0.05)",
+      bgGroupHeader: "rgba(5,150,105,0.06)",
+      borderTop:     "1px solid rgba(5,150,105,0.15)",
+    },
+    sidebarEmoji: "🥑",
+    topTabs: [
+      { tabId: KETO_TABS.DASHBOARD, label: "Dashboard",        icon: "🏠", appOnly: true },
+      { tabId: KETO_TABS.PLANNER,   label: "Meal Planner",     icon: "📅", appOnly: true },
+      { tabId: KETO_TABS.ANALYSER,  label: "Recipe Analyser",  icon: "🔬", appOnly: true },
+      { tabId: KETO_TABS.MACROS,    label: "Macro Calculator", icon: "📊", appOnly: true },
+      { tabId: KETO_TABS.MY_MEALS,  label: "My Meals",         icon: "🍽️", appOnly: true },
     ],
   },
 

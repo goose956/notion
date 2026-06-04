@@ -1,0 +1,61 @@
+{
+  "version": "1.0.0",
+  "id": "keto",
+  "name": "Keto OS",
+  "description": "AI-generated meal plans, recipe macro analysis and personalised macro targets — your complete keto toolkit in one place.",
+  "databases": [
+    {
+      "id": "meals",
+      "name": "My Meals",
+      "properties": [
+        { "name": "Title",       "type": "title" },
+        { "name": "Type",        "type": "select", "options": [{ "name": "Breakfast", "color": "yellow" }, { "name": "Lunch", "color": "green" }, { "name": "Dinner", "color": "blue" }, { "name": "Snack", "color": "orange" }, { "name": "Dessert", "color": "pink" }] },
+        { "name": "Calories",    "type": "number", "format": "number" },
+        { "name": "Net Carbs",   "type": "number", "format": "number" },
+        { "name": "Protein",     "type": "number", "format": "number" },
+        { "name": "Fat",         "type": "number", "format": "number" },
+        { "name": "Ingredients", "type": "rich_text" },
+        { "name": "Notes",       "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "documents",
+      "name": "Documents",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Type",    "type": "select", "options": [{ "name": "Meal Plan", "color": "green" }, { "name": "Recipe Analysis", "color": "blue" }, { "name": "Macro Targets", "color": "purple" }] },
+        { "name": "Content", "type": "rich_text" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "goal",
+      "question": "What is your primary keto goal?",
+      "type": "select",
+      "options": ["Weight Loss", "Maintenance", "Muscle Gain", "Mental Clarity / Energy", "Medical / Therapeutic"],
+      "required": true
+    },
+    {
+      "id": "diet-type",
+      "question": "Which approach do you follow?",
+      "type": "select",
+      "options": ["Standard Keto (SKD)", "Lazy Keto", "Strict / Clean Keto", "Carnivore-adjacent", "Dairy-Free Keto", "Not sure yet"],
+      "required": true
+    },
+    {
+      "id": "allergies",
+      "question": "Any dietary restrictions or allergies?",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. dairy-free, nut-free, no pork"
+    },
+    {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Canada", "Australia", "Other"],
+      "required": true
+    }
+  ]
+}
