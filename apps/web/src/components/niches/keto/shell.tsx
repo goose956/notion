@@ -1,10 +1,11 @@
 "use client";
 import { KETO_TABS } from "@/lib/niche-registry";
-import { KetoDashboard }        from "./dashboard";
-import { KetoMealPlanner }      from "./meal-planner";
-import { KetoRecipeAnalyser }   from "./recipe-analyser";
-import { KetoMacroCalculator }  from "./macro-calculator";
-import { KetoMyMeals }          from "./my-meals";
+import { KetoDashboard }          from "./dashboard";
+import { KetoMealPlanner }        from "./meal-planner";
+import { KetoRecipeAnalyser }     from "./recipe-analyser";
+import { KetoMacroCalculator }    from "./macro-calculator";
+import { KetoMyMeals }            from "./my-meals";
+import { KetoIngredientMeals }    from "./ingredient-meals";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 
 export function KetoNicheShell({
@@ -36,6 +37,8 @@ export function KetoNicheShell({
       return wrap(<KetoMacroCalculator criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
     case KETO_TABS.MY_MEALS:
       return wrap(<KetoMyMeals mealsDb={mealsDb} documentsDb={documentsDb} />);
+    case KETO_TABS.INGREDIENTS:
+      return wrap(<KetoIngredientMeals criteria={criteria} mealsDb={mealsDb} onRowAdded={onRowAdded} />);
     default:
       return wrap(<KetoDashboard databases={databases} criteria={criteria} />);
   }

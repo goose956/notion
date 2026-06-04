@@ -96,11 +96,12 @@ export const FBA_TABS = {
 
 // ─── Keto OS tab IDs ─────────────────────────────────────────────────────────
 export const KETO_TABS = {
-  DASHBOARD: "__keto_dashboard__",
-  PLANNER:   "__keto_planner__",
-  ANALYSER:  "__keto_analyser__",
-  MACROS:    "__keto_macros__",
-  MY_MEALS:  "__keto_my_meals__",
+  DASHBOARD:   "__keto_dashboard__",
+  PLANNER:     "__keto_planner__",
+  ANALYSER:    "__keto_analyser__",
+  MACROS:      "__keto_macros__",
+  MY_MEALS:    "__keto_my_meals__",
+  INGREDIENTS: "__keto_ingredients__",
 } as const;
 
 // ─── Personal Trainer Business OS tab IDs ────────────────────────────────────
@@ -839,7 +840,8 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: KETO_TABS.PLANNER,   label: "Meal Planner",     icon: "📅", appOnly: true },
       { tabId: KETO_TABS.ANALYSER,  label: "Recipe Analyser",  icon: "🔬", appOnly: true },
       { tabId: KETO_TABS.MACROS,    label: "Macro Calculator", icon: "📊", appOnly: true },
-      { tabId: KETO_TABS.MY_MEALS,  label: "My Meals",         icon: "🍽️", appOnly: true },
+      { tabId: KETO_TABS.MY_MEALS,    label: "My Meals",           icon: "🍽️", appOnly: true },
+      { tabId: KETO_TABS.INGREDIENTS, label: "What Can I Make?",   icon: "🥘", appOnly: true },
     ],
   },
 
