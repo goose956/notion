@@ -40,6 +40,7 @@ export function KetoNicheShell({
     case KETO_TABS.INGREDIENTS:
       return wrap(<KetoIngredientMeals criteria={criteria} mealsDb={mealsDb} onRowAdded={onRowAdded} />);
     default:
-      return wrap(<KetoDashboard databases={databases} criteria={criteria} />);
+      // Not a keto tab — stay mounted but render nothing
+      return null;
   }
 }

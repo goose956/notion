@@ -37,6 +37,7 @@ export function SENDParentShell({
     case SEND_TABS.DOCUMENTS:
       return <SENDDocuments documentsDb={documentsDb} />;
     default:
-      return <SENDDashboard databases={databases} criteria={criteria} />;
+      // Not a SEND tab — stay mounted but render nothing
+      return null;
   }
 }
