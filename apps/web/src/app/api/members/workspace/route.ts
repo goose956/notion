@@ -19,6 +19,7 @@ import {
   updateAppDatabaseSchema,
   updateAppWorkspaceStatus,
   getCustomerWorkflows,
+  addCustomerWorkflow,
 } from "@niche-factory/db";
 import { NotionApiClient } from "@niche-factory/notion-client";
 import type { NichePack } from "@niche-factory/schema";
@@ -267,14 +268,20 @@ export async function GET(_req: NextRequest) {
     try {
       let workspaces = await listAppWorkspacesByUser(userId).catch(() => []);
 
-      // Filter to only workspaces the user currently has enabled in Browse Workflows.
-      // If the customerWorkflows table is empty (legacy users pre-dating Browse Workflows),
-      // fall back to showing all workspaces so existing users aren't affected.
+      // Sync customerWorkflows with the user's actual app workspaces.
+      // Any workspace that exists but isn't tracked in customerWorkflows gets backfilled —
+      // this handles auto-provisioned workspaces (e.g. wedding planner) that predate
+      // the Browse Workflows feature. addCustomerWorkflow is idempotent (onConflictDoNothing).
       const enabledSlugs = await getCustomerWorkflows(userId).catch(() => [] as string[]);
-      if (enabledSlugs.length > 0) {
-        const enabledSet = new Set(enabledSlugs);
-        workspaces = workspaces.filter((w) => enabledSet.has(w.nichePackId));
+      const enabledSet = new Set(enabledSlugs);
+      for (const ws of workspaces) {
+        if (!enabledSet.has(ws.nichePackId)) {
+          await addCustomerWorkflow(userId, ws.nichePackId).catch(() => null);
+          enabledSet.add(ws.nichePackId);
+        }
       }
+      // Now filter — only workspaces the user has enabled (not explicitly removed).
+      workspaces = workspaces.filter((w) => enabledSet.has(w.nichePackId));
 
       // No auto-provisioning here — workspaces are created via the onboarding flow.
 
