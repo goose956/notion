@@ -18,6 +18,7 @@ import {
   createAppDatabase,
   updateAppDatabaseSchema,
   updateAppWorkspaceStatus,
+  addCustomerWorkflow,
 } from "@niche-factory/db";
 import { NotionApiClient } from "@niche-factory/notion-client";
 import type { NichePack } from "@niche-factory/schema";
@@ -104,6 +105,9 @@ async function provisionAppWorkspace(userId: string, pack: NichePack, schemaVers
       durationMs: Date.now() - start,
       databaseIdMap,
     });
+    // Ensure this workspace appears in customer_workflows so the sidebar shows it
+    // and Browse Workflows remove can correctly hide it.
+    await addCustomerWorkflow(userId, pack.id).catch(() => null);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create app databases";
     await updateAppWorkspaceStatus(workspaceId, {

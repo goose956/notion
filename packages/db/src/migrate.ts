@@ -38,6 +38,24 @@ const migrationsFolderPath = join(__dirname, "../drizzle");
 const client = postgres(url, { max: 1 });
 const db = drizzle(client);
 
+// Pre-migration fixups that cannot run inside a transaction must go here,
+// BEFORE migrate() is called. ALTER TYPE ADD VALUE is one such statement.
+console.log("Running pre-migration fixups...");
+await client.unsafe(`
+  ALTER TYPE deploy_status ADD VALUE IF NOT EXISTS 'removed';
+`);
+
+// Seed customer_workflows from app_workspaces so all provisioned workspaces
+// appear in the allow-list (handles auto-provisioned workspaces that predate
+// the Browse Workflows feature). addCustomerWorkflow uses ON CONFLICT DO NOTHING.
+await client.unsafe(`
+  INSERT INTO customer_workflows (id, email, niche_pack_id, added_at)
+  SELECT gen_random_uuid()::text, user_id, niche_pack_id, created_at
+  FROM app_workspaces
+  WHERE status IN ('success', 'in_progress', 'pending')
+  ON CONFLICT (email, niche_pack_id) DO NOTHING;
+`).catch(() => null); // table may not exist yet on first run
+
 console.log("Running database migrations...");
 await migrate(db, { migrationsFolder: migrationsFolderPath });
 console.log("Migrations complete.");
