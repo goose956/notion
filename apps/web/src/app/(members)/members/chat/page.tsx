@@ -725,8 +725,29 @@ function ChatPageInner() {
             : { notionDatabaseId: selectedNotionId, properties: item },
         ),
       });
-      const body = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(body.error ?? "Failed to save");
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+        details?: { expected?: string; received?: string };
+        warnings?: string[];
+      };
+      if (!res.ok) {
+        if (body.error === "schema_mismatch") {
+          const selectedDb = deployedDbs.find((d) => d.notionId === selectedNotionId);
+          const dbLabel = selectedDb ? `"${selectedDb.dbName}"` : "the selected database";
+          throw new Error(
+            `Wrong database selected — the AI returned fields for a different niche.\n` +
+            `Selected: ${dbLabel}\n` +
+            `Try switching to a different database in the dropdown above the results.` +
+            (body.details?.received ? `\n\nAI returned: ${body.details.received}` : "") +
+            (body.details?.expected ? `\nDatabase expects: ${body.details.expected}` : ""),
+          );
+        }
+        throw new Error(body.message ?? body.error ?? "Failed to save");
+      }
+      if (body.warnings?.length) {
+        console.warn("[workspace-save] warnings:", body.warnings);
+      }
       setAddedIndices((prev) => new Set([...prev, index]));
     } catch (err) {
       setAddError(err instanceof Error ? err.message : "Failed to save");
@@ -985,7 +1006,7 @@ function ChatPageInner() {
 
         {/* Error banner */}
         {addError && (
-          <div style={{ padding: "6px 32px", background: "rgba(235,87,87,0.08)", borderBottom: "1px solid rgba(235,87,87,0.2)", fontSize: "13px", color: "rgb(235,87,87)", flexShrink: 0 }}>
+          <div style={{ padding: "8px 32px", background: "rgba(235,87,87,0.08)", borderBottom: "1px solid rgba(235,87,87,0.2)", fontSize: "13px", color: "rgb(235,87,87)", flexShrink: 0, whiteSpace: "pre-line", lineHeight: 1.6 }}>
             {addError}
           </div>
         )}
