@@ -855,10 +855,10 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
     ],
   },
 
-  // ── SEND Parent OS ──────────────────────────────────────────────────────────
+  // ── Neurodivergent Family OS ─────────────────────────────────────────────────
   {
     nicheId:       "send-parent",
-    displayName:   "SEND Parent OS",
+    displayName:   "Neurodivergent Family OS",
     virtualTabIds: new Set(Object.values(SEND_TABS)),
     defaultTabId:  SEND_TABS.DASHBOARD,
     hiddenDbIds:   [],

@@ -77,7 +77,7 @@ export function SENDDashboard({
 
         <div style={{ fontSize: "28px", marginBottom: "6px" }}>{theme.emoji}</div>
         <h1 style={{ margin: "0 0 2px", fontSize: "20px", fontWeight: 800, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-          {childName ? `${childName}'s SEND Hub` : "SEND Parent OS"}
+          {childName ? `${childName}'s Family Hub` : "Neurodivergent Family OS"}
         </h1>
         {(childAge || diagnosis || focus) && (
           <p style={{ margin: "0 0 16px", fontSize: "13px", opacity: 0.85 }}>

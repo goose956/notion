@@ -51,12 +51,12 @@ Wedding / vendor search:
 [{"Vendor Name": "Bloom & Co", "Category": "Florist", "Website": "https://bloom.co.uk", "Phone": "0161 123 4567", "Notes": "Award-winning, min spend £500"}]
 \`\`\`
 
-SEND Parent OS — saving to Appointments database:
+Neurodivergent Family OS — saving to Appointments database:
 \`\`\`json
 [{"Title": "SALT Assessment — City Speech Therapy", "Type": "SALT", "Professional": "City Speech Therapy NHS", "Notes": "Accepts referrals from GP or self-referral. Average wait 12 weeks."}]
 \`\`\`
 
-SEND Parent OS — saving to Documents database:
+Neurodivergent Family OS — saving to Documents database:
 \`\`\`json
 [{"Title": "EHCP Assessment Rights Summary", "Type": "Other", "Content": "Parents can request an EHC needs assessment at any time. The LA must respond within 6 weeks..."}]
 \`\`\`

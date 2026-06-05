@@ -344,15 +344,16 @@ function getNichePrompts(nicheId: string, loc: string, crit: Record<string, unkn
     case "send-parent": {
       const child = String(crit["child-name"] ?? "").trim();
       const diagnosis = String(crit["diagnosis"] ?? "").trim();
+      const dx = diagnosis || "autism";
       return [
-        `What are the steps to request an EHCP assessment in the UK?`,
-        `What does a SALT assessment involve for a child with ${diagnosis || "autism"}?`,
-        `Find SENDIASS services${l}`,
-        `What rights do parents have at an annual EHCP review?`,
-        `What is the difference between EHCP and SEN support?`,
-        `How long does an EHCP assessment take?`,
-        child ? `What support should school provide for a child with ${diagnosis || "SEND"}?` : `What reasonable adjustments can schools make for SEND pupils?`,
-        `Find specialist SEND schools${l}`,
+        `How do I request a special education assessment for my child${l}?`,
+        `What does a speech and language therapy assessment involve for a child with ${dx}?`,
+        `Find specialist support services for families with ${dx}${l}`,
+        `What rights do parents have at an annual education review meeting?`,
+        `What is the difference between an IEP and a full special education plan?`,
+        `How long does a special education needs assessment take?`,
+        child ? `What school support should be provided for a child with ${dx}?` : `What reasonable adjustments can schools make for neurodivergent pupils?`,
+        `Find specialist schools for children with ${dx}${l}`,
       ];
     }
 

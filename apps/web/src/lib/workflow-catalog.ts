@@ -161,11 +161,11 @@ export const WORKFLOW_CATALOG = [
   },
   {
     id: "send-parent",
-    name: "SEND Parent OS",
+    name: "Neurodivergent Family OS",
     emoji: "💜",
-    tagline: "Document appointments, log behaviour patterns, build EHCP evidence and write formal letters — everything a SEND parent needs in one place.",
+    tagline: "Document appointments, log behaviour patterns, build EHCP/IEP evidence and write formal letters — everything a neurodivergent family needs in one place.",
     description:
-      "SEND Parent OS is built for parents navigating the SEND system — appointments with SALT, OT, CAMHS, schools, and tribunals; behaviour patterns that need documenting; EHCP assessments, annual reviews, and IEP meetings. The Appointment Manager prepares you before any appointment with tailored questions, then turns your rough notes into a professional summary, handover note, and action list you can share with other providers. The Behaviour Log lets you track incidents quickly by location, intensity, and trigger — then AI analyses patterns across all your logs and generates a professional Behaviour Profile for schools and professionals. The EHCP Builder is the killer feature: turn your everyday observations into professional evidence statements, write formal EHCP assessment requests, prepare position statements for annual reviews, or build IEP goals (US/Ireland). The Letter Writer drafts formal letters to schools, councils, and the NHS — EHCP requests, complaints about provision, responses to LA decisions — in seconds. Everything saves to your Documents library for a complete, shareable record.",
+      "Neurodivergent Family OS is built for parents supporting a child with autism, ADHD, sensory processing needs, or any additional need — wherever you are in the world. The Appointment Manager prepares you before any appointment with tailored questions, then turns your rough notes into a professional summary, handover note, and action list you can share with other providers. The Behaviour Log lets you track incidents quickly by location, intensity, and trigger — then AI analyses patterns across all your logs and generates a professional Behaviour Profile for schools and professionals. The EHCP/IEP Builder is the killer feature: turn your everyday observations into professional evidence statements, write formal assessment requests, prepare position statements for annual reviews, or build IEP goals. The Letter Writer drafts formal letters to schools, councils, and health providers — assessment requests, complaints about provision, responses to authority decisions — in seconds. Everything saves to your Documents library for a complete, shareable record.",
   },
   {
     id: "nail-tech",
