@@ -74,11 +74,11 @@
       "hint": "e.g. Ethan"
     },
     {
-      "id": "child-age",
-      "question": "How old is your child?",
-      "type": "select",
-      "options": ["Under 5", "5–7", "8–11", "12–15", "16–18", "18+"],
-      "required": true
+      "id": "child-dob",
+      "question": "What is your child's date of birth?",
+      "type": "date",
+      "required": true,
+      "hint": "Used to keep age accurate over time"
     },
     {
       "id": "diagnosis",

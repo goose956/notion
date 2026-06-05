@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER, N_FONT } from "@/lib/workspace-tokens";
-import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
+import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT, resolveChildAge } from "./utils";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 
 const inp: React.CSSProperties = { width: "100%", padding: "8px 10px", borderRadius: "7px", border: `1px solid ${N_BORDER}`, fontSize: "13px", color: N_FG, fontFamily: N_FONT, background: "white", boxSizing: "border-box" };
@@ -34,7 +34,7 @@ export function SENDLetterWriter({
   onRowAdded:  (dbNotionId: string, row: WorkspaceRow) => void;
 }) {
   const childName = String(criteria?.["child-name"] ?? "").trim();
-  const childAge  = String(criteria?.["child-age"]  ?? "").trim();
+  const childAge  = resolveChildAge(criteria?.["child-dob"] ?? criteria?.["child-age"]);
   const diagnosis = String(criteria?.["diagnosis"]  ?? "").trim();
 
   const [letterType,   setLetterType]   = useState(LETTER_TYPES[0]!);

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Palette } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER, N_FONT } from "@/lib/workspace-tokens";
-import { asText } from "./utils";
+import { asText, resolveChildAge } from "./utils";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 
 const THEMES = [
@@ -38,8 +38,9 @@ export function SENDDashboard({
   }, []);
 
   const theme       = THEMES[themeIdx]!;
-  const childName   = String(criteria?.["child-name"]     ?? "").trim();
-  const childAge    = String(criteria?.["child-age"]      ?? "").trim();
+  const childName   = String(criteria?.["child-name"]    ?? "").trim();
+  // Resolve from DOB (new) with fallback to legacy age-band string
+  const childAge    = resolveChildAge(criteria?.["child-dob"] ?? criteria?.["child-age"]);
   const diagnosis   = String(criteria?.["diagnosis"]      ?? "").trim();
   const focus       = String(criteria?.["current-focus"]  ?? "").trim();
 
