@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import type { WorkspaceDatabase } from "@/app/api/members/workspace/route";
 import { asText, asNumber, getCurrencyCode, formatCurrency, SHOP_TYPE_BADGE } from "./utils";
+import { N_FONT } from "@/lib/workspace-tokens";
 
 // ─── Themes ──────────────────────────────────────────────────────────────────
 const DASHBOARD_THEMES = [

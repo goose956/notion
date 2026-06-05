@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import type { WorkspaceDatabase } from "@/app/api/members/workspace/route";
 import { asText, asNumber, SECTION_ICON } from "./utils";
+import { N_FONT } from "@/lib/workspace-tokens";
 
 const DASHBOARD_THEMES = [
   {
