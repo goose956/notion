@@ -322,20 +322,156 @@ interface SuggestedPrompt {
   text: string;
 }
 
+// ─── Per-niche suggested prompts ─────────────────────────────────────────────
+// Each niche returns 6–8 prompts. Location suffix is appended where relevant.
+function getNichePrompts(nicheId: string, loc: string, crit: Record<string, unknown>): string[] {
+  const l = loc ? ` in ${loc}` : "";
+
+  switch (nicheId) {
+    case "wedding":
+    case "rainbow-wedding":
+      return [
+        `Find wedding venues${l}`,
+        `Search for wedding photographers${l}`,
+        `Find florists specialising in wedding flowers${l}`,
+        `Search for wedding catering companies${l}`,
+        `Find hair and makeup artists for weddings${l}`,
+        `What's the average cost of a wedding photographer${l}?`,
+        `What should I look for when hiring a wedding caterer?`,
+        `What questions should I ask a florist before booking?`,
+      ];
+
+    case "send-parent": {
+      const child = String(crit["child-name"] ?? "").trim();
+      const diagnosis = String(crit["diagnosis"] ?? "").trim();
+      return [
+        `What are the steps to request an EHCP assessment in the UK?`,
+        `What does a SALT assessment involve for a child with ${diagnosis || "autism"}?`,
+        `Find SENDIASS services${l}`,
+        `What rights do parents have at an annual EHCP review?`,
+        `What is the difference between EHCP and SEN support?`,
+        `How long does an EHCP assessment take?`,
+        child ? `What support should school provide for a child with ${diagnosis || "SEND"}?` : `What reasonable adjustments can schools make for SEND pupils?`,
+        `Find specialist SEND schools${l}`,
+      ];
+    }
+
+    case "neurodivergent":
+      return [
+        `What productivity strategies work best for ADHD adults?`,
+        `Find ADHD coaches or therapists${l}`,
+        `What is body doubling and how does it help ADHD?`,
+        `Evidence-based strategies for executive dysfunction`,
+        `Apps and tools recommended for neurodivergent adults`,
+        `What is rejection sensitive dysphoria?`,
+        `How to build routines that work for ADHD`,
+      ];
+
+    case "amazon-fba": {
+      const market = String(crit["marketplace"] ?? crit["market"] ?? "").trim();
+      const cat    = String(crit["category"]    ?? "").trim();
+      return [
+        `Best selling products in ${cat || "Home & Kitchen"} on Amazon${market ? ` ${market}` : ""}`,
+        `What are the Amazon FBA fees for${cat ? ` ${cat}` : " small household items"}?`,
+        `How to find low-competition product opportunities on Amazon`,
+        `What is a good BSR rank for ${cat || "Home & Kitchen"}?`,
+        `Amazon product research tools compared`,
+        `How to analyse Amazon reviews to find product improvement opportunities`,
+        `What are the best suppliers on Alibaba for ${cat || "home products"}?`,
+      ];
+    }
+
+    case "freelancer":
+      return [
+        `What should I charge as a freelance${loc ? ` designer in ${loc}` : " designer"}?`,
+        `How to write a winning project proposal`,
+        `Best freelance platforms for finding clients`,
+        `How to handle late-paying clients`,
+        `What contracts should freelancers use?`,
+        `How to raise your rates without losing clients`,
+        `Find co-working spaces${l}`,
+      ];
+
+    case "podcast":
+      return [
+        `Best podcast hosting platforms compared`,
+        `How to grow a podcast audience`,
+        `Find podcast editing services`,
+        `What equipment do I need to start a podcast?`,
+        `How to monetise a podcast`,
+        `Best practices for podcast SEO`,
+        `How to get guests on your podcast`,
+      ];
+
+    case "vibe-coder":
+      return [
+        `Best AI coding assistants compared`,
+        `How to use Claude API for code generation`,
+        `Next.js vs Remix — which should I use?`,
+        `How to deploy a Next.js app to Railway`,
+        `Best practices for API route security`,
+        `How to set up a TypeScript monorepo with pnpm`,
+        `Supabase vs Neon for a Next.js project`,
+      ];
+
+    case "nail-tech":
+      return [
+        `Find nail product suppliers${l}`,
+        `What nail courses are worth doing for a professional nail tech?`,
+        `How to price nail services`,
+        `Find nail trade shows and events${l}`,
+        `Best nail gel brands for professionals`,
+        `How to attract nail clients on Instagram`,
+        `What insurance do nail technicians need?`,
+      ];
+
+    case "keto":
+      return [
+        `What foods are high in fat but low in carbs for keto?`,
+        `Find keto-friendly restaurants${l}`,
+        `What are the best keto snacks to buy?`,
+        `How to break a keto weight loss plateau`,
+        `What is lazy keto vs strict keto?`,
+        `Best keto meal prep ideas for the week`,
+        `What supplements help with keto side effects?`,
+      ];
+
+    case "pt-business":
+      return [
+        `How to get personal training clients${l}`,
+        `Find gym spaces to rent for personal training${l}`,
+        `What PT software is best for managing clients?`,
+        `How to price personal training sessions`,
+        `Find CPD courses for personal trainers${l}`,
+        `How to build a personal training business online`,
+        `What qualifications do I need to become a PT in the UK?`,
+      ];
+
+    default:
+      // Generic fallback for any niche not listed
+      return [
+        `Find the best resources for getting started`,
+        `What are the most common mistakes to avoid?`,
+        `Find local services and providers${l}`,
+        `What tools and software are recommended?`,
+        `Find industry communities and forums`,
+        `What does it typically cost?`,
+      ];
+  }
+}
+
 function buildSuggestedPrompts(
   databases: DeployedDatabase[],
   criteria: NicheCriteriaEntry[],
 ): SuggestedPrompt[] {
   if (databases.length === 0) {
+    // Generic fallback — no niche deployed yet
     return [
-      { text: "Find wedding venues with a capacity of 100+" },
-      { text: "Search for wedding photographers" },
-      { text: "Find florists specialising in wedding flowers" },
-      { text: "Search for wedding catering companies" },
-      { text: "Find hair and makeup artists for weddings" },
-      { text: "What's the average cost of a wedding photographer?" },
-      { text: "What should I look for when hiring a wedding caterer?" },
-      { text: "What questions should I ask a florist before booking?" },
+      { text: "Find the best tools for managing my projects" },
+      { text: "What are the top productivity apps?" },
+      { text: "How do I research competitors in my market?" },
+      { text: "Find industry communities and forums" },
+      { text: "What questions should I ask before hiring a service provider?" },
     ];
   }
 
@@ -346,18 +482,14 @@ function buildSuggestedPrompts(
     if (seenNiches.has(db.nicheId)) continue;
     seenNiches.add(db.nicheId);
 
-    const crit = criteria.find((c) => c.nicheId === db.nicheId);
-    const location = crit ? extractLocation(crit.criteria) : null;
-    const locSuffix = location ? ` in ${location}` : "";
+    const crit  = criteria.find((c) => c.nicheId === db.nicheId);
+    const loc   = crit ? (extractLocation(crit.criteria) ?? "") : "";
+    const critData = crit?.criteria ?? {};
 
-    prompts.push({ text: `Find wedding venues${locSuffix}` });
-    prompts.push({ text: `Search for wedding photographers${locSuffix}` });
-    prompts.push({ text: `Find florists specialising in wedding flowers${locSuffix}` });
-    prompts.push({ text: `Search for wedding catering companies${locSuffix}` });
-    prompts.push({ text: `Find hair and makeup artists for weddings${locSuffix}` });
-    prompts.push({ text: `What's the average cost of a wedding photographer${locSuffix}?` });
-    prompts.push({ text: `What should I look for when hiring a wedding caterer?` });
-    prompts.push({ text: `What questions should I ask a florist before booking?` });
+    const nichePrompts = getNichePrompts(db.nicheId, loc, critData);
+    for (const text of nichePrompts) {
+      prompts.push({ text });
+    }
   }
 
   return prompts.slice(0, 10);
