@@ -1,17 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 const N_BLUE = "rgb(35,131,226)";
 const N_FONT =
   'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif';
 
 export function AddWorkflowButton({ slug }: { slug: string }) {
-  const router = useRouter();
-
   return (
     <button
-      onClick={() => router.push(`/members/setup/${slug}`)}
+      onClick={() => { window.location.href = `/members/setup/${slug}`; }}
       style={{
         fontFamily: N_FONT,
         display: "inline-flex",
