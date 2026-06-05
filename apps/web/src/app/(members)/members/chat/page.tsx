@@ -437,6 +437,7 @@ function getNichePrompts(nicheId: string, loc: string, crit: Record<string, unkn
       ];
 
     case "pt-business":
+    case "personal-trainer":
       return [
         `How to get personal training clients${l}`,
         `Find gym spaces to rent for personal training${l}`,
@@ -445,6 +446,106 @@ function getNichePrompts(nicheId: string, loc: string, crit: Record<string, unkn
         `Find CPD courses for personal trainers${l}`,
         `How to build a personal training business online`,
         `What qualifications do I need to become a PT in the UK?`,
+      ];
+
+    case "side-hustle":
+      return [
+        `What are the most profitable side hustles to start in 2025?`,
+        `How to validate a side hustle idea before investing time`,
+        `Best platforms to sell digital products online`,
+        `How to balance a side hustle with a full-time job`,
+        `What taxes do I need to pay on side hustle income${l}?`,
+        `How to grow a side hustle into a full-time business`,
+        `Best tools for automating a solo side hustle`,
+      ];
+
+    case "food-business":
+      return [
+        `What licences do I need to start a food business${l}?`,
+        `Find commercial kitchen hire${l}`,
+        `What food hygiene rating requirements apply to home bakers?`,
+        `How to price homemade food products`,
+        `Best platforms to sell food products online`,
+        `How to label homemade food products legally`,
+        `Find local farmers markets and food fairs${l}`,
+      ];
+
+    case "content-creator":
+      return [
+        `How to grow a YouTube channel from scratch`,
+        `Best tools for batch-creating content`,
+        `How to find brand deals as a small creator`,
+        `What should I charge for sponsored content?`,
+        `How to repurpose one video into multiple formats`,
+        `Find other creators to collaborate with${l}`,
+        `What content performs best on Instagram Reels vs TikTok?`,
+      ];
+
+    case "etsy-shop":
+      return [
+        `How to rank higher in Etsy search`,
+        `What are the best-selling Etsy categories in 2025?`,
+        `How to price handmade products on Etsy`,
+        `Find trending Etsy keywords for my niche`,
+        `How to get your first Etsy sale`,
+        `What is Etsy Ads and is it worth it?`,
+        `How to handle Etsy customer complaints`,
+      ];
+
+    case "author":
+      return [
+        `How to self-publish a book on Amazon KDP`,
+        `What is the best book cover design software?`,
+        `How to find a book editor${l}`,
+        `What are the best book marketing strategies for indie authors?`,
+        `How to build an author email list`,
+        `What royalties does Amazon KDP pay?`,
+        `How to write a compelling book blurb`,
+      ];
+
+    case "teacher":
+      return [
+        `Find CPD courses for teachers${l}`,
+        `Best tools for creating engaging lesson plans`,
+        `How to sell teaching resources on TpT or Tes`,
+        `Behaviour management strategies for the classroom`,
+        `How to differentiate lessons for mixed-ability classes`,
+        `Find SEND resources for primary school teachers`,
+        `What are the best EdTech tools for the classroom?`,
+      ];
+
+    case "cake-business":
+      return [
+        `What licences do I need to run a cake business from home${l}?`,
+        `How to price custom wedding cakes`,
+        `Find cake decorating supplies wholesale${l}`,
+        `How to photograph cakes for Instagram`,
+        `What insurance do home bakers need?`,
+        `Find local wedding fairs and events${l}`,
+        `How to get cake orders through social media`,
+      ];
+
+    case "str-guidebook":
+      return [
+        `What should every Airbnb welcome guide include?`,
+        `Find local restaurant recommendations to include in a guidebook`,
+        `How to write a house rules section guests will actually read`,
+        `Best apps for managing a short-term rental`,
+        `How to improve Airbnb listing ranking`,
+        `Find local attractions and activities${l}`,
+        `How to handle guest complaints on Airbnb`,
+      ];
+
+    case "project-manager":
+    case "pinterest-poster":
+      return [
+        `Best productivity tools for project managers`,
+        `How to run an effective stand-up meeting`,
+        `Agile vs Scrum vs Kanban — which should I use?`,
+        `How to manage stakeholder expectations`,
+        `Find project management communities and forums`,
+        `What are the best templates for project planning?`,
+        `How to handle scope creep`,
       ];
 
     default:
@@ -865,7 +966,10 @@ function ChatPageInner() {
                 <p style={{ fontSize: "11px", fontWeight: 500, color: N_SUBTLE, textTransform: "uppercase", letterSpacing: "0.05em", padding: "0 8px 6px" }}>
                   Try asking
                 </p>
-                {buildSuggestedPrompts(deployedDbs, nicheCriteria).map((p) => (
+                {buildSuggestedPrompts(
+                    activeNicheId ? deployedDbs.filter((d) => d.nicheId === activeNicheId) : deployedDbs,
+                    nicheCriteria,
+                  ).map((p) => (
                   <button
                     key={p.text}
                     onClick={() => void sendMessage(p.text)}
