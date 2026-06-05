@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CREDIT_PACKAGES,
@@ -28,15 +28,27 @@ export default function CreditsPage() {
   const [selectedIndex, setSelectedIndex] = useState(2);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [packages, setPackages] = useState<CreditPackage[]>(CREDIT_PACKAGES);
 
   const status = params.get("status");
 
-  const starterPackage = CREDIT_PACKAGES[0]!;
-  const selectedPackage = CREDIT_PACKAGES[selectedIndex] ?? starterPackage;
+  // Load configured credit amounts from admin settings
+  useEffect(() => {
+    fetch("/api/admin/credit-pricing")
+      .then((r) => r.json())
+      .then((data: { packages?: CreditPackage[] }) => {
+        if (Array.isArray(data.packages) && data.packages.length > 0) {
+          setPackages(data.packages);
+        }
+      })
+      .catch(() => null);
+  }, []);
+
+  const starterPackage = packages[0]!;
+  const selectedPackage = packages[selectedIndex] ?? starterPackage;
   const selectedCostPerCredit = getCostPerCredit(selectedPackage);
-  const starterCostPerCredit = getCostPerCredit(starterPackage);
   const selectedSavingsVsStarter = getDiscountVsStarter(selectedPackage, starterPackage);
-  const tiers = CREDIT_PACKAGES;
+  const tiers = packages;
 
   async function handleBuy(packageId: string) {
     setLoadingId(packageId);

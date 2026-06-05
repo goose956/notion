@@ -18,6 +18,7 @@ type SettingsResponse = {
   resendApiKeyConfigured: boolean;
   resendFromAddress: string;
   apifyTokenConfigured: boolean;
+  freeSignupCredits: number;
 };
 
 type PricingCurrency = "USD" | "GBP" | "EUR";
@@ -45,6 +46,7 @@ export function SettingsForm() {
   const [resendApiKey, setResendApiKey] = useState("");
   const [resendFromAddress, setResendFromAddress] = useState("");
   const [apifyToken, setApifyToken] = useState("");
+  const [freeSignupCredits, setFreeSignupCredits] = useState<number>(25);
 
   const [stripeSecretConfigured, setStripeSecretConfigured] = useState(false);
   const [stripeWebhookConfigured, setStripeWebhookConfigured] = useState(false);
@@ -70,6 +72,7 @@ export function SettingsForm() {
   const [pricingCurrencies, setPricingCurrencies] = useState<PricingCurrency[]>(["USD", "GBP", "EUR"]);
   const [pricingPackages, setPricingPackages] = useState<CreditPackage[]>([]);
   const [pricingValues, setPricingValues] = useState<Record<string, Record<PricingCurrency, string>>>({});
+  const [creditAmounts, setCreditAmounts] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function load() {
@@ -87,6 +90,7 @@ export function SettingsForm() {
         setResendConfigured(data.resendApiKeyConfigured);
         setResendFromAddress(data.resendFromAddress || "");
         setApifyConfigured(data.apifyTokenConfigured);
+        setFreeSignupCredits(data.freeSignupCredits ?? 25);
 
         const pricingRes = await fetch("/api/admin/credit-pricing", { cache: "no-store" });
         if (pricingRes.ok) {
@@ -94,6 +98,7 @@ export function SettingsForm() {
           setPricingCurrencies(pricingData.currencies);
           setPricingPackages(pricingData.packages);
           const nextValues: Record<string, Record<PricingCurrency, string>> = {};
+          const nextAmounts: Record<string, string> = {};
           for (const pkg of pricingData.packages) {
             const row = pricingData.table[pkg.id] ?? { USD: pkg.priceCents, GBP: pkg.priceCents, EUR: pkg.priceCents };
             nextValues[pkg.id] = {
@@ -101,8 +106,10 @@ export function SettingsForm() {
               GBP: ((row.GBP ?? pkg.priceCents) / 100).toFixed(2),
               EUR: ((row.EUR ?? pkg.priceCents) / 100).toFixed(2),
             };
+            nextAmounts[pkg.id] = String(pkg.credits);
           }
           setPricingValues(nextValues);
+          setCreditAmounts(nextAmounts);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load settings");
@@ -132,6 +139,7 @@ export function SettingsForm() {
           resendApiKey,
           resendFromAddress,
           apifyToken,
+          freeSignupCredits,
           customerApiKeyId: customerKeyId.trim() || undefined,
           customerApiKey: customerApiKey.trim() || undefined,
         }),
@@ -204,6 +212,7 @@ export function SettingsForm() {
 
     try {
       const payload: Record<string, Record<PricingCurrency, number>> = {};
+      const creditsPayload: Record<string, number> = {};
       for (const pkg of pricingPackages) {
         const row = pricingValues[pkg.id];
         if (!row) continue;
@@ -218,12 +227,14 @@ export function SettingsForm() {
           GBP: Math.round(gbp * 100),
           EUR: Math.round(eur * 100),
         };
+        const credits = parseInt(creditAmounts[pkg.id] ?? String(pkg.credits), 10);
+        if (credits > 0) creditsPayload[pkg.id] = credits;
       }
 
       const res = await fetch("/api/admin/credit-pricing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ table: payload }),
+        body: JSON.stringify({ table: payload, credits: creditsPayload }),
       });
 
       if (!res.ok) {
@@ -250,6 +261,25 @@ export function SettingsForm() {
     <div className="space-y-6">
       <form onSubmit={handleSave} className="space-y-6">
         <section className="surface-card p-5 space-y-3">
+          <h2 className="font-semibold">Free Signup Credits</h2>
+          <p className="text-xs text-muted-foreground">
+            Number of credits new users receive on signup. Displayed across the signup page, templates, and marketing copy.
+          </p>
+          <label className="block text-sm space-y-1">
+            <span className="font-medium">Credits on signup</span>
+            <input
+              type="number"
+              min={0}
+              max={10000}
+              step={1}
+              value={freeSignupCredits}
+              onChange={(e) => setFreeSignupCredits(Math.max(0, parseInt(e.target.value, 10) || 0))}
+              className="w-32 rounded-lg border bg-background/80 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </label>
+        </section>
+
+        <section className="surface-card p-5 space-y-3">
           <h2 className="font-semibold">Credits Pricing Table</h2>
           <p className="text-xs text-muted-foreground">
             Set friendly local prices for each slider tier. These values drive Stripe checkout amounts.
@@ -271,7 +301,18 @@ export function SettingsForm() {
                   {pricingPackages.map((pkg) => (
                     <tr key={pkg.id} className="border-b last:border-b-0">
                       <td className="py-2 pr-3">{pkg.name}</td>
-                      <td className="py-2 pr-3 text-muted-foreground">{pkg.credits}</td>
+                      <td className="py-2 pr-3">
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={creditAmounts[pkg.id] ?? pkg.credits}
+                          onChange={(e) =>
+                            setCreditAmounts((prev) => ({ ...prev, [pkg.id]: e.target.value }))
+                          }
+                          className="w-20 rounded-lg border bg-background/80 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                      </td>
                       {pricingCurrencies.map((currency) => (
                         <td key={`${pkg.id}:${currency}`} className="py-2 pr-3">
                           <input
