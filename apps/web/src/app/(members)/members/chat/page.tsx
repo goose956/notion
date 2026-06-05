@@ -546,10 +546,17 @@ function ChatPageInner() {
         if (b) setBackend(b);
         // Pre-select niche from URL param if present, otherwise pick first
         if (allDbs.length > 0) {
-          const match = nicheIdFromUrl
-            ? allDbs.find((d) => d.nicheId === nicheIdFromUrl)
-            : undefined;
-          const selected = match ?? allDbs[0]!;
+          let selected: DeployedDatabase;
+          if (nicheIdFromUrl) {
+            const nicheDbs = allDbs.filter((d) => d.nicheId === nicheIdFromUrl);
+            // Prefer "documents" db as default save target; fall back to first in niche
+            selected =
+              nicheDbs.find((d) => d.dbId === "documents") ??
+              nicheDbs[0] ??
+              allDbs[0]!;
+          } else {
+            selected = allDbs[0]!;
+          }
           setSelectedNotionId(selected.notionId);
           setActiveNicheId(selected.nicheId);
           setActiveNicheName(selected.nicheName);
@@ -957,28 +964,42 @@ function ChatPageInner() {
               {resultItems.length} result{resultItems.length !== 1 ? "s" : ""}
               {addedIndices.size > 0 && ` · ${addedIndices.size} saved to ${backend === "app" ? "Workspace" : "Notion"}`}
             </span>
-            {deployedDbs.length > 0 && (
+            {deployedDbs.length > 0 && (() => {
+              // Scope save targets to the active niche only; fall back to all DBs if no niche active
+              const saveTargets = activeNicheId
+                ? deployedDbs.filter((d) => d.nicheId === activeNicheId)
+                : deployedDbs;
+              const selectedDb = saveTargets.find((d) => d.notionId === selectedNotionId) ?? saveTargets[0];
+              return (
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <select
-                  value={selectedNotionId}
-                  onChange={(e) => handleDatabaseChange(e.target.value)}
-                  style={{
-                    fontSize: "13px",
-                    border: `1px solid ${N_BORDER_MED}`,
-                    borderRadius: "3px",
-                    padding: "3px 6px",
-                    color: N_FG,
-                    background: "white",
-                    fontFamily: N_FONT,
-                    maxWidth: "220px",
-                  }}
-                >
-                  {deployedDbs.map((db) => (
-                    <option key={db.notionId} value={db.notionId}>
-                      {db.nicheName} · {db.dbName}
-                    </option>
-                  ))}
-                </select>
+                {saveTargets.length <= 1 ? (
+                  // Single target — no dropdown needed, just a label
+                  <span style={{ fontSize: "12px", color: N_MUTED, padding: "3px 6px", border: `1px solid ${N_BORDER}`, borderRadius: "3px" }}>
+                    Save to: <strong style={{ color: N_FG }}>{selectedDb?.dbName ?? "Workspace"}</strong>
+                  </span>
+                ) : (
+                  // Multiple DBs within this niche — scoped dropdown
+                  <select
+                    value={selectedNotionId}
+                    onChange={(e) => handleDatabaseChange(e.target.value)}
+                    style={{
+                      fontSize: "13px",
+                      border: `1px solid ${N_BORDER_MED}`,
+                      borderRadius: "3px",
+                      padding: "3px 6px",
+                      color: N_FG,
+                      background: "white",
+                      fontFamily: N_FONT,
+                      maxWidth: "220px",
+                    }}
+                  >
+                    {saveTargets.map((db) => (
+                      <option key={db.notionId} value={db.notionId}>
+                        {activeNicheId ? db.dbName : `${db.nicheName} · ${db.dbName}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <button
                   disabled={pendingCount === 0 || addAllInProgress || !selectedNotionId}
                   onClick={() => void addAllToNotion()}
@@ -1000,7 +1021,8 @@ function ChatPageInner() {
                   Save all{pendingCount > 0 ? ` (${pendingCount})` : ""}
                 </button>
               </div>
-            )}
+              );
+            })()}
           </div>
         )}
 
