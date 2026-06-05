@@ -160,6 +160,14 @@ export const WORKFLOW_CATALOG = [
       "Everything a keto dieter needs to stay on track and eat well. The Meal Planner generates a full multi-day keto meal plan tailored to your calorie target, diet approach, allergies and food preferences — complete with daily macro breakdowns and a full shopping list. The Recipe Analyser calculates a detailed macro breakdown (calories, net carbs, protein, fat) for any recipe you paste in, gives it a keto suitability score out of 10, and suggests specific modifications to make it more keto-friendly. Save any analysed meal directly to My Meals — your personal keto recipe collection with macro chips, expandable ingredient lists and a one-click meal book export as PDF or text. The Macro Calculator uses the Mifflin-St Jeor formula to calculate your personalised daily targets based on your stats, activity level and goal. Save everything to your Documents library.",
   },
   {
+    id: "send-parent",
+    name: "SEND Parent OS",
+    emoji: "💜",
+    tagline: "Document appointments, log behaviour patterns, build EHCP evidence and write formal letters — everything a SEND parent needs in one place.",
+    description:
+      "SEND Parent OS is built for parents navigating the SEND system — appointments with SALT, OT, CAMHS, schools, and tribunals; behaviour patterns that need documenting; EHCP assessments, annual reviews, and IEP meetings. The Appointment Manager prepares you before any appointment with tailored questions, then turns your rough notes into a professional summary, handover note, and action list you can share with other providers. The Behaviour Log lets you track incidents quickly by location, intensity, and trigger — then AI analyses patterns across all your logs and generates a professional Behaviour Profile for schools and professionals. The EHCP Builder is the killer feature: turn your everyday observations into professional evidence statements, write formal EHCP assessment requests, prepare position statements for annual reviews, or build IEP goals (US/Ireland). The Letter Writer drafts formal letters to schools, councils, and the NHS — EHCP requests, complaints about provision, responses to LA decisions — in seconds. Everything saves to your Documents library for a complete, shareable record.",
+  },
+  {
     id: "nail-tech",
     name: "Nail Tech & Beauty Planner",
     emoji: "💅",

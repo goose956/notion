@@ -34,6 +34,7 @@ import { FBANicheShell }        from "@/components/niches/amazon-fba/shell";
 import { PodcastNicheShell }      from "@/components/niches/podcast/shell";
 import { VibeCoderNicheShell }    from "@/components/niches/vibe-coder/shell";
 import { KetoNicheShell }         from "@/components/niches/keto/shell";
+import { SENDParentShell }        from "@/components/niches/send-parent/shell";
 
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
@@ -1202,6 +1203,15 @@ export default function WorkspacePage() {
                   activeTab={activeTab}
                   databases={databases}
                   criteria={apiCriteriaByNiche["keto"] ?? null}
+                  onRowAdded={handleRowAdded}
+                />
+              );
+              if (entry.nicheId === "send-parent") return (
+                <SENDParentShell
+                  key="send-parent"
+                  activeTab={activeTab}
+                  databases={databases}
+                  criteria={apiCriteriaByNiche["send-parent"] ?? null}
                   onRowAdded={handleRowAdded}
                 />
               );

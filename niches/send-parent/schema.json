@@ -1,0 +1,105 @@
+{
+  "version": "1.0.0",
+  "id": "send-parent",
+  "name": "SEND Parent OS",
+  "description": "Appointment documentation, behaviour tracking, EHCP evidence builder and letter writer — everything a SEND parent needs in one place.",
+  "databases": [
+    {
+      "id": "appointments",
+      "name": "Appointments",
+      "properties": [
+        { "name": "Title",        "type": "title" },
+        { "name": "Type",         "type": "select", "options": [
+            { "name": "SALT",       "color": "blue"   },
+            { "name": "OT",         "color": "green"  },
+            { "name": "CAMHS",      "color": "purple" },
+            { "name": "School",     "color": "yellow" },
+            { "name": "GP / Paed",  "color": "orange" },
+            { "name": "Tribunal",   "color": "red"    },
+            { "name": "Other",      "color": "gray"   }
+          ]
+        },
+        { "name": "Professional",  "type": "rich_text" },
+        { "name": "Summary",       "type": "rich_text" },
+        { "name": "Actions",       "type": "rich_text" },
+        { "name": "Notes",         "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "behaviour-log",
+      "name": "Behaviour Log",
+      "properties": [
+        { "name": "Title",      "type": "title" },
+        { "name": "Location",   "type": "select", "options": [
+            { "name": "Home",        "color": "blue"   },
+            { "name": "School",      "color": "yellow" },
+            { "name": "Out & About", "color": "green"  },
+            { "name": "Other",       "color": "gray"   }
+          ]
+        },
+        { "name": "Intensity",  "type": "select", "options": [
+            { "name": "Low",    "color": "green"  },
+            { "name": "Medium", "color": "yellow" },
+            { "name": "High",   "color": "red"    }
+          ]
+        },
+        { "name": "Trigger",    "type": "rich_text" },
+        { "name": "Resolution", "type": "rich_text" },
+        { "name": "Notes",      "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "documents",
+      "name": "Documents",
+      "properties": [
+        { "name": "Title",   "type": "title" },
+        { "name": "Type",    "type": "select", "options": [
+            { "name": "Appointment Summary", "color": "blue"   },
+            { "name": "Behaviour Profile",   "color": "orange" },
+            { "name": "EHCP Evidence",       "color": "purple" },
+            { "name": "Letter",              "color": "green"  },
+            { "name": "Other",               "color": "gray"   }
+          ]
+        },
+        { "name": "Content", "type": "rich_text" }
+      ]
+    }
+  ],
+  "onboardingQuestions": [
+    {
+      "id": "child-name",
+      "question": "What is your child's name?",
+      "type": "text",
+      "required": false,
+      "hint": "e.g. Ethan"
+    },
+    {
+      "id": "child-age",
+      "question": "How old is your child?",
+      "type": "select",
+      "options": ["Under 5", "5–7", "8–11", "12–15", "16–18", "18+"],
+      "required": true
+    },
+    {
+      "id": "diagnosis",
+      "question": "What is your child's primary diagnosis or area of need?",
+      "type": "select",
+      "options": ["Autism (ASD)", "ADHD", "Autism & ADHD", "Sensory Processing Disorder", "Developmental Delay", "Awaiting Diagnosis", "Other"],
+      "required": true
+    },
+    {
+      "id": "country",
+      "question": "Where are you based?",
+      "type": "select",
+      "options": ["United Kingdom", "United States", "Ireland", "Australia", "Canada", "Other"],
+      "required": true
+    },
+    {
+      "id": "current-focus",
+      "question": "What is your biggest challenge right now?",
+      "type": "select",
+      "options": ["Getting an EHCP / IEP", "Fighting for school support", "Managing appointments", "Understanding behaviours", "Transition planning", "General organisation"],
+      "required": true
+    }
+  ]
+}

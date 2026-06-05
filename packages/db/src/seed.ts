@@ -40,6 +40,7 @@ const packs: NichePack[] = [
   loadSchema("../../../niches/podcast/schema.json"),
   loadSchema("../../../niches/vibe-coder/schema.json"),
   loadSchema("../../../niches/keto/schema.json"),
+  loadSchema("../../../niches/send-parent/schema.json"),
 ];
 
 async function seed() {

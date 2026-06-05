@@ -94,6 +94,16 @@ export const FBA_TABS = {
   LIBRARY:   "__fba_library__",
 } as const;
 
+// ─── SEND Parent OS tab IDs ──────────────────────────────────────────────────
+export const SEND_TABS = {
+  DASHBOARD:    "__send_dashboard__",
+  APPOINTMENTS: "__send_appointments__",
+  BEHAVIOUR:    "__send_behaviour__",
+  EHCP:         "__send_ehcp__",
+  LETTERS:      "__send_letters__",
+  DOCUMENTS:    "__send_documents__",
+} as const;
+
 // ─── Keto OS tab IDs ─────────────────────────────────────────────────────────
 export const KETO_TABS = {
   DASHBOARD:   "__keto_dashboard__",
@@ -842,6 +852,33 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: KETO_TABS.MACROS,    label: "Macro Calculator", icon: "📊", appOnly: true },
       { tabId: KETO_TABS.MY_MEALS,    label: "My Meals",           icon: "🍽️", appOnly: true },
       { tabId: KETO_TABS.INGREDIENTS, label: "What Can I Make?",   icon: "🥘", appOnly: true },
+    ],
+  },
+
+  // ── SEND Parent OS ──────────────────────────────────────────────────────────
+  {
+    nicheId:       "send-parent",
+    displayName:   "SEND Parent OS",
+    virtualTabIds: new Set(Object.values(SEND_TABS)),
+    defaultTabId:  SEND_TABS.DASHBOARD,
+    hiddenDbIds:   [],
+    accent: {
+      hex:           "#8b5cf6",
+      fgActive:      "#6d28d9",
+      fgHeader:      "#4c1d95",
+      bgActive:      "rgba(139,92,246,0.10)",
+      bgHover:       "rgba(139,92,246,0.05)",
+      bgGroupHeader: "rgba(139,92,246,0.06)",
+      borderTop:     "1px solid rgba(139,92,246,0.15)",
+    },
+    sidebarEmoji: "💜",
+    topTabs: [
+      { tabId: SEND_TABS.DASHBOARD,    label: "Dashboard",    icon: "🏠", appOnly: true },
+      { tabId: SEND_TABS.APPOINTMENTS, label: "Appointments", icon: "📋", appOnly: true },
+      { tabId: SEND_TABS.BEHAVIOUR,    label: "Behaviour Log", icon: "📊", appOnly: true },
+      { tabId: SEND_TABS.EHCP,         label: "EHCP Builder", icon: "📄", appOnly: true },
+      { tabId: SEND_TABS.LETTERS,      label: "Letter Writer", icon: "✉️", appOnly: true },
+      { tabId: SEND_TABS.DOCUMENTS,    label: "Documents",    icon: "🗂️", appOnly: true },
     ],
   },
 
