@@ -83,7 +83,8 @@ Replace NUMBER with integers. These are per-serving values.`;
 
     let macros: { calories: number; netCarbs: number; protein: number; fat: number } | null = null;
     let analysis = raw;
-    const lastLine = raw.split("\n").findLast((l) => l.trim().startsWith("{"));
+    const lines = raw.split("\n");
+    const lastLine = lines.slice().reverse().find((l) => l.trim().startsWith("{"));
     if (lastLine) {
       try {
         macros   = JSON.parse(lastLine.trim());

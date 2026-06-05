@@ -93,7 +93,8 @@ Replace NUMBER with integers. These are daily totals.`;
 
     let macroObj: { calories: number; netCarbs: number; protein: number; fat: number } | null = null;
     let targets  = raw;
-    const lastLine = raw.split("\n").findLast((l) => l.trim().startsWith("{"));
+    const lines = raw.split("\n");
+    const lastLine = lines.slice().reverse().find((l) => l.trim().startsWith("{"));
     if (lastLine) {
       try {
         macroObj = JSON.parse(lastLine.trim());
