@@ -6,6 +6,7 @@ import {
   createAppWorkspace,
   createAppDatabase,
   updateAppWorkspaceStatus,
+  addCustomerWorkflow,
 } from "@niche-factory/db";
 import type { NichePack } from "@niche-factory/schema";
 import { SetupForm } from "./setup-form.js";
@@ -101,6 +102,7 @@ export default async function SetupPage({
           durationMs: Date.now() - start,
           databaseIdMap,
         });
+        await addCustomerWorkflow(userEmail, nicheId).catch(() => null);
       } catch {
         // If auto-deploy fails, fall through to show the form so the user
         // can try manually via the normal deploy flow.
