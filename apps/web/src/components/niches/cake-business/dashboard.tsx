@@ -219,7 +219,7 @@ export function CakeBusinessDashboard({
       </div>
 
       {/* STATS */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: "10px" }}>
         <div style={{ borderRadius: "12px", background: theme.accentLight, border: `1px solid ${theme.accentBorder}`, padding: "14px" }}>
           <p style={{ margin: "0 0 2px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: theme.accentText }}>Active orders</p>
           <p style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: N_FG }}>{activeOrders.length}</p>

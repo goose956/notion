@@ -175,13 +175,13 @@ export function STRDashboard({
   const missingSections = SECTIONS.filter((s) => !generatedSections.has(s));
 
   return (
-    <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontFamily: N_FONT }}>
       {/* Hero + picker */}
-      <div style={{ position: "relative", marginBottom: "24px" }}>
+      <div style={{ position: "relative" }}>
         <section style={{
           background: theme.gradient,
-          borderRadius: "14px",
-          padding: "28px 32px",
+          borderRadius: "16px",
+          padding: "22px 26px 20px",
           color: "white",
           boxShadow: theme.shadow,
         }}>
@@ -245,7 +245,7 @@ export function STRDashboard({
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px,1fr))", gap: "14px", marginBottom: "24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))", gap: "10px" }}>
         {statCards.map((card, i) => (
           <div key={i} style={{ background: theme.statCards[i]?.bg ?? theme.accentLight, border: `1px solid ${theme.statCards[i]?.border ?? theme.accentBorder}`, borderRadius: "12px", padding: "16px 18px" }}>
             <p style={{ fontSize: "20px", margin: "0 0 6px 0" }}>{card.icon}</p>

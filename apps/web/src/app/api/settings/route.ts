@@ -11,6 +11,7 @@ const SETTINGS_KEYS = {
   resendApiKey: "resend.apiKey",
   resendFromAddress: "resend.fromAddress",
   apifyToken: "apify.token",
+  freeSignupCredits: "credits.freeSignup",
 } as const;
 
 const SettingsSchema = z.object({
@@ -22,6 +23,7 @@ const SettingsSchema = z.object({
   resendApiKey: z.string().optional(),
   resendFromAddress: z.string().optional(),
   apifyToken: z.string().optional(),
+  freeSignupCredits: z.coerce.number().int().min(0).max(10000).optional(),
   /** Per-customer key fields — if both are present, skip global settings update */
   customerApiKeyId: z.string().optional(),
   customerApiKey: z.string().optional(),
@@ -29,6 +31,9 @@ const SettingsSchema = z.object({
 
 export async function GET() {
   const settings = await getSettings(Object.values(SETTINGS_KEYS));
+
+  const rawFreeCredits = settings[SETTINGS_KEYS.freeSignupCredits];
+  const freeSignupCredits = rawFreeCredits ? parseInt(rawFreeCredits, 10) : 25;
 
   return NextResponse.json({
     stripeSecretKeyConfigured: Boolean(settings[SETTINGS_KEYS.stripeSecretKey]),
@@ -39,6 +44,7 @@ export async function GET() {
     resendApiKeyConfigured: Boolean(settings[SETTINGS_KEYS.resendApiKey]),
     resendFromAddress: settings[SETTINGS_KEYS.resendFromAddress] || "",
     apifyTokenConfigured: Boolean(settings[SETTINGS_KEYS.apifyToken]),
+    freeSignupCredits,
   });
 }
 
@@ -79,6 +85,9 @@ export async function POST(req: NextRequest) {
     [SETTINGS_KEYS.resendApiKey]: data.resendApiKey ?? "",
     [SETTINGS_KEYS.resendFromAddress]: data.resendFromAddress ?? "",
     [SETTINGS_KEYS.apifyToken]: data.apifyToken ?? "",
+    ...(data.freeSignupCredits !== undefined
+      ? { [SETTINGS_KEYS.freeSignupCredits]: String(data.freeSignupCredits) }
+      : {}),
   });
 
   return NextResponse.json({ ok: true });

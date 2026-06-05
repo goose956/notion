@@ -54,9 +54,9 @@ export function PodcastDashboard({
   const recentDocs    = documents.slice(0, 5);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px", fontFamily: N_FONT }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontFamily: N_FONT }}>
       {/* Hero banner */}
-      <div style={{ position: "relative", borderRadius: "16px", background: theme.gradient, boxShadow: `0 8px 32px ${theme.shadow}`, padding: "28px 28px 24px", color: "white", overflow: "hidden" }}>
+      <div style={{ position: "relative", borderRadius: "16px", background: theme.gradient, boxShadow: `0 8px 32px ${theme.shadow}`, padding: "22px 26px 20px", color: "white", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "12px", right: "14px" }} ref={pickerRef}>
           <button onClick={() => setPickerOpen((x) => !x)} style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "8px", padding: "5px 8px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", color: "white" }}>
             <Palette size={13} />

@@ -27,7 +27,7 @@ export function TeacherDashboard({
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px", fontFamily: N_FONT }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontFamily: N_FONT }}>
       <div>
         <h2 style={{ margin: "0 0 4px", fontSize: "18px", fontWeight: 700, color: N_FG }}>
           {schoolName ? `${schoolName} — Planning Hub` : "Teacher Planning Hub"}

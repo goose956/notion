@@ -25,7 +25,7 @@ function getDiscountVsStarter(pkg: CreditPackage, starter: CreditPackage): numbe
 
 export default function CreditsPage() {
   const params = useSearchParams();
-  const [selectedIndex, setSelectedIndex] = useState(2);
+  const [selectedIndex, setSelectedIndex] = useState(2); // index 2 = Growth (500 credits)
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [packages, setPackages] = useState<CreditPackage[]>(CREDIT_PACKAGES);

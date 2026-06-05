@@ -51,13 +51,12 @@ export function PinterestDashboard({
   const weeklyPct = Math.min(100, Math.round((stats.thisWeek / weeklyGoal) * 100));
 
   return (
-    <div style={{ maxWidth: "860px", fontFamily: N_FONT }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontFamily: N_FONT }}>
       {/* Header */}
       <div style={{
-        borderRadius: "14px",
+        borderRadius: "16px",
         background: "linear-gradient(135deg, #6f0110 0%, #ad081b 45%, #e60023 75%, #ff4060 100%)",
-        padding: "22px 28px",
-        marginBottom: "20px",
+        padding: "22px 26px 20px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",

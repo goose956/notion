@@ -121,13 +121,12 @@ export function PMDashboard({
   ];
 
   return (
-    <div style={{ maxWidth: "860px", fontFamily: N_FONT }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontFamily: N_FONT }}>
       {/* Header */}
       <div style={{
-        borderRadius: "14px",
+        borderRadius: "16px",
         background: "linear-gradient(135deg, #1e1b4b 0%, #3730a3 45%, #4f46e5 75%, #818cf8 100%)",
-        padding: "22px 28px",
-        marginBottom: "20px",
+        padding: "22px 26px 20px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
