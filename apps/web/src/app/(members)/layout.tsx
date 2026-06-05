@@ -29,10 +29,12 @@ export default async function MembersLayout({
   const [explicitWorkflows, appWorkspaceNiches] = userEmail
     ? await Promise.all([
         getCustomerWorkflows(userEmail).catch(() => [] as string[]),
-        listAppWorkspacesByUser(userEmail).then((ws) => ws.map((w) => w.nichePackId)).catch(() => [] as string[]),
+        listAppWorkspacesByUser(userEmail)
+          .then((ws) => ws.filter((w) => w.status !== "removed").map((w) => w.nichePackId))
+          .catch(() => [] as string[]),
       ])
     : [[] as string[], [] as string[]];
-  // Merge: start with app_workspaces niches (user's original), then add any extras from customer_workflows
+  // Merge: start with active (non-removed) app_workspaces, then add any extras from customer_workflows
   const activeWorkflows = [
     ...appWorkspaceNiches,
     ...explicitWorkflows.filter((id) => !appWorkspaceNiches.includes(id)),

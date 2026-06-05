@@ -16,6 +16,7 @@ export const deployStatusEnum = pgEnum("deploy_status", [
   "pending",
   "in_progress",
   "success",
+  "removed",
   "failed",
 ]);
 

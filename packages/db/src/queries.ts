@@ -930,6 +930,44 @@ export async function createAppWorkspace(
   return created;
 }
 
+/**
+ * Soft-delete an app workspace when the user removes a workflow from Browse Workflows.
+ * Sets status = "removed" on all matching workspaces for this user + niche.
+ * Data is preserved — re-adding the workflow restores it.
+ */
+export async function removeAppWorkspaceByNiche(
+  userId: string,
+  nichePackId: string,
+): Promise<void> {
+  await db
+    .update(appWorkspaces)
+    .set({ status: "removed", completedAt: new Date() })
+    .where(
+      and(
+        eq(appWorkspaces.userId, userId),
+        eq(appWorkspaces.nichePackId, nichePackId),
+      ),
+    );
+}
+
+/**
+ * Restore a previously removed app workspace when a workflow is re-added.
+ */
+export async function restoreAppWorkspaceByNiche(
+  userId: string,
+  nichePackId: string,
+): Promise<void> {
+  await db
+    .update(appWorkspaces)
+    .set({ status: "success", completedAt: new Date() })
+    .where(
+      and(
+        eq(appWorkspaces.userId, userId),
+        eq(appWorkspaces.nichePackId, nichePackId),
+      ),
+    );
+}
+
 export async function updateAppWorkspaceStatus(
   id: string,
   update: {

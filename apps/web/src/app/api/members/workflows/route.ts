@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { addCustomerWorkflow, removeCustomerWorkflow } from "@niche-factory/db";
+import { addCustomerWorkflow, removeCustomerWorkflow, removeAppWorkspaceByNiche, restoreAppWorkspaceByNiche } from "@niche-factory/db";
 import { WORKFLOW_CATALOG } from "@/lib/workflow-catalog";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +25,8 @@ export async function POST(req: Request) {
   if (!slug) return NextResponse.json({ error: "Invalid workflow slug" }, { status: 400 });
 
   await addCustomerWorkflow(email, slug);
+  // Restore workspace if it was previously removed
+  await restoreAppWorkspaceByNiche(email, slug).catch(() => null);
   return NextResponse.json({ ok: true });
 }
 
@@ -42,5 +44,7 @@ export async function DELETE(req: Request) {
   if (!slug) return NextResponse.json({ error: "Invalid workflow slug" }, { status: 400 });
 
   await removeCustomerWorkflow(email, slug);
+  // Soft-delete the workspace — hides it from sidebar, preserves all data
+  await removeAppWorkspaceByNiche(email, slug).catch(() => null);
   return NextResponse.json({ ok: true });
 }
