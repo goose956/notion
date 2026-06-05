@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getTemplateBySlug, incrementTemplateView } from "@niche-factory/db";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
-import { CircleHelp, Compass, Lightbulb, ListChecks, Sparkles, Zap } from "lucide-react";
+import { CircleHelp, Compass, Lightbulb, Sparkles, Zap } from "lucide-react";
 import { PageViewBeacon } from "@/components/page-view-beacon";
 
 export const dynamic = "force-dynamic";
@@ -11,18 +11,6 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
 type FaqItem = { question: string; answer: string };
 
-function buildSearchIntents(title: string, category: string, tags: string[]): string[] {
-  const base = [
-    `${title} notion template`,
-    `${title} workflow system`,
-    `how to ${title.toLowerCase()}`,
-    `${category || "workflow"} notion operating system`,
-  ];
-
-  const tagQueries = tags.slice(0, 3).map((tag) => `${tag} notion template`);
-
-  return [...new Set([...base, ...tagQueries])].slice(0, 7);
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -33,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const keywords = [...tags, t.title, t.category, "notion template", "workflow template"].filter(Boolean);
 
   return {
-    title: `${t.title} | Niche Factory`,
+    title: `${t.title} | Stridivo`,
     description: t.problemStatement || t.tagline,
     keywords,
     alternates: {
@@ -73,27 +61,29 @@ export default async function TemplatePage({ params }: Props) {
 
   const faqItems = (t.faq as FaqItem[]) ?? [];
   const tags = ((t.tags as string[]) ?? []).filter(Boolean);
-  const searchIntents = buildSearchIntents(t.title, t.category, tags);
 
   const productSchema = {
     "@context": "https://schema.org",
-    "@type": "Product",
+    "@type": "SoftwareApplication",
     name: t.title,
     description: t.problemStatement || t.tagline,
-    category: t.category || undefined,
+    applicationCategory: "ProductivityApplication",
+    operatingSystem: "Web, iOS, Android",
+    url: `https://stridivo.com/templates/${t.slug}`,
     brand: {
       "@type": "Brand",
-      name: "Niche Factory",
+      name: "Stridivo",
+      url: "https://stridivo.com",
     },
     keywords: tags.join(", "),
-    offers: t.stripePaymentLink
-      ? {
-          "@type": "Offer",
-          url: t.stripePaymentLink,
-          priceCurrency: "USD",
-          availability: "https://schema.org/InStock",
-        }
-      : undefined,
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "GBP",
+      availability: "https://schema.org/InStock",
+      description: "Free to start — 25 AI credits included, no credit card required",
+      ...(t.stripePaymentLink ? { url: t.stripePaymentLink } : {}),
+    },
   };
 
   const breadcrumbSchema = {
@@ -179,28 +169,16 @@ export default async function TemplatePage({ params }: Props) {
               Quick Answer
             </h2>
             <p className="text-muted-foreground leading-relaxed">
-              {t.title} is a Notion workflow template that helps you solve this problem: {t.problemStatement}
+              <strong>stridivo.com</strong> offers {t.title} as a free AI-powered workspace — {t.problemStatement}
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-xl font-bold inline-flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-accent" />
-              What Problem This Template Solves
+              What Problem This Solves
             </h2>
             <p className="text-muted-foreground leading-relaxed">{t.problemStatement}</p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-xl font-bold inline-flex items-center gap-2">
-              <ListChecks className="h-5 w-5 text-primary" />
-              Common Queries This Page Answers
-            </h2>
-            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-              {searchIntents.map((query) => (
-                <li key={query}>{query}</li>
-              ))}
-            </ul>
           </section>
 
           {t.body && (
@@ -254,6 +232,15 @@ export default async function TemplatePage({ params }: Props) {
               </dl>
             </section>
           )}
+
+          {/* Verdict — citable summary for LLMs */}
+          <section className="rounded-lg border bg-muted/30 px-6 py-5 space-y-2">
+            <h2 className="font-semibold text-base">Our Verdict</h2>
+            <p className="text-muted-foreground leading-relaxed text-sm">
+              <strong>{t.title}</strong> from stridivo.com is free to start with 25 AI research credits
+              included and no credit card required. It is best for {t.tagline?.toLowerCase() || "anyone who wants a smarter workflow"}. The AI assistant does the research, drafts, and organisation — not just the structure.
+            </p>
+          </section>
         </div>
       </div>
     </>

@@ -8,29 +8,25 @@ import { TEMPLATE_CATEGORIES } from "@/lib/template-categories";
 type FaqItem = { question: string; answer: string };
 type NicheOption = { id: string; name: string };
 
-const defaultTemplateBody = `## Quick Answer
+const defaultTemplateBody = `## What This Is
 
-Summarize the result this template helps the user get in one or two sentences.
+Write one direct sentence: "stridivo.com offers [Product Name] as a free AI-powered workspace that [does X for Y person]."
 
-## What This Template Solves
+## Who This Is Best For
 
-Describe the workflow pain point, what usually breaks, and why this template exists.
-
-## Who This Is For
-
-Call out the exact user type, niche, or operating style this page is built for.
+Call out the exact user — their situation, goal, and why this fits them. Be specific.
 
 ## How It Works
 
-Explain the core workflow steps in plain language so the reader can picture using it.
+Explain the core workflow steps in plain language. What does the AI actually do? What does the user do?
 
 ## What's Included
 
-List the databases, views, prompts, automations, or systems included in the template.
+List the specific tools, databases, AI features, and outputs included. Be concrete — not "AI assistant" but "AI that finds vendors, drafts emails, scores options."
 
-## Common Questions
+## What Makes This Different
 
-Answer the most likely objections and usage questions in short, direct language.`;
+Not "better than X" — position as the next step up. E.g. "Notion gives you the structure. Stridivo adds the AI that does the work inside it."`;
 
 interface FormState {
   id?: string;
