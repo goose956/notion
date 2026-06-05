@@ -18,6 +18,7 @@ import {
   createAppDatabase,
   updateAppDatabaseSchema,
   updateAppWorkspaceStatus,
+  getCustomerWorkflows,
 } from "@niche-factory/db";
 import { NotionApiClient } from "@niche-factory/notion-client";
 import type { NichePack } from "@niche-factory/schema";
@@ -265,6 +266,15 @@ export async function GET(_req: NextRequest) {
 
     try {
       let workspaces = await listAppWorkspacesByUser(userId).catch(() => []);
+
+      // Filter to only workspaces the user currently has enabled in Browse Workflows.
+      // If the customerWorkflows table is empty (legacy users pre-dating Browse Workflows),
+      // fall back to showing all workspaces so existing users aren't affected.
+      const enabledSlugs = await getCustomerWorkflows(userId).catch(() => [] as string[]);
+      if (enabledSlugs.length > 0) {
+        const enabledSet = new Set(enabledSlugs);
+        workspaces = workspaces.filter((w) => enabledSet.has(w.nichePackId));
+      }
 
       // No auto-provisioning here — workspaces are created via the onboarding flow.
 
