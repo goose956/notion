@@ -847,8 +847,9 @@ export async function getDailyViews(
     ORDER BY 1
   `);
   const map = new Map<string, { human: number; llm: number; bot: number }>();
-  for (const r of rows as unknown as Array<{ day: Date; visitor_type: string; cnt: number }>) {
-    const key = r.day.toISOString().slice(0, 10);
+  for (const r of rows as unknown as Array<{ day: Date | string; visitor_type: string; cnt: number }>) {
+    // postgres.js may return a Date object or a timestamp string — handle both
+    const key = (r.day instanceof Date ? r.day.toISOString() : String(r.day)).slice(0, 10);
     if (!map.has(key)) map.set(key, { human: 0, llm: 0, bot: 0 });
     const entry = map.get(key)!;
     const t = r.visitor_type as "human" | "llm" | "bot";
