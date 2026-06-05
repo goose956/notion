@@ -842,7 +842,7 @@ export async function getDailyViews(
       visitor_type,
       COUNT(*)::int AS cnt
     FROM page_views
-    WHERE created_at >= NOW() - (${days} || ' days')::interval
+    WHERE created_at >= NOW() - make_interval(days => ${days})
     GROUP BY 1, 2
     ORDER BY 1
   `);
@@ -869,7 +869,7 @@ export async function getTopPages(
       SUM(CASE WHEN visitor_type = 'human' THEN 1 ELSE 0 END)::int AS human,
       SUM(CASE WHEN visitor_type = 'llm' THEN 1 ELSE 0 END)::int AS llm
     FROM page_views
-    WHERE created_at >= NOW() - (${days} || ' days')::interval
+    WHERE created_at >= NOW() - make_interval(days => ${days})
     GROUP BY path
     ORDER BY total DESC
     LIMIT ${limit}

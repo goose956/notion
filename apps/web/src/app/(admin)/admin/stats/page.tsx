@@ -184,10 +184,11 @@ function StatCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function StatsPage() {
+  const empty = { totalViews: 0, totalLlm: 0, totalHuman: 0, todayViews: 0, todayLlm: 0 };
   const [summary, daily, topPages] = await Promise.all([
-    getAnalyticsSummary(),
-    getDailyViews(30),
-    getTopPages(15, 30),
+    getAnalyticsSummary().catch(() => empty),
+    getDailyViews(30).catch(() => [] as { date: string; human: number; llm: number; bot: number }[]),
+    getTopPages(15, 30).catch(() => [] as { path: string; total: number; human: number; llm: number }[]),
   ]);
 
   const llmPct =
