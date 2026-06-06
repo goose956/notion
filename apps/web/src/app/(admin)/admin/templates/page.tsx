@@ -3,6 +3,7 @@ import { listTemplates } from "@niche-factory/db";
 import type { TemplateRow } from "@niche-factory/db";
 import { BarChart3, Eye, FileText, MousePointerClick, Plus, Sparkles } from "lucide-react";
 import { DeleteTemplateButton } from "./delete-button";
+import { LandingPageCreator } from "@/components/admin/landing-page-creator";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,11 @@ export default async function AdminTemplatesPage() {
           ))}
         </div>
       )}
+
+      {/* Niche Landing Page Generator */}
+      <div className="mt-8">
+        <LandingPageCreator />
+      </div>
     </div>
   );
 }
