@@ -17,10 +17,17 @@ export default async function AdminTemplatesPage() {
     dbError = err instanceof Error ? err.message : "Database error";
   }
 
-  const publishedCount = rows.filter((r) => r.published).length;
-  const draftCount = rows.length - publishedCount;
-  const totalViews = rows.reduce((sum, r) => sum + r.viewCount, 0);
-  const totalClicks = rows.reduce((sum, r) => sum + r.clickCount, 0);
+  function isLandingPage(r: TemplateRow) {
+    return ((r.tags as string[]) ?? []).includes("landing-page");
+  }
+
+  const templateRows = rows.filter((r) => !isLandingPage(r));
+  const landingRows = rows.filter(isLandingPage);
+
+  const publishedCount = templateRows.filter((r) => r.published).length;
+  const draftCount = templateRows.length - publishedCount;
+  const totalViews = templateRows.reduce((sum, r) => sum + r.viewCount, 0);
+  const totalClicks = templateRows.reduce((sum, r) => sum + r.clickCount, 0);
   const overallCtr = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
 
   return (
@@ -51,9 +58,10 @@ export default async function AdminTemplatesPage() {
         </div>
       )}
 
-      {rows.length > 0 && (
+      {/* LLM-optimised template pages */}
+      {templateRows.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-          <StatCard label="Total" value={String(rows.length)} icon={<FileText className="h-3.5 w-3.5" />} />
+          <StatCard label="Total" value={String(templateRows.length)} icon={<FileText className="h-3.5 w-3.5" />} />
           <StatCard label="Published" value={String(publishedCount)} icon={<Sparkles className="h-3.5 w-3.5" />} />
           <StatCard label="Drafts" value={String(draftCount)} icon={<BarChart3 className="h-3.5 w-3.5" />} />
           <StatCard label="Views" value={totalViews.toLocaleString()} icon={<Eye className="h-3.5 w-3.5" />} />
@@ -65,7 +73,7 @@ export default async function AdminTemplatesPage() {
         </div>
       )}
 
-      {rows.length === 0 && dbError === undefined && (
+      {templateRows.length === 0 && dbError === undefined && (
         <div className="rounded-lg border border-dashed p-12 text-center">
           <p className="text-muted-foreground text-sm mb-3">No templates yet.</p>
           <Link
@@ -77,16 +85,39 @@ export default async function AdminTemplatesPage() {
         </div>
       )}
 
-      {rows.length > 0 && (
+      {templateRows.length > 0 && (
         <div className="surface-card divide-y overflow-hidden">
-          {rows.map((row) => (
+          {templateRows.map((row) => (
             <TemplateListRow key={row.id} row={row} />
           ))}
         </div>
       )}
 
-      {/* Niche Landing Page Generator */}
-      <div className="mt-8">
+      {/* Landing pages section */}
+      <div className="mt-10">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Niche Landing Pages</h2>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              Condensed paid-ad copy pages — generated per niche pack
+            </p>
+          </div>
+        </div>
+
+        {landingRows.length > 0 && (
+          <div className="surface-card divide-y overflow-hidden mb-6">
+            {landingRows.map((row) => (
+              <TemplateListRow key={row.id} row={row} />
+            ))}
+          </div>
+        )}
+
+        {landingRows.length === 0 && (
+          <div className="rounded-lg border border-dashed p-8 text-center mb-6">
+            <p className="text-muted-foreground text-sm">No landing pages yet — generate one below.</p>
+          </div>
+        )}
+
         <LandingPageCreator />
       </div>
     </div>
