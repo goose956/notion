@@ -31,7 +31,6 @@ export const PROJECT_MANAGER_TABS = {
   APPLY_TEMPLATES: "__pm_apply_templates__",
   FOCUS_MODE:      "__pm_focus_mode__",
   TASK_BREAKDOWN:  "__pm_task_breakdown__",
-  DOCUMENTS:       "__pm_documents__",
 } as const;
 
 // ─── Neurodivergent Life OS tab IDs ──────────────────────────────────────────
@@ -368,7 +367,7 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
     displayName:   "Project HQ",
     virtualTabIds: new Set(Object.values(PROJECT_MANAGER_TABS)),
     defaultTabId:  PROJECT_MANAGER_TABS.DASHBOARD,
-    hiddenDbIds:   ["documents"],
+    hiddenDbIds:   [],
     accent:        PROJECT_MANAGER_ACCENT,
     sidebarEmoji:  "🗂️",
     topTabs: [
@@ -379,8 +378,8 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: PROJECT_MANAGER_TABS.APPLY_TEMPLATES, label: "Apply Templates", icon: "📋", appOnly: true },
       { tabId: PROJECT_MANAGER_TABS.FOCUS_MODE,      label: "Focus Mode",       icon: "🎯", appOnly: true },
       { tabId: PROJECT_MANAGER_TABS.TASK_BREAKDOWN,  label: "Task Breakdown",   icon: "🔨", appOnly: true },
-      { tabId: PROJECT_MANAGER_TABS.DOCUMENTS,       label: "Documents",        icon: "📎", appOnly: true },
     ],
+    savedResearchDbIds: ["documents"],
   },
 
   // ── Pinterest Poster ─────────────────────────────────────────────────────
