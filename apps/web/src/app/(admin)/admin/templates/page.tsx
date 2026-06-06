@@ -142,7 +142,7 @@ function TemplateListRow({ row, urlPrefix = "/templates" }: { row: TemplateRow; 
             {row.published ? "Published" : "Draft"}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">{urlPrefix}/{row.slug}</p>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">{urlPrefix}/{row.slug as string}</p>
       </div>
 
       <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
@@ -153,7 +153,7 @@ function TemplateListRow({ row, urlPrefix = "/templates" }: { row: TemplateRow; 
 
       <div className="flex items-center gap-2 shrink-0">
         <Link
-          href={`${urlPrefix}/${row.slug}`}
+          href={`${urlPrefix}/${row.slug}` as string}
           target="_blank"
           className="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
