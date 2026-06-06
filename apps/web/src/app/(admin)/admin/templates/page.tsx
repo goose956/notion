@@ -142,7 +142,7 @@ function TemplateListRow({ row, urlPrefix = "/templates" }: { row: TemplateRow; 
             {row.published ? "Published" : "Draft"}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">{urlPrefix}/{row.slug as string}</p>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">{urlPrefix}/{row.slug}</p>
       </div>
 
       <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
@@ -152,13 +152,14 @@ function TemplateListRow({ row, urlPrefix = "/templates" }: { row: TemplateRow; 
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
-        <Link
-          href={`${urlPrefix}/${row.slug}` as string}
+        <a
+          href={`${urlPrefix}/${row.slug}`}
           target="_blank"
+          rel="noreferrer"
           className="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           View ↗
-        </Link>
+        </a>
         <Link
           href={`/admin/templates/${row.id}/edit`}
           className="inline-flex items-center justify-center rounded-md border text-xs font-medium h-7 px-3 hover:bg-muted transition-colors"
