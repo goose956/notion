@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Loader2, Plus, Trash2, FileText, Lock, Eye } from "lucide-react";
+import { Loader2, Plus, Trash2, FileText, Lock, Eye, PenLine } from "lucide-react";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
@@ -183,6 +183,61 @@ function PasswordGate({ storedHash, onUnlock }: { storedHash: string; onUnlock: 
   );
 }
 
+// ─── Lightweight markdown renderer ───────────────────────────────────────────
+
+function inlineFormat(line: string): React.ReactNode {
+  const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
+    if (part.startsWith("`") && part.endsWith("`")) return <code key={i} style={{ background: "rgba(55,53,47,0.08)", borderRadius: 3, padding: "1px 5px", fontSize: "0.9em", fontFamily: "monospace" }}>{part.slice(1, -1)}</code>;
+    return part;
+  });
+}
+
+function renderMarkdown(text: string): React.ReactNode[] {
+  const lines = text.split("\n");
+  const nodes: React.ReactNode[] = [];
+  let key = 0;
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i]!;
+    if (/^### /.test(line)) {
+      nodes.push(<p key={key++} style={{ fontSize: "13px", fontWeight: 700, color: "#37352f", margin: "16px 0 4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{inlineFormat(line.slice(4))}</p>);
+    } else if (/^## /.test(line)) {
+      nodes.push(<p key={key++} style={{ fontSize: "16px", fontWeight: 700, color: "#37352f", margin: "20px 0 6px" }}>{inlineFormat(line.slice(3))}</p>);
+    } else if (/^# /.test(line)) {
+      nodes.push(<p key={key++} style={{ fontSize: "18px", fontWeight: 700, color: "#37352f", margin: "24px 0 8px" }}>{inlineFormat(line.slice(2))}</p>);
+    } else if (/^[-*] /.test(line)) {
+      const items: React.ReactNode[] = [];
+      while (i < lines.length && /^[-*] /.test(lines[i]!)) {
+        items.push(<li key={i} style={{ marginBottom: "4px" }}>{inlineFormat(lines[i]!.slice(2))}</li>);
+        i++;
+      }
+      nodes.push(<ul key={key++} style={{ margin: "8px 0", paddingLeft: "22px", fontSize: "14px", lineHeight: 1.7 }}>{items}</ul>);
+      continue;
+    } else if (/^\d+\. /.test(line)) {
+      const items: React.ReactNode[] = [];
+      while (i < lines.length && /^\d+\. /.test(lines[i]!)) {
+        items.push(<li key={i} style={{ marginBottom: "4px" }}>{inlineFormat(lines[i]!.replace(/^\d+\. /, ""))}</li>);
+        i++;
+      }
+      nodes.push(<ol key={key++} style={{ margin: "8px 0", paddingLeft: "22px", fontSize: "14px", lineHeight: 1.7 }}>{items}</ol>);
+      continue;
+    } else if (/^> /.test(line)) {
+      nodes.push(<blockquote key={key++} style={{ borderLeft: "3px solid #d0cec9", margin: "8px 0", paddingLeft: "14px", color: "#6b6b6b", fontSize: "14px", lineHeight: 1.7 }}>{inlineFormat(line.slice(2))}</blockquote>);
+    } else if (/^---+$/.test(line.trim())) {
+      nodes.push(<hr key={key++} style={{ border: "none", borderTop: "1px solid #e0ddd8", margin: "16px 0" }} />);
+    } else if (line.trim() === "") {
+      nodes.push(<div key={key++} style={{ height: "8px" }} />);
+    } else {
+      nodes.push(<p key={key++} style={{ fontSize: "14px", color: "#37352f", margin: "0 0 6px", lineHeight: 1.75 }}>{inlineFormat(line)}</p>);
+    }
+    i++;
+  }
+  return nodes;
+}
+
 // ─── Body editor (handles text + embedded SVG assets) ────────────────────────
 
 function extractSvgs(text: string): { textOnly: string; svgs: string[] } {
@@ -198,6 +253,7 @@ function BodyEditor({ body, onChange, row }: { body: string; onChange: (v: strin
   const storedHash = String(row.properties["PasswordHash"] ?? "").trim();
   const isLocked = isRowLocked(row);
   const [unlocked, setUnlocked] = useState(!isLocked);
+  const [mode, setMode] = useState<"edit" | "preview">("edit");
 
   if (!unlocked) {
     return <PasswordGate storedHash={storedHash} onUnlock={() => setUnlocked(true)} />;
@@ -205,11 +261,8 @@ function BodyEditor({ body, onChange, row }: { body: string; onChange: (v: strin
 
   const { textOnly, svgs } = extractSvgs(body);
   const hasSvgs = svgs.length > 0;
-
-  // Clean readable text (strip "SVG asset:" labels)
   const displayText = textOnly.replace(/SVG asset\s*\d*:\s*\n?/gi, "").trimEnd();
 
-  // When user edits the textarea, splice SVG blocks back in at the end
   function handleTextChange(newText: string) {
     if (!hasSvgs) { onChange(newText); return; }
     const rebuilt = newText.trimEnd() +
@@ -218,7 +271,7 @@ function BodyEditor({ body, onChange, row }: { body: string; onChange: (v: strin
     onChange(rebuilt);
   }
 
-  // SVG-only view: image canvas document — show large viewer, no textarea
+  // SVG-only view
   if (hasSvgs) {
     return (
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", background: "#f5f5f4", display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 16px", gap: "20px" }}>
@@ -228,11 +281,7 @@ function BodyEditor({ body, onChange, row }: { body: string; onChange: (v: strin
             <div key={i} style={{ width: "100%", maxWidth: "500px", background: "white", borderRadius: "8px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.10)" }}>
               <img src={dataUri} alt={`Asset ${i + 1}`} style={{ width: "100%", display: "block" }} />
               <div style={{ padding: "10px 14px", borderTop: `1px solid ${N_BORDER}`, display: "flex", justifyContent: "flex-end" }}>
-                <a
-                  href={dataUri}
-                  download={`asset-${i + 1}.svg`}
-                  style={{ fontSize: "12px", color: N_MUTED, textDecoration: "none", fontFamily: N_FONT }}
-                >
+                <a href={dataUri} download={`asset-${i + 1}.svg`} style={{ fontSize: "12px", color: N_MUTED, textDecoration: "none", fontFamily: N_FONT }}>
                   Download SVG
                 </a>
               </div>
@@ -243,26 +292,81 @@ function BodyEditor({ body, onChange, row }: { body: string; onChange: (v: strin
     );
   }
 
-  // Plain text document
   return (
-    <textarea
-      value={displayText}
-      onChange={(e) => handleTextChange(e.target.value)}
-      placeholder="Document content…"
-      style={{
-        flex: 1,
-        padding: "20px",
-        border: "none",
-        outline: "none",
-        resize: "none",
-        fontSize: "14px",
-        color: N_FG,
-        fontFamily: N_FONT,
-        lineHeight: 1.7,
-        background: "#fafafa",
-        minWidth: 0,
-      }}
-    />
+    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      {/* Edit / Preview toggle */}
+      <div style={{ display: "flex", gap: "2px", padding: "8px 20px", borderBottom: `1px solid ${N_BORDER}`, background: "white", flexShrink: 0 }}>
+        <button
+          onClick={() => setMode("edit")}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: "5px",
+            padding: "4px 12px", borderRadius: "5px", border: "none",
+            background: mode === "edit" ? "rgba(55,53,47,0.08)" : "transparent",
+            fontSize: "12px", fontWeight: mode === "edit" ? 600 : 400,
+            color: mode === "edit" ? "#37352f" : "#9b9a97",
+            cursor: "pointer", fontFamily: N_FONT,
+          }}
+        >
+          <PenLine size={12} /> Edit
+        </button>
+        <button
+          onClick={() => setMode("preview")}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: "5px",
+            padding: "4px 12px", borderRadius: "5px", border: "none",
+            background: mode === "preview" ? "rgba(55,53,47,0.08)" : "transparent",
+            fontSize: "12px", fontWeight: mode === "preview" ? 600 : 400,
+            color: mode === "preview" ? "#37352f" : "#9b9a97",
+            cursor: "pointer", fontFamily: N_FONT,
+          }}
+        >
+          <Eye size={12} /> Preview
+        </button>
+        {displayText && (
+          <span style={{ marginLeft: "auto", fontSize: "11px", color: "#b5b3af", alignSelf: "center" }}>
+            {displayText.split(/\s+/).filter(Boolean).length} words
+          </span>
+        )}
+      </div>
+
+      {mode === "edit" ? (
+        <textarea
+          value={displayText}
+          onChange={(e) => handleTextChange(e.target.value)}
+          placeholder="Start writing… Markdown is supported: **bold**, *italic*, ## headings, - bullets"
+          style={{
+            flex: 1,
+            padding: "24px 28px",
+            border: "none",
+            outline: "none",
+            resize: "none",
+            fontSize: "14px",
+            color: "#37352f",
+            fontFamily: `"Georgia", "Times New Roman", serif`,
+            lineHeight: 1.8,
+            background: "#fafaf8",
+            minWidth: 0,
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "24px 28px",
+            background: "#fafaf8",
+          }}
+        >
+          {displayText.trim() ? (
+            <div style={{ maxWidth: "680px" }}>
+              {renderMarkdown(displayText)}
+            </div>
+          ) : (
+            <p style={{ color: "#b5b3af", fontSize: "14px", fontStyle: "italic" }}>Nothing to preview yet.</p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
