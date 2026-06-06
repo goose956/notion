@@ -66,7 +66,7 @@ function DocCard({
 }) {
   const title = prop(row, "Title") || "Untitled";
   const summary = prop(row, "Summary");
-  const body = prop(row, "Body", "Content", "Draft");
+  const body = prop(row, "Body", "Content", "Draft", "Notes");
   const type = prop(row, "Type");
   const cfg = getTypeConfig(type);
   const { textOnly, svgs } = extractSvgs(body);
@@ -281,7 +281,7 @@ function DocEditor({
 }) {
   const [title, setTitle] = useState(prop(row, "Title"));
   const [subject, setSubject] = useState(prop(row, "Subject"));
-  const [body, setBody] = useState(prop(row, "Body", "Content", "Draft"));
+  const [body, setBody] = useState(prop(row, "Body", "Content", "Draft", "Notes"));
   const [type, setType] = useState(prop(row, "Type") || "Other");
   const isImageDoc = extractSvgs(body).svgs.length > 0;
   const isLockedDoc = isRowLocked(row);
@@ -297,8 +297,8 @@ function DocEditor({
   const hasRecipProp   = db.properties.some((p) => p.name === "Recipient") || "Recipient" in row.properties;
   const hasTypeProp    = db.properties.some((p) => p.name === "Type")    || "Type"    in row.properties;
   // Detect body field from schema OR from row properties directly
-  const bodyProp       = db.properties.find((p) => ["Body","Content","Draft"].includes(p.name))
-    ?? (["Body","Content","Draft"].find((k) => k in row.properties) ? { name: ["Body","Content","Draft"].find((k) => k in row.properties)! } : { name: "Body" });
+  const bodyProp       = db.properties.find((p) => ["Body","Content","Draft","Notes"].includes(p.name))
+    ?? (["Body","Content","Draft","Notes"].find((k) => k in row.properties) ? { name: ["Body","Content","Draft","Notes"].find((k) => k in row.properties)! } : { name: "Body" });
   const typeOptions    = (db.properties.find((p) => p.name === "Type")?.options ?? Object.keys(TYPE_CONFIG)) as string[];
 
   async function handleSave() {
