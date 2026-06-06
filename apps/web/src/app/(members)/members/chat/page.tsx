@@ -686,16 +686,45 @@ function ChatPageInner() {
     if (!title.trim() || !summaryText) return;
     setSavingNote(true);
     try {
-      await fetch("/api/members/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          content: summaryText,
-          nicheId: activeNicheId,
-          nicheName: activeNicheName,
-        }),
-      });
+      // Try to save directly as a row in the Documents DB for the active niche
+      const docsDb =
+        deployedDbs.find((d) => d.nicheId === activeNicheId && d.dbId === "documents") ??
+        deployedDbs.find((d) => d.dbId === "documents");
+
+      if (docsDb && backend === "app") {
+        const today = new Date().toISOString().slice(0, 10);
+        await fetch("/api/members/workspace", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            databaseId: docsDb.notionId,
+            properties: {
+              Title:        title.trim(),
+              Notes:        summaryText,
+              Type:         "Note",
+              "Date Added": today,
+            },
+            propertyTypes: {
+              Title:        "title",
+              Notes:        "rich_text",
+              Type:         "select",
+              "Date Added": "date",
+            },
+          }),
+        });
+      } else {
+        // Fallback — user has no documents DB deployed (or is on Notion backend)
+        await fetch("/api/members/notes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: title.trim(),
+            content: summaryText,
+            nicheId: activeNicheId,
+            nicheName: activeNicheName,
+          }),
+        });
+      }
       setNoteSaved(true);
       setShowNoteTitleInput(false);
     } finally {
