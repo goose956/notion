@@ -381,6 +381,7 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: PROJECT_MANAGER_TABS.TASK_BREAKDOWN,  label: "Task Breakdown",   icon: "🔨", appOnly: true },
       { tabId: PROJECT_MANAGER_TABS.DOCUMENTS,       label: "Documents",        icon: "📎", appOnly: true },
     ],
+    savedResearchDbIds: ["documents"],
   },
 
   // ── Pinterest Poster ─────────────────────────────────────────────────────

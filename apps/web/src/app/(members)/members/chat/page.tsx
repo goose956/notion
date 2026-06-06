@@ -686,46 +686,16 @@ function ChatPageInner() {
     if (!title.trim() || !summaryText) return;
     setSavingNote(true);
     try {
-      // Find the documents DB — prefer the active niche, fall back to any niche
-      const docsDb = deployedDbs.find(
-        (d) => d.nicheId === activeNicheId && d.dbId === "documents",
-      ) ?? deployedDbs.find((d) => d.dbId === "documents");
-
-      const today = new Date().toISOString().slice(0, 10);
-
-      if (docsDb && backend === "app") {
-        await fetch("/api/members/workspace", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            databaseId: docsDb.notionId,
-            properties: {
-              Title:        title.trim(),
-              Notes:        summaryText,
-              Type:         "Note",
-              "Date Added": today,
-            },
-            propertyTypes: {
-              Title:        "title",
-              Notes:        "rich_text",
-              Type:         "select",
-              "Date Added": "date",
-            },
-          }),
-        });
-      } else {
-        // Fallback — save to the general notes store (works for all users)
-        await fetch("/api/members/notes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: title.trim(),
-            content: summaryText,
-            nicheId: activeNicheId,
-            nicheName: activeNicheName,
-          }),
-        });
-      }
+      await fetch("/api/members/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          content: summaryText,
+          nicheId: activeNicheId,
+          nicheName: activeNicheName,
+        }),
+      });
       setNoteSaved(true);
       setShowNoteTitleInput(false);
     } finally {
