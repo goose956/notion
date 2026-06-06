@@ -107,7 +107,7 @@ export default async function AdminTemplatesPage() {
         {landingRows.length > 0 && (
           <div className="surface-card divide-y overflow-hidden mb-6">
             {landingRows.map((row) => (
-              <TemplateListRow key={row.id} row={row} />
+              <TemplateListRow key={row.id} row={row} urlPrefix="/landing" />
             ))}
           </div>
         )}
@@ -124,7 +124,7 @@ export default async function AdminTemplatesPage() {
   );
 }
 
-function TemplateListRow({ row }: { row: TemplateRow }) {
+function TemplateListRow({ row, urlPrefix = "/templates" }: { row: TemplateRow; urlPrefix?: string }) {
   const ctr = row.viewCount > 0 ? (row.clickCount / row.viewCount) * 100 : 0;
 
   return (
@@ -142,7 +142,7 @@ function TemplateListRow({ row }: { row: TemplateRow }) {
             {row.published ? "Published" : "Draft"}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">/templates/{row.slug}</p>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">{urlPrefix}/{row.slug}</p>
       </div>
 
       <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
@@ -153,7 +153,7 @@ function TemplateListRow({ row }: { row: TemplateRow }) {
 
       <div className="flex items-center gap-2 shrink-0">
         <Link
-          href={`/templates/${row.slug}`}
+          href={`${urlPrefix}/${row.slug}`}
           target="_blank"
           className="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >

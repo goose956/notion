@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, ChevronDown } from "lucide-react";
+import { Sparkles, ChevronDown, Plus, Trash2, ExternalLink } from "lucide-react";
 
 type NicheOption = { id: string; name: string };
 
-interface LandingPageDraft {
+interface LandingDraft {
   headline: string;
   subheadline: string;
   hook: string;
@@ -17,25 +17,6 @@ interface LandingPageDraft {
   suggestedSlug: string;
 }
 
-function draftToBody(d: LandingPageDraft): string {
-  const bullets = d.bullets.map((b) => `- ${b}`).join("\n");
-  return `## ${d.headline}
-
-${d.subheadline}
-
-${d.hook}
-
-## What the AI Does
-
-${bullets}
-
-## The Result
-
-${d.result}
-
-## ${d.cta}`;
-}
-
 const inputCls =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring placeholder:text-muted-foreground";
 
@@ -44,8 +25,7 @@ export function LandingPageCreator() {
   const [niches, setNiches] = useState<NicheOption[]>([]);
   const [nichePackId, setNichePackId] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [draft, setDraft] = useState<LandingPageDraft | null>(null);
-  const [body, setBody] = useState("");
+  const [draft, setDraft] = useState<LandingDraft | null>(null);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [saving, setSaving] = useState(false);
@@ -61,10 +41,7 @@ export function LandingPageCreator() {
   }, []);
 
   async function handleGenerate() {
-    if (!nichePackId) {
-      setError("Select a niche pack first");
-      return;
-    }
+    if (!nichePackId) { setError("Select a niche pack first"); return; }
     setGenerating(true);
     setError(null);
     setDraft(null);
@@ -74,14 +51,10 @@ export function LandingPageCreator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nichePackId }),
       });
-      const data = await res.json() as { draft?: LandingPageDraft; nicheName?: string; error?: string };
-      if (!res.ok) {
-        setError(data.error ?? "Generation failed");
-        return;
-      }
+      const data = await res.json() as { draft?: LandingDraft; error?: string };
+      if (!res.ok) { setError(data.error ?? "Generation failed"); return; }
       const d = data.draft!;
       setDraft(d);
-      setBody(draftToBody(d));
       setTitle(d.suggestedTitle);
       setSlug(d.suggestedSlug);
     } catch (err) {
@@ -91,24 +64,38 @@ export function LandingPageCreator() {
     }
   }
 
+  function updateBullet(i: number, val: string) {
+    if (!draft) return;
+    const bullets = draft.bullets.map((b, idx) => idx === i ? val : b);
+    setDraft({ ...draft, bullets });
+  }
+
+  function addBullet() {
+    if (!draft) return;
+    setDraft({ ...draft, bullets: [...draft.bullets, ""] });
+  }
+
+  function removeBullet(i: number) {
+    if (!draft) return;
+    setDraft({ ...draft, bullets: draft.bullets.filter((_, idx) => idx !== i) });
+  }
+
   async function handleSave(publish = false) {
-    if (!body.trim() || !title.trim()) {
-      setError("Title and body are required");
-      return;
-    }
+    if (!draft || !title.trim()) { setError("Title required"); return; }
     setSaving(true);
     setError(null);
     setSuccess(null);
     try {
+      const finalSlug = slug || title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const res = await fetch("/api/templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+          slug: finalSlug,
           title,
-          tagline: draft?.subheadline ?? "",
-          problemStatement: draft?.hook ?? "",
-          body,
+          tagline: draft.subheadline,
+          problemStatement: draft.hook,
+          body: JSON.stringify(draft),
           faq: [],
           category: "Other",
           tags: ["landing-page"],
@@ -119,13 +106,10 @@ export function LandingPageCreator() {
         }),
       });
       const data = await res.json() as { template?: { id: string }; error?: string };
-      if (!res.ok) {
-        setError(data.error ?? "Save failed");
-        return;
-      }
-      setSuccess(publish ? "Published!" : "Saved as draft");
+      if (!res.ok) { setError(data.error ?? "Save failed"); return; }
+      setSuccess(publish ? `Published — /landing/${finalSlug}` : "Saved as draft");
       if (data.template?.id) {
-        router.push(`/admin/templates/${data.template.id}/edit`);
+        router.refresh();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -136,7 +120,7 @@ export function LandingPageCreator() {
 
   return (
     <div className="surface-card overflow-hidden">
-      {/* Header — click to toggle */}
+      {/* Header */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -146,12 +130,10 @@ export function LandingPageCreator() {
           <span className="icon-badge h-6 w-6">
             <Sparkles className="h-3.5 w-3.5 text-accent" />
           </span>
-          <span className="text-sm font-medium">Niche Landing Page Generator</span>
-          <span className="text-xs text-muted-foreground">— condensed Facebook / paid-ad copy</span>
+          <span className="text-sm font-medium">Generate Landing Page</span>
+          <span className="text-xs text-muted-foreground">— dark hero · gradient · Facebook-ready copy</span>
         </div>
-        <ChevronDown
-          className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
-        />
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
@@ -193,20 +175,18 @@ export function LandingPageCreator() {
             </button>
           </div>
 
-          {/* Generated copy — editable */}
+          {/* Field editor */}
           {draft && (
-            <div className="space-y-4">
+            <div className="space-y-4 pt-1">
+
+              {/* Title + slug */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium">Page title</label>
-                  <input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className={inputCls}
-                  />
+                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide">Page title (internal)</label>
+                  <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium">Slug</label>
+                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide">Slug → /landing/…</label>
                   <input
                     value={slug}
                     onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
@@ -215,20 +195,104 @@ export function LandingPageCreator() {
                 </div>
               </div>
 
+              {/* Headline */}
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium">
-                  Copy{" "}
-                  <span className="text-muted-foreground font-normal">(Markdown — edit freely)</span>
-                </label>
-                <textarea
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  rows={18}
-                  className={`${inputCls} font-mono text-sm`}
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide">Headline</label>
+                <input
+                  value={draft.headline}
+                  onChange={(e) => setDraft({ ...draft, headline: e.target.value })}
+                  className={`${inputCls} font-semibold`}
+                  placeholder="Big bold headline…"
                 />
               </div>
 
-              <div className="flex items-center gap-2 justify-end pt-1">
+              {/* Subheadline */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide">Subheadline (orange accent)</label>
+                <input
+                  value={draft.subheadline}
+                  onChange={(e) => setDraft({ ...draft, subheadline: e.target.value })}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Hook */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide">Hook paragraph</label>
+                <textarea
+                  value={draft.hook}
+                  onChange={(e) => setDraft({ ...draft, hook: e.target.value })}
+                  rows={3}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Bullets */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide">AI bullets</label>
+                  <button
+                    type="button"
+                    onClick={addBullet}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <Plus className="h-3 w-3" /> Add
+                  </button>
+                </div>
+                {draft.bullets.map((b, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      value={b}
+                      onChange={(e) => updateBullet(i, e.target.value)}
+                      className={inputCls}
+                      placeholder="AI does X — specific action, concrete result"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeBullet(i)}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Result */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide">Result statement (shown in gradient box)</label>
+                <textarea
+                  value={draft.result}
+                  onChange={(e) => setDraft({ ...draft, result: e.target.value })}
+                  rows={2}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* CTA */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide">CTA button text</label>
+                <input
+                  value={draft.cta}
+                  onChange={(e) => setDraft({ ...draft, cta: e.target.value })}
+                  className={inputCls}
+                  placeholder="Get it free"
+                />
+              </div>
+
+              {/* Save actions */}
+              <div className="flex items-center gap-2 justify-end pt-2 border-t">
+                {success && slug && (
+                  <a
+                    href={`/landing/${slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mr-auto"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Preview page
+                  </a>
+                )}
                 <button
                   type="button"
                   onClick={() => handleSave(false)}
