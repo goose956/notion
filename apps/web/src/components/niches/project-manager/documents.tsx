@@ -58,7 +58,21 @@ export function PMDocuments({
     [projectsDb]
   );
 
-  const docs = documentsDb?.rows ?? [];
+  // If the DB hasn't been provisioned yet, prompt a reload — self-heal creates it on first workspace load
+  if (!documentsDb) {
+    return (
+      <div style={{ fontFamily: N_FONT, textAlign: "center", padding: "60px 24px", color: N_MUTED }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>📎</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: N_FG, marginBottom: 6 }}>Documents not loaded yet</div>
+        <div style={{ fontSize: 13, marginBottom: 16 }}>This database is created on your first workspace visit. Please reload the page.</div>
+        <button onClick={() => window.location.reload()} style={{ padding: "8px 20px", borderRadius: 8, background: ACCENT, color: "#fff", border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: N_FONT }}>
+          Reload
+        </button>
+      </div>
+    );
+  }
+
+  const docs = documentsDb.rows;
 
   const [filterProject, setFilterProject] = useState("All");
   const [filterType, setFilterType] = useState("All");

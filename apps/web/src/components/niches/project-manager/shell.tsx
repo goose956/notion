@@ -23,7 +23,8 @@ export function ProjectManagerShell({
   onRowDeleted: (dbNotionId: string, pageId: string) => void;
 }) {
   const projectsDb  = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "projects") ?? null;
-  const documentsDb = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "documents") ?? null;
+  // dbId match only — nicheId guard omitted so a schemaSnapshot mismatch can't hide the DB
+  const documentsDb = databases.find((d) => d.dbId === "documents") ?? null;
   const tasksDb     = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "tasks") ?? null;
   const templatesDb = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "task-templates") ?? null;
   const reviewsDb   = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "weekly-reviews") ?? null;
