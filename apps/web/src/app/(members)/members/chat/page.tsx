@@ -1243,7 +1243,7 @@ function ChatPageInner() {
                         ) : (
                           <button
                             onClick={() => setShowNoteTitleInput(true)}
-                            style={{ fontSize: "12px", color: N_MUTED, background: "transparent", border: `1px solid ${N_BORDER_MED}`, borderRadius: "3px", padding: "3px 10px", cursor: "pointer", fontFamily: N_FONT }}
+                            style={{ fontSize: "12px", color: "#fff", background: N_BLUE, border: "none", borderRadius: "3px", padding: "4px 12px", cursor: "pointer", fontFamily: N_FONT, fontWeight: 600 }}
                           >
                             Save to documents
                           </button>
