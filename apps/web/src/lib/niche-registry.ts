@@ -368,7 +368,7 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
     displayName:   "Project HQ",
     virtualTabIds: new Set(Object.values(PROJECT_MANAGER_TABS)),
     defaultTabId:  PROJECT_MANAGER_TABS.DASHBOARD,
-    hiddenDbIds:   [],
+    hiddenDbIds:   ["documents"],
     accent:        PROJECT_MANAGER_ACCENT,
     sidebarEmoji:  "🗂️",
     topTabs: [
@@ -381,7 +381,6 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: PROJECT_MANAGER_TABS.TASK_BREAKDOWN,  label: "Task Breakdown",   icon: "🔨", appOnly: true },
       { tabId: PROJECT_MANAGER_TABS.DOCUMENTS,       label: "Documents",        icon: "📎", appOnly: true },
     ],
-    hiddenDbIds: ["documents"],
   },
 
   // ── Pinterest Poster ─────────────────────────────────────────────────────
