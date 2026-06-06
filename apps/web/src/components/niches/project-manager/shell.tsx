@@ -5,7 +5,6 @@ import { PMDashboard } from "./dashboard";
 import { PMApplyTemplates } from "./apply-templates";
 import { PMFocusMode } from "./focus-mode";
 import { PMTaskBreakdown } from "./task-breakdown";
-import { PMDocuments } from "./documents";
 
 export function ProjectManagerShell({
   activeTab,
@@ -23,8 +22,6 @@ export function ProjectManagerShell({
   onRowDeleted: (dbNotionId: string, pageId: string) => void;
 }) {
   const projectsDb  = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "projects") ?? null;
-  // dbId match only — nicheId guard omitted so a schemaSnapshot mismatch can't hide the DB
-  const documentsDb = databases.find((d) => d.dbId === "documents") ?? null;
   const tasksDb     = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "tasks") ?? null;
   const templatesDb = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "task-templates") ?? null;
   const reviewsDb   = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "weekly-reviews") ?? null;
@@ -66,18 +63,6 @@ export function ProjectManagerShell({
         tasksDb={tasksDb}
         projectsDb={projectsDb}
         onRowAdded={onRowAdded}
-      />
-    </div>
-  );
-
-  if (activeTab === PROJECT_MANAGER_TABS.DOCUMENTS) return (
-    <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-      <PMDocuments
-        documentsDb={documentsDb}
-        projectsDb={projectsDb}
-        onRowAdded={onRowAdded}
-        onRowUpdated={onRowUpdated}
-        onRowDeleted={onRowDeleted}
       />
     </div>
   );

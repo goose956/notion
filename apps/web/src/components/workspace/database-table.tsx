@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, type ChangeEvent, type KeyboardEvent } from "react";
-import { Loader2, Plus, Trash2, SlidersHorizontal, Mail } from "lucide-react";
+import { Loader2, Plus, Trash2, SlidersHorizontal, Mail, Pencil, X as XIcon, Check } from "lucide-react";
 import { ConfirmModal, type PendingConfirm } from "@/components/confirm-modal";
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_ACTIVE, N_BLUE, N_FONT } from "@/lib/workspace-tokens";
 import type { WorkspaceDatabase, WorkspaceRow, WorkspaceProperty } from "@/app/api/members/workspace/route";
@@ -188,6 +188,56 @@ export function DatabaseTable({
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
   const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null);
+
+  // ── Row expand / full-form edit (used for documents DB) ──────────────────
+  const [expandedRow, setExpandedRow] = useState<WorkspaceRow | null>(null);
+  const [expandFields, setExpandFields] = useState<Record<string, string>>({});
+  const [expandSaving, setExpandSaving] = useState(false);
+  const [expandError, setExpandError] = useState<string | null>(null);
+
+  // Whether this DB supports expand-to-edit
+  const isExpandableDb = isAppBackend && db.dbId === "documents";
+
+  function openExpand(row: WorkspaceRow) {
+    const fields: Record<string, string> = {};
+    for (const col of allCols) {
+      if (READONLY_TYPES.has(col.type)) continue;
+      const v = row.properties[col.name];
+      fields[col.name] = v == null ? "" : String(v);
+    }
+    setExpandFields(fields);
+    setExpandError(null);
+    setExpandedRow(row);
+  }
+
+  async function handleExpandSave() {
+    if (!expandedRow) return;
+    setExpandSaving(true);
+    setExpandError(null);
+    try {
+      const writableCols = allCols.filter((c) => !READONLY_TYPES.has(c.type));
+      const properties: Record<string, string> = {};
+      const propertyTypes: Record<string, string> = {};
+      for (const col of writableCols) {
+        properties[col.name] = expandFields[col.name] ?? "";
+        propertyTypes[col.name] = col.type;
+      }
+      const res = await fetch(`/api/members/workspace/${expandedRow.pageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ properties, propertyTypes }),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      for (const [name, val] of Object.entries(properties)) {
+        onRowUpdated(expandedRow.pageId, name, val === "" ? null : val);
+      }
+      setExpandedRow(null);
+    } catch {
+      setExpandError("Failed to save. Please try again.");
+    } finally {
+      setExpandSaving(false);
+    }
+  }
 
   const settingsKey = `workspace.sheet.${db.notionId}.columns`;
 
@@ -422,6 +472,95 @@ export function DatabaseTable({
           onCancel={() => setPendingConfirm(null)}
         />
       )}
+
+      {/* ── Full-form row editor modal (documents DB) ───────────────────── */}
+      {expandedRow && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 50,
+            background: "rgba(0,0,0,0.35)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "24px",
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setExpandedRow(null); }}
+        >
+          <div
+            style={{
+              background: "#fff", borderRadius: 12, width: "100%", maxWidth: 560,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+              overflow: "hidden",
+              fontFamily: N_FONT,
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${N_BORDER}` }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: N_FG }}>Edit document</span>
+              <button onClick={() => setExpandedRow(null)} style={{ background: "none", border: "none", cursor: "pointer", color: N_MUTED, display: "flex", padding: 4 }}>
+                <XIcon size={16} />
+              </button>
+            </div>
+
+            {/* Fields */}
+            <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflowY: "auto" }}>
+              {allCols.filter((c) => !READONLY_TYPES.has(c.type)).map((col) => (
+                <div key={col.id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: N_MUTED }}>{col.name}</label>
+                  {col.type === "select" && col.options ? (
+                    <select
+                      value={expandFields[col.name] ?? ""}
+                      onChange={(e) => setExpandFields((p) => ({ ...p, [col.name]: e.target.value }))}
+                      style={{ fontFamily: N_FONT, fontSize: 13, color: N_FG, background: "#fff", border: `1px solid ${N_BORDER}`, borderRadius: 6, padding: "7px 10px", outline: "none" }}
+                    >
+                      <option value="">—</option>
+                      {col.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  ) : col.type === "rich_text" && col.name === "Notes" ? (
+                    <textarea
+                      value={expandFields[col.name] ?? ""}
+                      onChange={(e) => setExpandFields((p) => ({ ...p, [col.name]: e.target.value }))}
+                      rows={5}
+                      style={{ fontFamily: N_FONT, fontSize: 13, color: N_FG, background: "#fff", border: `1px solid ${N_BORDER}`, borderRadius: 6, padding: "7px 10px", outline: "none", resize: "vertical" }}
+                    />
+                  ) : col.type === "date" ? (
+                    <input
+                      type="date"
+                      value={expandFields[col.name] ?? ""}
+                      onChange={(e) => setExpandFields((p) => ({ ...p, [col.name]: e.target.value }))}
+                      style={{ fontFamily: N_FONT, fontSize: 13, color: N_FG, background: "#fff", border: `1px solid ${N_BORDER}`, borderRadius: 6, padding: "7px 10px", outline: "none" }}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={expandFields[col.name] ?? ""}
+                      onChange={(e) => setExpandFields((p) => ({ ...p, [col.name]: e.target.value }))}
+                      style={{ fontFamily: N_FONT, fontSize: 13, color: N_FG, background: "#fff", border: `1px solid ${N_BORDER}`, borderRadius: 6, padding: "7px 10px", outline: "none" }}
+                    />
+                  )}
+                </div>
+              ))}
+              {expandError && <div style={{ fontSize: 12, color: "#dc2626" }}>{expandError}</div>}
+            </div>
+
+            {/* Footer */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: "14px 20px", borderTop: `1px solid ${N_BORDER}` }}>
+              <button
+                onClick={() => setExpandedRow(null)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "7px 14px", borderRadius: 6, background: "none", border: `1px solid ${N_BORDER}`, fontSize: 13, color: N_MUTED, cursor: "pointer", fontFamily: N_FONT }}
+              >
+                <XIcon size={13} /> Cancel
+              </button>
+              <button
+                onClick={() => void handleExpandSave()}
+                disabled={expandSaving}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "7px 16px", borderRadius: 6, background: "#4f46e5", border: "none", fontSize: 13, fontWeight: 600, color: "#fff", cursor: expandSaving ? "not-allowed" : "pointer", opacity: expandSaving ? 0.6 : 1, fontFamily: N_FONT }}
+              >
+                <Check size={13} /> {expandSaving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ overflowX: "auto", position: "relative" }}>
       {isAppBackend && allCols.length > 0 && (
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px", position: "relative" }}>
@@ -694,6 +833,16 @@ export function DatabaseTable({
                 }}
               >
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  {isExpandableDb && (
+                    <button
+                      onClick={() => openExpand(row)}
+                      title="Edit"
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", color: N_SUBTLE, display: "flex", alignItems: "center" }}
+                      className="hover:text-[#37352F]"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  )}
                   {supportsEmailCompose && buildComposeMailto(row) && (
                     <a
                       href={buildComposeMailto(row)!}
