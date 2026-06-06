@@ -167,6 +167,37 @@
       ]
     },
     {
+      "id": "documents",
+      "name": "Documents",
+      "description": "Save links, notes, and reference files — attached to a project.",
+      "icon": "📎",
+      "properties": [
+        { "type": "title", "name": "Title" },
+        { "type": "rich_text", "name": "Project" },
+        {
+          "type": "select",
+          "name": "Type",
+          "options": [
+            { "name": "Link", "color": "blue" },
+            { "name": "Note", "color": "yellow" },
+            { "name": "Brief", "color": "purple" },
+            { "name": "Spec", "color": "orange" },
+            { "name": "Contract", "color": "red" },
+            { "name": "Reference", "color": "gray" },
+            { "name": "Other", "color": "default" }
+          ]
+        },
+        { "type": "rich_text", "name": "URL" },
+        { "type": "rich_text", "name": "Notes" },
+        { "type": "date", "name": "Date Added" }
+      ],
+      "views": [
+        { "name": "All Documents", "type": "table" },
+        { "name": "By Project", "type": "board", "groupByProperty": "Project" },
+        { "name": "By Type", "type": "board", "groupByProperty": "Type" }
+      ]
+    },
+    {
       "id": "weekly-reviews",
       "name": "Weekly Reviews",
       "description": "One entry per week — what got done, what's still open, what to focus on next.",

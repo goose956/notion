@@ -5,6 +5,7 @@ import { PMDashboard } from "./dashboard";
 import { PMApplyTemplates } from "./apply-templates";
 import { PMFocusMode } from "./focus-mode";
 import { PMTaskBreakdown } from "./task-breakdown";
+import { PMDocuments } from "./documents";
 
 export function ProjectManagerShell({
   activeTab,
@@ -25,6 +26,7 @@ export function ProjectManagerShell({
   const tasksDb     = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "tasks") ?? null;
   const templatesDb = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "task-templates") ?? null;
   const reviewsDb   = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "weekly-reviews") ?? null;
+  const documentsDb = databases.find((d) => d.nicheId === "project-manager" && d.dbId === "documents") ?? null;
 
   if (activeTab === PROJECT_MANAGER_TABS.DASHBOARD) return (
     <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
@@ -64,6 +66,17 @@ export function ProjectManagerShell({
         tasksDb={tasksDb}
         projectsDb={projectsDb}
         onRowAdded={onRowAdded}
+      />
+    </div>
+  );
+
+  if (activeTab === PROJECT_MANAGER_TABS.DOCUMENTS) return (
+    <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+      <PMDocuments
+        documentsDb={documentsDb}
+        projectsDb={projectsDb}
+        onRowAdded={onRowAdded}
+        onRowDeleted={onRowDeleted}
       />
     </div>
   );
