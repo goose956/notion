@@ -5,6 +5,7 @@ import { Sparkles, Loader2, Plus, X, ChevronDown, Settings } from "lucide-react"
 import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
+import type { TeacherClass } from "./class-selector";
 
 // ── Default term config ───────────────────────────────────────────────────────
 const TERM_NAMES = ["Autumn 1", "Autumn 2", "Spring 1", "Spring 2", "Summer 1", "Summer 2"] as const;
@@ -145,11 +146,15 @@ function TermWeeksEditor({ termWeeks, onChange, onClose }: {
 export function TeacherYearPlanner({
   db,
   apiCriteria,
+  classes = [],
+  activeClass = null,
   onRowAdded,
   onRowUpdated,
 }: {
   db: WorkspaceDatabase | null;
   apiCriteria: Record<string, unknown> | null;
+  classes?: TeacherClass[];
+  activeClass?: TeacherClass | null;
   onRowAdded: (row: WorkspaceRow) => void;
   onRowUpdated: (pageId: string, name: string, val: string | number | boolean | null) => void;
 }) {
@@ -163,21 +168,33 @@ export function TeacherYearPlanner({
     return { ...DEFAULT_TERM_WEEKS };
   });
 
-  // Year groups — default from onboarding criteria, fallback to defaults
+  // Year groups — derive from class registry first, then criteria, then defaults
+  // De-duplicate year groups across classes so each appears once as a tab
+  const classYearGroups = Array.from(new Set(classes.map((c) => c.yearGroup).filter(Boolean)));
   const criteriaYearGroups = String(apiCriteria?.["year-groups"] ?? "")
     .split(/[,\/\-–]/)
     .map((s) => s.trim())
     .filter(Boolean)
     .map((s) => s.match(/\d+/) ? `Year ${s.match(/\d+/)?.[0]}` : s);
 
-  const [yearGroups, setYearGroups] = useState<string[]>(() => {
-    if (typeof window === "undefined") return criteriaYearGroups.length ? criteriaYearGroups : DEFAULT_YEAR_GROUPS;
+  // Fallback list (only used when no classes registered)
+  const fallbackYearGroups = criteriaYearGroups.length ? criteriaYearGroups : DEFAULT_YEAR_GROUPS;
+
+  // If classes are registered, use their year groups — don't persist separately
+  const derivedYearGroups = classYearGroups.length ? classYearGroups : null;
+
+  const [yearGroupsLocal, setYearGroupsLocal] = useState<string[]>(() => {
+    if (typeof window === "undefined") return fallbackYearGroups;
     try {
       const saved = localStorage.getItem("teacher-year-planner-year-groups");
       if (saved) return JSON.parse(saved) as string[];
     } catch { /* */ }
-    return criteriaYearGroups.length ? criteriaYearGroups : DEFAULT_YEAR_GROUPS;
+    return fallbackYearGroups;
   });
+
+  // Effective year groups: from classes if available, else from local state
+  const yearGroups = derivedYearGroups ?? yearGroupsLocal;
+  const setYearGroups = (next: string[]) => setYearGroupsLocal(next);
 
   const [subjects, setSubjects] = useState<string[]>(() => {
     if (typeof window === "undefined") return DEFAULT_SUBJECTS;
@@ -188,7 +205,21 @@ export function TeacherYearPlanner({
     return DEFAULT_SUBJECTS;
   });
 
-  const [activeYearGroup, setActiveYearGroup] = useState<string>(() => yearGroups[0] ?? DEFAULT_YEAR_GROUPS[0]!);
+  const [activeYearGroup, setActiveYearGroup] = useState<string>(
+    () => (activeClass?.yearGroup && yearGroups.includes(activeClass.yearGroup))
+      ? activeClass.yearGroup
+      : (yearGroups[0] ?? DEFAULT_YEAR_GROUPS[0]!)
+  );
+
+  // When active class changes externally, switch to that year group
+  const prevActiveClassRef = useRef<string | null>(null);
+  if (activeClass?.yearGroup && activeClass.yearGroup !== prevActiveClassRef.current) {
+    prevActiveClassRef.current = activeClass.yearGroup ?? null;
+    if (activeClass.yearGroup && yearGroups.includes(activeClass.yearGroup) && activeYearGroup !== activeClass.yearGroup) {
+      // Use a ref trick to avoid setState during render — schedule it
+      setTimeout(() => setActiveYearGroup(activeClass.yearGroup), 0);
+    }
+  }
   const [activeTerm, setActiveTerm]           = useState<TermName>("Autumn 1");
   const [showTermEditor, setShowTermEditor]   = useState(false);
   const [showAddYearGroup, setShowAddYearGroup] = useState(false);
@@ -364,7 +395,9 @@ export function TeacherYearPlanner({
         <div>
           <h2 style={{ margin: "0 0 4px", fontSize: "18px", fontWeight: 700, color: N_FG }}>Year Planner</h2>
           <p style={{ margin: 0, fontSize: "13px", color: N_MUTED }}>
-            Map your curriculum week by week — separate plans per year group, configurable term lengths.
+            {classes.length > 0
+              ? `Showing plan for ${activeYearGroup}${classes.filter(c => c.yearGroup === activeYearGroup).map(c => ` · ${c.name}`).join("")}. Switch year group below.`
+              : "Map your curriculum week by week — separate plans per year group, configurable term lengths."}
           </p>
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center", position: "relative" }}>
@@ -416,7 +449,8 @@ export function TeacherYearPlanner({
               </div>
             );
           })}
-          {showAddYearGroup ? (
+          {/* Only show manual add when no class registry */}
+          {!derivedYearGroups && showAddYearGroup ? (
             <span style={{ display: "inline-flex", gap: "4px", alignItems: "center" }}>
               <input value={newYearGroup} onChange={(e) => setNewYearGroup(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") addYearGroup(); if (e.key === "Escape") setShowAddYearGroup(false); }}
@@ -425,11 +459,13 @@ export function TeacherYearPlanner({
               <button type="button" onClick={addYearGroup} style={{ padding: "5px 10px", borderRadius: "8px", background: ACCENT_LIGHT, border: `1px solid ${ACCENT_BORDER}`, color: ACCENT_TEXT, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT, fontWeight: 600 }}>Add</button>
               <button type="button" onClick={() => setShowAddYearGroup(false)} style={{ padding: "5px 8px", borderRadius: "8px", border: `1px solid ${N_BORDER}`, background: "none", fontSize: "13px", cursor: "pointer", fontFamily: N_FONT, color: N_MUTED }}>Cancel</button>
             </span>
-          ) : (
+          ) : !derivedYearGroups ? (
             <button type="button" onClick={() => setShowAddYearGroup(true)}
               style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 12px", borderRadius: "8px", background: "#f8f9fb", border: `1px dashed ${N_BORDER_MED}`, fontSize: "13px", color: N_MUTED, cursor: "pointer", fontFamily: N_FONT }}>
               <Plus size={12} /> Add year group
             </button>
+          ) : (
+            <span style={{ fontSize: "11px", color: N_MUTED, fontStyle: "italic" }}>Year groups come from your class list</span>
           )}
         </div>
       </div>

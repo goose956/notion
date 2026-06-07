@@ -4,6 +4,7 @@ import { BookOpen, Users, FileText, ClipboardList, CalendarDays, Palette, Pencil
 import { N_FG, N_MUTED, N_SUBTLE, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import { asText } from "./utils";
 import type { WorkspaceDatabase } from "@/app/api/members/workspace/route";
+import type { TeacherClass } from "./class-selector";
 
 // ─── Dashboard colour themes ────────────────────────────────────────────────
 const DASHBOARD_THEMES = [
@@ -122,9 +123,13 @@ function getNextTermEnd(): { name: string; daysUntil: number } | null {
 export function TeacherDashboard({
   databases,
   criteria,
+  classes = [],
+  activeClass = null,
 }: {
-  databases:  WorkspaceDatabase[];
-  criteria:   Record<string, unknown> | null;
+  databases:   WorkspaceDatabase[];
+  criteria:    Record<string, unknown> | null;
+  classes?:    TeacherClass[];
+  activeClass?: TeacherClass | null;
 }) {
   const nicheId    = "teacher";
   const storageKey = `wsDashboardTheme_${nicheId}`;
@@ -295,6 +300,31 @@ export function TeacherDashboard({
           </div>
         ))}
       </div>
+
+      {/* ── MY CLASSES ──────────────────────────────────────────────── */}
+      {classes.length > 0 && (
+        <div style={{ borderRadius: "12px", border: `1px solid ${N_BORDER_MED}`, background: "white", padding: "16px" }}>
+          <p style={{ margin: "0 0 12px", fontSize: "13px", fontWeight: 700, color: N_FG }}>My Classes</p>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {classes.map((c, i) => {
+              const COLORS = ["#2563eb","#16a34a","#ea580c","#9333ea","#0891b2","#dc2626","#ca8a04","#0d9488"];
+              const col = COLORS[i % COLORS.length]!;
+              const isActive = activeClass?.id === c.id;
+              return (
+                <div key={c.id} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "10px", background: isActive ? `${col}12` : "#f8f9fb", border: `1px solid ${isActive ? col + "40" : N_BORDER_MED}` }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: col, flexShrink: 0 }} />
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: N_FG }}>{c.name}</span>
+                  {(c.yearGroup || c.subject) && (
+                    <span style={{ fontSize: "11px", color: N_MUTED }}>{[c.yearGroup, c.subject].filter(Boolean).join(" · ")}</span>
+                  )}
+                  {isActive && <span style={{ fontSize: "10px", fontWeight: 700, color: col, background: `${col}18`, padding: "1px 6px", borderRadius: "99px", marginLeft: "2px" }}>Active</span>}
+                </div>
+              );
+            })}
+          </div>
+          {classes.length === 0 && <p style={{ margin: 0, fontSize: "13px", color: N_MUTED }}>No classes set up yet. Add them via the class selector on any planning tab.</p>}
+        </div>
+      )}
 
       {/* ── QUICK STATS ROW ─────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
