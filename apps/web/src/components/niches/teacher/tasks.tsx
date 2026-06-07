@@ -97,8 +97,11 @@ export function TeacherTasks({
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ databaseId: db.notionId, properties, propertyTypes }),
       });
-      const data = await res.json() as { row?: WorkspaceRow };
-      if (data.row) { onRowAdded(data.row); setNewTitle(""); setNewDue(""); setAdding(false); }
+      const data = await res.json() as { pageId?: string };
+      if (data.pageId) {
+        onRowAdded({ pageId: data.pageId, properties });
+        setNewTitle(""); setNewDue(""); setAdding(false);
+      }
     } finally { setSaving(false); }
   }
 

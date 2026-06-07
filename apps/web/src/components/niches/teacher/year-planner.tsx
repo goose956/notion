@@ -328,8 +328,10 @@ export function TeacherYearPlanner({
             propertyTypes: { Title: "title", Subject: "select", Week: "number", Term: "select", "Year Group": "select", Status: "select" },
           }),
         });
-        const data = await res.json() as { row?: WorkspaceRow };
-        if (data.row) onRowAdded(data.row);
+        const data = await res.json() as { pageId?: string };
+        if (data.pageId) {
+          onRowAdded({ pageId: data.pageId, properties: { Title: topic, Subject: subject, Week: week, Term: term, "Year Group": yearGroup, Status: "Planned" } });
+        }
       }
     } catch { /* silent */ } finally {
       setSavingCells((p) => { const n = new Set(p); n.delete(key); return n; });
