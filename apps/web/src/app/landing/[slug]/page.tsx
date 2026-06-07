@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTemplateBySlug } from "@niche-factory/db";
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
   Zap, CheckCircle2, ArrowRight, Brain, Sparkles,
   Clock, Target, TrendingUp, Star, Shield, Rocket,
@@ -37,7 +36,6 @@ function parseLandingData(body: string): LandingData | null {
   }
 }
 
-// Cycle through a small set of accent icons for variety
 const BULLET_ICONS = [Zap, CheckCircle2, Target, Brain, Clock, TrendingUp, Star, Shield, Rocket, Sparkles];
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -80,17 +78,17 @@ export default async function LandingPage({ params }: Props) {
 
       {/* ── Nav bar ── */}
       <header className="relative z-10 flex items-center justify-between px-6 py-5 max-w-5xl mx-auto">
-        <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-white/80 hover:text-white transition-colors">
+        <a href="/" className="flex items-center gap-2 text-sm font-semibold text-white/80 hover:text-white transition-colors">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/s-logo.png" alt="Stridivo" className="h-6 w-auto opacity-90" />
           <span>stridivo.com</span>
-        </Link>
-        <Link
+        </a>
+        <a
           href={signupHref}
           className="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-full border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition-colors"
         >
           Sign in
-        </Link>
+        </a>
       </header>
 
       {/* ── Hero ── */}
@@ -120,13 +118,13 @@ export default async function LandingPage({ params }: Props) {
         </p>
 
         {/* Primary CTA */}
-        <Link
+        <a
           href={signupHref}
           className="inline-flex items-center gap-2 bg-[#E83D00] hover:bg-[#d13600] text-white font-bold text-base px-8 py-4 rounded-full shadow-lg shadow-[#E83D00]/30 transition-all hover:shadow-[#E83D00]/50 hover:scale-[1.02]"
         >
           {d.cta}
           <ArrowRight className="h-4 w-4" />
-        </Link>
+        </a>
 
         <p className="mt-4 text-xs text-white/30">No credit card. No setup. Just plug in and go.</p>
       </section>
@@ -184,20 +182,20 @@ export default async function LandingPage({ params }: Props) {
           Ready to hand the busywork to AI?
         </h2>
         <p className="text-white/50 mb-8 text-sm">Takes 60 seconds to set up.</p>
-        <Link
+        <a
           href={signupHref}
           className="inline-flex items-center gap-2 bg-[#E83D00] hover:bg-[#d13600] text-white font-bold text-base px-8 py-4 rounded-full shadow-lg shadow-[#E83D00]/30 transition-all hover:shadow-[#E83D00]/50 hover:scale-[1.02]"
         >
           {d.cta}
           <ArrowRight className="h-4 w-4" />
-        </Link>
+        </a>
       </section>
 
       {/* ── Footer ── */}
       <footer className="relative z-10 border-t border-white/8 py-6 px-6 text-center">
         <p className="text-xs text-white/30">
           © {new Date().getFullYear()}{" "}
-          <Link href="/" className="hover:text-white/60 transition-colors">stridivo.com</Link>
+          <a href="/" className="hover:text-white/60 transition-colors">stridivo.com</a>
           {" "}· AI-powered Notion workspaces
         </p>
       </footer>
