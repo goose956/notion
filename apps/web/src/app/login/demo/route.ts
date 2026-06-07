@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { signIn } from "@/auth";
 
-// Direct login as demo@stridivo.com — no email required.
+// Direct login as demo@stridivo.com - no email required.
 // Only works when DEMO_LOGIN_ENABLED=true is set in env.
 export async function GET(req: NextRequest) {
   if (process.env["DEMO_LOGIN_ENABLED"] !== "true") {
