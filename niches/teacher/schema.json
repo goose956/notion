@@ -5,6 +5,29 @@
   "description": "AI builds your lesson plans, writes student report comments, and creates assessments — so you can focus on teaching, not paperwork.",
   "databases": [
     {
+      "id": "tasks",
+      "name": "Teacher Tasks",
+      "properties": [
+        { "name": "Title",    "type": "title" },
+        { "name": "Subject",  "type": "select", "options": [{ "name": "English" }, { "name": "Maths" }, { "name": "Science" }, { "name": "History" }, { "name": "Geography" }, { "name": "Art" }, { "name": "PE" }, { "name": "Music" }, { "name": "Computing" }, { "name": "Languages" }, { "name": "PSHE" }, { "name": "Admin" }, { "name": "Other" }] },
+        { "name": "Priority", "type": "select", "options": [{ "name": "High", "color": "red" }, { "name": "Medium", "color": "yellow" }, { "name": "Low", "color": "gray" }] },
+        { "name": "Due Date", "type": "date" },
+        { "name": "Done",     "type": "checkbox" },
+        { "name": "Notes",    "type": "rich_text" }
+      ]
+    },
+    {
+      "id": "key-dates",
+      "name": "Key Dates",
+      "properties": [
+        { "name": "Title",      "type": "title" },
+        { "name": "Date",       "type": "date" },
+        { "name": "Type",       "type": "select", "options": [{ "name": "Exam", "color": "red" }, { "name": "Parents Evening", "color": "purple" }, { "name": "INSET Day", "color": "blue" }, { "name": "Assembly", "color": "green" }, { "name": "Trip", "color": "orange" }, { "name": "Deadline", "color": "red" }, { "name": "Meeting", "color": "gray" }, { "name": "Other", "color": "default" }] },
+        { "name": "Year Group", "type": "select", "options": [{ "name": "All" }, { "name": "Year 1" }, { "name": "Year 2" }, { "name": "Year 3" }, { "name": "Year 4" }, { "name": "Year 5" }, { "name": "Year 6" }, { "name": "Year 7" }, { "name": "Year 8" }, { "name": "Year 9" }, { "name": "Year 10" }, { "name": "Year 11" }, { "name": "Year 12" }, { "name": "Year 13" }] },
+        { "name": "Notes",      "type": "rich_text" }
+      ]
+    },
+    {
       "id": "year-planner",
       "name": "Year Planner",
       "properties": [

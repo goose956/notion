@@ -130,6 +130,8 @@ export const TEACHER_TABS = {
   LESSONS:      "__teacher_lessons__",
   REPORTS:      "__teacher_reports__",
   ASSESSMENTS:  "__teacher_assessments__",
+  TASKS:        "__teacher_tasks__",
+  KEY_DATES:    "__teacher_key_dates__",
   LIBRARY:      "__teacher_library__",
 } as const;
 
@@ -695,6 +697,8 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
       { tabId: TEACHER_TABS.LESSONS,     label: "Lesson Planner",  icon: "📋", appOnly: true },
       { tabId: TEACHER_TABS.REPORTS,     label: "Report Writer",   icon: "📝", appOnly: true },
       { tabId: TEACHER_TABS.ASSESSMENTS, label: "Assessments",     icon: "📊", appOnly: true },
+      { tabId: TEACHER_TABS.TASKS,       label: "Tasks",           icon: "✅", appOnly: true },
+      { tabId: TEACHER_TABS.KEY_DATES,   label: "Key Dates",       icon: "📌", appOnly: true },
       { tabId: TEACHER_TABS.LIBRARY,     label: "My Documents",    icon: "📁", appOnly: true },
     ],
   },

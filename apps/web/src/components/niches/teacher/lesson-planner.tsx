@@ -5,8 +5,10 @@ import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-t
 import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 
-const DURATIONS = ["30 minutes", "45 minutes", "1 hour", "1.5 hours", "2 hours"];
+const DURATIONS   = ["30 minutes", "45 minutes", "1 hour", "1.5 hours", "2 hours"];
 const YEAR_GROUPS = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10", "Year 11", "Year 12", "Year 13", "Mixed"];
+
+type Mode = "lesson" | "cover";
 
 export function TeacherLessonPlanner({
   criteria,
@@ -21,34 +23,61 @@ export function TeacherLessonPlanner({
   const defaultYearGroup = String(criteria?.["year-groups"] ?? "").split(",")[0]?.trim() ?? "";
   const curriculum       = String(criteria?.["curriculum"]  ?? "England (National Curriculum)").trim();
 
+  const [mode,       setMode]       = useState<Mode>("lesson");
+
+  // Shared fields
   const [topic,      setTopic]      = useState("");
   const [subject,    setSubject]    = useState(defaultSubject);
   const [yearGroup,  setYearGroup]  = useState(defaultYearGroup);
   const [duration,   setDuration]   = useState("1 hour");
+
+  // Lesson-only fields
   const [objectives, setObjectives] = useState("");
   const [diff,       setDiff]       = useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
-  const [plan,    setPlan]    = useState<string | null>(null);
-  const [planTitle, setPlanTitle] = useState("");
+  // Cover-only fields
+  const [abilityNote, setAbilityNote] = useState("");
+
+  const [loading,    setLoading]    = useState(false);
+  const [error,      setError]      = useState<string | null>(null);
+  const [plan,       setPlan]       = useState<string | null>(null);
+  const [planTitle,  setPlanTitle]  = useState("");
 
   const [saving,   setSaving]   = useState(false);
   const [saveMsg,  setSaveMsg]  = useState<string | null>(null);
+
+  function switchMode(m: Mode) {
+    setMode(m);
+    setPlan(null);
+    setError(null);
+    setSaveMsg(null);
+  }
 
   async function generate() {
     if (!topic.trim()) { setError("Please enter a topic."); return; }
     setLoading(true); setError(null); setPlan(null); setSaveMsg(null);
     try {
-      const res = await fetch("/api/members/teacher-lesson", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, subject, yearGroup, duration, objectives, curriculum, differentiation: diff }),
-      });
-      if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Failed");
-      const data = await res.json() as { plan: string; title: string };
-      setPlan(data.plan);
-      setPlanTitle(data.title);
+      if (mode === "lesson") {
+        const res = await fetch("/api/members/teacher-lesson", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic, subject, yearGroup, duration, objectives, curriculum, differentiation: diff }),
+        });
+        if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Failed");
+        const data = await res.json() as { plan: string; title: string };
+        setPlan(data.plan);
+        setPlanTitle(data.title);
+      } else {
+        const res = await fetch("/api/members/teacher-substitute", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic, subject, yearGroup, duration, abilityNote, curriculum }),
+        });
+        if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Failed");
+        const data = await res.json() as { plan: string; title: string };
+        setPlan(data.plan);
+        setPlanTitle(data.title);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -60,7 +89,8 @@ export function TeacherLessonPlanner({
     if (!plan || !documentsDb) return;
     setSaving(true); setSaveMsg(null);
     try {
-      const properties = { Title: planTitle, Type: "Lesson Plan", Subject: subject || "Other", "Year Group": yearGroup || "", Content: plan };
+      const docType    = mode === "cover" ? "Lesson Plan" : "Lesson Plan";
+      const properties = { Title: planTitle, Type: docType, Subject: subject || "Other", "Year Group": yearGroup || "", Content: plan };
       const propertyTypes = { Title: "title", Type: "select", Subject: "select", "Year Group": "select", Content: "rich_text" };
       const res = await fetch("/api/members/workspace", {
         method: "POST",
@@ -71,7 +101,7 @@ export function TeacherLessonPlanner({
       const data = await res.json() as { pageId?: string };
       if (data.pageId) {
         onRowAdded(documentsDb.notionId, { pageId: data.pageId, properties });
-        setSaveMsg("Lesson plan saved to Documents");
+        setSaveMsg(`${mode === "cover" ? "Cover lesson" : "Lesson plan"} saved to Documents`);
       }
     } catch {
       setSaveMsg("Save failed — try again");
@@ -92,45 +122,79 @@ export function TeacherLessonPlanner({
       @media print{body{margin:20px;}}
     </style></head><body>
       <h1>${planTitle}</h1>
-      <p class="meta">${[subject, yearGroup, duration].filter(Boolean).join(" · ")}</p>
+      <p class="meta">${[subject, yearGroup, duration].filter(Boolean).join(" · ")}${mode === "cover" ? " · Cover Lesson" : ""}</p>
       <pre>${plan.replace(/</g, "&lt;")}</pre>
     </body></html>`);
     win.document.close();
     win.print();
   }
 
+  const isCover = mode === "cover";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", fontFamily: N_FONT }}>
-      <div>
-        <h2 style={{ margin: "0 0 4px", fontSize: "18px", fontWeight: 700, color: N_FG }}>Lesson Planner</h2>
-        <p style={{ margin: 0, fontSize: "13px", color: N_MUTED }}>
-          Give a topic and AI writes a complete, structured lesson plan — starter, main activities, differentiation, plenary and assessment. 1 credit.
-        </p>
-      </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-        <Field label="Topic *" value={topic} onChange={setTopic} placeholder="e.g. The Water Cycle, Fractions, World War 2" />
-        <Field label="Subject" value={subject} onChange={setSubject} placeholder="e.g. Science, Maths, History" />
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
-        <SelectField label="Year Group" value={yearGroup} onChange={setYearGroup} options={["", ...YEAR_GROUPS]} />
-        <SelectField label="Duration" value={duration} onChange={setDuration} options={DURATIONS} />
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <label style={{ fontSize: "12px", fontWeight: 600, color: N_MUTED, textTransform: "uppercase", letterSpacing: "0.07em" }}>Options</label>
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: N_FG, cursor: "pointer", marginTop: "10px" }}>
-            <input type="checkbox" checked={diff} onChange={(e) => setDiff(e.target.checked)} />
-            Include differentiation (SEN / EAL / G&T)
-          </label>
+      {/* Header + mode toggle */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <h2 style={{ margin: "0 0 4px", fontSize: "18px", fontWeight: 700, color: N_FG }}>
+            {isCover ? "Cover Lesson Generator" : "Lesson Planner"}
+          </h2>
+          <p style={{ margin: 0, fontSize: "13px", color: N_MUTED }}>
+            {isCover
+              ? "Generates a self-contained cover lesson a non-specialist substitute can deliver with no preparation. 1 credit."
+              : "Give a topic and AI writes a complete, structured lesson plan — starter, main activities, differentiation, plenary and assessment. 1 credit."}
+          </p>
+        </div>
+        <div style={{ display: "flex", borderRadius: "10px", border: `1px solid ${N_BORDER_MED}`, overflow: "hidden", flexShrink: 0 }}>
+          {(["lesson", "cover"] as Mode[]).map((m) => (
+            <button key={m} type="button" onClick={() => switchMode(m)}
+              style={{ padding: "7px 18px", border: "none", cursor: "pointer", fontFamily: N_FONT, fontSize: "13px", fontWeight: 600,
+                background: mode === m ? ACCENT : "white",
+                color:      mode === m ? "white" : N_MUTED,
+                transition: "all 0.15s",
+              }}>
+              {m === "lesson" ? "📋 Lesson Plan" : "🔄 Cover Lesson"}
+            </button>
+          ))}
         </div>
       </div>
 
-      <Field label="Learning objectives (optional)" value={objectives} onChange={setObjectives} placeholder="e.g. Students will be able to explain the stages of the water cycle" />
+      {/* Topic + subject */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+        <Field label="Topic *" value={topic} onChange={setTopic} placeholder={isCover ? "e.g. The Water Cycle, Fractions, World War 2" : "e.g. The Water Cycle, Fractions, World War 2"} />
+        <Field label="Subject" value={subject} onChange={setSubject} placeholder="e.g. Science, Maths, History" />
+      </div>
+
+      {/* Year group + duration + options */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+        <SelectField label="Year Group" value={yearGroup} onChange={setYearGroup} options={["", ...YEAR_GROUPS]} />
+        <SelectField label="Duration" value={duration} onChange={setDuration} options={DURATIONS} />
+        {!isCover && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ fontSize: "12px", fontWeight: 600, color: N_MUTED, textTransform: "uppercase", letterSpacing: "0.07em" }}>Options</label>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: N_FG, cursor: "pointer", marginTop: "10px" }}>
+              <input type="checkbox" checked={diff} onChange={(e) => setDiff(e.target.checked)} />
+              Include differentiation (SEN / EAL / G&T)
+            </label>
+          </div>
+        )}
+        {isCover && (
+          <Field label="Class notes (optional)" value={abilityNote} onChange={setAbilityNote} placeholder="e.g. mixed ability, some SEN students" />
+        )}
+      </div>
+
+      {/* Lesson-only: objectives */}
+      {!isCover && (
+        <Field label="Learning objectives (optional)" value={objectives} onChange={setObjectives} placeholder="e.g. Students will be able to explain the stages of the water cycle" />
+      )}
 
       <button onClick={generate} disabled={loading}
         style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: "8px", padding: "10px 20px", borderRadius: "8px", background: ACCENT, border: "none", color: "white", fontWeight: 700, fontSize: "14px", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, fontFamily: N_FONT }}>
         {loading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : "✦"}
-        {loading ? "Building lesson plan…" : "Generate Lesson Plan"}
+        {loading
+          ? (isCover ? "Building cover lesson…" : "Building lesson plan…")
+          : (isCover ? "Generate Cover Lesson" : "Generate Lesson Plan")}
       </button>
 
       {error && <ErrorBox message={error} />}
@@ -140,7 +204,7 @@ export function TeacherLessonPlanner({
           <div style={{ padding: "14px 16px 10px", borderBottom: `1px solid ${N_BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
             <div>
               <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: N_FG }}>{planTitle}</p>
-              <p style={{ margin: "2px 0 0", fontSize: "11px", color: N_MUTED }}>{[subject, yearGroup, duration].filter(Boolean).join(" · ")}</p>
+              <p style={{ margin: "2px 0 0", fontSize: "11px", color: N_MUTED }}>{[subject, yearGroup, duration].filter(Boolean).join(" · ")}{isCover ? " · Cover Lesson" : ""}</p>
             </div>
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
               <button onClick={exportPDF}

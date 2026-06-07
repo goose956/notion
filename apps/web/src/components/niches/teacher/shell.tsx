@@ -7,6 +7,8 @@ import { TeacherYearPlanner } from "./year-planner";
 import { TeacherLessonPlanner } from "./lesson-planner";
 import { TeacherReportWriter } from "./report-writer";
 import { TeacherAssessmentBuilder } from "./assessment-builder";
+import { TeacherTasks } from "./tasks";
+import { TeacherKeyDates } from "./key-dates";
 import { DocumentsView } from "@/components/workspace/documents-view";
 
 export function TeacherNicheShell({
@@ -28,8 +30,10 @@ export function TeacherNicheShell({
   const [criteria, setCriteria] = useState<Record<string, unknown> | null>(apiCriteria);
   useEffect(() => { setCriteria(apiCriteria); }, [apiCriteria]);
 
-  const documentsDb  = databases.find((d) => d.nicheId === nicheId && d.dbId === "documents") ?? null;
+  const documentsDb   = databases.find((d) => d.nicheId === nicheId && d.dbId === "documents")    ?? null;
   const yearPlannerDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "year-planner") ?? null;
+  const tasksDb       = databases.find((d) => d.nicheId === nicheId && d.dbId === "tasks")        ?? null;
+  const keyDatesDb    = databases.find((d) => d.nicheId === nicheId && d.dbId === "key-dates")    ?? null;
 
   const wrap = (children: ReactNode) => (
     <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>{children}</div>
@@ -47,6 +51,21 @@ export function TeacherNicheShell({
   if (activeTab === TEACHER_TABS.LESSONS)     return wrap(<TeacherLessonPlanner criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
   if (activeTab === TEACHER_TABS.REPORTS)     return wrap(<TeacherReportWriter criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
   if (activeTab === TEACHER_TABS.ASSESSMENTS) return wrap(<TeacherAssessmentBuilder criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
+  if (activeTab === TEACHER_TABS.TASKS) return wrap(
+    <TeacherTasks
+      db={tasksDb}
+      onRowAdded={(row) => onRowAdded(tasksDb?.notionId ?? "", row)}
+      onRowUpdated={(pageId, name, val) => onRowUpdated(tasksDb?.notionId ?? "", pageId, name, val)}
+      onRowDeleted={(pageId) => onRowDeleted(tasksDb?.notionId ?? "", pageId)}
+    />
+  );
+  if (activeTab === TEACHER_TABS.KEY_DATES) return wrap(
+    <TeacherKeyDates
+      db={keyDatesDb}
+      onRowAdded={(row) => onRowAdded(keyDatesDb?.notionId ?? "", row)}
+      onRowDeleted={(pageId) => onRowDeleted(keyDatesDb?.notionId ?? "", pageId)}
+    />
+  );
   if (activeTab === TEACHER_TABS.LIBRARY && documentsDb) return wrap(
     <DocumentsView
       db={documentsDb}
