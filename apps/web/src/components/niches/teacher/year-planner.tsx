@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { Sparkles, Loader2, Plus, X, ChevronDown } from "lucide-react";
-import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT, N_BG } from "@/lib/workspace-tokens";
+import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 
