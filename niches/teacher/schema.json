@@ -22,7 +22,7 @@
       "name": "Planning Documents",
       "properties": [
         { "name": "Title",   "type": "title" },
-        { "name": "Type",    "type": "select", "options": [{ "name": "Lesson Plan", "color": "blue" }, { "name": "Report Comment", "color": "green" }, { "name": "Assessment", "color": "orange" }] },
+        { "name": "Type",    "type": "select", "options": [{ "name": "Lesson Plan", "color": "blue" }, { "name": "Report Comment", "color": "green" }, { "name": "Assessment", "color": "orange" }, { "name": "Parent Email", "color": "purple" }] },
         { "name": "Subject", "type": "select", "options": [{ "name": "English" }, { "name": "Maths" }, { "name": "Science" }, { "name": "History" }, { "name": "Geography" }, { "name": "Art" }, { "name": "PE" }, { "name": "Music" }, { "name": "Computing" }, { "name": "Languages" }, { "name": "PSHE" }, { "name": "Other" }] },
         { "name": "Year Group", "type": "select", "options": [{ "name": "Year 1" }, { "name": "Year 2" }, { "name": "Year 3" }, { "name": "Year 4" }, { "name": "Year 5" }, { "name": "Year 6" }, { "name": "Year 7" }, { "name": "Year 8" }, { "name": "Year 9" }, { "name": "Year 10" }, { "name": "Year 11" }, { "name": "Year 12" }, { "name": "Year 13" }] },
         { "name": "Content", "type": "rich_text" }
