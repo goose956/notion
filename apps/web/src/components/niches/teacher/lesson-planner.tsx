@@ -144,8 +144,9 @@ function MiniCalendar({ selectedWeekStart, onSelectWeek }: {
   selectedWeekStart: Date;
   onSelectWeek: (monday: Date) => void;
 }) {
-  const [calYear,  setCalYear]  = useState(() => selectedWeekStart.getFullYear());
-  const [calMonth, setCalMonth] = useState(() => selectedWeekStart.getMonth());
+  const [calYear,      setCalYear]      = useState(() => selectedWeekStart.getFullYear());
+  const [calMonth,     setCalMonth]     = useState(() => selectedWeekStart.getMonth());
+  const [hoveredWeek,  setHoveredWeek]  = useState<number | null>(null);
 
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const todayYMD = toYMD(today);
@@ -216,12 +217,15 @@ function MiniCalendar({ selectedWeekStart, onSelectWeek }: {
         return (
           <div key={wi}
             onClick={() => selectWeek(week)}
+            onMouseEnter={() => setHoveredWeek(wi)}
+            onMouseLeave={() => setHoveredWeek(null)}
             style={{
               display: "grid", gridTemplateColumns: "repeat(7, 1fr)",
               borderRadius: "5px", cursor: "pointer", marginBottom: "1px",
-              background: isSelected ? ACCENT_LIGHT : "transparent",
-              outline: isSelected ? `1px solid ${ACCENT_BORDER}` : "none",
+              background: isSelected ? ACCENT_LIGHT : hoveredWeek === wi ? "rgba(37,99,235,0.05)" : "transparent",
+              outline: isSelected ? `1px solid ${ACCENT_BORDER}` : hoveredWeek === wi ? `1px solid ${ACCENT_BORDER}` : "1px solid transparent",
               padding: "1px",
+              transition: "background 0.1s",
             }}
           >
             {week.map((d, di) => {
@@ -260,6 +264,14 @@ function MiniCalendar({ selectedWeekStart, onSelectWeek }: {
       >
         Today
       </button>
+
+      {/* Hint */}
+      <p style={{
+        margin: "8px 0 0", fontSize: "10px", color: N_MUTED,
+        fontFamily: N_FONT, textAlign: "center", lineHeight: 1.4,
+      }}>
+        Click any row to jump to that week
+      </p>
     </div>
   );
 }
