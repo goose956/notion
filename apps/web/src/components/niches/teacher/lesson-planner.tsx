@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo, type CSSProperties } from "react";
-import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Check, Copy, Trash } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Check, Copy, Trash, Download } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT, T_SURFACE, T_SURFACE2, T_CAL_BG, T_CAL_BDR, T_SHADOW } from "./utils";
 
@@ -674,6 +674,92 @@ export function TeacherLessonPlanner({
     setTimeout(() => setCopyDone(null), 2500);
   }
 
+  function exportPDF() {
+    const win = window.open("", "_blank");
+    if (!win) return;
+
+    const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"] as const;
+    const DAY_FULL = { Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday" };
+    const COLORS: Record<string, string> = {
+      Mon: "#2563eb", Tue: "#16a34a", Wed: "#ea580c", Thu: "#9333ea", Fri: "#0d9488",
+    };
+
+    // Group entries by day
+    const byDay: Record<string, LessonEntry[]> = {};
+    for (const day of DAYS) {
+      const idx = DAYS.indexOf(day);
+      const ymd = toYMD(weekDays[idx]!);
+      byDay[day] = weekEntries
+        .filter(e => e.date === ymd)
+        .sort((a, b) => timeToMin(a.timeStart) - timeToMin(b.timeStart));
+    }
+
+    // Build subject colour map for the print output (solid versions)
+    const SUBJ_COLORS: Record<string, string> = {
+      maths: "#ea580c", math: "#ea580c", mathematics: "#ea580c",
+      english: "#16a34a", literacy: "#16a34a",
+      science: "#0891b2", physics: "#2563eb",
+      biology: "#0d9488", chemistry: "#ca8a04",
+      pe: "#dc2626", "physical education": "#dc2626", sport: "#dc2626",
+      art: "#9333ea", music: "#9333ea", drama: "#9333ea",
+      history: "#ca8a04", geography: "#0d9488",
+      computing: "#0891b2", "computer science": "#0891b2",
+    };
+    function subjectHex(s: string): string {
+      return SUBJ_COLORS[s.toLowerCase().trim()] ?? "#2563eb";
+    }
+
+    const colsHtml = DAYS.map(day => {
+      const lessons = byDay[day] ?? [];
+      const color = COLORS[day]!;
+      const lessonHtml = lessons.length === 0
+        ? `<p style="color:#aaa;font-size:12px;margin:8px 0;text-align:center;">No lessons</p>`
+        : lessons.map(l => {
+            const hex = subjectHex(l.subject);
+            return `
+              <div style="margin-bottom:8px;padding:8px 10px;border-radius:6px;border-left:3px solid ${hex};background:${hex}12;">
+                <div style="font-size:10px;font-weight:700;color:${hex};margin-bottom:2px;">${l.timeStart}${l.timeEnd ? `–${l.timeEnd}` : ""}</div>
+                ${l.classYear ? `<div style="font-size:10px;color:#666;margin-bottom:2px;">${l.classYear}</div>` : ""}
+                ${l.subject ? `<div style="font-size:12px;font-weight:700;color:#1e293b;">${l.subject}</div>` : ""}
+                ${l.topic ? `<div style="font-size:11px;color:#475569;margin-top:2px;">${l.topic}</div>` : ""}
+                ${l.notes ? `<div style="font-size:10px;color:#94a3b8;margin-top:3px;">${l.notes}</div>` : ""}
+              </div>`;
+          }).join("");
+      const dateIdx = DAYS.indexOf(day);
+      const date = weekDays[dateIdx]!;
+      const dateLabel = `${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`;
+      return `
+        <div style="flex:1;min-width:0;border-right:1px solid #e2e8f0;padding:0 10px 10px;">
+          <div style="padding:8px 0 10px;border-bottom:2px solid ${color};margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:${color};">${DAY_FULL[day]}</div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:1px;">${dateLabel}</div>
+          </div>
+          ${lessonHtml}
+        </div>`;
+    }).join("");
+
+    win.document.write(`<!DOCTYPE html>
+<html><head><title>Timetable – ${weekLabel}</title>
+<style>
+  body { font-family: -apple-system, Arial, sans-serif; margin: 0; padding: 20px; color: #1e293b; }
+  @media print { body { padding: 10px; } @page { margin: 15mm; } }
+</style>
+</head><body>
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #1e293b;">
+    <div>
+      <h1 style="margin:0;font-size:18px;font-weight:800;color:#1e293b;">Weekly Timetable</h1>
+      <p style="margin:4px 0 0;font-size:12px;color:#64748b;">${weekLabel}</p>
+    </div>
+    <div style="font-size:11px;color:#94a3b8;">Printed ${new Date().toLocaleDateString("en-GB")}</div>
+  </div>
+  <div style="display:flex;gap:0;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+    ${colsHtml}
+  </div>
+</body></html>`);
+    win.document.close();
+    win.print();
+  }
+
   const w0 = weekDays[0]!;
   const w4 = weekDays[4]!;
   const weekLabel = w0.getMonth() === w4.getMonth()
@@ -836,6 +922,11 @@ export function TeacherLessonPlanner({
           <span style={{ flex: 1, textAlign: "center", fontSize: "13px", fontWeight: 700, color: N_FG }}>{weekLabel}</span>
           <button type="button" onClick={() => setSelectedWeekStart(d => addDays(d, 7))} style={navBtn}>
             <ChevronRight size={13} />
+          </button>
+          <button type="button" onClick={exportPDF}
+            title="Export this week as PDF"
+            style={{ ...navBtn, gap: "4px", fontSize: "11px", fontWeight: 600, color: ACCENT_TEXT, background: ACCENT_LIGHT, border: `1px solid ${ACCENT_BORDER}`, padding: "4px 10px" }}>
+            <Download size={12} /> PDF
           </button>
         </div>
 
