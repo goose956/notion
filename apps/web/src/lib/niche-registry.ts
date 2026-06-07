@@ -680,7 +680,7 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
     displayName:   "Teacher Planning OS",
     virtualTabIds: new Set(Object.values(TEACHER_TABS)),
     defaultTabId:  TEACHER_TABS.DASHBOARD,
-    hiddenDbIds:   [],
+    hiddenDbIds:   ["key-dates", "tasks", "documents"],
     accent: {
       hex:           "#2563eb",
       fgActive:      "#1d4ed8",
