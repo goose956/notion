@@ -452,7 +452,7 @@ export function TeacherLessonPlanner({
   const [entries,           setEntries]           = useState<LessonEntry[]>(() => loadEntries());
   const [selectedWeekStart, setSelectedWeekStart] = useState<Date>(() => getMonday(new Date()));
 
-  const activeClass = criteria?._activeClass as { subject?: string } | undefined;
+  const activeClass = criteria?.["_activeClass"] as { subject?: string } | undefined;
   const defaultSubject = activeClass?.subject ?? "";
 
   // Mon–Fri for the selected week
