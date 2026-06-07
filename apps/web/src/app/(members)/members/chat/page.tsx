@@ -700,13 +700,13 @@ function ChatPageInner() {
             databaseId: docsDb.notionId,
             properties: {
               Title:        title.trim(),
-              Notes:        summaryText,
+              Content:      summaryText,
               Type:         "Note",
               "Date Added": today,
             },
             propertyTypes: {
               Title:        "title",
-              Notes:        "rich_text",
+              Content:      "rich_text",
               Type:         "select",
               "Date Added": "date",
             },
