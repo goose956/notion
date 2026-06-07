@@ -30,10 +30,13 @@ export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin") || req.nextUrl.origin;
 
   try {
-    const puppeteer = await import("puppeteer");
+    const chromium = await import("@sparticuz/chromium");
+    const puppeteer = await import("puppeteer-core");
+
     const browser = await puppeteer.default.launch({
+      args: chromium.default.args,
+      executablePath: await chromium.default.executablePath(),
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     const dataUrls: string[] = [];
@@ -46,12 +49,10 @@ export async function POST(req: NextRequest) {
       await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
       await new Promise((r) => setTimeout(r, 800));
 
-      // Screenshot returns a Buffer — no file path needed
       const buffer = await page.screenshot({ fullPage: false }) as Buffer;
       await page.close();
 
-      const base64 = buffer.toString("base64");
-      dataUrls.push(`data:image/png;base64,${base64}`);
+      dataUrls.push(`data:image/png;base64,${buffer.toString("base64")}`);
     }
 
     await browser.close();
