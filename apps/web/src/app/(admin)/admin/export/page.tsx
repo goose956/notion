@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Download, Sparkles, Camera, ChevronDown, ChevronUp, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+
+const TESTED_KEY = "stridivo-tested-niches";
 import { WORKFLOW_CATALOG } from "@/lib/workflow-catalog";
 
 const PAGE_SIZE = 30;
@@ -139,12 +141,14 @@ function Field({ label, value, onChange, multiline }: { label: string; value: st
 
 // ─── Niche row ────────────────────────────────────────────────────────────────
 function NicheRow({
-  row, globalIndex, selected, onSelect, onChange,
+  row, globalIndex, selected, tested, onSelect, onToggleTested, onChange,
 }: {
   row: NicheExportData;
   globalIndex: number;
   selected: boolean;
+  tested: boolean;
   onSelect: (idx: number, checked: boolean) => void;
+  onToggleTested: (id: string) => void;
   onChange: (index: number, field: keyof NicheExportData, value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -224,6 +228,20 @@ function NicheRow({
           ) : (
             <span className="text-xs text-muted-foreground">Incomplete</span>
           )}
+          {/* Tested toggle — stops propagation so it doesn't open/close the row */}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onToggleTested(row.id); }}
+            className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
+              tested
+                ? "bg-green-500/15 border-green-500/40 text-green-500"
+                : "bg-muted border-border text-muted-foreground hover:text-foreground"
+            }`}
+            title={tested ? "Mark as untested" : "Mark as tested"}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${tested ? "bg-green-500" : "bg-muted-foreground/50"}`} />
+            {tested ? "Tested" : "Untested"}
+          </button>
           {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         </button>
       </div>
@@ -300,6 +318,24 @@ export default function ExportPage() {
   const [selected, setSelected] = useState<Set<number>>(() => new Set(WORKFLOW_CATALOG.map((_, i) => i)));
   const [page, setPage] = useState(0);
   const [parsingAll, setParsingAll] = useState(false);
+  const [tested, setTested] = useState<Set<string>>(() => new Set());
+
+  // Load tested state from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(TESTED_KEY);
+      if (stored) setTested(new Set(JSON.parse(stored) as string[]));
+    } catch { /* ignore */ }
+  }, []);
+
+  function toggleTested(id: string) {
+    setTested((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      try { localStorage.setItem(TESTED_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  }
 
   const totalPages = Math.ceil(rows.length / PAGE_SIZE);
   const pageRows = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -423,7 +459,9 @@ export default function ExportPage() {
               row={row}
               globalIndex={globalIndex}
               selected={selected.has(globalIndex)}
+              tested={tested.has(row.id)}
               onSelect={handleSelect}
+              onToggleTested={toggleTested}
               onChange={handleChange}
             />
           );
