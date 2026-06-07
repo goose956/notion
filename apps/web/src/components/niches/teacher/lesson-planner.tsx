@@ -408,7 +408,7 @@ function EntryForm({ initial, overlapError, onSave, onCancel }: {
 }
 
 // ── Day column ────────────────────────────────────────────────────────────────
-function DayColumn({ date, entries, defaultSubject, defaultClassYear, onAdd, onEdit, onDelete, onCopyDay }: {
+function DayColumn({ date, entries, defaultSubject, defaultClassYear, onAdd, onEdit, onDelete }: {
   date:              Date;
   entries:           LessonEntry[];
   defaultSubject:    string;
@@ -416,7 +416,6 @@ function DayColumn({ date, entries, defaultSubject, defaultClassYear, onAdd, onE
   onAdd:             (data: Omit<LessonEntry, "id" | "date">) => void;
   onEdit:            (id: string, data: Omit<LessonEntry, "id" | "date">) => void;
   onDelete:          (id: string) => void;
-  onCopyDay:         () => void;
 }) {
   const [adding,      setAdding]      = useState(false);
   const [editId,      setEditId]      = useState<string | null>(null);
@@ -458,9 +457,9 @@ function DayColumn({ date, entries, defaultSubject, defaultClassYear, onAdd, onE
     }}>
       {/* Day header */}
       <div style={{
-        padding: "8px 6px 6px", borderBottom: `1px solid ${N_BORDER_MED}`,
+        padding: "10px 8px 8px", borderBottom: `1px solid ${N_BORDER_MED}`,
         background: isToday ? "rgba(37,99,235,0.04)" : "white",
-        textAlign: "center", flexShrink: 0, position: "relative",
+        textAlign: "center", flexShrink: 0,
       }}>
         <div style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: isToday ? ACCENT_TEXT : N_MUTED, fontFamily: N_FONT }}>
           {dayShort}
@@ -469,23 +468,12 @@ function DayColumn({ date, entries, defaultSubject, defaultClassYear, onAdd, onE
           width: "32px", height: "32px", borderRadius: "50%",
           background: isToday ? ACCENT : "transparent",
           display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "3px auto 0", fontFamily: N_FONT,
+          margin: "4px auto 0", fontFamily: N_FONT,
           fontSize: "16px", fontWeight: 700,
           color: isToday ? "white" : N_FG,
         }}>
           {date.getDate()}
         </div>
-        {/* Copy day icon */}
-        <button type="button" onClick={e => { e.stopPropagation(); onCopyDay(); }}
-          title={`Copy ${dayShort} forward`}
-          style={{
-            position: "absolute", top: "6px", right: "4px",
-            background: "none", border: "none", cursor: "pointer",
-            color: N_MUTED, padding: "2px", borderRadius: "3px",
-            display: "flex", alignItems: "center", opacity: 0.6,
-          }}>
-          <Copy size={10} />
-        </button>
       </div>
 
       {/* Entries + Add */}
@@ -533,8 +521,14 @@ function DayColumn({ date, entries, defaultSubject, defaultClassYear, onAdd, onE
   );
 }
 
-// ── Copy/Clear panel ──────────────────────────────────────────────────────────
-type CopyTarget = { mode: "week" } | { mode: "day"; ymd: string; label: string };
+// ── Day colours for copy selector ─────────────────────────────────────────────
+const DAY_COLORS: Record<string, { bg: string; text: string; border: string; active: string }> = {
+  Mon: { bg: "rgba(37,99,235,0.08)",  text: "#2563eb", border: "rgba(37,99,235,0.3)",  active: "#2563eb" },
+  Tue: { bg: "rgba(22,163,74,0.08)",  text: "#16a34a", border: "rgba(22,163,74,0.3)",  active: "#16a34a" },
+  Wed: { bg: "rgba(234,88,12,0.08)",  text: "#ea580c", border: "rgba(234,88,12,0.3)",  active: "#ea580c" },
+  Thu: { bg: "rgba(147,51,234,0.08)", text: "#9333ea", border: "rgba(147,51,234,0.3)", active: "#9333ea" },
+  Fri: { bg: "rgba(13,148,136,0.08)", text: "#0d9488", border: "rgba(13,148,136,0.3)", active: "#0d9488" },
+};
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export function TeacherLessonPlanner({
@@ -545,17 +539,17 @@ export function TeacherLessonPlanner({
   const [entries,           setEntries]           = useState<LessonEntry[]>(() => loadEntries());
   const [selectedWeekStart, setSelectedWeekStart] = useState<Date>(() => getMonday(new Date()));
 
-  // Copy / clear state
-  const [copyTarget,   setCopyTarget]   = useState<CopyTarget | null>(null);
+  // Copy/clear state
+  const [copyMode,     setCopyMode]     = useState<"week" | "day">("week");
+  const [copyDay,      setCopyDay]      = useState<string>("Mon");
   const [copyWeeks,    setCopyWeeks]    = useState(12);
   const [clearConfirm, setClearConfirm] = useState(false);
-  const [copyDone,     setCopyDone]     = useState<string | null>(null); // success message
+  const [copyDone,     setCopyDone]     = useState<string | null>(null);
 
   const activeClass      = criteria?.["_activeClass"] as { subject?: string; name?: string } | undefined;
   const defaultSubject   = activeClass?.subject ?? "";
   const defaultClassYear = activeClass?.name ?? "";
 
-  // Mon–Fri for the selected week
   const weekDays = [0, 1, 2, 3, 4].map(i => addDays(selectedWeekStart, i));
 
   const weekEntries = useMemo(() => {
@@ -564,7 +558,6 @@ export function TeacherLessonPlanner({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, selectedWeekStart]);
 
-  // ── CRUD ────────────────────────────────────────────────────────────────────
   function addEntry(date: Date, data: Omit<LessonEntry, "id" | "date">) {
     const next = [...entries, { id: uid(), date: toYMD(date), ...data }];
     setEntries(next); saveEntries(next);
@@ -578,23 +571,31 @@ export function TeacherLessonPlanner({
     setEntries(next); saveEntries(next);
   }
 
-  // ── Copy ────────────────────────────────────────────────────────────────────
   function doCopy() {
-    if (!copyTarget) return;
-    const srcYMDs = copyTarget.mode === "week"
-      ? weekDays.map(toYMD)
-      : [copyTarget.ymd];
+    // Determine source YMDs
+    let srcYMDs: string[];
+    if (copyMode === "week") {
+      srcYMDs = weekDays.map(toYMD);
+    } else {
+      // Find the matching day of week in the selected week
+      const dayIndexMap: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4 };
+      const idx = dayIndexMap[copyDay] ?? 0;
+      srcYMDs = [toYMD(weekDays[idx]!)];
+    }
 
     const toCopy = entries.filter(e => srcYMDs.includes(e.date));
-    if (toCopy.length === 0) { setCopyTarget(null); return; }
+    if (toCopy.length === 0) {
+      setCopyDone("No lessons found to copy on the selected day/week.");
+      setTimeout(() => setCopyDone(null), 3500);
+      return;
+    }
 
-    // Build a set of existing time keys to avoid exact duplicates
     const existing = new Set(entries.map(e => `${e.date}|${e.timeStart}|${e.timeEnd}`));
     const newEntries: LessonEntry[] = [];
 
     for (let w = 1; w <= copyWeeks; w++) {
       for (const entry of toCopy) {
-        const orig = ymdToDate(entry.date);
+        const orig    = ymdToDate(entry.date);
         const newDate = addDays(orig, w * 7);
         const newYMD  = toYMD(newDate);
         const key     = `${newYMD}|${entry.timeStart}|${entry.timeEnd}`;
@@ -606,20 +607,18 @@ export function TeacherLessonPlanner({
     }
 
     const next = [...entries, ...newEntries];
-    setEntries(next);
-    saveEntries(next);
-    setCopyTarget(null);
-    setCopyDone(`Copied ${newEntries.length} lesson${newEntries.length !== 1 ? "s" : ""} across ${copyWeeks} week${copyWeeks !== 1 ? "s" : ""}.`);
-    setTimeout(() => setCopyDone(null), 3500);
+    setEntries(next); saveEntries(next);
+    setCopyDone(`✓ Copied ${newEntries.length} lesson${newEntries.length !== 1 ? "s" : ""} across ${copyWeeks} week${copyWeeks !== 1 ? "s" : ""}.`);
+    setTimeout(() => setCopyDone(null), 4000);
   }
 
-  // ── Clear week ──────────────────────────────────────────────────────────────
   function clearWeek() {
     const ymdSet = new Set(weekDays.map(toYMD));
     const next   = entries.filter(e => !ymdSet.has(e.date));
-    setEntries(next);
-    saveEntries(next);
+    setEntries(next); saveEntries(next);
     setClearConfirm(false);
+    setCopyDone("✓ Week cleared.");
+    setTimeout(() => setCopyDone(null), 2500);
   }
 
   const w0 = weekDays[0]!;
@@ -628,23 +627,145 @@ export function TeacherLessonPlanner({
     ? `${w0.getDate()}–${w4.getDate()} ${MONTH_NAMES[w0.getMonth()]} ${w4.getFullYear()}`
     : `${w0.getDate()} ${MONTH_NAMES[w0.getMonth()]} – ${w4.getDate()} ${MONTH_NAMES[w4.getMonth()]} ${w4.getFullYear()}`;
 
-  const btnBase: CSSProperties = {
-    display: "flex", alignItems: "center", gap: "4px",
-    padding: "4px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`,
-    background: "white", cursor: "pointer", fontSize: "11px",
-    color: N_MUTED, fontFamily: N_FONT, fontWeight: 600,
+  const navBtn: CSSProperties = {
+    background: "none", border: `1px solid ${N_BORDER_MED}`, cursor: "pointer",
+    color: N_MUTED, padding: "4px 7px", borderRadius: "6px",
+    display: "flex", alignItems: "center",
   };
 
+  const dayCol = copyMode === "day" ? (DAY_COLORS[copyDay] ?? DAY_COLORS["Mon"]!) : DAY_COLORS["Mon"]!;
+
   return (
-    <div style={{ fontFamily: N_FONT, display: "flex", gap: "14px", height: "100%", minHeight: "500px" }}>
+    <div style={{ fontFamily: N_FONT, display: "flex", gap: "14px", minHeight: "500px" }}>
 
-      {/* Left: mini calendar */}
-      <MiniCalendar
-        selectedWeekStart={selectedWeekStart}
-        onSelectWeek={d => { setSelectedWeekStart(d); setCopyTarget(null); setClearConfirm(false); }}
-      />
+      {/* ── Left column: calendar + copy panel ── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "210px", flexShrink: 0 }}>
+        <MiniCalendar selectedWeekStart={selectedWeekStart} onSelectWeek={setSelectedWeekStart} />
 
-      {/* Right: week view */}
+        {/* Copy / Clear panel */}
+        <div style={{
+          background: "white", borderRadius: "12px",
+          border: `1px solid ${N_BORDER_MED}`, padding: "14px",
+          display: "flex", flexDirection: "column", gap: "12px",
+        }}>
+          <p style={{ margin: 0, fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: N_MUTED }}>
+            Copy &amp; Clear
+          </p>
+
+          {/* Mode toggle */}
+          <div style={{ display: "flex", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, overflow: "hidden" }}>
+            {(["week", "day"] as const).map(m => (
+              <button key={m} type="button" onClick={() => setCopyMode(m)}
+                style={{
+                  flex: 1, padding: "6px 4px", border: "none", cursor: "pointer",
+                  fontFamily: N_FONT, fontSize: "11px", fontWeight: 700,
+                  background: copyMode === m ? ACCENT : "white",
+                  color: copyMode === m ? "white" : N_MUTED,
+                  transition: "all 0.15s",
+                }}>
+                {m === "week" ? "Full Week" : "One Day"}
+              </button>
+            ))}
+          </div>
+
+          {/* Day selector (only when mode = day) */}
+          {copyMode === "day" && (
+            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+              {(["Mon", "Tue", "Wed", "Thu", "Fri"] as const).map(d => {
+                const col = DAY_COLORS[d]!;
+                const isSelected = copyDay === d;
+                return (
+                  <button key={d} type="button" onClick={() => setCopyDay(d)}
+                    style={{
+                      flex: "1 1 auto", padding: "5px 4px",
+                      borderRadius: "6px", border: `1px solid ${isSelected ? col.active : col.border}`,
+                      background: isSelected ? col.active : col.bg,
+                      color: isSelected ? "white" : col.text,
+                      fontWeight: 700, fontSize: "11px", cursor: "pointer",
+                      fontFamily: N_FONT, transition: "all 0.15s",
+                    }}>
+                    {d}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Weeks input */}
+          <div>
+            <label style={{ display: "block", fontSize: "10px", fontWeight: 700, color: N_MUTED, marginBottom: "5px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Repeat for
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+              <input
+                type="number" min={1} max={52} value={copyWeeks}
+                onChange={e => setCopyWeeks(Math.max(1, Math.min(52, Number(e.target.value))))}
+                style={{
+                  width: "52px", padding: "6px 8px", borderRadius: "7px",
+                  border: `1px solid ${N_BORDER_MED}`, fontSize: "13px",
+                  fontFamily: N_FONT, textAlign: "center",
+                }}
+              />
+              <span style={{ fontSize: "12px", color: N_MUTED }}>week{copyWeeks !== 1 ? "s" : ""}</span>
+            </div>
+          </div>
+
+          {/* Copy button */}
+          <button type="button" onClick={doCopy}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+              width: "100%", padding: "8px", borderRadius: "8px",
+              background: copyMode === "day" ? dayCol.active : ACCENT,
+              border: "none", color: "white", fontWeight: 700, fontSize: "12px",
+              cursor: "pointer", fontFamily: N_FONT,
+            }}>
+            <Copy size={13} />
+            {copyMode === "week" ? "Copy Week" : `Copy ${copyDay}s`}
+          </button>
+
+          {/* Divider */}
+          <div style={{ borderTop: `1px solid ${N_BORDER_MED}`, margin: "0 -14px", paddingTop: "0" }} />
+
+          {/* Clear week */}
+          {!clearConfirm ? (
+            <button type="button" onClick={() => setClearConfirm(true)}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                width: "100%", padding: "7px", borderRadius: "8px",
+                background: "rgba(220,38,38,0.07)", border: "1px solid rgba(220,38,38,0.25)",
+                color: "#dc2626", fontWeight: 700, fontSize: "12px",
+                cursor: "pointer", fontFamily: N_FONT,
+              }}>
+              <Trash size={13} /> Clear This Week
+            </button>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <p style={{ margin: 0, fontSize: "11px", color: "#dc2626", fontWeight: 600, textAlign: "center" }}>
+                Remove all lessons this week?
+              </p>
+              <div style={{ display: "flex", gap: "6px" }}>
+                <button type="button" onClick={clearWeek}
+                  style={{ flex: 1, padding: "6px", borderRadius: "7px", background: "#dc2626", border: "none", color: "white", fontWeight: 700, fontSize: "11px", cursor: "pointer", fontFamily: N_FONT }}>
+                  Yes, clear
+                </button>
+                <button type="button" onClick={() => setClearConfirm(false)}
+                  style={{ flex: 1, padding: "6px", borderRadius: "7px", background: "white", border: `1px solid ${N_BORDER_MED}`, color: N_MUTED, fontSize: "11px", cursor: "pointer", fontFamily: N_FONT }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Feedback message */}
+          {copyDone && (
+            <p style={{ margin: 0, fontSize: "11px", color: "#15803d", fontWeight: 600, fontFamily: N_FONT, textAlign: "center" }}>
+              {copyDone}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Right: week view ── */}
       <div style={{
         flex: 1, display: "flex", flexDirection: "column", minWidth: 0,
         background: "white", borderRadius: "12px",
@@ -652,104 +773,23 @@ export function TeacherLessonPlanner({
       }}>
         {/* Week header */}
         <div style={{
-          display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap",
-          padding: "9px 12px", borderBottom: `1px solid ${N_BORDER_MED}`,
+          display: "flex", alignItems: "center", gap: "10px",
+          padding: "11px 14px", borderBottom: `1px solid ${N_BORDER_MED}`,
           flexShrink: 0, background: "white",
         }}>
-          <button type="button" onClick={() => setSelectedWeekStart(d => addDays(d, -7))}
-            style={{ ...btnBase, padding: "4px 7px" }}>
+          <button type="button" onClick={() => setSelectedWeekStart(d => addDays(d, -7))} style={navBtn}>
             <ChevronLeft size={13} />
           </button>
-          <span style={{ flex: 1, textAlign: "center", fontSize: "13px", fontWeight: 700, color: N_FG, minWidth: "160px" }}>{weekLabel}</span>
-          <button type="button" onClick={() => setSelectedWeekStart(d => addDays(d, 7))}
-            style={{ ...btnBase, padding: "4px 7px" }}>
+          <span style={{ flex: 1, textAlign: "center", fontSize: "13px", fontWeight: 700, color: N_FG }}>{weekLabel}</span>
+          <button type="button" onClick={() => setSelectedWeekStart(d => addDays(d, 7))} style={navBtn}>
             <ChevronRight size={13} />
           </button>
-          <div style={{ width: "1px", height: "20px", background: N_BORDER_MED, flexShrink: 0 }} />
-          {/* Copy week */}
-          <button type="button"
-            onClick={() => { setCopyTarget({ mode: "week" }); setClearConfirm(false); }}
-            style={{ ...btnBase, color: ACCENT_TEXT, borderColor: ACCENT_BORDER, background: copyTarget?.mode === "week" ? ACCENT_LIGHT : "white" }}>
-            <Copy size={11} /> Copy Week
-          </button>
-          {/* Clear week */}
-          <button type="button"
-            onClick={() => { setClearConfirm(v => !v); setCopyTarget(null); }}
-            style={{ ...btnBase, color: clearConfirm ? "#dc2626" : N_MUTED, borderColor: clearConfirm ? "rgba(220,38,38,0.3)" : N_BORDER_MED }}>
-            <Trash size={11} /> Clear Week
-          </button>
         </div>
-
-        {/* Copy panel */}
-        {copyTarget && (
-          <div style={{
-            padding: "10px 14px", borderBottom: `1px solid ${ACCENT_BORDER}`,
-            background: ACCENT_LIGHT, display: "flex", alignItems: "center",
-            gap: "10px", flexWrap: "wrap", flexShrink: 0,
-          }}>
-            <span style={{ fontSize: "12px", fontWeight: 600, color: ACCENT_TEXT, fontFamily: N_FONT }}>
-              Copy {copyTarget.mode === "day" ? `${copyTarget.label}` : "this week"} to the next
-            </span>
-            <input
-              type="number" min={1} max={52} value={copyWeeks}
-              onChange={e => setCopyWeeks(Math.max(1, Math.min(52, Number(e.target.value))))}
-              style={{ width: "52px", padding: "4px 8px", borderRadius: "6px", border: `1px solid ${ACCENT_BORDER}`, fontSize: "12px", fontFamily: N_FONT, textAlign: "center" }}
-            />
-            <span style={{ fontSize: "12px", color: ACCENT_TEXT, fontFamily: N_FONT }}>
-              week{copyWeeks !== 1 ? "s" : ""}
-            </span>
-            <button type="button" onClick={doCopy}
-              style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 14px", borderRadius: "6px", background: ACCENT, border: "none", color: "white", fontWeight: 700, fontSize: "12px", cursor: "pointer", fontFamily: N_FONT }}>
-              <Copy size={11} /> Copy
-            </button>
-            <button type="button" onClick={() => setCopyTarget(null)}
-              style={{ padding: "5px 10px", borderRadius: "6px", background: "white", border: `1px solid ${ACCENT_BORDER}`, color: ACCENT_TEXT, fontSize: "12px", cursor: "pointer", fontFamily: N_FONT }}>
-              Cancel
-            </button>
-            <span style={{ fontSize: "11px", color: N_MUTED, fontFamily: N_FONT }}>
-              Slots that already have a lesson at that time will be skipped.
-            </span>
-          </div>
-        )}
-
-        {/* Clear confirm panel */}
-        {clearConfirm && (
-          <div style={{
-            padding: "10px 14px", borderBottom: "1px solid rgba(220,38,38,0.2)",
-            background: "rgba(220,38,38,0.05)", display: "flex", alignItems: "center",
-            gap: "10px", flexShrink: 0, flexWrap: "wrap",
-          }}>
-            <span style={{ fontSize: "12px", fontWeight: 600, color: "#dc2626", fontFamily: N_FONT, flex: 1 }}>
-              Remove all lessons for this week?
-            </span>
-            <button type="button" onClick={clearWeek}
-              style={{ padding: "5px 14px", borderRadius: "6px", background: "#dc2626", border: "none", color: "white", fontWeight: 700, fontSize: "12px", cursor: "pointer", fontFamily: N_FONT }}>
-              Yes, clear
-            </button>
-            <button type="button" onClick={() => setClearConfirm(false)}
-              style={{ padding: "5px 10px", borderRadius: "6px", background: "white", border: `1px solid ${N_BORDER_MED}`, color: N_MUTED, fontSize: "12px", cursor: "pointer", fontFamily: N_FONT }}>
-              Cancel
-            </button>
-          </div>
-        )}
-
-        {/* Success toast */}
-        {copyDone && (
-          <div style={{
-            padding: "8px 14px", borderBottom: "1px solid rgba(22,163,74,0.2)",
-            background: "rgba(22,163,74,0.07)", flexShrink: 0,
-            fontSize: "12px", color: "#15803d", fontFamily: N_FONT, fontWeight: 600,
-          }}>
-            ✓ {copyDone}
-          </div>
-        )}
 
         {/* Day columns */}
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
           {weekDays.map(date => {
             const ymd = toYMD(date);
-            const dayNum = date.getDay();
-            const dayLabel = DAY_SHORT[dayNum] ?? "";
             return (
               <DayColumn
                 key={ymd}
@@ -760,10 +800,6 @@ export function TeacherLessonPlanner({
                 onAdd={data => addEntry(date, data)}
                 onEdit={editEntry}
                 onDelete={deleteEntry}
-                onCopyDay={() => {
-                  setCopyTarget({ mode: "day", ymd, label: dayLabel });
-                  setClearConfirm(false);
-                }}
               />
             );
           })}
