@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { signIn } from "@/auth";
+import { buildMagicLink } from "@/lib/magic-link";
 
 // Direct login as demo@stridivo.com - no email required.
 // Only works when DEMO_LOGIN_ENABLED=true is set in env.
@@ -9,14 +9,9 @@ export async function GET(req: NextRequest) {
   }
 
   const callbackUrl = req.nextUrl.searchParams.get("callbackUrl") ?? "/members/workspace";
+  const secret = process.env["AUTH_SECRET"] ?? "";
+  const origin = req.nextUrl.origin;
 
-  try {
-    await signIn("email", { email: "demo@stridivo.com", redirectTo: callbackUrl });
-  } catch (err: unknown) {
-    const digest = (err as { digest?: string }).digest ?? "";
-    if (digest.startsWith("NEXT_REDIRECT")) throw err;
-    return NextResponse.redirect(new URL("/login?error=sign-in-failed", req.url));
-  }
-
-  return NextResponse.redirect(new URL(callbackUrl, req.url));
+  const magicUrl = buildMagicLink("demo@stridivo.com", secret, origin, callbackUrl);
+  return NextResponse.redirect(magicUrl);
 }
