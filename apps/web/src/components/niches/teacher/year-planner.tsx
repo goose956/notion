@@ -326,7 +326,7 @@ export function TeacherYearPlanner({
           </span>
         ) : (
           <button type="button" onClick={() => setShowAddSubject(true)}
-            style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "99px", background: N_BG, border: `1px dashed ${N_BORDER_MED}`, fontSize: "12px", color: N_MUTED, cursor: "pointer", fontFamily: N_FONT }}>
+            style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 10px", borderRadius: "99px", background: "#f8f9fb", border: `1px dashed ${N_BORDER_MED}`, fontSize: "12px", color: N_MUTED, cursor: "pointer", fontFamily: N_FONT }}>
             <Plus size={11} /> Add subject
           </button>
         )}
@@ -366,11 +366,11 @@ export function TeacherYearPlanner({
               </th>
             </tr>
             <tr style={{ borderBottom: `1px solid ${N_BORDER_MED}` }}>
-              <th style={{ padding: "6px 12px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: N_MUTED, background: N_BG, fontFamily: N_FONT, whiteSpace: "nowrap" }}>
+              <th style={{ padding: "6px 12px", textAlign: "left", fontSize: "11px", fontWeight: 600, color: N_MUTED, background: "#f8f9fb", fontFamily: N_FONT, whiteSpace: "nowrap" }}>
                 Subject
               </th>
               {term.weeks.map((w) => (
-                <th key={w} style={{ padding: "6px 4px", textAlign: "center", fontSize: "11px", fontWeight: 600, color: N_MUTED, background: N_BG, fontFamily: N_FONT, minWidth: "90px" }}>
+                <th key={w} style={{ padding: "6px 4px", textAlign: "center", fontSize: "11px", fontWeight: 600, color: N_MUTED, background: "#f8f9fb", fontFamily: N_FONT, minWidth: "90px" }}>
                   Wk {w}
                 </th>
               ))}
@@ -379,7 +379,7 @@ export function TeacherYearPlanner({
           <tbody>
             {subjects.map((subject, si) => (
               <tr key={subject} style={{ borderBottom: si < subjects.length - 1 ? `1px solid ${N_BORDER}` : "none" }}>
-                <td style={{ padding: "8px 12px", fontSize: "12px", fontWeight: 700, color: N_FG, background: N_BG, borderRight: `1px solid ${N_BORDER_MED}`, whiteSpace: "nowrap", fontFamily: N_FONT }}>
+                <td style={{ padding: "8px 12px", fontSize: "12px", fontWeight: 700, color: N_FG, background: "#f8f9fb", borderRight: `1px solid ${N_BORDER_MED}`, whiteSpace: "nowrap", fontFamily: N_FONT }}>
                   {subject}
                 </td>
                 {term.weeks.map((week) => {
