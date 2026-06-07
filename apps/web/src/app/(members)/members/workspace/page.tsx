@@ -498,6 +498,13 @@ export default function WorkspacePage() {
       nicheGroups.push({ nicheId: db.nicheId, nicheName: db.nicheName, dbs: [db] });
     }
   }
+  // Also include niches whose databases are ALL hidden (virtual-tab-only niches)
+  // so they still appear in the sidebar.
+  for (const db of databases) {
+    if (!nicheGroups.find((g) => g.nicheId === db.nicheId)) {
+      nicheGroups.push({ nicheId: db.nicheId, nicheName: db.nicheName, dbs: [] });
+    }
+  }
 
   // Default selected sync niche to first group when groups load
   useEffect(() => {
