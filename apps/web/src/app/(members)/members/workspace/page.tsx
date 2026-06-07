@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, ExternalLink, RefreshCw, ChevronDown, ChevronRight, Menu, X as XIcon } from "lucide-react";
+import { Loader2, Plus, ExternalLink, RefreshCw, ChevronDown, ChevronRight, Menu, X as XIcon, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type {
   WorkspaceDatabase,
   WorkspaceRow,
@@ -237,6 +237,7 @@ export default function WorkspacePage() {
   // ── Mobile sidebar state ───────────────────────────────────────────────────
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768); }
     check();
@@ -554,13 +555,14 @@ export default function WorkspacePage() {
       {/* ── Left sidebar: database list ───────────────────────────────────── */}
       <div
         style={{
-          width: "220px",
+          width: isMobile ? "220px" : sidebarCollapsed ? "44px" : "220px",
           flexShrink: 0,
           borderRight: `1px solid ${N_BORDER}`,
           display: "flex",
           flexDirection: "column",
           background: "white",
           overflow: "hidden",
+          transition: isMobile ? undefined : "width 0.2s ease",
           // Mobile: fixed drawer that slides in from the left
           ...(isMobile ? {
             position: "fixed",
@@ -574,7 +576,21 @@ export default function WorkspacePage() {
           } : {}),
         }}
       >
+        {/* Collapsed desktop state — just a toggle button */}
+        {!isMobile && sidebarCollapsed && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "10px 0", gap: "8px" }}>
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              title="Expand sidebar"
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "6px", color: N_SUBTLE, display: "flex", alignItems: "center", borderRadius: "6px" }}
+            >
+              <PanelLeftOpen size={16} />
+            </button>
+          </div>
+        )}
+
         {/* Scrollable nav area */}
+        {(!sidebarCollapsed || isMobile) && (
         <div ref={sidebarNavRef} style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
         <div
           style={{
@@ -606,6 +622,15 @@ export default function WorkspacePage() {
                 style={refreshing ? { animation: "spin 1s linear infinite" } : undefined}
               />
             </button>
+            {!isMobile && (
+              <button
+                onClick={() => setSidebarCollapsed(true)}
+                title="Collapse sidebar"
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "3px", color: N_SUBTLE, display: "flex", alignItems: "center" }}
+              >
+                <PanelLeftClose size={14} />
+              </button>
+            )}
             {isMobile && (
               <button
                 onClick={() => setSidebarOpen(false)}
@@ -749,7 +774,8 @@ export default function WorkspacePage() {
             </div>
           );
         })}
-        </div>{/* end scrollable nav area */}
+        </div>
+        )}
 
         {/* ── Notion sync footer — quiet, out of the way ─────────────────── */}
         {backend === "app" && nicheGroups.length > 0 && (
