@@ -36,6 +36,32 @@ import { VibeCoderNicheShell }    from "@/components/niches/vibe-coder/shell";
 import { KetoNicheShell }         from "@/components/niches/keto/shell";
 import { SENDParentShell }        from "@/components/niches/send-parent/shell";
 
+// ─── Demo toolbar: screenshot tabs per niche ─────────────────────────────────
+const NICHE_SCREENSHOT_TABS: Record<string, string[]> = {
+  "wedding-planner":        ["Dashboard", "Seating Planner", "AI Speech Writer"],
+  "rainbow":                ["Dashboard", "Seating Planner", "AI Speech Writer"],
+  "project-manager":        ["Dashboard", "Focus Mode", "Task Breakdown"],
+  "pinterest-poster":       ["Dashboard", "Create Pin"],
+  "neurodivergent":         ["Dashboard", "Brain Dump", "What can I do?"],
+  "side-hustle":            ["Dashboard", "Plan Builder", "Market Analyser"],
+  "neurodivergent-wedding": ["Dashboard", "Vendor Brain Dump", "Seating Planner"],
+  "food-business":          ["Dashboard", "Plan Builder", "Compliance"],
+  "content-creator":        ["Dashboard", "Idea Generator", "Script Writer"],
+  "etsy-shop":              ["Dashboard", "Listing Writer", "Finance Tracker"],
+  "cake-business":          ["Dashboard", "Plan Builder", "Pricing & Financials"],
+  "str-guidebook":          ["Dashboard", "Guidebook", "Welcome Pack"],
+  "nail-tech":              ["Dashboard", "Plan Builder", "Pricing & Financials"],
+  "teacher":                ["Dashboard", "Lesson Planner", "Report Writer"],
+  "author":                 ["Dashboard", "Story Planner", "Scene Writer"],
+  "freelancer":             ["Dashboard", "Proposal Writer", "Invoice Builder"],
+  "personal-trainer":       ["Dashboard", "Programme Builder", "Client Check-In"],
+  "amazon-fba":             ["Dashboard", "Product Research", "Listing Writer"],
+  "podcast":                ["Dashboard", "Episode Planner", "Show Notes"],
+  "vibe-coder":             ["Dashboard", "Project Planner", "Launch Kit"],
+  "keto":                   ["Dashboard", "Meal Planner", "Macro Calculator"],
+  "send-parent":            ["Dashboard", "Appointments", "EHCP Builder"],
+};
+
 // ─── Reusable sidebar tab button ─────────────────────────────────────────────
 // Driven by registry data — no per-niche JSX needed.
 function NicheSidebarTabBtn({
@@ -247,6 +273,21 @@ export default function WorkspacePage() {
 
   const [apiCriteriaByNiche, setApiCriteriaByNiche] = useState<Record<string, Record<string, unknown> | null>>({});
   const [seatedGuestIds, setSeatedGuestIds] = useState<Set<string>>(new Set());
+
+  // ── Demo toolbar state ─────────────────────────────────────────────────────
+  const [isDemoUser, setIsDemoUser] = useState(false);
+  const [demoScreenshots, setDemoScreenshots] = useState<Array<{ nicheId: string; index: number; dataUrl: string; filename: string }>>([]);
+  const [demoStatus, setDemoStatus] = useState("");
+  const [demoSeeding, setDemoSeeding] = useState(false);
+  const [demoScreenshotting, setDemoScreenshotting] = useState(false);
+
+  useEffect(() => {
+    void fetch("/api/auth/session")
+      .then((r) => r.json() as Promise<{ user?: { email?: string } }>)
+      .then((data) => { if (data.user?.email === "demo@stridivo.com") setIsDemoUser(true); })
+      .catch(() => undefined);
+  }, []);
+
   const lastUrlSelectionKeyRef = useRef<string>("");
   const sidebarNavRef = useRef<HTMLDivElement>(null);
 
@@ -1344,6 +1385,98 @@ export default function WorkspacePage() {
         )}
 
       </div>
+
+      {/* ── Demo toolbar ──────────────────────────────────────────────────── */}
+      {isDemoUser && !loading && databases.length > 0 && (() => {
+        const activeDb = databases.find((d) => d.notionId === activeTab);
+        const activeNicheId = activeDb?.nicheId ??
+          (isVirtualTab(activeTab) ? (NICHE_REGISTRY.find(e => e.virtualTabIds.has(activeTab))?.nicheId ?? null) : null);
+        if (!activeNicheId) return null;
+        const nicheName = databases.find(d => d.nicheId === activeNicheId)?.nicheName ?? activeNicheId;
+        return (
+          <div style={{
+            position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999,
+            background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)",
+            padding: "8px 16px", display: "flex", alignItems: "center", gap: 10,
+          }}>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>🎬 Demo</span>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>{nicheName}</span>
+            <button
+              disabled={demoSeeding}
+              onClick={async () => {
+                setDemoSeeding(true);
+                setDemoStatus("Seeding…");
+                try {
+                  const res = await fetch("/api/admin/seed-workspace", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nicheId: activeNicheId }),
+                  });
+                  const data = await res.json() as { ok?: boolean; inserted?: number; error?: string };
+                  if (!res.ok) throw new Error(data.error ?? "Seed failed");
+                  setDemoStatus(`✓ Seeded (${data.inserted ?? 0} rows)`);
+                  await loadDatabases({ selectionMode: "preserve" });
+                } catch (err) {
+                  setDemoStatus(err instanceof Error ? err.message : "Seed failed");
+                } finally {
+                  setDemoSeeding(false);
+                }
+              }}
+              style={{ fontSize: 11, padding: "3px 10px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "#fff", cursor: demoSeeding ? "not-allowed" : "pointer" }}
+            >
+              {demoSeeding ? "Seeding…" : "🌱 Seed"}
+            </button>
+            <button
+              disabled={demoScreenshotting}
+              onClick={async () => {
+                setDemoScreenshotting(true);
+                setDemoStatus("Taking screenshots…");
+                try {
+                  const res = await fetch("/api/admin/export/screenshots", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nicheId: activeNicheId, tabLabels: NICHE_SCREENSHOT_TABS[activeNicheId] ?? ["Dashboard"] }),
+                  });
+                  const data = await res.json() as { dataUrls?: string[]; error?: string };
+                  if (!res.ok) throw new Error(data.error ?? "Screenshot failed");
+                  const newScreenshots = (data.dataUrls ?? []).map((dataUrl, i) => ({
+                    nicheId: activeNicheId,
+                    index: i + 1,
+                    dataUrl,
+                    filename: `${activeNicheId}-${i + 1}.png`,
+                  }));
+                  setDemoScreenshots((prev) => [...prev, ...newScreenshots]);
+                  setDemoStatus(`✓ ${newScreenshots.length} screenshot${newScreenshots.length !== 1 ? "s" : ""}`);
+                } catch (err) {
+                  setDemoStatus(err instanceof Error ? err.message : "Screenshot failed");
+                } finally {
+                  setDemoScreenshotting(false);
+                }
+              }}
+              style={{ fontSize: 11, padding: "3px 10px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "#fff", cursor: demoScreenshotting ? "not-allowed" : "pointer" }}
+            >
+              {demoScreenshotting ? "Capturing…" : "📸 Screenshot"}
+            </button>
+            {demoScreenshots.length > 0 && (
+              <button
+                onClick={() => {
+                  for (const screenshot of demoScreenshots) {
+                    const a = document.createElement("a");
+                    a.href = screenshot.dataUrl;
+                    a.download = screenshot.filename;
+                    a.click();
+                  }
+                }}
+                style={{ fontSize: 11, padding: "3px 10px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "#fff", cursor: "pointer" }}
+              >
+                {`⬇️ Download all (${demoScreenshots.length})`}
+              </button>
+            )}
+            {demoStatus && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>{demoStatus}</span>}
+          </div>
+        );
+      })()}
+
     </div>
   );
 }
