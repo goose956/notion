@@ -436,9 +436,10 @@ export default function ExportPage() {
       });
       const data = await res.json() as { ok?: boolean; provisioned?: number; skipped?: number; errors?: string[] };
       if (data.ok) {
-        setSeedResult(`Seeded ${data.provisioned ?? 0} niches (${data.skipped ?? 0} skipped)${data.errors?.length ? ` — ${data.errors.length} errors` : ""}`);
+        const errMsg = data.errors?.length ? ` | Errors: ${data.errors.join("; ")}` : "";
+        setSeedResult(`✓ ${data.provisioned ?? 0} seeded, ${data.skipped ?? 0} skipped${errMsg}`);
       } else {
-        setSeedResult("Seed failed — check console");
+        setSeedResult(`Failed${data.errors?.length ? `: ${data.errors.join("; ")}` : ""}`);
       }
     } catch (err) {
       setSeedResult(`Error: ${err instanceof Error ? err.message : String(err)}`);
