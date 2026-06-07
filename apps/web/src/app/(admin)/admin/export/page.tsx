@@ -154,7 +154,8 @@ function NicheRow({
   const [open, setOpen] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [screenshotting, setScreenshotting] = useState(false);
-  const [screenshotFolder, setScreenshotFolder] = useState("");
+  const [screenshotPreviews, setScreenshotPreviews] = useState<string[]>([]);
+  const [screenshotError, setScreenshotError] = useState("");
 
   async function handleParse() {
     setParsing(true);
@@ -179,22 +180,31 @@ function NicheRow({
   }
 
   async function handleScreenshots() {
-    if (!screenshotFolder.trim()) { alert("Enter a folder path first"); return; }
     setScreenshotting(true);
+    setScreenshotError("");
     try {
       const res = await fetch("/api/admin/export/screenshots", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nicheId: row.id, folder: screenshotFolder, accents: [row.accent_1, row.accent_2, row.accent_3] }),
+        body: JSON.stringify({ nicheId: row.id, accents: [row.accent_1, row.accent_2, row.accent_3] }),
       });
       const data = await res.json();
-      if (data.paths) {
-        onChange(globalIndex, "screenshot_1", data.paths[0] ?? "");
-        onChange(globalIndex, "screenshot_2", data.paths[1] ?? "");
-        onChange(globalIndex, "screenshot_3", data.paths[2] ?? "");
+      if (data.error) { setScreenshotError(data.error); return; }
+      if (data.dataUrls) {
+        setScreenshotPreviews(data.dataUrls);
+        onChange(globalIndex, "screenshot_1", `${row.id}-1.png`);
+        onChange(globalIndex, "screenshot_2", `${row.id}-2.png`);
+        onChange(globalIndex, "screenshot_3", `${row.id}-3.png`);
       }
     } finally {
       setScreenshotting(false);
     }
+  }
+
+  function downloadScreenshot(dataUrl: string, filename: string) {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = filename;
+    a.click();
   }
 
   const filled = row.feature_1 && row.feature_2 && row.feature_3 && row.target_audience && row.seed_keywords;
@@ -286,25 +296,34 @@ function NicheRow({
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <p className="text-sm font-medium">Screenshots</p>
-            <div className="flex items-center gap-2">
-              <input className="flex-1 border rounded-md px-3 py-1.5 text-sm bg-background"
-                placeholder="Output folder path on server"
-                value={screenshotFolder} onChange={(e) => setScreenshotFolder(e.target.value)} />
+            <div className="flex items-center gap-3">
               <button onClick={handleScreenshots} disabled={screenshotting}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm hover:bg-muted disabled:opacity-60">
                 {screenshotting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
-                Screenshot
+                {screenshotting ? "Taking screenshots…" : "Take screenshots"}
               </button>
+              <span className="text-xs text-muted-foreground">Screenshots taken in the browser — download each one below.</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {([1, 2, 3] as const).map((n) => (
-                <Field key={n} label={`Screenshot ${n} path`}
-                  value={row[`screenshot_${n}` as keyof NicheExportData]}
-                  onChange={(v) => onChange(globalIndex, `screenshot_${n}` as keyof NicheExportData, v)} />
-              ))}
-            </div>
+            {screenshotError && (
+              <p className="text-xs text-red-500">{screenshotError}</p>
+            )}
+            {screenshotPreviews.length > 0 && (
+              <div className="grid grid-cols-3 gap-3">
+                {screenshotPreviews.map((src, i) => (
+                  <div key={i} className="space-y-1.5">
+                    <img src={src} alt={`Screenshot ${i + 1}`} className="w-full rounded-md border object-cover" style={{ aspectRatio: "16/10" }} />
+                    <button
+                      onClick={() => downloadScreenshot(src, `${row.id}-${i + 1}.png`)}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded-md border text-xs hover:bg-muted"
+                    >
+                      <Download className="h-3 w-3" /> Download {i + 1}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
