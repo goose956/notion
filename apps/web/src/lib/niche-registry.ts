@@ -126,6 +126,7 @@ export const PT_TABS = {
 // ─── Teacher Planning OS tab IDs ─────────────────────────────────────────────
 export const TEACHER_TABS = {
   DASHBOARD:    "__teacher_dashboard__",
+  CLASSES:      "__teacher_classes__",
   YEAR_PLANNER: "__teacher_year_planner__",
   LESSONS:      "__teacher_lessons__",
   REPORTS:      "__teacher_reports__",
@@ -693,6 +694,7 @@ export const NICHE_REGISTRY: NicheRegistryEntry[] = [
     sidebarEmoji: "🏫",
     topTabs: [
       { tabId: TEACHER_TABS.DASHBOARD,    label: "Dashboard",       icon: "🏠", appOnly: true },
+      { tabId: TEACHER_TABS.CLASSES,      label: "My Classes",      icon: "👥", appOnly: true },
       { tabId: TEACHER_TABS.YEAR_PLANNER,label: "Year Planner",    icon: "📅", appOnly: true },
       { tabId: TEACHER_TABS.LESSONS,     label: "Lesson Planner",  icon: "📋", appOnly: true },
       { tabId: TEACHER_TABS.REPORTS,     label: "Report Writer",   icon: "📝", appOnly: true },

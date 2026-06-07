@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { TEACHER_TABS } from "@/lib/niche-registry";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 import { TeacherDashboard } from "./dashboard";
+import { TeacherClassesManager } from "./classes-manager";
 import { TeacherYearPlanner } from "./year-planner";
 import { TeacherLessonPlanner } from "./lesson-planner";
 import { TeacherReportWriter } from "./report-writer";
@@ -133,6 +134,14 @@ export function TeacherNicheShell({
   );
 
   if (activeTab === TEACHER_TABS.DASHBOARD)    return wrap(<TeacherDashboard databases={databases} criteria={ec} classes={classes} activeClass={activeClass} />);
+  if (activeTab === TEACHER_TABS.CLASSES)      return wrap(
+    <TeacherClassesManager
+      classes={classes}
+      activeClassId={activeClassId}
+      onClassesChange={handleClassesChange}
+      onSelectClass={handleSelectClass}
+    />
+  );
   if (activeTab === TEACHER_TABS.YEAR_PLANNER) return wrap(
     <TeacherYearPlanner
       db={yearPlannerDb}
