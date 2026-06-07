@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   }
 
   const tabs: string[] = Array.isArray(tabLabels) && tabLabels.length > 0
-    ? tabLabels.slice(0, 3)
+    ? tabLabels
     : ["Dashboard"];
 
   const secret = process.env["MAGIC_LINK_SECRET"] ?? process.env["AUTH_SECRET"] ?? "dev-secret";
