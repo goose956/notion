@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { Plus, Loader2, Trash2, Calendar } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
-import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
+import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT, T_SURFACE, T_SURFACE2, T_SHADOW } from "./utils";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 
 const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -140,7 +140,7 @@ export function TeacherKeyDates({
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderBottom: `1px solid ${N_BORDER}`, opacity: isPast ? 0.5 : 1 }}>
         {/* Date badge */}
-        <div style={{ flexShrink: 0, width: "52px", textAlign: "center", padding: "6px 4px", borderRadius: "8px", background: isToday ? ACCENT_LIGHT : "rgba(0,0,0,0.03)", border: `1px solid ${isToday ? ACCENT_BORDER : N_BORDER}` }}>
+        <div style={{ flexShrink: 0, width: "52px", textAlign: "center", padding: "6px 4px", borderRadius: "8px", background: isToday ? ACCENT_LIGHT : T_SURFACE2, border: `1px solid ${isToday ? ACCENT_BORDER : N_BORDER}` }}>
           {date ? <>
             <div style={{ fontSize: "18px", fontWeight: 800, color: isToday ? ACCENT_TEXT : N_FG, lineHeight: 1 }}>
               {new Date(date).getDate()}
@@ -194,7 +194,7 @@ export function TeacherKeyDates({
           </p>
         </div>
         <button onClick={() => setAdding((v) => !v)}
-          style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", background: adding ? "white" : ACCENT_LIGHT, border: `1px solid ${adding ? N_BORDER_MED : ACCENT_BORDER}`, color: adding ? N_MUTED : ACCENT_TEXT, fontWeight: 600, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT }}>
+          style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", background: adding ? T_SURFACE2 : ACCENT_LIGHT, border: `1px solid ${adding ? N_BORDER_MED : ACCENT_BORDER}`, color: adding ? N_MUTED : ACCENT_TEXT, fontWeight: 600, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT }}>
           <Plus size={14} /> Add Date
         </button>
       </div>
@@ -212,11 +212,11 @@ export function TeacherKeyDates({
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
             <select value={newType} onChange={(e) => setNewType(e.target.value)}
-              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}>
+              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: T_SURFACE2 }}>
               {EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
             <select value={newYearGroup} onChange={(e) => setNewYearGroup(e.target.value)}
-              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}>
+              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: T_SURFACE2 }}>
               {YEAR_GROUPS.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
             <input value={newNotes} onChange={(e) => setNewNotes(e.target.value)} placeholder="Notes (optional)"
@@ -228,7 +228,7 @@ export function TeacherKeyDates({
               {saving ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : "Add"}
             </button>
             <button onClick={() => setAdding(false)}
-              style={{ padding: "8px 12px", borderRadius: "8px", background: "white", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT, color: N_MUTED }}>
+              style={{ padding: "8px 12px", borderRadius: "8px", background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT, color: N_MUTED }}>
               Cancel
             </button>
           </div>
@@ -238,7 +238,7 @@ export function TeacherKeyDates({
       {/* Filters */}
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
         <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
-          style={{ padding: "6px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT, background: "white" }}>
+          style={{ padding: "6px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT, background: T_SURFACE2 }}>
           <option value="">All types</option>
           {EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
@@ -254,7 +254,7 @@ export function TeacherKeyDates({
           <p style={{ margin: 0, fontSize: "14px", color: N_MUTED }}>No key dates yet — add one above.</p>
         </div>
       ) : (
-        <div style={{ borderRadius: "12px", border: `1px solid ${N_BORDER_MED}`, background: "white", overflow: "hidden" }}>
+        <div style={{ borderRadius: "12px", border: `1px solid ${N_BORDER_MED}`, background: T_SURFACE, overflow: "hidden", boxShadow: T_SHADOW }}>
           {upcoming.length > 0 && (
             <>
               <div style={{ padding: "8px 16px", background: ACCENT_LIGHT, borderBottom: `1px solid ${ACCENT_BORDER}` }}>
@@ -265,7 +265,7 @@ export function TeacherKeyDates({
           )}
           {later.length > 0 && (
             <>
-              <div style={{ padding: "8px 16px", background: "rgba(0,0,0,0.02)", borderBottom: `1px solid ${N_BORDER}` }}>
+              <div style={{ padding: "8px 16px", background: T_SURFACE2, borderBottom: `1px solid ${N_BORDER_MED}` }}>
                 <span style={{ fontSize: "11px", fontWeight: 800, color: N_MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>Upcoming</span>
               </div>
               {later.map((r) => <DateRow key={r.pageId} row={r} />)}
@@ -273,7 +273,7 @@ export function TeacherKeyDates({
           )}
           {showPast && past.length > 0 && (
             <>
-              <div style={{ padding: "8px 16px", background: "rgba(0,0,0,0.02)", borderBottom: `1px solid ${N_BORDER}` }}>
+              <div style={{ padding: "8px 16px", background: T_SURFACE2, borderBottom: `1px solid ${N_BORDER_MED}` }}>
                 <span style={{ fontSize: "11px", fontWeight: 800, color: N_MUTED, textTransform: "uppercase", letterSpacing: "0.08em" }}>Past</span>
               </div>
               {past.map((r) => <DateRow key={r.pageId} row={r} isPast />)}

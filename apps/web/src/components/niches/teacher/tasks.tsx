@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { Plus, Loader2, Trash2 } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
-import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
+import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT, T_SURFACE, T_SURFACE2, T_SHADOW } from "./utils";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 
 const PRIORITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -142,7 +142,7 @@ export function TeacherTasks({
           </p>
         </div>
         <button onClick={() => setAdding((v) => !v)}
-          style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", background: adding ? "white" : ACCENT_LIGHT, border: `1px solid ${adding ? N_BORDER_MED : ACCENT_BORDER}`, color: adding ? N_MUTED : ACCENT_TEXT, fontWeight: 600, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT }}>
+          style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", background: adding ? T_SURFACE2 : ACCENT_LIGHT, border: `1px solid ${adding ? N_BORDER_MED : ACCENT_BORDER}`, color: adding ? N_MUTED : ACCENT_TEXT, fontWeight: 600, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT }}>
           <Plus size={14} /> Add Task
         </button>
       </div>
@@ -158,11 +158,11 @@ export function TeacherTasks({
                 style={{ width: "100%", padding: "9px 12px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, boxSizing: "border-box" }} />
             </div>
             <select value={newSubject} onChange={(e) => setNewSubject(e.target.value)}
-              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}>
+              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: T_SURFACE2 }}>
               {SUBJECTS.map((s) => <option key={s} value={s}>{s || "Subject…"}</option>)}
             </select>
             <select value={newPrio} onChange={(e) => setNewPrio(e.target.value)}
-              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: "white" }}>
+              style={{ padding: "8px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", fontFamily: N_FONT, background: T_SURFACE2 }}>
               {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
             <input type="date" value={newDue} onChange={(e) => setNewDue(e.target.value)}
@@ -173,7 +173,7 @@ export function TeacherTasks({
                 {saving ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : "Add"}
               </button>
               <button onClick={() => setAdding(false)}
-                style={{ padding: "8px 12px", borderRadius: "8px", background: "white", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT, color: N_MUTED }}>
+                style={{ padding: "8px 12px", borderRadius: "8px", background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", cursor: "pointer", fontFamily: N_FONT, color: N_MUTED }}>
                 Cancel
               </button>
             </div>
@@ -184,12 +184,12 @@ export function TeacherTasks({
       {/* Filters */}
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
         <select value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}
-          style={{ padding: "6px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT, background: "white" }}>
+          style={{ padding: "6px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT, background: T_SURFACE2 }}>
           <option value="">All subjects</option>
           {SUBJECTS.filter(Boolean).map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}
-          style={{ padding: "6px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT, background: "white" }}>
+          style={{ padding: "6px 10px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "12px", fontFamily: N_FONT, background: T_SURFACE2 }}>
           <option value="">All priorities</option>
           {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
@@ -208,7 +208,7 @@ export function TeacherTasks({
           </p>
         </div>
       ) : (
-        <div style={{ borderRadius: "12px", border: `1px solid ${N_BORDER_MED}`, background: "white", overflow: "hidden" }}>
+        <div style={{ borderRadius: "12px", border: `1px solid ${N_BORDER_MED}`, background: T_SURFACE, overflow: "hidden", boxShadow: T_SHADOW }}>
           {sorted.map((row, i) => {
             const done     = asBool(row.properties["Done"]);
             const title    = asText(row.properties["Title"]);
@@ -222,7 +222,7 @@ export function TeacherTasks({
               <div key={row.pageId} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderBottom: i < sorted.length - 1 ? `1px solid ${N_BORDER}` : "none", opacity: done ? 0.55 : 1, transition: "opacity 0.2s" }}>
                 {/* Checkbox */}
                 <button type="button" onClick={() => toggleDone(row)} disabled={toggling.has(row.pageId)}
-                  style={{ flexShrink: 0, width: "20px", height: "20px", borderRadius: "50%", border: `2px solid ${done ? ACCENT : N_BORDER_MED}`, background: done ? ACCENT : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
+                  style={{ flexShrink: 0, width: "20px", height: "20px", borderRadius: "50%", border: `2px solid ${done ? ACCENT : N_BORDER_MED}`, background: done ? ACCENT : T_SURFACE2, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
                   {toggling.has(row.pageId)
                     ? <Loader2 size={10} style={{ animation: "spin 1s linear infinite", color: ACCENT }} />
                     : done ? <span style={{ color: "white", fontSize: "11px", fontWeight: 900 }}>✓</span> : null}

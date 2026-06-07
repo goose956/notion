@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, X, ChevronDown, Pencil, Check, BookOpen } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
-import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
+import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT, T_SURFACE, T_SURFACE2 } from "./utils";
 
 export interface TeacherClass {
   id:        string;
@@ -118,7 +118,7 @@ export function ClassSelectorBar({
       {open && (
         <div style={{
           position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 100,
-          background: "white", borderRadius: "12px",
+          background: T_SURFACE, borderRadius: "12px",
           boxShadow: "0 8px 32px rgba(0,0,0,0.14)", padding: "10px",
           border: `1px solid ${N_BORDER_MED}`, minWidth: "300px",
         }}>
@@ -213,7 +213,7 @@ function ClassForm({ form, onChange, onCommit, onCancel, label }: {
           <Check size={12} /> {label}
         </button>
         <button type="button" onClick={onCancel}
-          style={{ padding: "6px 10px", borderRadius: "7px", background: "white", border: `1px solid ${N_BORDER_MED}`, color: N_MUTED, fontSize: "12px", cursor: "pointer", fontFamily: N_FONT }}>
+          style={{ padding: "6px 10px", borderRadius: "7px", background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`, color: N_MUTED, fontSize: "12px", cursor: "pointer", fontFamily: N_FONT }}>
           Cancel
         </button>
       </div>

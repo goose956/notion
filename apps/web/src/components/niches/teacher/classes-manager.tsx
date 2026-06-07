@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Check, X, BookOpen, Users } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
-import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
+import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT, T_SURFACE, T_SURFACE2 } from "./utils";
 import type { TeacherClass } from "./class-selector";
 
 const CLASS_COLORS = [
@@ -108,7 +108,7 @@ function ClassForm({
           onClick={onCancel}
           style={{
             padding: "8px 14px", borderRadius: "8px",
-            background: "white", border: `1px solid ${N_BORDER_MED}`,
+            background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`,
             color: N_MUTED, fontSize: "13px", cursor: "pointer",
             fontFamily: N_FONT,
           }}
@@ -228,7 +228,7 @@ export function TeacherClassesManager({
         <div style={{
           padding: "48px 32px", textAlign: "center",
           borderRadius: "16px", border: `2px dashed ${N_BORDER_MED}`,
-          background: "#fafafa",
+          background: T_SURFACE,
         }}>
           <div style={{
             width: "52px", height: "52px", borderRadius: "50%",
@@ -297,7 +297,7 @@ export function TeacherClassesManager({
                         style={{
                           borderRadius: "12px",
                           border: `1px solid ${isActive ? ACCENT_BORDER : N_BORDER_MED}`,
-                          background: isActive ? ACCENT_LIGHT : "white",
+                          background: isActive ? ACCENT_LIGHT : T_SURFACE,
                           padding: "14px 16px",
                           boxShadow: isActive ? `0 0 0 3px ${ACCENT_BORDER}` : "0 1px 3px rgba(0,0,0,0.06)",
                           transition: "all 0.15s",
@@ -370,7 +370,7 @@ export function TeacherClassesManager({
                                 onClick={() => setConfirm(null)}
                                 style={{
                                   padding: "4px 10px", borderRadius: "6px",
-                                  background: "white", border: `1px solid ${N_BORDER_MED}`,
+                                  background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`,
                                   color: N_MUTED, fontSize: "12px",
                                   cursor: "pointer", fontFamily: N_FONT,
                                 }}
@@ -400,7 +400,7 @@ export function TeacherClassesManager({
                                 style={{
                                   display: "flex", alignItems: "center", gap: "4px",
                                   padding: "6px 12px", borderRadius: "7px",
-                                  background: "white", border: `1px solid ${N_BORDER_MED}`,
+                                  background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`,
                                   color: N_MUTED, fontSize: "12px",
                                   cursor: "pointer", fontFamily: N_FONT,
                                 }}
@@ -413,7 +413,7 @@ export function TeacherClassesManager({
                                 style={{
                                   display: "flex", alignItems: "center",
                                   padding: "6px 8px", borderRadius: "7px",
-                                  background: "white", border: `1px solid ${N_BORDER_MED}`,
+                                  background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`,
                                   color: "#dc2626", fontSize: "12px",
                                   cursor: "pointer", fontFamily: N_FONT,
                                 }}

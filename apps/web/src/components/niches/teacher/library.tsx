@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
-import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
+import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT, T_SURFACE, T_SURFACE2 } from "./utils";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 
 type DocType = "all" | "Lesson Plan" | "Report Comment" | "Assessment";
@@ -67,7 +67,7 @@ function DocRow({ row }: { row: WorkspaceRow }) {
           {open ? <ChevronUp size={14} color={N_MUTED} /> : <ChevronDown size={14} color={N_MUTED} />}
         </button>
         <button onClick={exportPDF}
-          style={{ flexShrink: 0, padding: "4px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, background: "white", color: N_FG, fontSize: "11px", fontWeight: 600, cursor: "pointer", fontFamily: N_FONT }}>
+          style={{ flexShrink: 0, padding: "4px 10px", borderRadius: "6px", border: `1px solid ${N_BORDER_MED}`, background: T_SURFACE2, color: N_FG, fontSize: "11px", fontWeight: 600, cursor: "pointer", fontFamily: N_FONT }}>
           📄 PDF
         </button>
       </div>
@@ -143,7 +143,7 @@ export function TeacherLibrary({ databases }: { databases: WorkspaceDatabase[] }
           <p style={{ margin: 0, fontSize: "13px", color: N_MUTED }}>Use Lesson Planner, Report Writer and Assessment Builder to generate and save documents here.</p>
         </div>
       ) : (
-        <div style={{ borderRadius: "12px", border: `1px solid ${N_BORDER_MED}`, background: "white", overflow: "hidden" }}>
+        <div style={{ borderRadius: "12px", border: `1px solid ${N_BORDER_MED}`, background: T_SURFACE, overflow: "hidden" }}>
           {/* Filter tabs */}
           <div style={{ display: "flex", borderBottom: `1px solid ${N_BORDER_MED}`, overflowX: "auto" }}>
             {(["all", "Lesson Plan", "Report Comment", "Assessment"] as DocType[]).map((f) => {

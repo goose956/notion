@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
-import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
+import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT, T_SURFACE, T_SURFACE2, T_SHADOW } from "./utils";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 
 const ASSESSMENT_TYPES = ["Multiple choice quiz", "Short answer questions", "Essay questions", "Exam paper", "Worksheet", "Marking rubric"];
@@ -133,7 +133,7 @@ export function TeacherAssessmentBuilder({
       {error && <ErrorBox message={error} />}
 
       {assessment && (
-        <section style={{ borderRadius: "12px", border: `1px solid ${N_BORDER_MED}`, background: "white", overflow: "hidden" }}>
+        <section style={{ borderRadius: "12px", border: `1px solid ${N_BORDER_MED}`, background: T_SURFACE, overflow: "hidden", boxShadow: T_SHADOW }}>
           <div style={{ padding: "14px 16px 10px", borderBottom: `1px solid ${N_BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
             <div>
               <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, color: N_FG }}>{assTitle}</p>
@@ -141,7 +141,7 @@ export function TeacherAssessmentBuilder({
             </div>
             <div style={{ display: "flex", gap: "8px" }}>
               <button onClick={exportPDF}
-                style={{ display: "flex", alignItems: "center", gap: "6px", padding: "7px 14px", borderRadius: "8px", background: "white", border: `1px solid ${N_BORDER_MED}`, color: N_FG, fontWeight: 600, fontSize: "12px", cursor: "pointer", fontFamily: N_FONT }}>
+                style={{ display: "flex", alignItems: "center", gap: "6px", padding: "7px 14px", borderRadius: "8px", background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`, color: N_FG, fontWeight: 600, fontSize: "12px", cursor: "pointer", fontFamily: N_FONT }}>
                 📄 Export PDF
               </button>
               {documentsDb && (
@@ -182,7 +182,7 @@ function SelectField({ label, value, onChange, options }: { label: string; value
     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
       <label style={{ fontSize: "12px", fontWeight: 600, color: N_MUTED, textTransform: "uppercase", letterSpacing: "0.07em" }}>{label}</label>
       <select value={value} onChange={(e) => onChange(e.target.value)}
-        style={{ padding: "9px 12px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", color: N_FG, fontFamily: N_FONT, background: "white" }}>
+        style={{ padding: "9px 12px", borderRadius: "8px", border: `1px solid ${N_BORDER_MED}`, fontSize: "13px", color: N_FG, fontFamily: N_FONT, background: T_SURFACE2 }}>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
     </div>

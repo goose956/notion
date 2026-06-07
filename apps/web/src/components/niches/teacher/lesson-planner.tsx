@@ -2,7 +2,7 @@
 import { useState, useMemo, type CSSProperties } from "react";
 import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Check, Copy, Trash } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
-import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
+import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT, T_SURFACE, T_SURFACE2, T_CAL_BG, T_CAL_BDR, T_SHADOW } from "./utils";
 
 // ── Storage ───────────────────────────────────────────────────────────────────
 const STORAGE_KEY = "teacher-lesson-schedule";
@@ -182,8 +182,8 @@ function MiniCalendar({ selectedWeekStart, onSelectWeek }: {
 
   return (
     <div style={{
-      background: "white", borderRadius: "12px",
-      border: `1px solid ${N_BORDER_MED}`, padding: "14px",
+      background: T_CAL_BG, borderRadius: "12px",
+      border: `1px solid ${T_CAL_BDR}`, padding: "14px",
       width: "210px", flexShrink: 0, fontFamily: N_FONT,
     }}>
       {/* Month nav */}
@@ -258,7 +258,7 @@ function MiniCalendar({ selectedWeekStart, onSelectWeek }: {
         style={{
           width: "100%", marginTop: "10px", padding: "6px",
           borderRadius: "7px", border: `1px solid ${N_BORDER_MED}`,
-          background: "white", cursor: "pointer", fontSize: "11px",
+          background: T_SURFACE2, cursor: "pointer", fontSize: "11px",
           color: N_MUTED, fontFamily: N_FONT,
         }}
       >
@@ -308,7 +308,7 @@ function EntryCard({ entry, onEdit, onDelete }: {
       <div style={{ display: "flex", alignItems: "flex-start", gap: "5px", marginBottom: "4px" }}>
         <span style={{
           fontSize: "10px", fontWeight: 700, color: col.text,
-          background: "white", border: `1px solid ${col.border}`,
+          background: T_SURFACE, border: `1px solid ${col.border}`,
           borderRadius: "3px", padding: "1px 5px", flexShrink: 0,
           fontFamily: N_FONT,
         }}>
@@ -357,7 +357,7 @@ function EntryCard({ entry, onEdit, onDelete }: {
             Yes
           </button>
           <button type="button" onClick={() => setConfirmDel(false)}
-            style={{ padding: "3px 8px", borderRadius: "5px", background: "white", border: `1px solid ${N_BORDER_MED}`, color: N_MUTED, fontSize: "11px", cursor: "pointer", fontFamily: N_FONT }}>
+            style={{ padding: "3px 8px", borderRadius: "5px", background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`, color: N_MUTED, fontSize: "11px", cursor: "pointer", fontFamily: N_FONT }}>
             No
           </button>
         </div>
@@ -452,7 +452,7 @@ function EntryForm({ initial, overlapError, onSave, onCancel }: {
           <Check size={11} /> Save
         </button>
         <button type="button" onClick={onCancel}
-          style={{ padding: "5px 10px", borderRadius: "6px", background: "white", border: `1px solid ${N_BORDER_MED}`, color: N_MUTED, fontSize: "11px", cursor: "pointer", fontFamily: N_FONT }}>
+          style={{ padding: "5px 10px", borderRadius: "6px", background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`, color: N_MUTED, fontSize: "11px", cursor: "pointer", fontFamily: N_FONT }}>
           Cancel
         </button>
       </div>
@@ -511,7 +511,7 @@ function DayColumn({ date, entries, defaultSubject, defaultClassYear, onAdd, onE
       {/* Day header */}
       <div style={{
         padding: "10px 8px 8px", borderBottom: `1px solid ${N_BORDER_MED}`,
-        background: isToday ? "rgba(37,99,235,0.04)" : "white",
+        background: isToday ? ACCENT_LIGHT : T_SURFACE2,
         textAlign: "center", flexShrink: 0,
       }}>
         <div style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: isToday ? ACCENT_TEXT : N_MUTED, fontFamily: N_FONT }}>
@@ -697,7 +697,7 @@ export function TeacherLessonPlanner({
 
         {/* Copy / Clear panel */}
         <div style={{
-          background: "white", borderRadius: "12px",
+          background: T_SURFACE, borderRadius: "12px",
           border: `1px solid ${N_BORDER_MED}`, padding: "14px",
           display: "flex", flexDirection: "column", gap: "12px",
         }}>
@@ -712,7 +712,7 @@ export function TeacherLessonPlanner({
                 style={{
                   flex: 1, padding: "6px 4px", border: "none", cursor: "pointer",
                   fontFamily: N_FONT, fontSize: "11px", fontWeight: 700,
-                  background: copyMode === m ? ACCENT : "white",
+                  background: copyMode === m ? ACCENT : T_SURFACE2,
                   color: copyMode === m ? "white" : N_MUTED,
                   transition: "all 0.15s",
                 }}>
@@ -802,7 +802,7 @@ export function TeacherLessonPlanner({
                   Yes, clear
                 </button>
                 <button type="button" onClick={() => setClearConfirm(false)}
-                  style={{ flex: 1, padding: "6px", borderRadius: "7px", background: "white", border: `1px solid ${N_BORDER_MED}`, color: N_MUTED, fontSize: "11px", cursor: "pointer", fontFamily: N_FONT }}>
+                  style={{ flex: 1, padding: "6px", borderRadius: "7px", background: T_SURFACE2, border: `1px solid ${N_BORDER_MED}`, color: N_MUTED, fontSize: "11px", cursor: "pointer", fontFamily: N_FONT }}>
                   Cancel
                 </button>
               </div>
@@ -821,14 +821,14 @@ export function TeacherLessonPlanner({
       {/* ── Right: week view ── */}
       <div style={{
         flex: 1, display: "flex", flexDirection: "column", minWidth: 0,
-        background: "white", borderRadius: "12px",
-        border: `1px solid ${N_BORDER_MED}`, overflow: "hidden",
+        background: T_SURFACE, borderRadius: "12px",
+        border: `1px solid ${N_BORDER_MED}`, overflow: "hidden", boxShadow: T_SHADOW,
       }}>
         {/* Week header */}
         <div style={{
           display: "flex", alignItems: "center", gap: "10px",
           padding: "11px 14px", borderBottom: `1px solid ${N_BORDER_MED}`,
-          flexShrink: 0, background: "white",
+          flexShrink: 0, background: T_SURFACE2,
         }}>
           <button type="button" onClick={() => setSelectedWeekStart(d => addDays(d, -7))} style={navBtn}>
             <ChevronLeft size={13} />

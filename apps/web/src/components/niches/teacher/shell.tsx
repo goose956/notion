@@ -12,7 +12,7 @@ import { TeacherKeyDates } from "./key-dates";
 import { DocumentsView } from "@/components/workspace/documents-view";
 import { ClassSelectorBar, type TeacherClass } from "./class-selector";
 import { N_BORDER_MED, N_FONT, N_MUTED } from "@/lib/workspace-tokens";
-import { ACCENT_BORDER, ACCENT_LIGHT, ACCENT_TEXT } from "./utils";
+import { ACCENT_BORDER, ACCENT_LIGHT, ACCENT_TEXT, T_BG, T_SURFACE2 } from "./utils";
 
 const CLASSES_STORAGE_KEY = "teacher-classes";
 const ACTIVE_CLASS_STORAGE_KEY = "teacher-active-class-id";
@@ -93,14 +93,14 @@ export function TeacherNicheShell({
   const ec = effectiveCriteria();
 
   const wrap = (children: ReactNode) => (
-    <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+    <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: T_BG }}>
 
       {/* Class context bar — shown on class-aware tabs */}
       {CLASS_AWARE_TABS.has(activeTab) && (
         <div style={{
           display: "flex", alignItems: "center", gap: "10px",
           padding: "10px 24px", borderBottom: `1px solid ${N_BORDER_MED}`,
-          background: "white", flexShrink: 0, flexWrap: "wrap",
+          background: T_SURFACE2, flexShrink: 0, flexWrap: "wrap",
         }}>
           <span style={{ fontSize: "12px", fontWeight: 600, color: N_MUTED, fontFamily: N_FONT }}>Class:</span>
           <ClassSelectorBar
