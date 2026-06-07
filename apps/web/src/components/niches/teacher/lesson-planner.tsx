@@ -87,8 +87,49 @@ const SUBJECT_PALETTE = [
   { bg:"rgba(202,138,4,0.09)",   text:"#ca8a04", border:"rgba(202,138,4,0.28)"  },
   { bg:"rgba(13,148,136,0.09)",  text:"#0d9488", border:"rgba(13,148,136,0.28)" },
 ];
+// Preset subject → palette index so common subjects always get the same colour
+// 0=blue 1=green 2=orange 3=purple 4=cyan 5=red 6=amber 7=teal
+const SUBJECT_PRESET: Record<string, number> = {
+  // Maths → orange
+  "maths": 2, "math": 2, "mathematics": 2,
+  // English → green
+  "english": 1, "english literature": 1, "english language": 1,
+  "english lit": 1, "english lang": 1, "literacy": 1,
+  // Sciences
+  "science": 4, "combined science": 4,
+  "biology": 7, "bio": 7,
+  "chemistry": 6, "chem": 6,
+  "physics": 0,
+  // Humanities
+  "history": 6,
+  "geography": 7, "geo": 7,
+  "religious education": 6, "re": 6, "religious studies": 6, "rs": 6,
+  "philosophy": 6,
+  // Creative
+  "art": 3, "art & design": 3, "fine art": 3,
+  "music": 3,
+  "drama": 3, "performing arts": 3,
+  "media": 3, "media studies": 3,
+  // Technology
+  "computing": 4, "computer science": 4, "ict": 4,
+  "design technology": 2, "dt": 2, "design & technology": 2,
+  "food technology": 2, "food": 2,
+  // Languages → blue
+  "french": 0, "spanish": 0, "german": 0, "mandarin": 0,
+  "languages": 0, "modern languages": 0, "mfl": 0,
+  // PE → red
+  "pe": 5, "physical education": 5, "sport": 5, "games": 5,
+  // Social / business
+  "business": 4, "business studies": 4, "economics": 4,
+  "psychology": 3, "sociology": 1,
+  "pshe": 7, "pse": 7, "citizenship": 7,
+};
+
 function subjectColor(subject: string) {
   if (!subject) return SUBJECT_PALETTE[0]!;
+  const key = subject.toLowerCase().trim();
+  if (key in SUBJECT_PRESET) return SUBJECT_PALETTE[SUBJECT_PRESET[key]!]!;
+  // Unknown subject — use hash for a consistent colour
   let h = 0;
   for (let i = 0; i < subject.length; i++) h = ((h * 31) + subject.charCodeAt(i)) >>> 0;
   return SUBJECT_PALETTE[h % SUBJECT_PALETTE.length]!;
