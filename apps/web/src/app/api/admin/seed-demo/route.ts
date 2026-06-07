@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
+import fs from "fs";
+import path from "path";
 import {
   getNichePack,
+  upsertNichePack,
   getLatestAppWorkspaceByNiche,
   createAppWorkspace,
   createAppDatabase,
@@ -11,7 +14,29 @@ import {
   upsertUserCriteria,
   listAppDatabasesByWorkspace,
 } from "@niche-factory/db";
+import { NichePackSchema } from "@niche-factory/schema";
 import type { NichePack } from "@niche-factory/schema";
+
+// Resolve the niches directory — works both locally and on Railway
+function getNicheSchemaPath(nicheId: string): string {
+  const candidates = [
+    path.join(process.cwd(), "../../niches", nicheId, "schema.json"),
+    path.join(process.cwd(), "niches", nicheId, "schema.json"),
+    path.join(__dirname, "../../../../../../niches", nicheId, "schema.json"),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  throw new Error(`schema.json not found for niche: ${nicheId}`);
+}
+
+async function ensureNichePackInDb(nicheId: string): Promise<void> {
+  const schemaPath = getNicheSchemaPath(nicheId);
+  const raw = JSON.parse(fs.readFileSync(schemaPath, "utf-8")) as unknown;
+  const result = NichePackSchema.safeParse(raw);
+  if (!result.success) throw new Error(`Invalid schema for ${nicheId}: ${result.error.message}`);
+  await upsertNichePack(result.data);
+}
 
 const DEMO_USER = "demo@stridivo.com";
 
@@ -252,15 +277,12 @@ export async function POST(req: NextRequest) {
     try {
       const existing = await getLatestAppWorkspaceByNiche(DEMO_USER, nicheId).catch(() => undefined);
       if (existing) {
-        if (reset) {
-          // Future: delete + reseed. For now, skip.
-          skipped++;
-          continue;
-        }
         skipped++;
         continue;
       }
 
+      // Load schema into DB first (no-op if already present)
+      await ensureNichePackInDb(nicheId);
       await seedWorkspace(DEMO_USER, nicheId);
       provisioned++;
     } catch (err) {
