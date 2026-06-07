@@ -3,6 +3,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import { TEACHER_TABS } from "@/lib/niche-registry";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 import { TeacherDashboard } from "./dashboard";
+import { TeacherYearPlanner } from "./year-planner";
 import { TeacherLessonPlanner } from "./lesson-planner";
 import { TeacherReportWriter } from "./report-writer";
 import { TeacherAssessmentBuilder } from "./assessment-builder";
@@ -27,13 +28,22 @@ export function TeacherNicheShell({
   const [criteria, setCriteria] = useState<Record<string, unknown> | null>(apiCriteria);
   useEffect(() => { setCriteria(apiCriteria); }, [apiCriteria]);
 
-  const documentsDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "documents") ?? null;
+  const documentsDb  = databases.find((d) => d.nicheId === nicheId && d.dbId === "documents") ?? null;
+  const yearPlannerDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "year-planner") ?? null;
 
   const wrap = (children: ReactNode) => (
     <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>{children}</div>
   );
 
-  if (activeTab === TEACHER_TABS.DASHBOARD)   return wrap(<TeacherDashboard databases={databases} criteria={criteria} />);
+  if (activeTab === TEACHER_TABS.DASHBOARD)    return wrap(<TeacherDashboard databases={databases} criteria={criteria} />);
+  if (activeTab === TEACHER_TABS.YEAR_PLANNER) return wrap(
+    <TeacherYearPlanner
+      db={yearPlannerDb}
+      apiCriteria={criteria}
+      onRowAdded={(row) => onRowAdded(yearPlannerDb?.notionId ?? "", row)}
+      onRowUpdated={(pageId, name, val) => onRowUpdated(yearPlannerDb?.notionId ?? "", pageId, name, val)}
+    />
+  );
   if (activeTab === TEACHER_TABS.LESSONS)     return wrap(<TeacherLessonPlanner criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
   if (activeTab === TEACHER_TABS.REPORTS)     return wrap(<TeacherReportWriter criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
   if (activeTab === TEACHER_TABS.ASSESSMENTS) return wrap(<TeacherAssessmentBuilder criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
