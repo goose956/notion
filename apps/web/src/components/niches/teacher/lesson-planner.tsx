@@ -12,10 +12,29 @@ interface LessonEntry {
   date:      string;  // YYYY-MM-DD
   timeStart: string;  // "09:00"
   timeEnd:   string;  // "10:00"
+  classYear: string;  // e.g. "7A Maths", "Year 10"
   subject:   string;
   topic:     string;
   links:     string;
   notes:     string;
+}
+
+// ── Time helpers ──────────────────────────────────────────────────────────────
+function timeToMin(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return (h ?? 0) * 60 + (m ?? 0);
+}
+
+function hasOverlap(entries: LessonEntry[], timeStart: string, timeEnd: string, excludeId?: string): boolean {
+  const start = timeToMin(timeStart);
+  const end   = timeToMin(timeEnd);
+  if (end <= start) return false; // invalid range — let form validation handle it
+  return entries.some(e => {
+    if (excludeId && e.id === excludeId) return false;
+    const eStart = timeToMin(e.timeStart);
+    const eEnd   = timeToMin(e.timeEnd);
+    return start < eEnd && end > eStart;
+  });
 }
 
 function loadEntries(): LessonEntry[] {
@@ -73,7 +92,7 @@ function subjectColor(subject: string) {
 
 function uid() { return Math.random().toString(36).slice(2, 10); }
 
-const BLANK_FORM = { timeStart: "09:00", timeEnd: "10:00", subject: "", topic: "", links: "", notes: "" };
+const BLANK_FORM = { timeStart: "09:00", timeEnd: "10:00", classYear: "", subject: "", topic: "", links: "", notes: "" };
 
 // ── Mini Calendar ─────────────────────────────────────────────────────────────
 function MiniCalendar({ selectedWeekStart, onSelectWeek }: {
@@ -215,7 +234,20 @@ function EntryCard({ entry, onEdit, onDelete }: {
       background: col.bg, padding: "9px 10px", marginBottom: "5px",
       position: "relative",
     }}>
-      {/* Time + actions row */}
+      {/* Class / year header */}
+      {entry.classYear && (
+        <div style={{ marginBottom: "5px" }}>
+          <span style={{
+            fontSize: "11px", fontWeight: 700, color: col.text,
+            background: col.bg, border: `1px solid ${col.border}`,
+            borderRadius: "4px", padding: "2px 7px", fontFamily: N_FONT,
+          }}>
+            {entry.classYear}
+          </span>
+        </div>
+      )}
+
+      {/* Time + subject + actions row */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: "5px", marginBottom: "4px" }}>
         <span style={{
           fontSize: "10px", fontWeight: 700, color: col.text,
@@ -278,14 +310,15 @@ function EntryCard({ entry, onEdit, onDelete }: {
 }
 
 // ── Entry form ────────────────────────────────────────────────────────────────
-function EntryForm({ initial, onSave, onCancel }: {
-  initial: Omit<LessonEntry, "id" | "date">;
-  onSave:  (data: Omit<LessonEntry, "id" | "date">) => void;
-  onCancel: () => void;
+function EntryForm({ initial, overlapError, onSave, onCancel }: {
+  initial:      Omit<LessonEntry, "id" | "date">;
+  overlapError: boolean;
+  onSave:       (data: Omit<LessonEntry, "id" | "date">) => void;
+  onCancel:     () => void;
 }) {
   const [form, setForm] = useState(initial);
   const f = (patch: Partial<typeof form>) => setForm(p => ({ ...p, ...patch }));
-  const canSave = form.topic.trim() || form.subject.trim();
+  const canSave = !!(form.topic.trim() || form.subject.trim());
 
   const labelStyle: CSSProperties = {
     display: "block", fontSize: "9px", fontWeight: 700, color: N_MUTED,
@@ -313,6 +346,23 @@ function EntryForm({ initial, onSave, onCancel }: {
           <input type="time" value={form.timeEnd} onChange={e => f({ timeEnd: e.target.value })} style={inputStyle} />
         </div>
       </div>
+
+      {/* Overlap error */}
+      {overlapError && (
+        <div style={{
+          padding: "6px 10px", borderRadius: "6px",
+          background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.25)",
+          fontSize: "11px", color: "#dc2626", fontFamily: N_FONT, fontWeight: 600,
+        }}>
+          ⚠ This time slot overlaps with another lesson. Adjust the times.
+        </div>
+      )}
+
+      <div>
+        <label style={labelStyle}>Class / Year Group</label>
+        <input value={form.classYear} onChange={e => f({ classYear: e.target.value })}
+          placeholder="e.g. 7A, Year 10, Sixth Form" autoFocus style={inputStyle} />
+      </div>
       <div>
         <label style={labelStyle}>Subject</label>
         <input value={form.subject} onChange={e => f({ subject: e.target.value })}
@@ -321,7 +371,7 @@ function EntryForm({ initial, onSave, onCancel }: {
       <div>
         <label style={labelStyle}>Topic / Lesson</label>
         <input value={form.topic} onChange={e => f({ topic: e.target.value })}
-          placeholder="What are you teaching?" autoFocus style={inputStyle} />
+          placeholder="What are you teaching?" style={inputStyle} />
       </div>
       <div>
         <label style={labelStyle}>Links</label>
@@ -354,16 +404,38 @@ function EntryForm({ initial, onSave, onCancel }: {
 }
 
 // ── Day column ────────────────────────────────────────────────────────────────
-function DayColumn({ date, entries, defaultSubject, onAdd, onEdit, onDelete }: {
-  date:           Date;
-  entries:        LessonEntry[];
-  defaultSubject: string;
-  onAdd:          (data: Omit<LessonEntry, "id" | "date">) => void;
-  onEdit:         (id: string, data: Omit<LessonEntry, "id" | "date">) => void;
-  onDelete:       (id: string) => void;
+function DayColumn({ date, entries, defaultSubject, defaultClassYear, onAdd, onEdit, onDelete }: {
+  date:              Date;
+  entries:           LessonEntry[];
+  defaultSubject:    string;
+  defaultClassYear:  string;
+  onAdd:             (data: Omit<LessonEntry, "id" | "date">) => void;
+  onEdit:            (id: string, data: Omit<LessonEntry, "id" | "date">) => void;
+  onDelete:          (id: string) => void;
 }) {
-  const [adding, setAdding] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
+  const [adding,      setAdding]      = useState(false);
+  const [editId,      setEditId]      = useState<string | null>(null);
+  const [overlapErr,  setOverlapErr]  = useState(false);
+
+  function handleAdd(data: Omit<LessonEntry, "id" | "date">) {
+    if (hasOverlap(entries, data.timeStart, data.timeEnd)) {
+      setOverlapErr(true);
+      return;
+    }
+    setOverlapErr(false);
+    onAdd(data);
+    setAdding(false);
+  }
+
+  function handleEdit(id: string, data: Omit<LessonEntry, "id" | "date">) {
+    if (hasOverlap(entries, data.timeStart, data.timeEnd, id)) {
+      setOverlapErr(true);
+      return;
+    }
+    setOverlapErr(false);
+    onEdit(id, data);
+    setEditId(null);
+  }
 
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const isToday = toYMD(date) === toYMD(today);
@@ -406,15 +478,16 @@ function DayColumn({ date, entries, defaultSubject, onAdd, onEdit, onDelete }: {
           editId === e.id ? (
             <EntryForm
               key={e.id}
-              initial={{ timeStart: e.timeStart, timeEnd: e.timeEnd, subject: e.subject, topic: e.topic, links: e.links, notes: e.notes }}
-              onSave={data => { onEdit(e.id, data); setEditId(null); }}
-              onCancel={() => setEditId(null)}
+              initial={{ timeStart: e.timeStart, timeEnd: e.timeEnd, classYear: e.classYear, subject: e.subject, topic: e.topic, links: e.links, notes: e.notes }}
+              overlapError={overlapErr}
+              onSave={data => { setOverlapErr(false); handleEdit(e.id, data); }}
+              onCancel={() => { setEditId(null); setOverlapErr(false); }}
             />
           ) : (
             <EntryCard
               key={e.id}
               entry={e}
-              onEdit={() => setEditId(e.id)}
+              onEdit={() => { setEditId(e.id); setOverlapErr(false); }}
               onDelete={() => onDelete(e.id)}
             />
           )
@@ -422,12 +495,13 @@ function DayColumn({ date, entries, defaultSubject, onAdd, onEdit, onDelete }: {
 
         {adding ? (
           <EntryForm
-            initial={{ ...BLANK_FORM, subject: defaultSubject }}
-            onSave={data => { onAdd(data); setAdding(false); }}
-            onCancel={() => setAdding(false)}
+            initial={{ ...BLANK_FORM, subject: defaultSubject, classYear: defaultClassYear }}
+            overlapError={overlapErr}
+            onSave={handleAdd}
+            onCancel={() => { setAdding(false); setOverlapErr(false); }}
           />
         ) : (
-          <button type="button" onClick={() => setAdding(true)}
+          <button type="button" onClick={() => { setAdding(true); setOverlapErr(false); }}
             style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
               width: "100%", padding: "6px",
@@ -452,8 +526,9 @@ export function TeacherLessonPlanner({
   const [entries,           setEntries]           = useState<LessonEntry[]>(() => loadEntries());
   const [selectedWeekStart, setSelectedWeekStart] = useState<Date>(() => getMonday(new Date()));
 
-  const activeClass = criteria?.["_activeClass"] as { subject?: string } | undefined;
-  const defaultSubject = activeClass?.subject ?? "";
+  const activeClass     = criteria?.["_activeClass"] as { subject?: string; name?: string } | undefined;
+  const defaultSubject  = activeClass?.subject ?? "";
+  const defaultClassYear = activeClass?.name ?? "";
 
   // Mon–Fri for the selected week
   const weekDays = [0, 1, 2, 3, 4].map(i => addDays(selectedWeekStart, i));
@@ -525,6 +600,7 @@ export function TeacherLessonPlanner({
                 date={date}
                 entries={weekEntries.filter(e => e.date === ymd)}
                 defaultSubject={defaultSubject}
+                defaultClassYear={defaultClassYear}
                 onAdd={data => addEntry(date, data)}
                 onEdit={editEntry}
                 onDelete={deleteEntry}

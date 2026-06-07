@@ -4,7 +4,6 @@ import { TEACHER_TABS } from "@/lib/niche-registry";
 import type { WorkspaceDatabase, WorkspaceRow } from "@/app/api/members/workspace/route";
 import { TeacherDashboard } from "./dashboard";
 import { TeacherClassesManager } from "./classes-manager";
-import { TeacherYearPlanner } from "./year-planner";
 import { TeacherLessonPlanner } from "./lesson-planner";
 import { TeacherReportWriter } from "./report-writer";
 import { TeacherAssessmentBuilder } from "./assessment-builder";
@@ -23,7 +22,6 @@ const CLASS_AWARE_TABS = new Set<string>([
   TEACHER_TABS.LESSONS,
   TEACHER_TABS.REPORTS,
   TEACHER_TABS.ASSESSMENTS,
-  TEACHER_TABS.YEAR_PLANNER,
 ]);
 
 export function TeacherNicheShell({
@@ -88,9 +86,8 @@ export function TeacherNicheShell({
   }, [criteria, activeClass]);
 
   // ── DB lookups ───────────────────────────────────────────────────────────────
-  const documentsDb   = databases.find((d) => d.nicheId === nicheId && d.dbId === "documents")    ?? null;
-  const yearPlannerDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "year-planner") ?? null;
-  const tasksDb       = databases.find((d) => d.nicheId === nicheId && d.dbId === "tasks")        ?? null;
+  const documentsDb = databases.find((d) => d.nicheId === nicheId && d.dbId === "documents") ?? null;
+  const tasksDb     = databases.find((d) => d.nicheId === nicheId && d.dbId === "tasks")     ?? null;
   const keyDatesDb    = databases.find((d) => d.nicheId === nicheId && d.dbId === "key-dates")    ?? null;
 
   const ec = effectiveCriteria();
@@ -140,16 +137,6 @@ export function TeacherNicheShell({
       activeClassId={activeClassId}
       onClassesChange={handleClassesChange}
       onSelectClass={handleSelectClass}
-    />
-  );
-  if (activeTab === TEACHER_TABS.YEAR_PLANNER) return wrap(
-    <TeacherYearPlanner
-      db={yearPlannerDb}
-      apiCriteria={ec}
-      classes={classes}
-      activeClass={activeClass}
-      onRowAdded={(row) => onRowAdded(yearPlannerDb?.notionId ?? "", row)}
-      onRowUpdated={(pageId, name, val) => onRowUpdated(yearPlannerDb?.notionId ?? "", pageId, name, val)}
     />
   );
   if (activeTab === TEACHER_TABS.LESSONS)     return wrap(<TeacherLessonPlanner criteria={ec} />);
