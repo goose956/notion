@@ -1,9 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Download, Sparkles, Camera, ChevronDown, ChevronUp, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, Sparkles, Camera, ChevronDown, ChevronUp, Loader2, ChevronLeft, ChevronRight, Sprout } from "lucide-react";
 
 const TESTED_KEY = "stridivo-tested-niches";
+
+// ─── Tab labels for Puppeteer screenshots (must match sidebar labels in niche-registry.ts) ──
+const NICHE_SCREENSHOT_TABS: Record<string, string[]> = {
+  "wedding-planner":        ["Dashboard", "Seating Planner", "AI Speech Writer"],
+  "rainbow":                ["Dashboard", "Seating Planner", "AI Speech Writer"],
+  "project-manager":        ["Dashboard", "Focus Mode", "Task Breakdown"],
+  "pinterest-poster":       ["Dashboard", "Create Pin"],
+  "neurodivergent":         ["Dashboard", "Brain Dump", "What can I do?"],
+  "side-hustle":            ["Dashboard", "Plan Builder", "Market Analyser"],
+  "neurodivergent-wedding": ["Dashboard", "Vendor Brain Dump", "Seating Planner"],
+  "food-business":          ["Dashboard", "Plan Builder", "Compliance"],
+  "content-creator":        ["Dashboard", "Idea Generator", "Script Writer"],
+  "etsy-shop":              ["Dashboard", "Listing Writer", "Finance Tracker"],
+  "cake-business":          ["Dashboard", "Plan Builder", "Pricing & Financials"],
+  "str-guidebook":          ["Dashboard", "Guidebook", "Welcome Pack"],
+  "nail-tech":              ["Dashboard", "Plan Builder", "Pricing & Financials"],
+  "teacher":                ["Dashboard", "Lesson Planner", "Report Writer"],
+  "author":                 ["Dashboard", "Story Planner", "Scene Writer"],
+  "freelancer":             ["Dashboard", "Proposal Writer", "Invoice Builder"],
+  "personal-trainer":       ["Dashboard", "Programme Builder", "Client Check-In"],
+  "amazon-fba":             ["Dashboard", "Product Research", "Listing Writer"],
+  "podcast":                ["Dashboard", "Episode Planner", "Show Notes"],
+  "vibe-coder":             ["Dashboard", "Project Planner", "Launch Kit"],
+  "keto":                   ["Dashboard", "Meal Planner", "Macro Calculator"],
+  "send-parent":            ["Dashboard", "Appointments", "EHCP Builder"],
+};
 import { WORKFLOW_CATALOG } from "@/lib/workflow-catalog";
 
 const PAGE_SIZE = 30;
@@ -183,9 +209,10 @@ function NicheRow({
     setScreenshotting(true);
     setScreenshotError("");
     try {
+      const tabLabels = NICHE_SCREENSHOT_TABS[row.id] ?? ["Dashboard"];
       const res = await fetch("/api/admin/export/screenshots", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nicheId: row.id, accents: [row.accent_1, row.accent_2, row.accent_3] }),
+        body: JSON.stringify({ nicheId: row.id, tabLabels }),
       });
       const data = await res.json();
       if (data.error) { setScreenshotError(data.error); return; }
@@ -338,6 +365,8 @@ export default function ExportPage() {
   const [page, setPage] = useState(0);
   const [parsingAll, setParsingAll] = useState(false);
   const [tested, setTested] = useState<Set<string>>(() => new Set());
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<string>("");
 
   // Load tested state from localStorage on mount
   useEffect(() => {
@@ -397,6 +426,27 @@ export default function ExportPage() {
     URL.revokeObjectURL(url);
   }
 
+  async function handleSeedDemo() {
+    setSeeding(true);
+    setSeedResult("");
+    try {
+      const res = await fetch("/api/admin/seed-demo", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json() as { ok?: boolean; provisioned?: number; skipped?: number; errors?: string[] };
+      if (data.ok) {
+        setSeedResult(`Seeded ${data.provisioned ?? 0} niches (${data.skipped ?? 0} skipped)${data.errors?.length ? ` — ${data.errors.length} errors` : ""}`);
+      } else {
+        setSeedResult("Seed failed — check console");
+      }
+    } catch (err) {
+      setSeedResult(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setSeeding(false);
+    }
+  }
+
   async function handleParseAll() {
     setParsingAll(true);
     try {
@@ -449,6 +499,16 @@ export default function ExportPage() {
           {parsingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           Parse Selected with AI
         </button>
+        <button onClick={handleSeedDemo} disabled={seeding}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-md border text-sm font-medium hover:bg-muted disabled:opacity-60">
+          {seeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sprout className="h-4 w-4" />}
+          {seeding ? "Seeding…" : "Seed Demo Account"}
+        </button>
+        {seedResult && (
+          <span className={`text-xs font-medium ${seedResult.startsWith("Error") ? "text-red-500" : "text-green-600"}`}>
+            {seedResult}
+          </span>
+        )}
         <button onClick={downloadCsv} disabled={selected.size === 0}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-md border text-sm font-medium hover:bg-muted disabled:opacity-60">
           <Download className="h-4 w-4" />

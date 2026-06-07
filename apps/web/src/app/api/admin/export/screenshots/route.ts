@@ -1,33 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildMagicLink } from "@/lib/magic-link";
 
-// Tab count per niche (we screenshot up to 3)
-const NICHE_TAB_COUNT: Record<string, number> = {
-  "wedding-planner":        6,
-  "rainbow":                6,
-  "project-manager":        4,
-  "pinterest-poster":       2,
-  "neurodivergent":         4,
-  "side-hustle":            3,
-  "neurodivergent-wedding": 6,
-  "food-business":          3,
-  "content-creator":        4,
-  "etsy-shop":              3,
-  "cake-business":          4,
-  "str-guidebook":          3,
-  "nail-tech":              4,
-};
+const DEMO_EMAIL = "demo@stridivo.com";
 
 export async function POST(req: NextRequest) {
-  const { nicheId, accents } = await req.json();
-  const accentList: string[] = Array.isArray(accents) ? accents : [];
+  const body = await req.json() as { nicheId?: string; tabLabels?: string[]; accents?: string[] };
+  const { nicheId, tabLabels } = body;
 
   if (!nicheId) {
     return NextResponse.json({ error: "nicheId required" }, { status: 400 });
   }
 
-  const tabCount = NICHE_TAB_COUNT[nicheId] ?? 3;
-  const tabsToShoot = Math.min(tabCount, 3);
+  const tabs: string[] = Array.isArray(tabLabels) && tabLabels.length > 0
+    ? tabLabels.slice(0, 3)
+    : ["Dashboard"];
+
+  const secret = process.env["MAGIC_LINK_SECRET"] ?? process.env["AUTH_SECRET"] ?? "dev-secret";
   const origin = req.headers.get("origin") || req.nextUrl.origin;
+
+  const magicUrl = buildMagicLink(
+    DEMO_EMAIL,
+    secret,
+    origin,
+    `/members/workspace`,
+  );
 
   try {
     const chromium = await import("@sparticuz/chromium");
@@ -39,19 +35,42 @@ export async function POST(req: NextRequest) {
       headless: true,
     });
 
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 800 });
+
+    // Log in via magic link
+    await page.goto(magicUrl, { waitUntil: "networkidle2", timeout: 30000 });
+    await new Promise((r) => setTimeout(r, 2000));
+
+    // Navigate to workspace for this niche
+    await page.goto(`${origin}/members/workspace?nicheId=${encodeURIComponent(nicheId)}`, {
+      waitUntil: "networkidle2",
+      timeout: 30000,
+    });
+    await new Promise((r) => setTimeout(r, 3000));
+
     const dataUrls: string[] = [];
 
-    for (let i = 0; i < tabsToShoot; i++) {
-      const accent = accentList[i] ? `?accent=${encodeURIComponent(accentList[i]!)}` : "";
-      const url = `${origin}/niche-preview/${nicheId}/${i}${accent}`;
-      const page = await browser.newPage();
-      await page.setViewport({ width: 1280, height: 800 });
-      await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
-      await new Promise((r) => setTimeout(r, 800));
+    for (let i = 0; i < tabs.length; i++) {
+      const label = tabs[i]!;
+
+      if (i > 0) {
+        // Click the sidebar tab with this label
+        await page.evaluate((lbl: string) => {
+          const candidates = document.querySelectorAll<HTMLElement>(
+            'button, [role="button"], div[style*="cursor: pointer"]',
+          );
+          for (const el of candidates) {
+            if (el.textContent?.trim().includes(lbl)) {
+              el.click();
+              break;
+            }
+          }
+        }, label);
+        await new Promise((r) => setTimeout(r, 1500));
+      }
 
       const buffer = await page.screenshot({ fullPage: false }) as Buffer;
-      await page.close();
-
       dataUrls.push(`data:image/png;base64,${buffer.toString("base64")}`);
     }
 
