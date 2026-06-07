@@ -95,7 +95,7 @@ export function TeacherTasks({
       const propertyTypes = { Title: "title", Subject: "select", Priority: "select", "Due Date": "date", Done: "checkbox" };
       const res = await fetch("/api/members/workspace", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dbNotionId: db.notionId, properties, propertyTypes }),
+        body: JSON.stringify({ databaseId: db.notionId, properties, propertyTypes }),
       });
       const data = await res.json() as { row?: WorkspaceRow };
       if (data.row) { onRowAdded(data.row); setNewTitle(""); setNewDue(""); setAdding(false); }

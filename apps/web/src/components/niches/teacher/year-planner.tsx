@@ -195,7 +195,7 @@ export function TeacherYearPlanner({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            properties: { Title: topic, Subject: subject, Week: String(week), Term: term, Status: asText(existing.properties["Status"]) || "Planned" },
+            properties: { Title: topic, Subject: subject, Week: week, Term: term, Status: asText(existing.properties["Status"]) || "Planned" },
             propertyTypes: { Title: "title", Subject: "select", Week: "number", Term: "select", Status: "select" },
           }),
         });
@@ -206,7 +206,7 @@ export function TeacherYearPlanner({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            dbNotionId: db.notionId,
+            databaseId: db.notionId,
             properties: { Title: topic, Subject: subject, Week: week, Term: term, Status: "Planned" },
             propertyTypes: { Title: "title", Subject: "select", Week: "number", Term: "select", Status: "select" },
           }),

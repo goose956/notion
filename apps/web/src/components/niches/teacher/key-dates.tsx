@@ -109,7 +109,7 @@ export function TeacherKeyDates({
       const propertyTypes = { Title: "title", Date: "date", Type: "select", "Year Group": "select", Notes: "rich_text" };
       const res = await fetch("/api/members/workspace", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dbNotionId: db.notionId, properties, propertyTypes }),
+        body: JSON.stringify({ databaseId: db.notionId, properties, propertyTypes }),
       });
       const data = await res.json() as { row?: WorkspaceRow };
       if (data.row) { onRowAdded(data.row); setNewTitle(""); setNewDate(""); setNewNotes(""); setAdding(false); }
