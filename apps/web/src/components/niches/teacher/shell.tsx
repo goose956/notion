@@ -6,7 +6,7 @@ import { TeacherDashboard } from "./dashboard";
 import { TeacherLessonPlanner } from "./lesson-planner";
 import { TeacherReportWriter } from "./report-writer";
 import { TeacherAssessmentBuilder } from "./assessment-builder";
-import { TeacherLibrary } from "./library";
+import { DocumentsView } from "@/components/workspace/documents-view";
 
 export function TeacherNicheShell({
   activeTab,
@@ -23,7 +23,6 @@ export function TeacherNicheShell({
   onRowUpdated: (dbNotionId: string, pageId: string, name: string, val: string | number | boolean | null) => void;
   onRowDeleted: (dbNotionId: string, pageId: string) => void;
 }) {
-  const _ = [onRowUpdated, onRowDeleted];
   const nicheId = "teacher";
   const [criteria, setCriteria] = useState<Record<string, unknown> | null>(apiCriteria);
   useEffect(() => { setCriteria(apiCriteria); }, [apiCriteria]);
@@ -38,7 +37,14 @@ export function TeacherNicheShell({
   if (activeTab === TEACHER_TABS.LESSONS)     return wrap(<TeacherLessonPlanner criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
   if (activeTab === TEACHER_TABS.REPORTS)     return wrap(<TeacherReportWriter criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
   if (activeTab === TEACHER_TABS.ASSESSMENTS) return wrap(<TeacherAssessmentBuilder criteria={criteria} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
-  if (activeTab === TEACHER_TABS.LIBRARY)     return wrap(<TeacherLibrary databases={databases} />);
+  if (activeTab === TEACHER_TABS.LIBRARY && documentsDb) return wrap(
+    <DocumentsView
+      db={documentsDb}
+      onRowAdded={(row) => onRowAdded(documentsDb.notionId, row)}
+      onRowUpdated={(pageId, name, val) => onRowUpdated(documentsDb.notionId, pageId, name, val)}
+      onRowDeleted={(pageId) => onRowDeleted(documentsDb.notionId, pageId)}
+    />
+  );
 
   return null;
 }
