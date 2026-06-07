@@ -18,7 +18,7 @@ const CLASSES_STORAGE_KEY = "teacher-classes";
 const ACTIVE_CLASS_STORAGE_KEY = "teacher-active-class-id";
 
 // Tabs where the class context is meaningfully shown
-const CLASS_AWARE_TABS = new Set([
+const CLASS_AWARE_TABS = new Set<string>([
   TEACHER_TABS.LESSONS,
   TEACHER_TABS.REPORTS,
   TEACHER_TABS.ASSESSMENTS,
