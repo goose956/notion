@@ -152,7 +152,7 @@ export function TeacherNicheShell({
       onRowUpdated={(pageId, name, val) => onRowUpdated(yearPlannerDb?.notionId ?? "", pageId, name, val)}
     />
   );
-  if (activeTab === TEACHER_TABS.LESSONS)     return wrap(<TeacherLessonPlanner criteria={ec} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
+  if (activeTab === TEACHER_TABS.LESSONS)     return wrap(<TeacherLessonPlanner criteria={ec} />);
   if (activeTab === TEACHER_TABS.REPORTS)     return wrap(<TeacherReportWriter criteria={ec} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
   if (activeTab === TEACHER_TABS.ASSESSMENTS) return wrap(<TeacherAssessmentBuilder criteria={ec} documentsDb={documentsDb} onRowAdded={onRowAdded} />);
   if (activeTab === TEACHER_TABS.TASKS) return wrap(
