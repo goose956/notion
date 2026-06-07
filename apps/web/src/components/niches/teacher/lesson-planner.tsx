@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, type CSSProperties } from "react";
 import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Check } from "lucide-react";
 import { N_FG, N_MUTED, N_BORDER, N_BORDER_MED, N_FONT } from "@/lib/workspace-tokens";
 import { ACCENT, ACCENT_LIGHT, ACCENT_BORDER, ACCENT_TEXT } from "./utils";
@@ -287,11 +287,11 @@ function EntryForm({ initial, onSave, onCancel }: {
   const f = (patch: Partial<typeof form>) => setForm(p => ({ ...p, ...patch }));
   const canSave = form.topic.trim() || form.subject.trim();
 
-  const labelStyle: React.CSSProperties = {
+  const labelStyle: CSSProperties = {
     display: "block", fontSize: "9px", fontWeight: 700, color: N_MUTED,
     marginBottom: "3px", textTransform: "uppercase", letterSpacing: "0.07em", fontFamily: N_FONT,
   };
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     width: "100%", padding: "6px 8px", borderRadius: "6px",
     border: `1px solid ${N_BORDER_MED}`, fontSize: "12px",
     fontFamily: N_FONT, boxSizing: "border-box",
