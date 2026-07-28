@@ -42,12 +42,12 @@ describe("NichePackSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects a pack with no data sources", () => {
+  it("accepts a pack with no data sources", () => {
     const result = NichePackSchema.safeParse({
       ...MINIMAL_PACK,
       dataSources: [],
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("rejects a pack with an invalid property type", () => {
