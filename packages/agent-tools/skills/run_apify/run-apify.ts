@@ -1,14 +1,16 @@
 /**
- * run-apify.ts — runs an Apify actor and returns dataset results.
+ * Runs an Apify Actor and returns dataset results.
  *
  * API key: APIFY_TOKEN (set in admin Settings or environment variable)
- * Get a free token at https://apify.com
  */
 import type { Skill, SkillContext, JsonValue } from "../../src/types.js";
 
 const APIFY_BASE = "https://api.apify.com/v2";
 const POLL_INTERVAL_MS = 3_000;
 const MAX_POLL_SECONDS = 60;
+const DEFAULT_MAX_ITEMS = 10;
+const MAX_ITEMS = 50;
+const TERMINAL_STATUSES = new Set(["SUCCEEDED", "FAILED", "ABORTED", "TIMED-OUT"]);
 
 type ApifyRun = {
   id?: string;
@@ -17,7 +19,39 @@ type ApifyRun = {
 };
 
 type ApifyRunResponse = { data?: ApifyRun };
-type ApifyDatasetResponse = { data?: { items?: JsonValue[] } };
+
+function authorizationHeaders(token: string): Record<string, string> {
+  return { Authorization: `Bearer ${token}` };
+}
+
+function normalizeActorId(actorId: string): string | null {
+  const value = actorId.trim();
+  if (/^[A-Za-z0-9]+$/.test(value)) return value;
+
+  const slug = /^([A-Za-z0-9._-]+)[/~]([A-Za-z0-9._-]+)$/.exec(value);
+  return slug === null ? null : `${slug[1]}~${slug[2]}`;
+}
+
+function parseMaxItems(value: JsonValue | undefined): number | null {
+  if (value === undefined) return DEFAULT_MAX_ITEMS;
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value < 1 ||
+    value > MAX_ITEMS
+  ) {
+    return null;
+  }
+  return value;
+}
+
+function parseMaxTotalChargeUsd(value: JsonValue | undefined): number | null | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  return value;
+}
 
 async function pollUntilFinished(
   runId: string,
@@ -25,21 +59,26 @@ async function pollUntilFinished(
 ): Promise<ApifyRun | null> {
   const deadline = Date.now() + MAX_POLL_SECONDS * 1_000;
   while (Date.now() < deadline) {
-    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-
-    const res = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${token}`, {
+    const res = await fetch(`${APIFY_BASE}/actor-runs/${encodeURIComponent(runId)}`, {
+      headers: authorizationHeaders(token),
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
 
     const data = (await res.json()) as ApifyRunResponse;
     const run = data.data;
-    if (run === undefined) return null;
+    if (run === undefined) {
+      throw new Error("Apify did not return run data");
+    }
 
     const status = run.status ?? "";
-    if (["SUCCEEDED", "FAILED", "ABORTED", "TIMED-OUT"].includes(status)) {
+    if (TERMINAL_STATUSES.has(status)) {
       return run;
     }
+
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
   return null;
 }
@@ -61,7 +100,15 @@ export const runApifySkill: Skill = {
       },
       max_items: {
         type: "number",
-        description: "Maximum result items to return (default 10, max 50).",
+        description:
+          "Maximum charged dataset items for supported Actors and result items to return (default 10, max 50).",
+        minimum: 1,
+        maximum: MAX_ITEMS,
+      },
+      max_total_charge_usd: {
+        type: "number",
+        description: "Maximum total Actor run charge in USD.",
+        exclusiveMinimum: 0,
       },
     },
     required: ["actor_id", "input"],
@@ -79,32 +126,55 @@ export const runApifySkill: Skill = {
 
     const actorId = typeof args["actor_id"] === "string" ? args["actor_id"].trim() : "";
     if (!actorId) return "Error: actor_id is required (e.g. \"apify/google-search-scraper\").";
+    const apiActorId = normalizeActorId(actorId);
+    if (apiActorId === null) {
+      return "Error: actor_id must be an Actor ID or a username/actor-name slug.";
+    }
 
-    const input = args["input"] !== null && typeof args["input"] === "object" && !Array.isArray(args["input"])
-      ? args["input"]
-      : {};
+    const rawInput = args["input"];
+    if (
+      rawInput === null ||
+      typeof rawInput !== "object" ||
+      Array.isArray(rawInput)
+    ) {
+      return "Error: input must be an object.";
+    }
+    const input = rawInput;
 
-    const maxItems = Math.min(
-      typeof args["max_items"] === "number" ? args["max_items"] : 10,
-      50,
-    );
+    const maxItems = parseMaxItems(args["max_items"]);
+    if (maxItems === null) {
+      return `Error: max_items must be a positive number no greater than ${MAX_ITEMS}.`;
+    }
+
+    const maxTotalChargeUsd = parseMaxTotalChargeUsd(args["max_total_charge_usd"]);
+    if (maxTotalChargeUsd === null) {
+      return "Error: max_total_charge_usd must be a positive number.";
+    }
 
     // Start the actor run
     let startData: ApifyRunResponse;
     try {
-      const startRes = await fetch(
-        `${APIFY_BASE}/acts/${encodeURIComponent(actorId)}/runs?token=${token}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(input),
-          signal: AbortSignal.timeout(15_000),
-        },
+      const startUrl = new URL(
+        `${APIFY_BASE}/actors/${encodeURIComponent(apiActorId)}/runs`,
       );
+      startUrl.searchParams.set("maxItems", String(maxItems));
+      if (maxTotalChargeUsd !== undefined) {
+        startUrl.searchParams.set("maxTotalChargeUsd", String(maxTotalChargeUsd));
+      }
+
+      const startRes = await fetch(startUrl, {
+        method: "POST",
+        headers: {
+          ...authorizationHeaders(token),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(input),
+        signal: AbortSignal.timeout(15_000),
+      });
 
       if (!startRes.ok) {
         const text = await startRes.text();
-        return `Failed to start Apify actor "${actorId}": HTTP ${startRes.status} — ${text.slice(0, 500)}`;
+        return `Failed to start Apify actor "${actorId}": HTTP ${startRes.status}: ${text.slice(0, 500)}`;
       }
 
       startData = (await startRes.json()) as ApifyRunResponse;
@@ -116,7 +186,12 @@ export const runApifySkill: Skill = {
     if (!runId) return "Error: Apify did not return a run ID.";
 
     // Poll for completion
-    const finishedRun = await pollUntilFinished(runId, token);
+    let finishedRun: ApifyRun | null;
+    try {
+      finishedRun = await pollUntilFinished(runId, token);
+    } catch (err) {
+      return `Error checking Apify run: ${err instanceof Error ? err.message : String(err)}`;
+    }
     if (finishedRun === null) {
       return `Actor run timed out after ${MAX_POLL_SECONDS}s. Run ID: ${runId}. Check Apify console for results.`;
     }
@@ -131,10 +206,14 @@ export const runApifySkill: Skill = {
     // Fetch dataset items
     let items: JsonValue[];
     try {
-      const dsRes = await fetch(
-        `${APIFY_BASE}/datasets/${datasetId}/items?token=${token}&limit=${maxItems}`,
-        { signal: AbortSignal.timeout(15_000) },
+      const datasetUrl = new URL(
+        `${APIFY_BASE}/datasets/${encodeURIComponent(datasetId)}/items`,
       );
+      datasetUrl.searchParams.set("limit", String(maxItems));
+      const dsRes = await fetch(datasetUrl, {
+        headers: authorizationHeaders(token),
+        signal: AbortSignal.timeout(15_000),
+      });
 
       if (!dsRes.ok) {
         return `Failed to fetch dataset results: HTTP ${dsRes.status}`;
